@@ -1,0 +1,48 @@
+erDiagram
+    IDENTITY_REF ||--o{ ENROLLMENT : has
+    COURSE ||--o{ COURSE_CLASS : contains
+    COURSE_CLASS ||--o{ ENROLLMENT : has
+    COURSE_CLASS ||--o{ TEACHING_ASSIGNMENT : assigns
+    IDENTITY_REF ||--o{ TEACHING_ASSIGNMENT : teaches
+    COURSE_CLASS ||--o{ SECTION : contains
+    SECTION ||--o{ LEARNING_ITEM : orders
+    LEARNING_ITEM ||--o| RESOURCE : specializes
+    RESOURCE ||--o{ RESOURCE_REVISION : versions
+    RESOURCE_REVISION ||--o{ CONTENT_BLOCK : contains
+    LEARNING_ITEM ||--o| QUIZ : specializes
+    QUIZ ||--o{ QUESTION : contains
+    QUIZ ||--o{ QUIZ_ATTEMPT : receives
+    QUIZ_ATTEMPT ||--o{ ANSWER : contains
+    LEARNING_ITEM ||--o| ASSIGNMENT : specializes
+    ASSIGNMENT ||--o{ SUBMISSION : receives
+    SUBMISSION ||--o{ SUBMISSION_VERSION : versions
+    IDENTITY_REF ||--o{ QUIZ_ATTEMPT : starts
+    IDENTITY_REF ||--o{ SUBMISSION : submits
+    ENROLLMENT ||--o{ GRADE_RECORD : receives
+    LEARNING_ITEM ||--o{ GRADE_RECORD : grades
+    IDENTITY_REF ||--o{ NOTIFICATION : receives
+    AUDIT_EVENT ||--o{ AUDIT_CHANGE : contains
+    FILE_REF }o--|| FILE_OBJECT : points_to
+
+    IDENTITY_REF { string id PK string externalSubject UK string officialIdentifier string status }
+    COURSE { string id PK string title string status }
+    COURSE_CLASS { string id PK string courseId FK string term string status }
+    ENROLLMENT { string id PK string classId FK string identityId FK string status }
+    SECTION { string id PK string classId FK string title int position }
+    LEARNING_ITEM { string id PK string sectionId FK string kind int position string availability }
+    RESOURCE { string itemId PK string currentRevisionId FK }
+    RESOURCE_REVISION { string id PK string resourceItemId FK int schemaVersion json document }
+    CONTENT_BLOCK { string id PK string revisionId FK int position string blockType json payload }
+    QUIZ { string itemId PK string resultReleaseMode }
+    QUESTION { string id PK string quizItemId FK string type decimal points }
+    QUIZ_ATTEMPT { string id PK string quizItemId FK string identityId FK string status decimal score }
+    ANSWER { string id PK string attemptId FK string questionId FK json response }
+    ASSIGNMENT { string itemId PK string submissionPolicy }
+    SUBMISSION { string id PK string assignmentItemId FK string identityId FK }
+    SUBMISSION_VERSION { string id PK string submissionId FK int versionNo json payload }
+    GRADE_RECORD { string id PK string enrollmentId FK string itemId FK decimal score string status }
+    FILE_REF { string id PK string ownerId string fileObjectId FK string purpose }
+    FILE_OBJECT { string fileObjectId PK }
+    NOTIFICATION { string id PK string identityId FK string type bool read }
+    AUDIT_EVENT { string id PK string actorSubject string action string entity string entityId json beforeState json afterState }
+    AUDIT_CHANGE { string id PK string auditEventId FK string path json beforeValue json afterValue }

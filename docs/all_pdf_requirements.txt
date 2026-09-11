@@ -1,0 +1,151 @@
+SSO-001 | P0 | Pengguna dapat masuk menggunakan identitas akun kampus dan password.
+SSO-002 | P0 | Pengguna dapat keluar dari seluruh sesi aktif yang relevan.
+SSO-003 | P0 | Pengguna yang telah masuk dapat mengakses E-Learning tanpa memasukkan ulang kredensial selama sesi masih berlaku.
+SSO-004 | P0 | Super Admin/Admin dapat membuat akun mahasiswa, pengajar, dan administrator.
+SSO-005 | P0 | Super Admin/Admin dapat mengimpor banyak akun dari file daftar pengguna.
+SSO-006 | P0 | Sebelum import diselesaikan, sistem menampilkan pratinjau, akun valid, duplikat, dan baris yang gagal. Dokumen Kebutuhan Fungsional Platform UAY V1.1 • September 2026
+SSO-007 | P0 | Super Admin dapat menetapkan dan mengubah peran umum pengguna.
+SSO-008 | P0 | Admin hanya dapat memberikan peran yang menjadi kewenangannya.
+SSO-009 | P0 | Admin dapat menonaktifkan dan mengaktifkan kembali akun.
+SSO-010 | P0 | Pengguna dapat mengganti password miliknya.
+SSO-011 | P0 | Admin dapat memulai reset password bagi pengguna.
+SSO-012 | P0 | Pengguna yang lupa password dapat menjalani pemulihan melalui mekanisme yang disetujui institusi.
+SSO-013 | P0 | Pengguna dapat melihat profil dasar: nama, identitas resmi, email, peran, dan status akun.
+SSO-014 | P0 | Sistem menolak login dengan kredensial salah atau akun Disabled menggunakan pesan yang aman dan mudah dipahami.
+SSO-015 | P0 | Sistem membatasi percobaan login berulang yang mencurigakan.
+SSO-016 | P0 | Perubahan pengguna, peran, status, dan reset password dicatat dalam riwayat aktivitas.
+SSO-017 | P1 | Pengguna dapat melihat dan mengakhiri sesi aktif pada perangkat lain.
+SSO-018 | P1 | Admin dapat menyaring dan mengekspor daftar pengguna.
+SSO-019 | P2 | Verifikasi tambahan saat login dapat diaktifkan untuk peran tertentu.
+FS-001 | P0 | Pengguna atau aplikasi yang berwenang dapat mengunggah file.
+FS-002 | P0 | Sistem memvalidasi jenis dan ukuran file sebelum menerima unggahan.
+FS-003 | P0 | File yang ditolak disertai alasan yang mudah dipahami.
+FS-004 | P0 | Setiap file memiliki metadata yang dapat dilihat oleh pihak berwenang.
+FS-005 | P0 | Pengguna berwenang dapat membuka atau mengunduh file. Dokumen Kebutuhan Fungsional Platform UAY V1.1 • September 2026
+FS-006 | P0 | File Public dan Private diperlakukan sesuai tingkat aksesnya.
+FS-007 | P0 | File Private tidak dapat diakses oleh pengguna tanpa hak.
+FS-008 | P0 | Nama file yang sama tidak menyebabkan file lama tertimpa.
+FS-009 | P0 | Pengguna dapat menghapus file yang menjadi kewenangannya.
+FS-010 | P0 | File yang dihapus berpindah ke Trash dan tidak lagi tersedia untuk penggunaan normal.
+FS-011 | P0 | File dapat dipulihkan selama masih berada di Trash.
+FS-012 | P0 | File yang melewati tujuh hari di Trash dapat dihapus permanen.
+FS-013 | P0 | Penghapusan dan pemulihan file dicatat dalam riwayat aktivitas.
+FS-014 | P0 | Aplikasi dapat menghubungkan satu file dengan konteks penggunaan yang tepat.
+FS-015 | P0 | File tetap terlindungi ketika hubungan pengguna dengan course/class berubah.
+FS-016 | P1 | Admin dapat melihat ringkasan penggunaan ruang file.
+FS-017 | P1 | Admin dapat mencari dan menyaring file berdasarkan metadata serta status.
+FS-018 | P2 | File Private dapat diberikan akses sementara yang otomatis berakhir.
+FS-019 | P2 | Versi file umum dapat dikelola tanpa menghapus versi sebelumnya.
+ACC-001 | P0 | Pengguna dapat masuk menggunakan akun kampus yang telah disiapkan.
+ACC-002 | P0 | Pengguna diarahkan ke dashboard sesuai peran setelah berhasil masuk.
+ACC-003 | P0 | Pengguna dapat keluar dari sistem.
+ACC-004 | P0 | Akun yang dinonaktifkan tidak dapat menggunakan E-Learning.
+ACC-005 | P0 | Pengguna tidak dapat mengakses fungsi yang bukan hak perannya.
+ACC-006 | P1 | Pengguna dapat melihat informasi profil dasar dan status akunnya. ●​ Kriteria penerimaan — Admin, pengajar, dan mahasiswa menerima tampilan dan akses sesuai perannya. ●​ Kriteria penerimaan — Akun nonaktif ditolak. ●​ Kriteria penerimaan — Mahasiswa tidak dapat membuka halaman pengelolaan pengajar/admin.
+SDH-001 | P0 | Dashboard menampilkan course yang sedang diikuti.
+SDH-002 | P0 | Dashboard menampilkan tugas dan kuis yang akan datang.
+SDH-003 | P0 | Dashboard menampilkan nilai terbaru yang sudah dipublikasikan.
+SDH-004 | P0 | Dashboard menampilkan pengumuman terbaru dari class yang diikuti.
+SDH-005 | P0 | Setiap item dapat membawa mahasiswa ke konteks course atau aktivitas terkait.
+SDH-006 | P1 | Dashboard menampilkan ringkasan kemajuan pembelajaran. ●​ Kriteria penerimaan — Tidak ada course, nilai, atau pengumuman dari class yang tidak diikuti. ●​ Kriteria penerimaan — Deadline diurutkan sehingga tindakan terdekat mudah ditemukan. ●​ Kriteria penerimaan — Nilai draft tidak tampil.
+TDH-001 | P0 | Dashboard menampilkan class yang diajar.
+TDH-002 | P0 | Dashboard menampilkan submission dan jawaban essay yang perlu dinilai.
+TDH-003 | P0 | Dashboard menampilkan jadwal aktivitas yang akan dibuka atau ditutup.
+TDH-004 | P0 | Dashboard menampilkan aktivitas terbaru pada class.
+TDH-005 | P1 | Dashboard menyediakan filter dan ringkasan aktivitas per class. ●​ Kriteria penerimaan — Pengajar hanya melihat class yang ditugaskan. ●​ Kriteria penerimaan — Jumlah pekerjaan yang perlu dinilai sesuai kondisi sebenarnya. ●​ Kriteria penerimaan — Item dapat dibuka langsung untuk ditindaklanjuti.
+CRS-001 | P0 | Admin dapat membuat dan mengubah informasi course.
+CRS-002 | P0 | Admin dapat membuat satu atau lebih class di dalam course.
+CRS-003 | P0 | Admin dapat menetapkan satu atau lebih pengajar pada class.
+CRS-004 | P0 | Admin dapat mempublikasikan dan mengarsipkan course.
+CRS-005 | P0 | Pengajar dapat melihat dan mengelola class yang ditugaskan.
+CRS-006 | P0 | Mahasiswa dapat melihat course yang diikuti.
+CRS-007 | P0 | Course Archived tetap dapat dibaca tetapi tidak menerima kegiatan baru.
+CRS-008 | P1 | Course beserta isinya dapat diduplikasi untuk periode berikutnya. ●​ Kriteria penerimaan — Course Published terlihat oleh peserta yang terdaftar. ●​ Kriteria penerimaan — Course Archived menolak submission dan attempt baru. ●​ Kriteria penerimaan — Pengajar yang dilepas dari class tidak lagi dapat mengelola class tersebut.
+ENR-001 | P0 | Admin dan pengajar dapat menambahkan mahasiswa secara manual. Dokumen Kebutuhan Fungsional Platform UAY V1.1 • September 2026
+ENR-002 | P0 | Admin dan pengajar dapat mengimpor daftar mahasiswa.
+ENR-003 | P0 | Sistem menampilkan pratinjau dan kesalahan sebelum import diselesaikan.
+ENR-004 | P0 | Admin/pengajar dapat mengeluarkan mahasiswa dari class.
+ENR-005 | P1 | Enrollment key dapat diaktifkan atau dinonaktifkan per class.
+ENR-006 | P1 | Mahasiswa dapat bergabung menggunakan enrollment key yang valid.
+ENR-007 | P1 | Mahasiswa yang sudah terdaftar tidak dibuatkan enrollment ganda.
+ENR-008 | P1 | Mengeluarkan mahasiswa tidak menghapus histori tugas dan nilainya.
+ENR-009 | P1 | Enrollment dapat dibatasi periode dan kapasitas. ●​ Kriteria penerimaan — Hasil import menunjukkan baris berhasil dan gagal. ●​ Kriteria penerimaan — Enrollment key salah, tidak aktif, atau kedaluwarsa ditolak. ●​ Kriteria penerimaan — Pengguna yang bukan peserta tidak dapat melihat isi class. Dokumen Kebutuhan Fungsional Platform UAY V1.1 • September 2026
+SEC-001 | P0 | Pengajar dapat membuat, mengubah, mengurutkan, dan menghapus pertemuan.
+SEC-002 | P0 | Pertemuan memiliki judul dan deskripsi.
+SEC-003 | P0 | Pengajar dapat menambahkan Resource, Quiz, dan Assignment ke dalam pertemuan.
+SEC-004 | P0 | Pengajar dapat mengatur urutan seluruh item dalam pertemuan.
+SEC-005 | P0 | Item dapat disembunyikan atau ditampilkan.
+SEC-006 | P0 | Item dapat memiliki tanggal mulai dan tanggal berakhir.
+SEC-007 | P0 | Mahasiswa melihat item sesuai urutan dan aturan ketersediaan.
+SEC-008 | P1 | Pertemuan dapat memiliki persyaratan penyelesaian atau prerequisite. ●​ Kriteria penerimaan — Perubahan urutan pengajar tercermin pada tampilan mahasiswa. ●​ Kriteria penerimaan — Item tersembunyi tidak dapat dibuka mahasiswa. ●​ Kriteria penerimaan — Item di luar masa ketersediaan mengikuti kebijakan yang ditetapkan.
+RES-001 | P0 | Pengajar dapat membuat materi berupa teks terformat.
+RES-002 | P0 | Pengajar dapat menambahkan gambar.
+RES-003 | P0 | Pengajar dapat melampirkan file pembelajaran.
+RES-004 | P0 | Pengajar dapat menambahkan tautan eksternal.
+RES-005 | P0 | Pengajar dapat menambahkan video YouTube.
+RES-006 | P0 | Pengajar dapat menambahkan tautan Zoom atau Google Meet.
+RES-007 | P0 | Setiap resource memiliki judul, deskripsi, visibility, dan ketersediaan.
+RES-008 | P0 | Mahasiswa dapat membuka atau mengunduh resource yang tersedia. ●​ Kriteria penerimaan — Semua tipe resource tampil dengan jelas. ●​ Kriteria penerimaan — Tautan dan file yang tidak tersedia tidak dapat diakses mahasiswa. Dokumen Kebutuhan Fungsional Platform UAY V1.1 • September 2026
+QZ-001 | P0 | Pengajar dapat membuat bank soal.
+QZ-002 | P0 | Tipe soal: pilihan tunggal, pilihan ganda lebih dari satu, benar/salah, dan essay.
+QZ-003 | P0 | Setiap soal dapat memiliki bobot nilai.
+QZ-004 | P0 | Pengajar dapat mengatur jadwal buka/tutup, durasi, dan jumlah attempt.
+QZ-005 | P0 | Pengajar dapat mengacak urutan soal dan pilihan jawaban.
+QZ-006 | P0 | Mahasiswa dapat memulai, menyimpan jawaban, dan mengirim attempt.
+QZ-007 | P0 | Jawaban objektif dinilai otomatis.
+QZ-008 | P0 | Jawaban essay masuk daftar penilaian pengajar.
+QZ-009 | P0 | Attempt yang telah dikirim tidak dapat diubah mahasiswa.
+QZ-010 | P0 | Pengajar dapat menentukan kapan skor, jawaban benar, dan feedback terlihat.
+QZ-011 | P0 | Pengajar dapat melakukan pratinjau quiz.
+QZ-012 | P1 | Tipe short answer tersedia.
+QZ-013 | P2 | Tipe numerical, matching, ordering, calculated, cloze, dan drag-and-drop tersedia. ●​ Kriteria penerimaan — Mahasiswa tidak dapat memulai di luar jadwal. ●​ Kriteria penerimaan — Batas waktu dan jumlah attempt diterapkan konsisten. ●​ Kriteria penerimaan — Pengiriman berulang tidak menghasilkan attempt ganda. ●​ Kriteria penerimaan — Essay ditandai belum selesai dinilai hingga diperiksa pengajar.
+ASG-001 | P0 | Pengajar dapat membuat tugas dengan instruksi dan bobot nilai.
+ASG-002 | P0 | Metode submission dapat berupa teks, file, tautan, atau kombinasi.
+ASG-003 | P0 | Pengajar dapat mengatur waktu mulai, deadline, waktu penutupan, dan jumlah pengumpulan. Dokumen Kebutuhan Fungsional Platform UAY V1.1 • September 2026
+ASG-004 | P0 | Pengajar dapat mengizinkan atau menolak keterlambatan.
+ASG-005 | P0 | Sistem menandai submission On Time atau Late.
+ASG-006 | P0 | Mahasiswa menerima konfirmasi setelah submission berhasil.
+ASG-008 | P0 | Mahasiswa dapat melihat histori submission miliknya.
+ASG-009 | P0 | Pengajar dapat membuka submission, memberikan nilai, dan feedback.
+ASG-010 | P0 | Pengajar dapat menyimpan nilai sebagai draft atau mempublikasikannya.
+ASG-007 | P2 | Resubmission membuat versi baru tanpa menimpa versi sebelumnya.
+ASG-011 | P2 | Tugas kelompok dan rubric tersedia. ●​ Kriteria penerimaan — Submission setelah waktu penutupan ditolak. ●​ Kriteria penerimaan — Status On Time/Late sesuai waktu submission. ●​ Kriteria penerimaan — Setiap resubmission muncul sebagai versi tersendiri. ●​ Kriteria penerimaan — File submission hanya dapat dilihat pihak yang berhak. Dokumen Kebutuhan Fungsional Platform UAY V1.1 • September 2026
+GRD-001 | P0 | Pengajar dapat melihat daftar nilai seluruh peserta pada class.
+GRD-002 | P0 | Pengajar dapat melihat nilai berdasarkan aktivitas atau mahasiswa.
+GRD-003 | P0 | Nilai dapat disimpan sebagai draft.
+GRD-004 | P0 | Nilai dapat dipublikasikan kepada mahasiswa.
+GRD-005 | P0 | Mahasiswa hanya melihat nilai miliknya yang sudah dipublikasikan.
+GRD-006 | P0 | Pengajar dapat memperbarui nilai dan memberikan feedback.
+GRD-007 | P0 | Riwayat perubahan nilai penting dapat ditelusuri.
+GRD-008 | P1 | Nilai dapat diekspor.
+GRD-009 | P2 | Kategori, bobot, formula, dan perhitungan nilai akhir tersedia. ●​ Kriteria penerimaan — Nilai draft tidak terlihat mahasiswa. ●​ Kriteria penerimaan — Publikasi nilai menghasilkan pemberitahuan. ●​ Kriteria penerimaan — Mahasiswa tidak dapat melihat nilai mahasiswa lain. ●​ Kriteria penerimaan — Perubahan nilai dapat diketahui nilai lama, nilai baru, pelaku, dan waktu.
+ANN-001 | P0 | Admin atau pengajar dapat membuat pengumuman untuk class.
+ANN-002 | P0 | Pengumuman memiliki judul, isi, pembuat, dan waktu publikasi.
+ANN-003 | P0 | Pengumuman terlihat oleh peserta class.
+ANN-004 | P0 | Pengumuman terbaru muncul pada dashboard.
+ANN-005 | P1 | Pengumuman dapat dijadwalkan. ●​ Kriteria penerimaan — Pengumuman tidak terlihat pada pengguna di luar class. ●​ Kriteria penerimaan — Pengumuman terbaru dapat dibuka dari dashboard.
+NOT-001 | P0 | Sistem memberikan notifikasi ketika ada pengumuman baru. Dokumen Kebutuhan Fungsional Platform UAY V1.1 • September 2026
+NOT-002 | P0 | Sistem memberikan pengingat deadline tugas dan kuis.
+NOT-003 | P0 | Sistem memberikan notifikasi ketika nilai dipublikasikan.
+NOT-004 | P0 | Pengguna dapat melihat daftar notifikasi.
+NOT-005 | P0 | Pengguna dapat menandai notifikasi sudah atau belum dibaca.
+NOT-006 | P1 | Pengguna dapat mengatur preferensi notifikasi.
+NOT-007 | P2 | Notifikasi dapat dikirim melalui email atau kanal lain. ●​ Kriteria penerimaan — Notifikasi mengarah ke item yang relevan. ●​ Kriteria penerimaan — Status read/unread tersimpan. ●​ Kriteria penerimaan — Notifikasi nilai hanya dibuat setelah nilai dipublikasikan.
+FIL-001 | P0 | Pengajar dan mahasiswa dapat mengunggah file sesuai konteks dan hak akses.
+FIL-002 | P0 | Sistem menerapkan batas ukuran berdasarkan jenis file.
+FIL-003 | P0 | File berbahaya atau tipe yang tidak diizinkan ditolak.
+FIL-004 | P0 | File pembelajaran dapat ditandai sebagai public atau private sesuai kebutuhan.
+FIL-005 | P0 | File submission, soal, feedback, dan dokumen mahasiswa bersifat private.
+FIL-006 | P0 | Pengguna hanya dapat membuka file yang menjadi haknya.
+FIL-007 | P0 | File yang dihapus masuk Trash selama tujuh hari sebelum dihapus permanen.
+FIL-008 | P0 | File dapat dipulihkan sebelum masa Trash berakhir.
+FIL-009 | P0 | Video pembelajaran panjang menggunakan YouTube. Batas Ukuran File Jenis Maksimum Image 5 MB Dokumen Kebutuhan Fungsional Platform UAY V1.1 • September 2026
+AUD-001 | P0 | Sistem mencatat login dan perubahan status pengguna yang relevan.
+AUD-002 | P0 | Sistem mencatat pembuatan, perubahan, dan pengarsipan course.
+AUD-003 | P0 | Sistem mencatat penambahan dan pengeluaran peserta.
+AUD-004 | P0 | Sistem mencatat pembuatan atau perubahan quiz penting.
+AUD-005 | P0 | Sistem mencatat submission dan resubmission.
+AUD-006 | P0 | Sistem mencatat pembuatan, perubahan, dan publikasi nilai.
+AUD-007 | P0 | Sistem mencatat penghapusan dan pemulihan file.
+AUD-008 | P0 | Catatan audit menampilkan pelaku, tindakan, objek, konteks, dan waktu.
+AUD-009 | P1 | Admin dapat menyaring dan mengekspor catatan audit. ●​ Kriteria penerimaan — Perubahan nilai dapat ditelusuri ketika terjadi sengketa. ●​ Kriteria penerimaan — Pengguna biasa tidak dapat mengubah atau menghapus audit log. 8. Alur Pengguna Utama E-Learning

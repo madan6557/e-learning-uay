@@ -1,0 +1,17 @@
+flowchart TB
+    Internet[Browser / Internet]
+    Proxy[Reverse Proxy / TLS]
+    Web[E-Learning FE]
+    API[E-Learning API]
+    DB[(Managed PostgreSQL)]
+    SSO[SSO API / OIDC]
+    File[File Service API]
+    Store[(Object Storage)]
+
+    Internet --> Proxy
+    Proxy --> Web
+    Web --> API
+    API --> DB
+    API --> SSO
+    API --> File
+    File --> Store

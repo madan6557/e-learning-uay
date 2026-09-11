@@ -1,0 +1,20 @@
+CREATE FUNCTION reject_audit_mutation() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN RAISE EXCEPTION 'AuditLog is append-only'; END;
+$$;
+CREATE TRIGGER audit_append_only BEFORE UPDATE OR DELETE ON "AuditLog" FOR EACH ROW EXECUTE FUNCTION reject_audit_mutation();
+ALTER TABLE "GradeCategory" ADD CONSTRAINT grade_weight_range CHECK ("weightPercent" >= 0 AND "weightPercent" <= 100);
+ALTER TABLE "FinalGradeRecord" ADD CONSTRAINT final_score_range CHECK ("finalScore" >= 0 AND "finalScore" <= 100);
+ALTER TABLE "ManualGradeRecord" ADD CONSTRAINT manual_score_range CHECK (score >= 0 AND score <= 100);
+ALTER TABLE "Question" ADD CONSTRAINT positive_question_points CHECK (points > 0);
+ALTER TABLE "QuizAttempt" ADD CONSTRAINT attempt_score_range CHECK (score >= 0 AND score <= 100);
+ALTER TABLE "VideoProgress" ADD CONSTRAINT video_progress_range CHECK ("watchedSeconds" >= 0 AND percent >= 0 AND percent <= 100);
+ALTER TABLE "SlideProgress" ADD CONSTRAINT slide_progress_range CHECK (percent >= 0 AND percent <= 100);
+ALTER TABLE "AssignmentSubmission" ADD CONSTRAINT submission_version_positive CHECK (version > 0);
+ALTER TABLE "ResourceProgress" ADD CONSTRAINT resource_progress_user_fk FOREIGN KEY ("userId") REFERENCES "User"(id) ON DELETE CASCADE;
+ALTER TABLE "ResourceProgress" ADD CONSTRAINT resource_progress_resource_fk FOREIGN KEY ("resourceItemId") REFERENCES "ResourceItem"(id) ON DELETE CASCADE;
+ALTER TABLE "FileReference" ADD CONSTRAINT file_class_fk FOREIGN KEY ("classId") REFERENCES "CourseClass"(id);
+ALTER TABLE "FileReference" ADD CONSTRAINT file_owner_fk FOREIGN KEY ("ownerId") REFERENCES "User"(id);
+ALTER TABLE "ManualGradeRecord" ADD CONSTRAINT manual_class_fk FOREIGN KEY ("classId") REFERENCES "CourseClass"(id);
+ALTER TABLE "ManualGradeRecord" ADD CONSTRAINT manual_user_fk FOREIGN KEY ("userId") REFERENCES "User"(id);
+ALTER TABLE "ManualGradeRecord" ADD CONSTRAINT manual_category_fk FOREIGN KEY ("categoryId") REFERENCES "GradeCategory"(id);
+ALTER TABLE "IdempotencyRecord" ADD CONSTRAINT idempotency_user_fk FOREIGN KEY ("userId") REFERENCES "User"(id);

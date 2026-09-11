@@ -1,0 +1,21 @@
+# SSO dan File Service - Pertanyaan Penyelarasan
+
+Dokumen ini adalah decision register awal untuk penyelarasan lintas tim. Rekomendasi di sini adalah default teknis, bukan keputusan final, sampai pemilik service menyetujuinya.
+
+| ID | Pertanyaan | Rekomendasi default | Dampak jika berbeda | Owner | Status |
+|---|---|---|---|---|---|
+| SSO-01 | Apakah SSO menyediakan OIDC discovery, authorization code + PKCE, dan JWKS/introspection? | Gunakan OIDC Authorization Code + PKCE. | JWT internal atau one-time code membutuhkan adapter berbeda, tetapi domain E-Learning tetap sama. | Tim SSO | Open |
+| SSO-02 | Apa identifier canonical pengguna: `sub`, NIM/NIDN, atau kombinasi tenant + subject? | `sub` immutable sebagai foreign reference; NIM/NIDN hanya atribut tampilan/pencarian. | Perubahan NIM tidak merusak histori enrollment, grade, dan audit. | Tim SSO/UAY | Open |
+| SSO-03 | Claim apa yang wajib tersedia: name, email, role, status akun, issuer, audience, expiry? | `iss`, `aud`, `sub`, `iat`, `exp`, `name`, identifier resmi, roles, dan status aktif. | Claim yang tidak tersedia harus diambil melalui userinfo/admin API atau cache. | Tim SSO | Open |
+| SSO-04 | Bagaimana logout global dan pencabutan token dilakukan? | Access token pendek, refresh/session dikelola SSO, disabled account dicek ulang pada request sensitif. | Sesi E-Learning dapat tetap aktif sampai expiry jika tidak ada revocation/introspection. | Tim SSO | Open |
+| SSO-05 | Apakah E-Learning boleh menyimpan cache profil minimum? | Ya, simpan `IdentityRef` tanpa password dan tanpa mengambil alih ownership akun. | Tanpa cache, setiap tampilan membutuhkan userinfo call. | Tim SSO/EL | Open |
+| DATA-01 | Siapa pemilik master course, Course Class, dan enrollment? | E-Learning memiliki course/class/enrollment untuk pilot; SSO hanya identity dan global role. | Jika sistem akademik menjadi master, perlu sync idempotent dan kebijakan konflik. | PO/UAY | Open |
+| DATA-02 | Apakah Admin Prodi dibatasi berdasarkan prodi/fakultas? | Simpan scope kewenangan pada authorization policy E-Learning; role global dari SSO tidak cukup. | Tanpa scope, admin dapat melihat atau mengubah class di luar kewenangan. | PO/UAY | Open |
+| FILE-01 | Bagaimana upload dimulai dan diselesaikan? | E-Learning meminta upload session lalu browser mengirim binary ke File Service. | Proxy penuh lewat E-Learning lebih sederhana tetapi membebani API. | Tim File Service | Open |
+| FILE-02 | Apa identifier dan status objek file? | `fileObjectId`, original name, MIME, size, checksum, scan status, visibility, lifecycle status. | Tanpa status scan, E-Learning berisiko menampilkan file yang belum aman. | Tim File Service | Open |
+| FILE-03 | Bagaimana akses private file divalidasi? | Signed URL/token berumur pendek dengan context course/class/item dan re-authorization oleh File Service. | URL publik atau shared storage melemahkan isolasi data. | Tim File Service | Open |
+| FILE-04 | Apa aturan ketika file yang masih direferensikan dihapus atau dipulihkan? | Soft delete/trash, referensi E-Learning tetap immutable, restore tidak mengubah file ID. | Hard delete dapat mematahkan materi, submission, atau audit. | Tim File Service/EL | Open |
+| AUD-01 | Apakah setiap progress heartbeat harus menjadi audit event? | Audit semantic action dan checkpoint bermakna; heartbeat 5 detik disimpan sebagai progress snapshot, bukan audit ledger. | Audit literal setiap heartbeat meningkatkan volume dan biaya tanpa konteks bisnis setara. | PO/Tim EL | Open |
+| AUD-02 | Berapa lama audit disimpan dan siapa yang boleh melihat/export? | Append-only, retention ditetapkan UAY, hanya auditor/admin berwenang; export dilakukan terkontrol. | Retention pendek dapat menghambat sengketa akademik. | PO/UAY | Open |
+| DATA-03 | Apakah data OMNI yang sudah ada harus dimigrasikan? | Tidak ada migrasi otomatis; lakukan mapping/import terpisah hanya bila data dinyatakan resmi. | Migrasi membutuhkan mapping Module ke Class/Section dan audit histori yang terbatas. | PO/UAY | Open |
+| OPS-01 | Apakah target satu minggu adalah seluruh P0 atau vertical slice? | Satu minggu sebagai vertical slice yang aman; seluruh P0 diselesaikan melalui increment berikutnya. | Menjadikan seluruh P0 wajib selesai satu minggu adalah risiko jadwal dan kualitas tinggi. | PO/PM | Open |

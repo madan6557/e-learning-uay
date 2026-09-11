@@ -1,0 +1,6 @@
+# User crontab template, installed with `crontab -e` (not /etc/cron.d).
+# Use a VPS with its system timezone set to Asia/Jakarta so 02:00 means WIB.
+# On cron implementations supporting CRON_TZ, this also sets the schedule explicitly.
+# Adjust the workspace path and grant the operator access to Docker and this log file.
+CRON_TZ=Asia/Jakarta
+0 2 * * * bash /opt/uay-elearning/deployment/scripts/backup.sh >> /opt/uay-elearning/deployment/backups/cron.log 2>&1

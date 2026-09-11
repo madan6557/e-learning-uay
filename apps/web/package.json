@@ -1,0 +1,1 @@
+{"name":"@uay/web","version":"0.1.0","private":true,"type":"module","dependencies":{"exceljs":"^4.4.0","highlight.js":"^11.11.1","katex":"^0.16.22","lucide-react":"^0.544.0","pdfjs-dist":"5.4.149","react":"^19.1.1","react-dom":"^19.1.1"},"devDependencies":{"@types/katex":"^0.16.7"}}

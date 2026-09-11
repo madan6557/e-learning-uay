@@ -1,0 +1,554 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+
+
+enum GlobalRole {
+  SUPER_ADMIN
+  DEPARTMENT_ADMIN
+  INSTRUCTOR
+  STUDENT
+}
+
+model User {
+  id                 String       @id @default(uuid())
+  externalSubjectId  String       @unique
+  studentStaffNumber String       @unique
+  fullName           String
+  email              String       @unique
+  role               GlobalRole   @default(STUDENT)
+  departmentScopes   String[]     @default([])
+  isActive           Boolean      @default(true)
+  lastLoginAt        DateTime?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  instructedClasses  ClassInstructor[]
+  enrollments        Enrollment[]
+  videoProgresses    VideoProgress[]
+  slideProgresses    SlideProgress[]
+  downloads          MaterialDownload[]
+  quizAttempts       QuizAttempt[]
+  submissions        AssignmentSubmission[]
+  gradedAnswers      QuizAnswerGrade[]
+  finalGrades        FinalGradeRecord[]
+  notifications      Notification[]
+  auditLogs          AuditLog[]
+
+  @@index([role, isActive])
+}
+
+
+
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Course {
+  id          String       @id @default(uuid())
+  code        String       @unique
+  title       String
+  description String?
+  credits     Int          @default(3)
+  departmentCode   String
+  status      CourseStatus @default(DRAFT)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  classes       CourseClass[]
+  questionBanks QuestionBank[]
+}
+
+model CourseClass {
+  id            String       @id @default(uuid())
+  courseId      String
+  course        Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  name          String
+  academicYear  String
+  enrollmentKeyHash String?
+  status        CourseStatus @default(PUBLISHED)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  instructors     ClassInstructor[]
+  enrollments     Enrollment[]
+  sections        Section[]
+  gradeCategories GradeCategory[]
+  finalGrades     FinalGradeRecord[]
+  announcements   Announcement[]
+
+  @@index([courseId, academicYear])
+}
+
+model ClassInstructor {
+  id        String      @id @default(uuid())
+  classId   String
+  class     CourseClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isPrimary Boolean     @default(true)
+
+  @@unique([classId, userId])
+  @@index([userId])
+}
+
+model Enrollment {
+  id         String      @id @default(uuid())
+  classId    String
+  class      CourseClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrolledAt DateTime    @default(now())
+  isActive   Boolean     @default(true)
+
+  @@unique([classId, userId])
+  @@index([userId])
+}
+
+
+
+
+enum SectionType {
+  LECTURE
+  LAB_PRACTICUM
+  SEMINAR
+  WORKSHOP
+  EXAM
+}
+
+model Section {
+  id          String      @id @default(uuid())
+  classId     String
+  class       CourseClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  type        SectionType @default(LECTURE)
+  order       Int         @default(0)
+  isVisible   Boolean     @default(true)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  resources   ResourceItem[]
+  quizzes     Quiz[]
+  assignments Assignment[]
+
+  @@unique([classId, order])
+  @@index([classId])
+}
+
+enum ResourceType {
+  RICH_TEXT
+  DOCUMENT
+  VIDEO_MEDIA
+  LAB_PRACTICUM
+  VIRTUAL_SIMULATOR
+  TELECONFERENCE
+  EXTERNAL_LINK
+}
+
+model ResourceItem {
+  id                 String       @id @default(uuid())
+  sectionId          String
+  section            Section      @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  title              String
+  description        String?
+  resourceType       ResourceType
+  dynamicPayload     Json
+  completionCriteria Json?
+  contentOrder       Int          @default(0)
+  isVisible          Boolean      @default(true)
+  availableFrom      DateTime?
+  availableUntil     DateTime?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  downloads       MaterialDownload[]
+  videoProgresses VideoProgress[]
+  slideProgresses SlideProgress[]
+
+  @@index([sectionId, contentOrder])
+}
+
+
+
+
+model VideoProgress {
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resourceItemId String
+  resourceItem   ResourceItem @relation(fields: [resourceItemId], references: [id], onDelete: Cascade)
+  watchedSeconds Float          @default(0)
+  lastPositionSeconds Float          @default(0)
+  percent        Float        @default(0.0)
+  updatedAt      DateTime     @updatedAt
+
+  @@id([userId, resourceItemId])
+}
+
+model SlideProgress {
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resourceItemId String
+  resourceItem   ResourceItem @relation(fields: [resourceItemId], references: [id], onDelete: Cascade)
+  viewedPages    Int[]        @default([])
+  currentPage    Int          @default(1)
+  percent        Float        @default(0.0)
+  updatedAt      DateTime     @updatedAt
+
+  @@id([userId, resourceItemId])
+}
+
+model MaterialDownload {
+  id             String       @id @default(uuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resourceItemId String
+  resourceItem   ResourceItem @relation(fields: [resourceItemId], references: [id], onDelete: Cascade)
+  downloadedAt   DateTime     @default(now())
+
+  @@unique([userId, resourceItemId])
+  @@index([resourceItemId])
+}
+
+
+
+
+enum AggregationMethod {
+  SIMPLE_AVERAGE
+  WEIGHTED_POINTS
+  HIGHEST_SCORE
+}
+
+model GradeCategory {
+  id                String            @id @default(uuid())
+  classId           String
+  class             CourseClass       @relation(fields: [classId], references: [id], onDelete: Cascade)
+  name              String
+  weightPercent     Float
+  aggregationMethod AggregationMethod @default(SIMPLE_AVERAGE)
+  dropLowest        Int               @default(0)
+  kind              String            @default("ASSESSMENT")
+  order             Int               @default(0)
+  createdAt         DateTime          @default(now())
+
+  quizzes           Quiz[]
+  assignments       Assignment[]
+
+  @@index([classId, order])
+}
+
+model FinalGradeRecord {
+  id                 String      @id @default(uuid())
+  classId            String
+  class              CourseClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+  userId             String
+  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryScoresJson Json
+  finalScore         Float
+  gradeLetter        String
+  gradePoint         Float
+  isLocked           Boolean     @default(false)
+  publishedAt        DateTime?
+  updatedAt          DateTime    @updatedAt
+
+  @@unique([classId, userId])
+  @@index([classId])
+}
+
+
+
+
+enum QuestionType {
+  SINGLE_CHOICE
+  MULTIPLE_SELECT
+  TRUE_FALSE
+  SHORT_ANSWER
+  MATCHING
+  ORDERING
+  ESSAY
+  FILE_UPLOAD
+}
+
+enum QuizReleaseMode {
+  AUTO
+  HIDDEN
+  MANUAL
+  SCHEDULED
+}
+
+model QuestionBank {
+  id          String     @id @default(uuid())
+  courseId    String
+  course      Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  createdAt   DateTime   @default(now())
+
+  questions   Question[]
+}
+
+model Question {
+  id             String        @id @default(uuid())
+  questionBankId String?
+  questionBank   QuestionBank? @relation(fields: [questionBankId], references: [id], onDelete: SetNull)
+  quizId         String?
+  quiz           Quiz?         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  text           String
+  type           QuestionType  @default(SINGLE_CHOICE)
+  options        Json
+  points         Float         @default(10.0)
+  answerKey      Json
+  rubric         Json          @default("[]")
+  maxWords       Int           @default(1000)
+  explanation    String?
+  order          Int           @default(0)
+  createdAt      DateTime      @default(now())
+
+  answerGrades   QuizAnswerGrade[]
+
+  @@index([quizId, order])
+}
+
+model Quiz {
+  id                 String          @id @default(uuid())
+  sectionId          String
+  section            Section         @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  gradeCategoryId    String?
+  gradeCategory      GradeCategory?  @relation(fields: [gradeCategoryId], references: [id], onDelete: SetNull)
+  title              String
+  description        String?
+  status             CourseStatus    @default(DRAFT)
+  scoreMode          String          @default("STRICT")
+  passingScore       Float           @default(60.0)
+  timeLimitMinutes   Int?
+  timerMode          String          @default("INDEPENDENT")
+  attemptLimit       Int             @default(1)
+  randomizeQuestions Boolean         @default(false)
+  randomizeOptions   Boolean         @default(false)
+  resultReleaseMode  QuizReleaseMode @default(AUTO)
+  resultReleaseAt    DateTime?
+  availableFrom      DateTime?
+  availableUntil     DateTime?
+  contentOrder       Int             @default(0)
+  isVisible          Boolean         @default(true)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  questions          Question[]
+  attempts           QuizAttempt[]
+
+  @@index([sectionId, contentOrder])
+}
+
+model QuizAttempt {
+  id          String            @id @default(uuid())
+  quizId      String
+  quiz        Quiz              @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attemptNum  Int               @default(1)
+  score       Float             @default(0.0)
+  isPassed    Boolean           @default(false)
+  status      String            @default("IN_PROGRESS")
+  questionSnapshot Json
+  expiresAt   DateTime
+  revision    Int               @default(0)
+  objectiveScore Float          @default(0)
+  publishedAt DateTime?
+  forced      Boolean           @default(false)
+  answersJson Json
+  startedAt   DateTime          @default(now())
+  submittedAt DateTime?
+  isGraded    Boolean           @default(false)
+
+  answerGrades QuizAnswerGrade[]
+
+  @@unique([quizId, userId, attemptNum])
+  @@index([userId, quizId])
+}
+
+model QuizAnswerGrade {
+  id         String      @id @default(uuid())
+  attemptId  String
+  attempt    QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId String
+  question   Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  graderId   String
+  grader     User        @relation(fields: [graderId], references: [id], onDelete: Cascade)
+  score      Float
+  feedback   String?
+  gradedAt   DateTime    @default(now())
+
+  @@unique([attemptId, questionId])
+  @@index([questionId])
+}
+
+
+
+
+enum SubmissionStatus {
+  SUBMITTED
+  LATE
+  GRADED
+  SUPERSEDED
+}
+
+model Assignment {
+  id              String         @id @default(uuid())
+  sectionId       String
+  section         Section        @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  gradeCategoryId String?
+  gradeCategory   GradeCategory? @relation(fields: [gradeCategoryId], references: [id], onDelete: SetNull)
+  title           String
+  instructions    String
+  maxScore        Float          @default(100.0)
+  allowedFormats  Json
+  availableFrom   DateTime?
+  deadline        DateTime?
+  cutoffDate      DateTime?
+  allowLate       Boolean        @default(true)
+  maxAttempts     Int            @default(3)
+  contentOrder    Int            @default(0)
+  isVisible       Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  submissions     AssignmentSubmission[]
+
+  @@index([sectionId, contentOrder])
+}
+
+model AssignmentSubmission {
+  id           String           @id @default(uuid())
+  assignmentId String
+  assignment   Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  version      Int              @default(1)
+  status       SubmissionStatus @default(SUBMITTED)
+  textContent  String?
+  fileObjectId String?
+  fileName     String?
+  fileSizeBytes Int?
+  externalUrl  String?
+  score        Float?
+  feedback     String?
+  isPublished  Boolean          @default(false)
+  submittedAt  DateTime         @default(now())
+  gradedAt     DateTime?
+
+  @@unique([assignmentId, userId, version])
+  @@index([assignmentId, userId])
+}
+
+
+
+
+model Announcement {
+  id          String      @id @default(uuid())
+  classId     String
+  class       CourseClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+  title       String
+  content     String
+  authorId    String
+  isImportant Boolean     @default(false)
+  isPublished Boolean     @default(true)
+  publishedAt DateTime    @default(now())
+  createdAt   DateTime    @default(now())
+
+  @@index([classId, publishedAt])
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  message   String
+  linkUrl   String?
+  eventKey  String
+  isRead    Boolean   @default(false)
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@unique([userId, eventKey])
+  @@index([userId, isRead])
+}
+
+
+
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  actorId     String?
+  user        User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  actorRole   String
+  action      String
+  entity      String
+  entityId    String
+  classId     String?
+  beforeState Json?
+  afterState  Json?
+  metadata    Json
+  createdAt   DateTime @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([entity, entityId])
+  @@index([classId, createdAt])
+}
+model FileReference {
+  id String @id
+  classId String
+  ownerId String
+  purpose String
+  contextId String?
+  name String
+  mimeType String
+  sizeBytes Int
+  checksum String
+  status String @default("PENDING")
+  createdAt DateTime @default(now())
+  trashedAt DateTime?
+  @@index([classId, purpose])
+  @@index([ownerId])
+}
+
+model ResourceProgress {
+  userId String
+  resourceItemId String
+  completedAt DateTime @default(now())
+  checklistIds String[] @default([])
+  @@id([userId, resourceItemId])
+}
+
+model IdempotencyRecord {
+  userId String
+  key String
+  requestHash String
+  result Json
+  createdAt DateTime @default(now())
+  @@id([userId, key])
+}
+
+model ManualGradeRecord {
+  id String @id @default(uuid())
+  classId String
+  userId String
+  categoryId String
+  score Float
+  updatedAt DateTime @updatedAt
+  @@unique([classId, userId, categoryId])
+}

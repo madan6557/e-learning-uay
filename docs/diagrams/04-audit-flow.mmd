@@ -1,0 +1,20 @@
+flowchart TD
+    Req[Command API]
+    Policy[Authorization policy]
+    Tx[Database transaction]
+    Domain[Update domain object]
+    Event[Create AuditEvent]
+    Change[Create AuditChange rows]
+    DB[(PostgreSQL)]
+    Corr[Correlation ID]
+    Remote[SSO/File Service audit]
+
+    Req --> Corr
+    Corr --> Policy
+    Policy --> Tx
+    Tx --> Domain
+    Tx --> Event
+    Event --> Change
+    Domain --> DB
+    Event --> DB
+    Req --> Remote

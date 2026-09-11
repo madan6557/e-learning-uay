@@ -1,0 +1,15 @@
+sequenceDiagram
+    actor U as Pengguna
+    participant S as SSO
+    participant W as E-Learning FE
+    participant A as E-Learning API
+    participant D as E-Learning DB
+
+    U->>W: Buka E-Learning
+    W->>S: Authorization Code + PKCE
+    S-->>W: Redirect dengan authorization code
+    W->>A: Tukar code / kirim access token
+    A->>S: Validasi issuer, audience, expiry, subject
+    A->>D: Upsert IdentityRef minimum
+    A-->>W: Session E-Learning
+    W-->>U: Dashboard sesuai policy class

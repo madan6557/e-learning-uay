@@ -1,0 +1,112 @@
+name: uay-elearning
+x-api-environment: &api-environment
+  NODE_ENV: production
+  AUTH_MODE: oidc
+  PORT: 3000
+  APP_ORIGIN: ${APP_ORIGIN:?Set APP_ORIGIN}
+  DATABASE_URL: postgresql://${DB_USER:?Set DB_USER}:${DB_PASS:?Set DB_PASS}@postgres-db:5432/${DB_NAME:?Set DB_NAME}?schema=public
+  REDIS_URL: redis://:${REDIS_PASS:?Set REDIS_PASS}@redis-cache:6379
+  SSO_ISSUER: ${SSO_ISSUER:?Set SSO_ISSUER}
+  SSO_CLIENT_ID: ${SSO_CLIENT_ID:?Set SSO_CLIENT_ID}
+  SSO_CLIENT_SECRET: ${SSO_CLIENT_SECRET:?Set SSO_CLIENT_SECRET}
+  SSO_AUDIENCE: ${SSO_AUDIENCE:?Set SSO_AUDIENCE}
+  SSO_REDIRECT_URI: ${SSO_REDIRECT_URI:?Set SSO_REDIRECT_URI}
+  SSO_WEBHOOK_SECRET: ${SSO_WEBHOOK_SECRET:?Set SSO_WEBHOOK_SECRET}
+  FILE_SERVICE_URL: ${FILE_SERVICE_URL:?Set FILE_SERVICE_URL}
+  FILE_SERVICE_KEY: ${FILE_SERVICE_KEY:?Set FILE_SERVICE_KEY}
+  FILE_ALLOWED_ORIGINS: ${FILE_ALLOWED_ORIGINS:?Set FILE_ALLOWED_ORIGINS}
+  EMBED_ALLOWED_ORIGINS: ${EMBED_ALLOWED_ORIGINS:-https://www.youtube.com,https://www.youtube-nocookie.com,https://drive.google.com}
+services:
+  nginx-gateway:
+    image: nginx:1.28-alpine
+    container_name: uay-nginx
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./nginx/prod.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro
+    depends_on:
+      elearning-web: { condition: service_healthy }
+      elearning-api: { condition: service_healthy }
+    networks: [uay-net]
+  elearning-web:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile.web
+    container_name: uay-frontend
+    restart: unless-stopped
+    networks: [uay-net]
+    mem_limit: 128m
+  migrate:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile.api
+      target: migrate
+    environment: *api-environment
+    depends_on:
+      postgres-db: { condition: service_healthy }
+    networks: [uay-net]
+    restart: "no"
+  elearning-api:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile.api
+      target: runtime
+    container_name: uay-backend
+    environment: *api-environment
+    restart: unless-stopped
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis-cache: { condition: service_healthy }
+    networks: [uay-net]
+    read_only: true
+    tmpfs: ["/tmp"]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 768m
+  postgres-db:
+    image: postgres:16-alpine
+    container_name: uay-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:?Set DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS:?Set DB_PASS}
+      POSTGRES_DB: ${DB_NAME:?Set DB_NAME}
+    volumes: ["pg_data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [uay-net]
+    mem_limit: 1g
+  redis-cache:
+    image: redis:7-alpine
+    container_name: uay-redis
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASS:?Set REDIS_PASS}
+    command:
+      [
+        "sh",
+        "-c",
+        'exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD" --maxmemory 192mb --maxmemory-policy noeviction',
+      ]
+    volumes: ["redis_data:/data"]
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli ping | grep -q PONG',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [uay-net]
+    mem_limit: 256m
+networks:
+  uay-net:
+    driver: bridge
+volumes:
+  pg_data:
+  redis_data:

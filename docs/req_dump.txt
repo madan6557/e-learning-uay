@@ -1,0 +1,1431 @@
+
+=== PAGE 1 ===
+PLATFORM UAY  /  DOKUMEN KEBUTUHAN FUNGSIONAL 
+ 
+BUSINESS & FUNCTIONAL REQUIREMENTS 
+Platform Digital UAY 
+Gambaran sistem, fitur, aturan bisnis, dan kebutuhan pengguna 
+FOKUS DOKUMEN 
+Dokumen ini menjelaskan kebutuhan tiga aplikasi: SSO/Identity, File Service, dan E-Learning. Isinya 
+berfokus pada kemampuan sistem, aturan bisnis, hak pengguna, alur, serta kriteria penerimaan; tanpa 
+menetapkan teknologi, endpoint, database, deployment, atau cara implementasi teknis. 
+ 
+Atribut 
+Nilai 
+Dokumen 
+Dokumen Kebutuhan Fungsional Platform UAY 
+Versi 
+1.1 
+Status 
+Siap untuk validasi kebutuhan 
+Tanggal 
+2 September 2026 
+Product Owner 
+Muhammad Azmi Adhani 
+Target awal 
+Pilot E-Learning pada Prodi Informatika dan beberapa mata 
+kuliah 
+ 
+ 
+Dokumen Kebutuhan Fungsional Platform UAY V1.1  •  September 2026 
+
+=== PAGE 2 ===
+PLATFORM UAY  /  DOKUMEN KEBUTUHAN FUNGSIONAL 
+1. Ringkasan Platform 
+Platform Digital UAY pada tahap awal terdiri atas tiga aplikasi yang saling mendukung. SSO/Identity 
+menyediakan akun dan akses terpadu. File Service mengelola berkas institusi secara terpusat. E-Learning 
+menyediakan proses pembelajaran digital bagi admin, pengajar, dan mahasiswa. 
+1.1 Tujuan 
+●​
+Menyediakan satu tempat resmi untuk kegiatan pembelajaran daring dan pendukung pembelajaran tatap muka. 
+●​
+Memudahkan pengajar menyusun materi dan aktivitas berdasarkan pertemuan. 
+●​
+Memudahkan mahasiswa mengetahui apa yang harus dipelajari dan dikerjakan berikutnya. 
+●​
+Menyederhanakan enrollment, pengumpulan tugas, kuis, penilaian, serta penyampaian pengumuman. 
+●​
+Menyediakan riwayat yang dapat digunakan untuk menelusuri submission dan perubahan nilai penting. 
+1.2 Aplikasi dalam Cakupan- 
+Aplikasi 
+Peran dalam platform 
+SSO / Identity 
+Akun pengguna, login terpusat, peran umum, status akun, 
+pemulihan akses, dan administrasi pengguna. 
+File Service 
+Unggah, akses, pengelompokan, perlindungan, Trash, 
+pemulihan, dan riwayat file. 
+E-Learning 
+Course, class, peserta, pertemuan, materi, quiz, assignment, 
+nilai, pengumuman, dan notifikasi pembelajaran. 
+ 
+1.3 Batas Cakupan 
+Termasuk 
+Tidak termasuk pada versi awal 
+SSO dasar; pengelolaan pengguna; File Service dasar; serta 
+alur E-Learning dari penyiapan class sampai publikasi nilai 
+Portal Akademik/KRS; aplikasi mobile native; video hosting 
+panjang; proctoring; analitik lanjutan; serta fitur identitas 
+tingkat enterprise 
+ 
+1.4 Prioritas 
+Prioritas 
+Makna 
+P0 
+Wajib tersedia untuk pilot dan alur pembelajaran end-to-end 
+P1 
+Penyempurnaan setelah pilot stabil 
+P2 
+Fitur lanjutan yang tidak menghambat penggunaan awal 
+ 
+ 
+Dokumen Kebutuhan Fungsional Platform UAY V1.1  •  September 2026 
+
+=== PAGE 3 ===
+PLATFORM UAY  /  DOKUMEN KEBUTUHAN FUNGSIONAL 
+2. Aplikasi SSO / Identity 
+SSO/Identity merupakan pusat akun dan akses pengguna UAY. Pengguna memakai satu akun kampus untuk 
+masuk ke E-Learning dan, pada tahap berikutnya, aplikasi UAY lainnya. Pendaftaran akun publik tidak tersedia; 
+akun dibuat atau diimpor oleh pihak berwenang. 
+2.1 Aktor SSO 
+Aktor 
+Tanggung jawab 
+Super Admin 
+Mengelola keseluruhan pengguna, administrator, peran 
+umum, dan status akun. 
+Admin 
+Membuat atau mengimpor akun sesuai lingkup wewenang, 
+membantu reset password, dan menonaktifkan akun. 
+Pengguna 
+Masuk, keluar, menjaga kerahasiaan akun, mengubah 
+password, dan melihat profil dasar. 
+ 
+2.2 Aturan Bisnis SSO 
+●​
+Satu pengguna memiliki satu identitas utama kampus. 
+●​
+Akun tidak dibuat melalui pendaftaran publik. 
+●​
+Akun memiliki identitas unik resmi yang tidak boleh digunakan oleh pengguna lain. 
+●​
+Akun dapat berstatus Active atau Disabled. 
+●​
+Akun Disabled tidak dapat masuk ke aplikasi UAY. 
+●​
+Peran umum menentukan aplikasi atau fungsi yang boleh diakses, sedangkan hak khusus pembelajaran tetap 
+ditentukan E-Learning. 
+●​
+Password sementara wajib diganti ketika pengguna pertama kali masuk atau setelah reset administratif. 
+●​
+Aktivitas administratif penting harus dapat ditelusuri. 
+2.3 Kebutuhan Fitur SSO 
+ID 
+P 
+Kebutuhan 
+SSO-001 
+P0 
+Pengguna dapat masuk menggunakan 
+identitas akun kampus dan password. 
+SSO-002 
+P0 
+Pengguna dapat keluar dari seluruh sesi 
+aktif yang relevan. 
+SSO-003 
+P0 
+Pengguna yang telah masuk dapat 
+mengakses E-Learning tanpa 
+memasukkan ulang kredensial selama 
+sesi masih berlaku. 
+SSO-004 
+P0 
+Super Admin/Admin dapat membuat 
+akun mahasiswa, pengajar, dan 
+administrator. 
+SSO-005 
+P0 
+Super Admin/Admin dapat mengimpor 
+banyak akun dari file daftar pengguna. 
+SSO-006 
+P0 
+Sebelum import diselesaikan, sistem 
+menampilkan pratinjau, akun valid, 
+duplikat, dan baris yang gagal. 
+Dokumen Kebutuhan Fungsional Platform UAY V1.1  •  September 2026 
+
+=== PAGE 4 ===
+PLATFORM UAY  /  DOKUMEN KEBUTUHAN FUNGSIONAL 
+SSO-007 
+P0 
+Super Admin dapat menetapkan dan 
+mengubah peran umum pengguna. 
+SSO-008 
+P0 
+Admin hanya dapat memberikan peran 
+yang menjadi kewenangannya. 
+SSO-009 
+P0 
+Admin dapat menonaktifkan dan 
+mengaktifkan kembali akun. 
+SSO-010 
+P0 
+Pengguna dapat mengganti password 
+miliknya. 
+SSO-011 
+P0 
+Admin dapat memulai reset password 
+bagi pengguna. 
+SSO-012 
+P0 
+Pengguna yang lupa password dapat 
+menjalani pemulihan melalui 
+mekanisme yang disetujui institusi. 
+SSO-013 
+P0 
+Pengguna dapat melihat profil dasar: 
+nama, identitas resmi, email, peran, dan 
+status akun. 
+SSO-014 
+P0 
+Sistem menolak login dengan kredensial 
+salah atau akun Disabled menggunakan 
+pesan yang aman dan mudah dipahami. 
+SSO-015 
+P0 
+Sistem membatasi percobaan login 
+berulang yang mencurigakan. 
+SSO-016 
+P0 
+Perubahan pengguna, peran, status, 
+dan reset password dicatat dalam 
+riwayat aktivitas. 
+SSO-017 
+P1 
+Pengguna dapat melihat dan mengakhiri 
+sesi aktif pada perangkat lain. 
+SSO-018 
+P1 
+Admin dapat menyaring dan 
+mengekspor daftar pengguna. 
+SSO-019 
+P2 
+Verifikasi tambahan saat login dapat 
+diaktifkan untuk peran tertentu. 
+ 
+2.4 Kriteria Penerimaan SSO 
+●​
+Kriteria penerimaan — Mahasiswa, pengajar, dan admin dapat masuk menggunakan akun yang telah disiapkan. 
+●​
+Kriteria penerimaan — Akun Disabled selalu ditolak dan tidak mempertahankan akses aktif. 
+●​
+Kriteria penerimaan — Pengguna yang sudah masuk dapat berpindah ke E-Learning tanpa login ulang yang 
+tidak diperlukan. 
+●​
+Kriteria penerimaan — Import tidak membuat identitas ganda dan menyediakan laporan baris berhasil/gagal. 
+●​
+Kriteria penerimaan — Admin tidak dapat menetapkan peran di luar kewenangannya. 
+●​
+Kriteria penerimaan — Reset password tidak menampilkan atau mengirim password lama. 
+●​
+Kriteria penerimaan — Perubahan peran dan status akun dapat diketahui pelaku serta waktunya. 
+2.5 Alur Utama SSO 
+1.​ Admin menyiapkan akun secara manual atau melalui import. 
+2.​ Pengguna menerima informasi awal akun melalui prosedur institusi. 
+3.​ Pengguna masuk dan mengganti password sementara jika diwajibkan. 
+Dokumen Kebutuhan Fungsional Platform UAY V1.1  •  September 2026 
+
+=== PAGE 5 ===
+PLATFORM UAY  /  DOKUMEN KEBUTUHAN FUNGSIONAL 
+4.​ SSO mengenali identitas serta peran pengguna. 
+5.​ Pengguna diarahkan ke aplikasi yang berhak digunakan. 
+6.​ Jika akun dinonaktifkan, akses berikutnya ditolak. 
+ 
+Dokumen Kebutuhan Fungsional Platform UAY V1.1  •  September 2026 
+
+=== PAGE 6 ===
+PLATFORM UAY  /  DOKUMEN KEBUTUHAN FUNGSIONAL 
+3. Aplikasi File Service 
+File Service merupakan pusat pengelolaan berkas yang digunakan oleh aplikasi UAY. E-Learning tidak 
+menyimpan berkas secara mandiri; E-Learning hanya menghubungkan materi, tugas, submission, soal, atau 
+feedback dengan file yang dikelola File Service. 
+3.1 Aktor File Service 
+Aktor 
+Tanggung jawab 
+Super Admin/Admin File 
+Menetapkan kebijakan file, memantau penggunaan, 
+mengelola Trash, dan menangani pemulihan. 
+Aplikasi UAY 
+Menggunakan file sesuai konteks serta hak pengguna yang 
+sedang beraktivitas. 
+Pengajar 
+Mengunggah dan mengakses materi, soal, atau feedback 
+sesuai class. 
+Mahasiswa 
+Mengunggah submission dan mengakses file pembelajaran 
+yang tersedia baginya. 
+ 
+3.2 Klasifikasi dan Aturan Bisnis 
+●​
+Setiap file memiliki pemilik atau sumber, nama, jenis, ukuran, waktu unggah, status, tingkat akses, dan konteks 
+penggunaan. 
+●​
+Tingkat akses file adalah Public atau Private; default-nya Private. 
+●​
+File Public dapat dibuka sesuai kebutuhan publik yang disetujui. 
+●​
+File Private hanya dapat dibuka oleh pengguna yang memiliki hak melalui konteks aplikasi. 
+●​
+Submission, soal ujian, dokumen mahasiswa, dan feedback pengajar selalu Private. 
+●​
+Mengetahui nama atau lokasi file tidak otomatis memberikan hak akses. 
+●​
+File executable atau berbahaya ditolak secara default. 
+●​
+File ZIP diizinkan untuk kebutuhan akademik seperti pengumpulan source code. 
+●​
+Video panjang menggunakan layanan video eksternal; unggahan langsung hanya untuk video pendek sesuai 
+batas. 
+●​
+File yang dihapus masuk Trash selama tujuh hari, lalu dapat dihapus permanen. 
+3.3 Kebutuhan Fitur File Service 
+ID 
+P 
+Kebutuhan 
+FS-001 
+P0 
+Pengguna atau aplikasi yang 
+berwenang dapat mengunggah file. 
+FS-002 
+P0 
+Sistem memvalidasi jenis dan ukuran 
+file sebelum menerima unggahan. 
+FS-003 
+P0 
+File yang ditolak disertai alasan yang 
+mudah dipahami. 
+FS-004 
+P0 
+Setiap file memiliki metadata yang dapat 
+dilihat oleh pihak berwenang. 
+FS-005 
+P0 
+Pengguna berwenang dapat membuka 
+atau mengunduh file. 
+Dokumen Kebutuhan Fungsional Platform UAY V1.1  •  September 2026 
+
+=== PAGE 7 ===
+PLATFORM UAY  /  DOKUMEN KEBUTUHAN FUNGSIONAL 
+FS-006 
+P0 
+File Public dan Private diperlakukan 
+sesuai tingkat aksesnya. 
+FS-007 
+P0 
+File Private tidak dapat diakses oleh 
+pengguna tanpa hak. 
+FS-008 
+P0 
+Nama file yang sama tidak 
+menyebabkan file lama tertimpa. 
+FS-009 
+P0 
+Pengguna dapat menghapus file yang 
+menjadi kewenangannya. 
+FS-010 
+P0 
+File yang dihapus berpindah ke Trash 
+dan tidak lagi tersedia untuk 
+penggunaan normal. 
+FS-011 
+P0 
+File dapat dipulihkan selama masih 
+berada di Trash. 
+FS-012 
+P0 
+File yang melewati tujuh hari di Trash 
+dapat dihapus permanen. 
+FS-013 
+P0 
+Penghapusan dan pemulihan file dicatat 
+dalam riwayat aktivitas. 
+FS-014 
+P0 
+Aplikasi dapat menghubungkan satu file 
+dengan konteks penggunaan yang 
+tepat. 
+FS-015 
+ 
+P0 
+File tetap terlindungi ketika hubungan 
+pengguna dengan course/class 
+berubah. 
+FS-016 
+P1 
+Admin dapat melihat ringkasan 
+penggunaan ruang file. 
+FS-017 
+P1 
+Admin dapat mencari dan menyaring file 
+berdasarkan metadata serta status. 
+FS-018 
+P2 
+File Private dapat diberikan akses 
+sementara yang otomatis berakhir. 
+FS-019 
+P2 
+Versi file umum dapat dikelola tanpa 
+menghapus versi sebelumnya. 
+ 
+3.4 Batas Ukuran File 
+Jenis 
+Maksimum 
+Image 
+5 MB 
+PDF 
+20 MB 
+DOC/DOCX 
+15 MB 
+XLS/XLSX 
+15 MB 
+PPT/PPTX 
+30 MB 
+ZIP 
+30 MB 
+Audio (mp3) 
+20 MB 
+Dokumen Kebutuhan Fungsional Platform UAY V1.1  •  September 2026 
+
+=== PAGE 8 ===
+PLATFORM UAY  /  DOKUMEN KEBUTUHAN FUNGSIONAL 
+Short video (mp4) 
+50 MB 
+Other (Nanti Dulu) 
+10 MB 
+ 
+3.5 Kriteria Penerimaan File Service 
+●​
+Kriteria penerimaan — File valid dapat diunggah dan digunakan kembali pada konteks yang tepat. 
+●​
+Kriteria penerimaan — File melebihi batas, executable, atau terindikasi berbahaya ditolak. 
+●​
+Kriteria penerimaan — Dua file bernama sama tetap menjadi dua berkas berbeda. 
+●​
+Kriteria penerimaan — File Private tidak dapat dibuka oleh pengguna yang tidak berhak. 
+●​
+Kriteria penerimaan — File di Trash dapat dipulihkan sebelum tujuh hari. 
+●​
+Kriteria penerimaan — Setelah penghapusan permanen, file tidak lagi dapat dipulihkan melalui fungsi normal. 
+●​
+Kriteria penerimaan — Riwayat menunjukkan pelaku, tindakan, file, konteks, dan waktu penghapusan atau 
+pemulihan. 
+3.6 Alur Utama File 
+7.​ Pengguna memilih file pada aktivitas E-Learning. 
+8.​ Sistem memeriksa hak pengguna, jenis, dan ukuran file. 
+9.​ File valid disimpan dan dikaitkan dengan materi atau aktivitas terkait. 
+10.​Pihak yang berhak dapat membuka atau mengunduh file. 
+11.​ Jika dihapus, file masuk Trash selama tujuh hari. 
+12.​Admin atau pemilik yang berwenang dapat memulihkannya sebelum masa Trash berakhir. 
+ 
+Dokumen Kebutuhan Fungsional Platform UAY V1.1  •  September 2026 
+
+=== PAGE 9 ===
+PLATFORM UAY  /  DOKUMEN KEBUTUHAN FUNGSIONAL 
+4. Gambaran Struktur E-Learning 
+STRUKTUR UTAMA 
+Course berisi satu atau lebih Course Class. Setiap class memiliki Section/Pertemuan. Di dalam pertemuan, 
+pengajar menyusun Resource, Quiz, dan Assignment sebagai item yang terpisah tetapi tampil dalam satu 
+urutan pembelajaran. 
+ 
+●​
+Course — mata kuliah induk. 
+●​
+Course Class — kelas atau rombongan belajar yang berjalan. 
+●​
+Section/Pertemuan — pengelompokan pembelajaran berdasarkan topik atau minggu. 
+●​
+Resource — materi seperti teks, gambar, dokumen, tautan, video, atau tautan pertemuan. 
+●​
+Quiz — aktivitas soal, attempt, jawaban, dan penilaian. 
+●​
+Assignment — instruksi tugas, submission, resubmission, feedback, dan penilaian. 
+4.1 Contoh Alur Pertemuan 
+Urutan 
+Jenis 
+Contoh 
+1 
+Resource 
+Pengantar Encapsulation 
+2 
+Resource 
+Video dan file modul 
+3 
+Quiz 
+Quiz pemahaman Pertemuan 3 
+4 
+Assignment 
+Implementasi Encapsulation 
+ 
+Resource, Quiz, dan Assignment tidak dicampur menjadi satu fitur. Pertemuan hanya menyatukan dan 
+menentukan urutan tampilan ketiganya. 
+4.2 Hubungan dengan Sistem Pendukung 
+●​
+Layanan SSO/identitas kampus menangani login dan akun pengguna. 
+●​
+Layanan FileService kampus menangani penyimpanan dan pengambilan berkas. 
+●​
+E-Learning tetap menjadi tempat pengguna menjalankan proses pembelajaran dan menyimpan hubungan antara 
+materi/tugas dengan file terkait. 
+●​
+Portal Akademik ? Belum 
+ 
+Dokumen Kebutuhan Fungsional Platform UAY V1.1  •  September 2026 
+
+=== PAGE 10 ===
+PLATFORM UAY  /  DOKUMEN KEBUTUHAN FUNGSIONAL 
+5. Aktor dan Hak Akses E-Learning 
+Aktor 
+Tanggung jawab 
+Super Admin 
+Mengelola keseluruhan sistem dan administrator 
+Admin Prodi/Admin 
+Membuat course/class, menetapkan pengajar, mengelola 
+peserta 
+Pengajar 
+Mengelola pembelajaran dan penilaian pada class yang 
+ditugaskan 
+Mahasiswa 
+Mengikuti pembelajaran pada class yang diikuti 
+ 
+5.1 Matriks Hak Akses 
+Kemampuan 
+Super Admin 
+Admin 
+Pengajar 
+Mahasiswa 
+Membuat course/class 
+Ya 
+Ya 
+Tidak 
+Tidak 
+Menetapkan pengajar 
+Ya 
+Ya 
+Tidak 
+Tidak 
+Mengelola peserta 
+Ya 
+Ya 
+Class sendiri 
+Self-enroll jika dibuka 
+Mengelola materi 
+Ya 
+Dapat diberikan 
+Class sendiri 
+Tidak 
+Mengelola kuis/tugas 
+Ya 
+Dapat diberikan 
+Class sendiri 
+Tidak 
+Mengikuti kuis/tugas 
+Pratinjau 
+Pratinjau 
+Pratinjau 
+Ya 
+Menilai 
+Pemantauan 
+Dapat diberikan 
+Class sendiri 
+Tidak 
+Melihat nilai 
+Pemantauan 
+Sesuai wewenang 
+Class sendiri 
+Nilai sendiri 
+ 
+ATURAN AKSES 
+Pengguna tidak boleh memperoleh akses hanya karena mengetahui alamat suatu halaman atau item. Hak 
+akses selalu mengikuti peran, keanggotaan class, status course, dan ketersediaan aktivitas. 
+ 
+6. Aturan Bisnis E-Learning 
+●​
+Course hanya dapat dibuat oleh Super Admin atau Admin Prodi/Admin. 
+●​
+Status course pada versi awal adalah Draft, Published atau Archived. 
+●​
+Akun pengguna disiapkan oleh admin atau melalui import; tidak ada pendaftaran akun publik. 
+●​
+Peserta ditambahkan admin/pengajar atau menggunakan enrollment key jika opsi tersebut diaktifkan. 
+●​
+Course Archived bersifat hanya-baca bagi mahasiswa dan tidak menerima aktivitas baru. 
+●​
+Nilai mahasiswa tidak terlihat sebelum dipublikasikan. 
+●​
+Pengguna hanya dapat melihat data yang menjadi haknya. 
+●​
+Waktu mulai, tenggat, dan penutupan aktivitas berlaku berdasarkan waktu resmi sistem. 
+●​
+Riwayat submission tidak boleh ditimpa ketika mahasiswa melakukan pengumpulan ulang. 
+●​
+Perubahan nilai penting dan aktivitas administratif harus dapat ditelusuri. 
+Dokumen Kebutuhan Fungsional Platform UAY V1.1  •  September 2026 
+
+=== PAGE 11 ===
+PLATFORM UAY  /  DOKUMEN KEBUTUHAN FUNGSIONAL 
+7. Kebutuhan Fitur E-Learning 
+Setiap kebutuhan memiliki ID agar dapat dirujuk pada backlog, uji penerimaan, dan pembahasan perubahan 
+scope. 
+7.1 Login dan Akses Pengguna 
+ID 
+P 
+Kebutuhan 
+ACC-001 
+P0 
+Pengguna dapat masuk menggunakan 
+akun kampus yang telah disiapkan. 
+ACC-002 
+P0 
+Pengguna diarahkan ke dashboard 
+sesuai peran setelah berhasil masuk. 
+ACC-003 
+P0 
+Pengguna dapat keluar dari sistem. 
+ACC-004 
+P0 
+Akun yang dinonaktifkan tidak dapat 
+menggunakan E-Learning. 
+ACC-005 
+P0 
+Pengguna tidak dapat mengakses 
+fungsi yang bukan hak perannya. 
+ACC-006 
+P1 
+Pengguna dapat melihat informasi profil 
+dasar dan status akunnya. 
+ 
+●​
+Kriteria penerimaan — Admin, pengajar, dan mahasiswa menerima tampilan dan akses sesuai perannya. 
+●​
+Kriteria penerimaan — Akun nonaktif ditolak. 
+●​
+Kriteria penerimaan — Mahasiswa tidak dapat membuka halaman pengelolaan pengajar/admin. 
+7.2 Dashboard Mahasiswa 
+ID 
+P 
+Kebutuhan 
+SDH-001 
+P0 
+Dashboard menampilkan course yang 
+sedang diikuti. 
+SDH-002 
+P0 
+Dashboard menampilkan tugas dan kuis 
+yang akan datang. 
+SDH-003 
+P0 
+Dashboard menampilkan nilai terbaru 
+yang sudah dipublikasikan. 
+SDH-004 
+P0 
+Dashboard menampilkan pengumuman 
+terbaru dari class yang diikuti. 
+SDH-005 
+P0 
+Setiap item dapat membawa mahasiswa 
+ke konteks course atau aktivitas terkait. 
+SDH-006 
+P1 
+Dashboard menampilkan ringkasan 
+kemajuan pembelajaran. 
+ 
+●​
+Kriteria penerimaan — Tidak ada course, nilai, atau pengumuman dari class yang tidak diikuti. 
+●​
+Kriteria penerimaan — Deadline diurutkan sehingga tindakan terdekat mudah ditemukan. 
+●​
+Kriteria penerimaan — Nilai draft tidak tampil. 
+7.3 Dashboard Pengajar 
+ID 
+P 
+Kebutuhan 
+Dokumen Kebutuhan Fungsional Platform UAY V1.1  •  September 2026 
+
+=== PAGE 12 ===
+PLATFORM UAY  /  DOKUMEN KEBUTUHAN FUNGSIONAL 
+TDH-001 
+P0 
+Dashboard menampilkan class yang 
+diajar. 
+TDH-002 
+P0 
+Dashboard menampilkan submission 
+dan jawaban essay yang perlu dinilai. 
+TDH-003 
+P0 
+Dashboard menampilkan jadwal 
+aktivitas yang akan dibuka atau ditutup. 
+TDH-004 
+P0 
+Dashboard menampilkan aktivitas 
+terbaru pada class. 
+TDH-005 
+P1 
+Dashboard menyediakan filter dan 
+ringkasan aktivitas per class. 
+ 
+●​
+Kriteria penerimaan — Pengajar hanya melihat class yang ditugaskan. 
+●​
+Kriteria penerimaan — Jumlah pekerjaan yang perlu dinilai sesuai kondisi sebenarnya. 
+●​
+Kriteria penerimaan — Item dapat dibuka langsung untuk ditindaklanjuti. 
+7.4 Course dan Course Class 
+ID 
+P 
+Kebutuhan 
+CRS-001 
+P0 
+Admin dapat membuat dan mengubah 
+informasi course. 
+CRS-002 
+P0 
+Admin dapat membuat satu atau lebih 
+class di dalam course. 
+CRS-003 
+P0 
+Admin dapat menetapkan satu atau 
+lebih pengajar pada class. 
+CRS-004 
+P0 
+Admin dapat mempublikasikan dan 
+mengarsipkan course. 
+CRS-005 
+P0 
+Pengajar dapat melihat dan mengelola 
+class yang ditugaskan. 
+CRS-006 
+P0 
+Mahasiswa dapat melihat course yang 
+diikuti. 
+CRS-007 
+P0 
+Course Archived tetap dapat dibaca 
+tetapi tidak menerima kegiatan baru. 
+CRS-008 
+P1 
+Course beserta isinya dapat diduplikasi 
+untuk periode berikutnya. 
+ 
+●​
+Kriteria penerimaan — Course Published terlihat oleh peserta yang terdaftar. 
+●​
+Kriteria penerimaan — Course Archived menolak submission dan attempt baru. 
+●​
+Kriteria penerimaan — Pengajar yang dilepas dari class tidak lagi dapat mengelola class tersebut. 
+7.5 Enrollment dan Peserta 
+ID 
+P 
+Kebutuhan 
+ENR-001 
+P0 
+Admin dan pengajar dapat 
+menambahkan mahasiswa secara 
+manual. 
+Dokumen Kebutuhan Fungsional Platform UAY V1.1  •  September 2026 
+
+=== PAGE 13 ===
+PLATFORM UAY  /  DOKUMEN KEBUTUHAN FUNGSIONAL 
+ENR-002 
+P0 
+Admin dan pengajar dapat mengimpor 
+daftar mahasiswa. 
+ENR-003 
+P0 
+Sistem menampilkan pratinjau dan 
+kesalahan sebelum import diselesaikan. 
+ENR-004 
+P0 
+Admin/pengajar dapat mengeluarkan 
+mahasiswa dari class. 
+ENR-005 
+P1 
+Enrollment key dapat diaktifkan atau 
+dinonaktifkan per class. 
+ENR-006 
+P1 
+Mahasiswa dapat bergabung 
+menggunakan enrollment key yang 
+valid. 
+ENR-007 
+P1 
+Mahasiswa yang sudah terdaftar tidak 
+dibuatkan enrollment ganda. 
+ENR-008 
+P1 
+Mengeluarkan mahasiswa tidak 
+menghapus histori tugas dan nilainya. 
+ENR-009 
+P1 
+Enrollment dapat dibatasi periode dan 
+kapasitas. 
+ 
+●​
+Kriteria penerimaan — Hasil import menunjukkan baris berhasil dan gagal. 
+●​
+Kriteria penerimaan — Enrollment key salah, tidak aktif, atau kedaluwarsa ditolak. 
+●​
+Kriteria penerimaan — Pengguna yang bukan peserta tidak dapat melihat isi class. 
+ 
+Dokumen Kebutuhan Fungsional Platform UAY V1.1  •  September 2026 
+
+=== PAGE 14 ===
+PLATFORM UAY  /  DOKUMEN KEBUTUHAN FUNGSIONAL 
+7.6 Section/Pertemuan dan Susunan Pembelajaran 
+ID 
+P 
+Kebutuhan 
+SEC-001 
+P0 
+Pengajar dapat membuat, mengubah, 
+mengurutkan, dan menghapus 
+pertemuan. 
+SEC-002 
+P0 
+Pertemuan memiliki judul dan deskripsi. 
+SEC-003 
+P0 
+Pengajar dapat menambahkan 
+Resource, Quiz, dan Assignment ke 
+dalam pertemuan. 
+SEC-004 
+P0 
+Pengajar dapat mengatur urutan seluruh 
+item dalam pertemuan. 
+SEC-005 
+P0 
+Item dapat disembunyikan atau 
+ditampilkan. 
+SEC-006 
+P0 
+Item dapat memiliki tanggal mulai dan 
+tanggal berakhir. 
+SEC-007 
+P0 
+Mahasiswa melihat item sesuai urutan 
+dan aturan ketersediaan. 
+SEC-008 
+P1 
+Pertemuan dapat memiliki persyaratan 
+penyelesaian atau prerequisite. 
+ 
+●​
+Kriteria penerimaan — Perubahan urutan pengajar tercermin pada tampilan mahasiswa. 
+●​
+Kriteria penerimaan — Item tersembunyi tidak dapat dibuka mahasiswa. 
+●​
+Kriteria penerimaan — Item di luar masa ketersediaan mengikuti kebijakan yang ditetapkan. 
+7.7 Resource/Materi 
+ID 
+P 
+Kebutuhan 
+RES-001 
+P0 
+Pengajar dapat membuat materi berupa 
+teks terformat. 
+RES-002 
+P0 
+Pengajar dapat menambahkan gambar. 
+RES-003 
+P0 
+Pengajar dapat melampirkan file 
+pembelajaran. 
+RES-004 
+P0 
+Pengajar dapat menambahkan tautan 
+eksternal. 
+RES-005 
+P0 
+Pengajar dapat menambahkan video 
+YouTube. 
+RES-006 
+P0 
+Pengajar dapat menambahkan tautan 
+Zoom atau Google Meet. 
+RES-007 
+P0 
+Setiap resource memiliki judul, 
+deskripsi, visibility, dan ketersediaan. 
+RES-008 
+P0 
+Mahasiswa dapat membuka atau 
+mengunduh resource yang tersedia. 
+ 
+●​
+Kriteria penerimaan — Semua tipe resource tampil dengan jelas. 
+●​
+Kriteria penerimaan — Tautan dan file yang tidak tersedia tidak dapat diakses mahasiswa. 
+Dokumen Kebutuhan Fungsional Platform UAY V1.1  •  September 2026 
+
+=== PAGE 15 ===
+PLATFORM UAY  /  DOKUMEN KEBUTUHAN FUNGSIONAL 
+●​
+Kriteria penerimaan — Video panjang menggunakan tautan/embed, bukan unggahan langsung. 
+7.8 Quiz dan Question Bank 
+ID 
+P 
+Kebutuhan 
+QZ-001 
+P0 
+Pengajar dapat membuat bank soal. 
+QZ-002 
+P0 
+Tipe soal: pilihan tunggal, pilihan ganda 
+lebih dari satu, benar/salah, dan essay. 
+QZ-003 
+P0 
+Setiap soal dapat memiliki bobot nilai. 
+QZ-004 
+P0 
+Pengajar dapat mengatur jadwal 
+buka/tutup, durasi, dan jumlah attempt. 
+QZ-005 
+P0 
+Pengajar dapat mengacak urutan soal 
+dan pilihan jawaban. 
+QZ-006 
+P0 
+Mahasiswa dapat memulai, menyimpan 
+jawaban, dan mengirim attempt. 
+QZ-007 
+P0 
+Jawaban objektif dinilai otomatis. 
+QZ-008 
+P0 
+Jawaban essay masuk daftar penilaian 
+pengajar. 
+QZ-009 
+P0 
+Attempt yang telah dikirim tidak dapat 
+diubah mahasiswa. 
+QZ-010 
+P0 
+Pengajar dapat menentukan kapan skor, 
+jawaban benar, dan feedback terlihat. 
+QZ-011 
+P0 
+Pengajar dapat melakukan pratinjau 
+quiz. 
+QZ-012 
+P1 
+Tipe short answer tersedia. 
+QZ-013 
+P2 
+Tipe numerical, matching, ordering, 
+calculated, cloze, dan drag-and-drop 
+tersedia. 
+ 
+●​
+Kriteria penerimaan — Mahasiswa tidak dapat memulai di luar jadwal. 
+●​
+Kriteria penerimaan — Batas waktu dan jumlah attempt diterapkan konsisten. 
+●​
+Kriteria penerimaan — Pengiriman berulang tidak menghasilkan attempt ganda. 
+●​
+Kriteria penerimaan — Essay ditandai belum selesai dinilai hingga diperiksa pengajar. 
+7.9 Assignment dan Submission 
+ID 
+P 
+Kebutuhan 
+ASG-001 
+P0 
+Pengajar dapat membuat tugas dengan 
+instruksi dan bobot nilai. 
+ASG-002 
+P0 
+Metode submission dapat berupa teks, 
+file, tautan, atau kombinasi. 
+ASG-003 
+P0 
+Pengajar dapat mengatur waktu mulai, 
+deadline, waktu penutupan, dan jumlah 
+pengumpulan. 
+Dokumen Kebutuhan Fungsional Platform UAY V1.1  •  September 2026 
+
+=== PAGE 16 ===
+PLATFORM UAY  /  DOKUMEN KEBUTUHAN FUNGSIONAL 
+ASG-004 
+P0 
+Pengajar dapat mengizinkan atau 
+menolak keterlambatan. 
+ASG-005 
+P0 
+Sistem menandai submission On Time 
+atau Late. 
+ASG-006 
+P0 
+Mahasiswa menerima konfirmasi 
+setelah submission berhasil. 
+ASG-008 
+P0 
+Mahasiswa dapat melihat histori 
+submission miliknya. 
+ASG-009 
+P0 
+Pengajar dapat membuka submission, 
+memberikan nilai, dan feedback. 
+ASG-010 
+P0 
+Pengajar dapat menyimpan nilai 
+sebagai draft atau mempublikasikannya. 
+ASG-007 
+P2 
+Resubmission membuat versi baru 
+tanpa menimpa versi sebelumnya. 
+ASG-011 
+P2 
+Tugas kelompok dan rubric tersedia. 
+ 
+●​
+Kriteria penerimaan — Submission setelah waktu penutupan ditolak. 
+●​
+Kriteria penerimaan — Status On Time/Late sesuai waktu submission. 
+●​
+Kriteria penerimaan — Setiap resubmission muncul sebagai versi tersendiri. 
+●​
+Kriteria penerimaan — File submission hanya dapat dilihat pihak yang berhak. 
+ 
+Dokumen Kebutuhan Fungsional Platform UAY V1.1  •  September 2026 
+
+=== PAGE 17 ===
+PLATFORM UAY  /  DOKUMEN KEBUTUHAN FUNGSIONAL 
+7.10 Gradebook 
+ID 
+P 
+Kebutuhan 
+GRD-001 
+P0 
+Pengajar dapat melihat daftar nilai 
+seluruh peserta pada class. 
+GRD-002 
+P0 
+Pengajar dapat melihat nilai 
+berdasarkan aktivitas atau mahasiswa. 
+GRD-003 
+P0 
+Nilai dapat disimpan sebagai draft. 
+GRD-004 
+P0 
+Nilai dapat dipublikasikan kepada 
+mahasiswa. 
+GRD-005 
+P0 
+Mahasiswa hanya melihat nilai miliknya 
+yang sudah dipublikasikan. 
+GRD-006 
+P0 
+Pengajar dapat memperbarui nilai dan 
+memberikan feedback. 
+GRD-007 
+P0 
+Riwayat perubahan nilai penting dapat 
+ditelusuri. 
+GRD-008 
+P1 
+Nilai dapat diekspor. 
+GRD-009 
+P2 
+Kategori, bobot, formula, dan 
+perhitungan nilai akhir tersedia. 
+ 
+●​
+Kriteria penerimaan — Nilai draft tidak terlihat mahasiswa. 
+●​
+Kriteria penerimaan — Publikasi nilai menghasilkan pemberitahuan. 
+●​
+Kriteria penerimaan — Mahasiswa tidak dapat melihat nilai mahasiswa lain. 
+●​
+Kriteria penerimaan — Perubahan nilai dapat diketahui nilai lama, nilai baru, pelaku, dan waktu. 
+7.11 Announcement 
+ID 
+P 
+Kebutuhan 
+ANN-001 
+P0 
+Admin atau pengajar dapat membuat 
+pengumuman untuk class. 
+ANN-002 
+P0 
+Pengumuman memiliki judul, isi, 
+pembuat, dan waktu publikasi. 
+ANN-003 
+P0 
+Pengumuman terlihat oleh peserta 
+class. 
+ANN-004 
+P0 
+Pengumuman terbaru muncul pada 
+dashboard. 
+ANN-005 
+P1 
+Pengumuman dapat dijadwalkan. 
+ 
+●​
+Kriteria penerimaan — Pengumuman tidak terlihat pada pengguna di luar class. 
+●​
+Kriteria penerimaan — Pengumuman terbaru dapat dibuka dari dashboard. 
+7.12 In-App Notification 
+ID 
+P 
+Kebutuhan 
+NOT-001 
+P0 
+Sistem memberikan notifikasi ketika ada 
+pengumuman baru. 
+Dokumen Kebutuhan Fungsional Platform UAY V1.1  •  September 2026 
+
+=== PAGE 18 ===
+PLATFORM UAY  /  DOKUMEN KEBUTUHAN FUNGSIONAL 
+NOT-002 
+P0 
+Sistem memberikan pengingat deadline 
+tugas dan kuis. 
+NOT-003 
+P0 
+Sistem memberikan notifikasi ketika nilai 
+dipublikasikan. 
+NOT-004 
+P0 
+Pengguna dapat melihat daftar 
+notifikasi. 
+NOT-005 
+P0 
+Pengguna dapat menandai notifikasi 
+sudah atau belum dibaca. 
+NOT-006 
+P1 
+Pengguna dapat mengatur preferensi 
+notifikasi. 
+NOT-007 
+P2 
+Notifikasi dapat dikirim melalui email 
+atau kanal lain. 
+ 
+●​
+Kriteria penerimaan — Notifikasi mengarah ke item yang relevan. 
+●​
+Kriteria penerimaan — Status read/unread tersimpan. 
+●​
+Kriteria penerimaan — Notifikasi nilai hanya dibuat setelah nilai dipublikasikan. 
+7.13 Integrasi File dalam E-Learning 
+ID 
+P 
+Kebutuhan 
+FIL-001 
+P0 
+Pengajar dan mahasiswa dapat 
+mengunggah file sesuai konteks dan 
+hak akses. 
+FIL-002 
+P0 
+Sistem menerapkan batas ukuran 
+berdasarkan jenis file. 
+FIL-003 
+P0 
+File berbahaya atau tipe yang tidak 
+diizinkan ditolak. 
+FIL-004 
+P0 
+File pembelajaran dapat ditandai 
+sebagai public atau private sesuai 
+kebutuhan. 
+FIL-005 
+P0 
+File submission, soal, feedback, dan 
+dokumen mahasiswa bersifat private. 
+FIL-006 
+P0 
+Pengguna hanya dapat membuka file 
+yang menjadi haknya. 
+FIL-007 
+P0 
+File yang dihapus masuk Trash selama 
+tujuh hari sebelum dihapus permanen. 
+FIL-008 
+P0 
+File dapat dipulihkan sebelum masa 
+Trash berakhir. 
+FIL-009 
+P0 
+Video pembelajaran panjang 
+menggunakan YouTube. 
+ 
+Batas Ukuran File 
+Jenis 
+Maksimum 
+Image 
+5 MB 
+Dokumen Kebutuhan Fungsional Platform UAY V1.1  •  September 2026 
+
+=== PAGE 19 ===
+PLATFORM UAY  /  DOKUMEN KEBUTUHAN FUNGSIONAL 
+PDF 
+20 MB 
+DOC/DOCX 
+15 MB 
+XLS/XLSX 
+15 MB 
+PPT/PPTX 
+30 MB 
+ZIP 
+30 MB 
+Audio 
+20 MB 
+Short video 
+50 MB 
+Other 
+10 MB 
+ 
+●​
+Kriteria penerimaan — File melebihi batas ditolak dengan pesan yang dapat dipahami. 
+●​
+Kriteria penerimaan — File private tidak dapat dibuka pihak yang tidak berhak. 
+●​
+Kriteria penerimaan — File di Trash tidak dapat digunakan secara normal dan dapat dipulihkan sebelum tujuh 
+hari. 
+7.14 Audit Aktivitas Penting 
+ID 
+P 
+Kebutuhan 
+AUD-001 
+P0 
+Sistem mencatat login dan perubahan 
+status pengguna yang relevan. 
+AUD-002 
+P0 
+Sistem mencatat pembuatan, 
+perubahan, dan pengarsipan course. 
+AUD-003 
+P0 
+Sistem mencatat penambahan dan 
+pengeluaran peserta. 
+AUD-004 
+P0 
+Sistem mencatat pembuatan atau 
+perubahan quiz penting. 
+AUD-005 
+P0 
+Sistem mencatat submission dan 
+resubmission. 
+AUD-006 
+P0 
+Sistem mencatat pembuatan, 
+perubahan, dan publikasi nilai. 
+AUD-007 
+P0 
+Sistem mencatat penghapusan dan 
+pemulihan file. 
+AUD-008 
+P0 
+Catatan audit menampilkan pelaku, 
+tindakan, objek, konteks, dan waktu. 
+AUD-009 
+P1 
+Admin dapat menyaring dan 
+mengekspor catatan audit. 
+ 
+●​
+Kriteria penerimaan — Perubahan nilai dapat ditelusuri ketika terjadi sengketa. 
+●​
+Kriteria penerimaan — Pengguna biasa tidak dapat mengubah atau menghapus audit log. 
+8. Alur Pengguna Utama E-Learning 
+8.1 Persiapan Class oleh Admin 
+13.​Admin membuat course. 
+Dokumen Kebutuhan Fungsional Platform UAY V1.1  •  September 2026 
+
+=== PAGE 20 ===
+PLATFORM UAY  /  DOKUMEN KEBUTUHAN FUNGSIONAL 
+14.​Admin membuat class pada course tersebut. 
+15.​Admin menetapkan pengajar. 
+16.​Admin atau pengajar menambahkan mahasiswa secara manual/import. 
+17.​Admin mempublikasikan course agar dapat digunakan. 
+8.2 Pengajar Menyiapkan Pembelajaran 
+18.​Pengajar membuka class yang ditugaskan. 
+19.​Pengajar membuat pertemuan. 
+20.​Pengajar menambahkan dan mengurutkan resource, quiz, dan assignment. 
+21.​Pengajar mengatur visibility serta waktu ketersediaan. 
+22.​Pengajar memeriksa tampilan melalui pratinjau. 
+8.3 Mahasiswa Mengikuti Pembelajaran 
+23.​Mahasiswa masuk dan melihat dashboard. 
+24.​Mahasiswa membuka course dan pertemuan yang tersedia. 
+25.​Mahasiswa membaca resource. 
+26.​Mahasiswa mengikuti quiz dan mengumpulkan assignment. 
+27.​Mahasiswa menerima notifikasi ketika nilai dipublikasikan. 
+28.​Mahasiswa melihat nilai serta feedback miliknya. 
+8.4 Pengajar Melakukan Penilaian 
+29.​Pengajar melihat pekerjaan yang perlu dinilai. 
+30.​Pengajar memeriksa essay atau submission tugas. 
+31.​Pengajar memberikan nilai dan feedback. 
+32.​Pengajar menyimpan nilai sebagai draft untuk pemeriksaan. 
+33.​Pengajar mempublikasikan nilai. 
+34.​Jika ada koreksi, sistem menyimpan riwayat perubahannya. 
+9. Kebutuhan Kualitas Platform 
+Aspek 
+Kebutuhan 
+Kemudahan penggunaan 
+Navigasi, label, dan tindakan utama mudah dipahami tanpa 
+pelatihan teknis mendalam. 
+Responsif 
+Fungsi utama dapat digunakan pada komputer, tablet, dan 
+ponsel. 
+Aksesibilitas 
+Dapat digunakan dengan keyboard; label form jelas; kontras 
+memadai. 
+Keamanan akses 
+Pengguna hanya melihat course, aktivitas, file, submission, 
+dan nilai yang menjadi haknya. 
+Keandalan 
+Submission dan pengiriman quiz tidak menghasilkan duplikasi 
+ketika pengguna mengulang tindakan. 
+Kinerja 
+Dashboard dan halaman pembelajaran tetap responsif pada 
+beban pilot. 
+Kejelasan status 
+Sistem menampilkan loading, berhasil, gagal, kosong, 
+terlambat, draft, published, dan archived secara jelas. 
+Dokumen Kebutuhan Fungsional Platform UAY V1.1  •  September 2026 
+
+=== PAGE 21 ===
+PLATFORM UAY  /  DOKUMEN KEBUTUHAN FUNGSIONAL 
+Pemulihan data 
+Data pembelajaran penting memiliki mekanisme cadangan 
+dan pemulihan yang diuji. 
+ 
+10. Scope Rilis 
+P0 — Pilot 
+P1 — Setelah Pilot 
+P2 — Lanjutan 
+SSO login/logout; akun; import; peran; 
+reset; status; File 
+upload/access/private/public/trash; serta 
+seluruh alur inti E-Learning sampai 
+publikasi nilai 
+Sesi pengguna; filter/ekspor user; 
+ringkasan storage; pencarian file; forum; 
+progress; prerequisite; duplicate course; 
+short answer; ekspor nilai 
+Verifikasi login tambahan; akses file 
+sementara; file versioning; advanced 
+gradebook/quiz; rubric; analytics; 
+calendar; kanal notifikasi lain; Portal 
+Akademik 
+ 
+BATAS TARGET SATU MINGGU 
+Target satu minggu dipahami sebagai Production Pilot/V0.1 terbatas. Jika seluruh P0 belum dapat 
+diselesaikan dengan aman dan stabil, scope pilot dipersempit berdasarkan alur end-to-end tanpa 
+mengurangi perlindungan akses dan keselamatan data. 
+ 
+11. Kriteria Kesiapan Pilot 
+●​
+Admin dapat membuat/import akun, menetapkan peran sesuai wewenang, menonaktifkan akun, dan membantu 
+reset password. 
+●​
+Mahasiswa, pengajar, dan admin dapat masuk melalui SSO dan memperoleh akses sesuai peran. 
+●​
+File valid dapat diunggah, file Private terlindungi, dan Trash/pemulihan berfungsi. 
+●​
+Admin dapat menyiapkan class dan peserta. 
+●​
+Pengajar dapat menyusun pertemuan, materi, kuis, dan tugas. 
+●​
+Mahasiswa dapat belajar, mengikuti kuis, serta mengumpulkan tugas. 
+●​
+Pengajar dapat menilai dan mempublikasikan hasil. 
+●​
+Mahasiswa hanya melihat nilai miliknya setelah dipublikasikan. 
+●​
+Hak akses diuji lintas SSO, File Service, dan E-Learning untuk semua peran. 
+●​
+Submission history, perubahan nilai, perubahan akun, serta penghapusan file dapat ditelusuri. 
+●​
+Tidak ada masalah kritis terbuka yang menghambat alur utama. 
+●​
+Prosedur dukungan, pemulihan, dan penanggung jawab pilot sudah ditetapkan. 
+12. Asumsi dan Pertanyaan Terbuka 
+ID 
+Pertanyaan 
+Asumsi sementara 
+OQ-01 
+Identifier resmi mahasiswa dan 
+pengajar? 
+Menggunakan identitas institusi yang 
+ditentukan UAY 
+OQ-02 
+Saluran pemulihan akun yang disetujui? 
+Dibantu admin pada pilot 
+OQ-03 
+Siapa yang dapat menetapkan setiap 
+peran? 
+Super Admin menetapkan matriks 
+kewenangan 
+OQ-04 
+Zona waktu operasional? 
+Mengikuti zona waktu kampus 
+Dokumen Kebutuhan Fungsional Platform UAY V1.1  •  September 2026 
+
+=== PAGE 22 ===
+PLATFORM UAY  /  DOKUMEN KEBUTUHAN FUNGSIONAL 
+OQ-05 
+Skema nilai yang digunakan? 
+Poin diperoleh dibandingkan poin 
+maksimum 
+OQ-06 
+Brand dan logo final? 
+Menggunakan identitas visual UAY yang 
+tersedia 
+OQ-07 
+Berapa lama submission disimpan 
+setelah semester? 
+Tidak dihapus otomatis pada versi awal 
+OQ-08 
+Siapa pemilik insiden dan dukungan 
+pilot? 
+Ditetapkan sebelum uji penerimaan 
+OQ-09 
+Batas wewenang Admin Prodi? 
+Hanya unit/prodi yang menjadi tanggung 
+jawabnya 
+OQ-10 
+Apakah ada pengecualian retensi file 
+tertentu? 
+Tidak ada pada versi awal 
+ 
+ 
+Dokumen Kebutuhan Fungsional Platform UAY V1.1  •  September 2026 
+
+=== PAGE 23 ===
+PLATFORM UAY  /  DOKUMEN KEBUTUHAN FUNGSIONAL 
+13. Sign-Off Kebutuhan 
+Peran 
+Nama 
+Keputusan/Tanggal 
+Product Owner 
+Muhammad Azmi Adhani 
+________________________ 
+Perwakilan Pengajar 
+________________________ 
+________________________ 
+Perwakilan Admin 
+________________________ 
+________________________ 
+Perwakilan Mahasiswa/UAT 
+________________________ 
+________________________ 
+Stakeholder UAY 
+________________________ 
+________________________ 
+ 
+SIAP UNTUK VALIDASI 
+Dokumen ini dapat digunakan untuk walkthrough bersama stakeholder dan tim pengembang. Perubahan 
+kebutuhan setelah disetujui harus dicatat dengan alasan, dampak scope, prioritas, dan keputusan Product 
+Owner. 
+ 
+Dokumen Kebutuhan Fungsional Platform UAY V1.1  •  September 2026 

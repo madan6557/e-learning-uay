@@ -1,0 +1,21 @@
+sequenceDiagram
+    actor P as Pengajar/Mahasiswa
+    participant W as E-Learning FE
+    participant A as E-Learning API
+    participant F as File Service
+    participant S as Object Storage
+
+    P->>W: Pilih file
+    W->>A: Request upload session + context
+    A->>F: Authorize context dan create file object
+    F-->>A: fileObjectId + signed upload URL
+    A-->>W: signed upload URL
+    W->>F: Upload binary
+    F->>S: Simpan dan scan binary
+    F-->>W: Scan status / completion
+    W->>A: Simpan FileRef pada item
+    P->>W: Buka file
+    W->>A: Request access
+    A->>F: Re-authorize user dan context
+    F-->>W: signed download URL
+    W->>F: Download/stream

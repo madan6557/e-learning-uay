@@ -1,0 +1,87 @@
+name: uay-elearning-dev
+services:
+  postgres-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: uay
+      POSTGRES_PASSWORD: uay_local_only
+      POSTGRES_DB: elearning
+    volumes: ["pg_dev:/var/lib/postgresql/data"]
+    ports: ["127.0.0.1:55432:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U uay -d elearning"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  redis-cache:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  elearning-api:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      AUTH_MODE: development
+      API_HOST: 0.0.0.0
+      APP_ORIGIN: http://127.0.0.1:5173
+      DATABASE_URL: postgresql://uay:uay_local_only@postgres-db:5432/elearning?schema=public
+      REDIS_URL: redis://redis-cache:6379
+      FILE_SERVICE_URL: http://file-service:3001
+      FILE_SERVICE_KEY: local-development-only
+      FILE_ALLOWED_ORIGINS: http://127.0.0.1:3001,http://localhost:3001
+    command:
+      [
+        "sh",
+        "-c",
+        "npm run db:migrate && npm run db:seed && node --watch --import tsx apps/api/src/index.ts",
+      ]
+    ports: ["127.0.0.1:3000:3000"]
+    volumes:
+      - ../apps/api/src:/app/apps/api/src
+      - ../packages/shared/src:/app/packages/shared/src
+    depends_on:
+      postgres-db: { condition: service_healthy }
+      redis-cache: { condition: service_healthy }
+  file-service:
+    image: node:22-bookworm-slim
+    working_dir: /service
+    command: ["node", "file-service.mjs"]
+    environment:
+      NODE_ENV: development
+      APP_ORIGIN: http://127.0.0.1:5173
+      FILE_BIND_HOST: 0.0.0.0
+      FILE_PUBLIC_ORIGIN: http://127.0.0.1:3001
+      FILE_SERVICE_DATA_DIRECTORY: /data
+      FILE_SERVICE_KEY: local-development-only
+    ports: ["127.0.0.1:3001:3001"]
+    volumes:
+      - ../scripts/file-service.mjs:/service/file-service.mjs:ro
+      - file_dev:/data
+  elearning-web:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile.dev
+    environment:
+      API_PROXY_TARGET: http://elearning-api:3000
+    command:
+      [
+        "node",
+        "node_modules/vite/bin/vite.js",
+        "--config",
+        "apps/web/vite.config.ts",
+        "--host",
+        "0.0.0.0",
+      ]
+    ports: ["127.0.0.1:5173:5173"]
+    volumes:
+      - ../apps/web/src:/app/apps/web/src
+      - ../packages/shared/src:/app/packages/shared/src
+    depends_on: [elearning-api]
+volumes:
+  pg_dev:
+  file_dev:

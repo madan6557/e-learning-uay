@@ -1,0 +1,61 @@
+{
+  "name": "elearning-uay",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/api",
+    "apps/web",
+    "packages/shared"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:api": "tsx watch apps/api/src/index.ts",
+    "dev:web": "vite --config apps/web/vite.config.ts",
+    "db:generate": "prisma generate --schema packages/db/prisma/schema.prisma",
+    "db:migrate": "prisma migrate deploy --schema packages/db/prisma/schema.prisma",
+    "db:seed": "tsx packages/db/seed.ts",
+    "db:local": "node scripts/database.mjs",
+    "build": "npm run db:generate && tsc -p apps/api/tsconfig.json && tsc -p apps/web/tsconfig.json && vite build --config apps/web/vite.config.ts",
+    "build:web": "vite build --config apps/web/vite.config.ts",
+    "build:api": "npm run db:generate && tsc -p apps/api/tsconfig.json",
+    "test": "tsx --test tests/*.test.ts",
+    "test:integration": "node scripts/test-integration.mjs",
+    "check": "npm run build && npm test",
+    "start": "node apps/api/dist/apps/api/src/index.js",
+    "start:railway": "node apps/api/dist/apps/api/src/index.js",
+    "deploy:railway": "node scripts/railway-deploy.mjs"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.0",
+    "cookie-parser": "^1.4.7",
+    "dompurify": "^3.2.7",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "ioredis": "^5.7.0",
+    "jose": "^6.1.0",
+    "jsdom": "^26.1.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.9",
+    "@types/express": "^5.0.3",
+    "@types/jsdom": "^21.1.7",
+    "@types/node": "^22.18.0",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.3",
+    "embedded-postgres": "16.14.0-beta.17",
+    "prisma": "^6.19.0",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.7"
+  },
+  "overrides": {
+    "deepmerge-ts": "^8.0.0",
+    "uuid": "^11.1.1"
+  }
+}

@@ -1,0 +1,16 @@
+flowchart LR
+    User[Pengguna]
+    SSO[SSO / Identity\nAkun, session, role]
+    ELFE[E-Learning FE]
+    ELAPI[E-Learning BE\nDomain, policy, audit]
+    ELDB[(E-Learning DB)]
+    FSFE[File Service FE/API]
+    FS[(File Storage)]
+
+    User --> SSO
+    User --> ELFE
+    ELFE --> ELAPI
+    ELAPI --> SSO
+    ELAPI --> ELDB
+    ELAPI --> FSFE
+    FSFE --> FS

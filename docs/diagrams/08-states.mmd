@@ -1,0 +1,19 @@
+stateDiagram-v2
+    [*] --> Draft
+    Draft --> Published: publish
+    Published --> Archived: archive
+    Archived --> Published: restore
+
+    state Submission {
+        [*] --> NotSubmitted
+        NotSubmitted --> Submitted: submit v1
+        Submitted --> Submitted: resubmit v2..n
+        Submitted --> Graded: grade
+        Graded --> Graded: revise grade
+    }
+
+    state Grade {
+        [*] --> DraftGrade
+        DraftGrade --> PublishedGrade: publish
+        PublishedGrade --> DraftGrade: correction
+    }
