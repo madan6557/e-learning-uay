@@ -309,8 +309,8 @@ if (
     busy = true;
     try {
       await runScheduledWork();
-    } catch (error) {
-      console.error("Scheduled work failed; will retry.");
+    } catch (error: any) {
+      console.error("Scheduled work failed; will retry:", error?.message || error);
     } finally {
       busy = false;
     }
