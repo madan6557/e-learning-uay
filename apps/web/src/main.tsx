@@ -94,8 +94,9 @@ function PublicShell({ children }: { children: ReactNode }) {
       <header className="public-header">
         <Brand />
         <nav aria-label="Menu publik">
-          <LoginButton className="secondary" label="Masuk dengan SSO UAY">
-            Masuk dengan SSO UAY <ArrowRight size={16} />
+          <LoginButton className="header-sso-btn" label="Masuk dengan SSO UAY">
+            <span>Masuk SSO</span>
+            <ArrowRight size={15} />
           </LoginButton>
         </nav>
       </header>
@@ -115,8 +116,11 @@ function Landing({ config, error }: { config: any; error?: Error | null }) {
     <PublicShell>
       {error && <Notice error={error} />}
       <section className="landing-hero">
-        <div>
-          <span className="eyebrow">UNIVERSITAS ACHMAD YANI BANJARMASIN</span>
+        <div className="hero-content">
+          <div className="hero-pill">
+            <span className="hero-pill-dot" />
+            <span>UNIVERSITAS ACHMAD YANI BANJARMASIN</span>
+          </div>
           <h1>
             Belajar terarah.
             <br />
@@ -124,30 +128,70 @@ function Landing({ config, error }: { config: any; error?: Error | null }) {
           </h1>
           <p>
             Akses materi perkuliahan, kerjakan tugas, dan ikuti perkembangan
-            belajar dalam satu ruang akademik.
+            belajar dalam satu ruang akademik modern.
           </p>
-          <LoginButton className="button" label="Masuk dengan SSO UAY">
-            Masuk dengan SSO UAY <ArrowRight size={18} />
-          </LoginButton>
-          <small className="landing-caption">
-            <ShieldCheck size={16} /> Gunakan akun akademik UAY Anda.
-          </small>
+          <div className="hero-actions">
+            <LoginButton className="button hero-cta" label="Masuk dengan SSO UAY">
+              <span>Masuk dengan SSO UAY</span>
+              <ArrowRight size={18} />
+            </LoginButton>
+          </div>
+          <div className="landing-caption">
+            <ShieldCheck size={16} />
+            <span>Gunakan akun akademik UAY Anda.</span>
+          </div>
         </div>
-        <div className="landing-illustration" aria-hidden="true">
-          <div className="illustration-circle">
-            <GraduationCap size={92} strokeWidth={1.3} />
-          </div>
-          <div className="illustration-card">
-            <BookOpen />
-            <span>
-              Materi perkuliahan<small>Terstruktur dan mudah diakses</small>
-            </span>
-          </div>
-          <div className="illustration-card">
-            <ClipboardCheck />
-            <span>
-              Tugas & evaluasi<small>Perkembangan belajar yang jelas</small>
-            </span>
+        <div className="landing-preview" aria-hidden="true">
+          <div className="preview-window">
+            <div className="preview-bar">
+              <div className="window-dots">
+                <span />
+                <span />
+                <span />
+              </div>
+              <span className="preview-title">LMS Universitas Achmad Yani</span>
+              <span className="preview-status">
+                <span className="status-dot online" />
+                Aktif
+              </span>
+            </div>
+            <div className="preview-body">
+              <div className="preview-card">
+                <div className="preview-card-header">
+                  <span className="preview-tag">MATA KULIAH AKTIF</span>
+                  <span className="preview-code">IF2101 · 3 SKS</span>
+                </div>
+                <h4>Pemrograman Web & Cloud</h4>
+                <p>14 Pertemuan · Teori & Praktikum Lab</p>
+                <div className="preview-progress-track">
+                  <div className="preview-progress-fill" style={{ width: "75%" }} />
+                </div>
+                <div className="preview-progress-meta">
+                  <span>Progres Belajar</span>
+                  <strong>75% Selesai</strong>
+                </div>
+              </div>
+              <div className="preview-mini-grid">
+                <div className="preview-mini-item">
+                  <span className="mini-icon quiz">
+                    <ClipboardCheck size={16} />
+                  </span>
+                  <div>
+                    <strong>Tugas & Kuis</strong>
+                    <small>Evaluasi berkala</small>
+                  </div>
+                </div>
+                <div className="preview-mini-item">
+                  <span className="mini-icon material">
+                    <BookOpen size={16} />
+                  </span>
+                  <div>
+                    <strong>11 Blok Materi</strong>
+                    <small>Interaktif & terstruktur</small>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -155,22 +199,24 @@ function Landing({ config, error }: { config: any; error?: Error | null }) {
         {[
           [
             BookOpen,
-            "Ruang kelas digital",
-            "Materi, diskusi, dan pengumuman tersusun per kelas.",
+            "Ruang Kelas Digital",
+            "Materi perkuliahan, diskusi interaktif, dan pengumuman akademik tersusun rapi per kelas.",
           ],
           [
             ClipboardCheck,
-            "Pembelajaran terarah",
-            "Jadwal, tugas, dan kuis membantu Anda tetap pada jalur.",
+            "Pembelajaran Terarah",
+            "Jadwal kuliah, tugas berversi, dan kuis adaptif membantu Anda tetap fokus dan terorganisir.",
           ],
           [
             GraduationCap,
-            "Perkembangan yang terlihat",
-            "Pantau hasil belajar dan umpan balik dari pengajar.",
+            "Perkembangan yang Terlihat",
+            "Pantau rekap nilai terbobot, evaluasi pengajar, dan pencapaian akademik secara transparan.",
           ],
         ].map(([Icon, title, text]: any) => (
-          <article key={title}>
-            <Icon size={24} />
+          <article className="feature-card" key={title}>
+            <div className="feature-icon-wrapper">
+              <Icon size={22} />
+            </div>
             <h2>{title}</h2>
             <p>{text}</p>
           </article>
@@ -180,7 +226,10 @@ function Landing({ config, error }: { config: any; error?: Error | null }) {
         <section className="demo-section">
           <div className="section-heading">
             <div>
-              <span className="environment-badge">LINGKUNGAN UJI</span>
+              <span className="environment-badge">
+                <span className="badge-dot" />
+                LINGKUNGAN UJI
+              </span>
               <h2>Mode uji cepat</h2>
               <p>Pilih akun untuk mencoba pengalaman setiap peran.</p>
             </div>
@@ -201,11 +250,12 @@ function Landing({ config, error }: { config: any; error?: Error | null }) {
                     </small>
                   </div>
                   <LoginButton
-                    className="secondary"
+                    className="demo-login-btn"
                     label={`Masuk sebagai ${u.fullName}`}
                     demoUserId={u.id}
                   >
-                    Gunakan akun <ArrowRight size={15} />
+                    <span>Gunakan</span>
+                    <ArrowRight size={14} />
                   </LoginButton>
                 </article>
               ))}
@@ -354,23 +404,35 @@ function AuthShell({
               <Menu size={22} />
             </IconButton>
             <Breadcrumbs
-              items={[
-                { label: "Beranda", href: "#/dashboard" },
-                { label: current },
-              ]}
+              items={
+                pathname === "/dashboard"
+                  ? [{ label: "Beranda" }]
+                  : [
+                      { label: "Beranda", href: "#/dashboard" },
+                      { label: current },
+                    ]
+              }
             />
           </div>
           <div className="topbar-right">
-            {demo && <span className="environment-badge">Mode uji</span>}
-            <UserChip user={user} role={(t.roles as any)[user.role]} />
-            <Action
-              label="Keluar"
-              className="text-button logout-button"
-              run={logout}
-            >
-              <LogOut size={17} />
-              <span>Keluar</span>
-            </Action>
+            {demo && (
+              <span className="environment-badge">
+                <span className="badge-dot" />
+                Mode Uji
+              </span>
+            )}
+            <div className="user-nav-group">
+              <UserChip user={user} role={(t.roles as any)[user.role]} />
+              <span className="topbar-divider" aria-hidden="true" />
+              <Action
+                label="Keluar dari sesi"
+                className="minimal-logout-btn"
+                run={logout}
+              >
+                <LogOut size={15} />
+                <span className="logout-text">Keluar</span>
+              </Action>
+            </div>
           </div>
         </header>
         <main id="main-content">

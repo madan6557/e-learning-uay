@@ -67,9 +67,9 @@ export function UserChip({ user, role }: { user: any; role: string }) {
       aria-label={`Profil akun ${user.fullName}`}
     >
       <Avatar name={user.fullName} />
-      <span>
-        {user.fullName}
-        <small>{role}</small>
+      <span className="user-chip-details">
+        <span className="user-chip-name">{user.fullName}</span>
+        <small className="user-chip-role">{role}</small>
       </span>
     </a>
   );
