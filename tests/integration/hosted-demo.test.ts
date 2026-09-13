@@ -21,14 +21,14 @@ test("hosted demo keeps the browser callback on the frontend origin without prov
     port: 0,
     origin,
     publicIssuer: `${apiOrigin}/demo-sso`,
-    redirectUri: `${origin}/api/v1/auth/callback`,
+    redirectUri: `${origin}/auth/callback`,
     clientId: "elearning-uay-demo",
     audience: "elearning-uay-demo",
   });
   process.env.SSO_ISSUER = mock.issuer;
   process.env.SSO_CLIENT_ID = "elearning-uay-demo";
   process.env.SSO_AUDIENCE = "elearning-uay-demo";
-  process.env.SSO_REDIRECT_URI = `${origin}/api/v1/auth/callback`;
+  process.env.SSO_REDIRECT_URI = `${origin}/auth/callback`;
   process.env.DEMO_INTERNAL_SSO_URL = mock.internalIssuer;
   const { createApp } = await import("../../apps/api/src/index.js");
   const { db } = await import("../../apps/api/src/core.js");
@@ -69,7 +69,8 @@ test("hosted demo keeps the browser callback on the frontend origin without prov
     });
     const callback = new URL(provider.headers.get("location")!);
     assert.equal(callback.origin, origin);
-    const completed = await fetch(base + callback.pathname + callback.search, {
+    assert.equal(callback.pathname, "/auth/callback");
+    const completed = await fetch(base + "/api/v1/auth/callback" + callback.search, {
       headers: { Cookie: stateCookie },
       redirect: "manual",
     });

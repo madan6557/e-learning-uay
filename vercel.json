@@ -11,6 +11,10 @@
   },
   "rewrites": [
     {
+      "source": "/auth/callback",
+      "destination": "/api/proxy?path=v1/auth/callback"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api/proxy?path=:path*"
     },
