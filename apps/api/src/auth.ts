@@ -26,13 +26,11 @@ const isSecure = Boolean(
 );
 const cookieName =
   process.env.COOKIE_NAME ??
-  (production && !isDemo ? "__Host-uay-session" : "uay-session");
+  (production ? "__Host-uay-session" : "uay-session");
 const cookie = {
   httpOnly: true,
   secure: isSecure,
-  sameSite:
-    (process.env.COOKIE_SAMESITE as any) ??
-    (isSecure && isDemo ? "none" : "lax"),
+  sameSite: (process.env.COOKIE_SAMESITE as any) ?? "lax",
   path: "/",
 };
 type Session = {
@@ -45,10 +43,23 @@ type Session = {
 };
 let discovery: any;
 let jwks: ReturnType<typeof createRemoteJWKSet>;
+function oidcServerEndpoint(endpoint: string) {
+  const fixture = process.env.DEMO_INTERNAL_SSO_URL;
+  if (!isDemo || !fixture) return endpoint;
+  const publicUrl = new URL(endpoint);
+  const publicIssuer = new URL(config.issuer);
+  if (publicUrl.origin !== publicIssuer.origin) return endpoint;
+  const local = new URL(fixture);
+  const issuerPath = publicIssuer.pathname.replace(/\/$/, "");
+  const path = publicUrl.pathname.startsWith(issuerPath)
+    ? publicUrl.pathname.slice(issuerPath.length) || "/"
+    : publicUrl.pathname;
+  return new URL(`${path}${publicUrl.search}`, local).href;
+}
 export async function oidcMetadata() {
   if (!discovery) {
     const response = await fetch(
-      `${config.issuer}/.well-known/openid-configuration`,
+      oidcServerEndpoint(`${config.issuer}/.well-known/openid-configuration`),
       { signal: AbortSignal.timeout(3000) },
     );
     ensure(response.ok, 503, "SSO_UNAVAILABLE");
@@ -69,7 +80,7 @@ export async function oidcMetadata() {
         "SSO_CONFIGURATION",
       );
     discovery = data;
-    jwks = createRemoteJWKSet(new URL(data.jwks_uri), {
+    jwks = createRemoteJWKSet(new URL(oidcServerEndpoint(data.jwks_uri)), {
       timeoutDuration: 3000,
     });
   }
@@ -162,7 +173,7 @@ async function syncUser(claims: JWTPayload) {
 }
 async function tokenRequest(values: Record<string, string>) {
   const metadata = await oidcMetadata();
-  const response = await fetch(metadata.token_endpoint, {
+  const response = await fetch(oidcServerEndpoint(metadata.token_endpoint), {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
@@ -193,7 +204,7 @@ export function registerAuth(app: Express) {
   );
   app.get("/api/v1/auth/development-users", async (_req, res) => {
     ensure(
-      !production && (config.authMode === "development" || isDemo),
+      (!production && config.authMode === "development") || isDemo,
       404,
       "NOT_FOUND",
     );
@@ -228,7 +239,10 @@ export function registerAuth(app: Express) {
     if (demoUserId) {
       ensure(
         isDemo &&
-          ["127.0.0.1", "localhost"].includes(new URL(config.issuer).hostname),
+          (["127.0.0.1", "localhost"].includes(
+            new URL(config.issuer).hostname,
+          ) ||
+            new URL(config.issuer).origin === config.origin),
         404,
         "NOT_FOUND",
       );

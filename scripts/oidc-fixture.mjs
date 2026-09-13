@@ -10,9 +10,12 @@ export async function startMockSso({
   origin = "http://127.0.0.1:5173",
   clientId = "elearning-uay",
   audience = "elearning-uay",
+  publicIssuer,
 } = {}) {
-  if (process.env.NODE_ENV === "production")
-    throw new Error("Local SSO is unavailable in production.");
+  if (process.env.NODE_ENV === "production" && process.env.DEMO_MODE !== "true")
+    throw new Error(
+      "Local SSO is unavailable outside demo mode in production.",
+    );
   const db = new PrismaClient();
   const { privateKey, publicKey } = await generateKeyPair("RS256");
   const jwk = {
@@ -186,9 +189,11 @@ export async function startMockSso({
     server.once("error", reject);
     server.listen(port, "127.0.0.1", resolve);
   });
-  issuer = `http://127.0.0.1:${server.address().port}`;
+  const internalIssuer = `http://127.0.0.1:${server.address().port}`;
+  issuer = publicIssuer?.replace(/\/$/, "") ?? internalIssuer;
   return {
     issuer,
+    internalIssuer,
     close: async () => {
       server.closeAllConnections();
       await new Promise((r) => server.close(r));
@@ -203,6 +208,9 @@ if (
   const sso = await startMockSso({
     port: Number(process.env.SSO_MOCK_PORT ?? 4402),
     origin: process.env.APP_ORIGIN,
+    clientId: process.env.SSO_CLIENT_ID ?? "elearning-uay",
+    audience: process.env.SSO_AUDIENCE ?? "elearning-uay",
+    publicIssuer: process.env.SSO_PUBLIC_ISSUER,
   });
   console.log(`Local SSO ready at ${sso.issuer}`);
   for (const signal of ["SIGINT", "SIGTERM"])

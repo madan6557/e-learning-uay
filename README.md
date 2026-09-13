@@ -18,17 +18,17 @@ Perintah `dev` menyalin `.env.example` jika `.env` belum ada, menyalakan Postgre
 
 Buka **http://127.0.0.1:5173/** untuk landing publik. Pilih **Masuk dengan SSO UAY** atau akun pada **Mode uji cepat**. Kedua cara melewati authorization code, PKCE, state/nonce, JWT/JWKS dan callback OIDC yang sama. Dashboard baru muncul setelah login berhasil. Kelas contoh adalah **IF2101 – Pemrograman Web / Kelas A**. Gunakan alamat `127.0.0.1` secara konsisten agar origin, cookie, dan upload cocok.
 
-| Layanan lokal | Alamat / lokasi |
-|---|---|
-| Antarmuka | `http://127.0.0.1:5173` |
-| API / kesehatan | `http://127.0.0.1:3000/api/health` |
-| File Service demonstrasi | `http://127.0.0.1:3001` |
-| Provider SSO lokal | `http://127.0.0.1:4402` |
-| PostgreSQL 16 | `127.0.0.1:55432` |
-| Data persisten | `.local/postgres`, `.local/file-service` |
-| Konfigurasi lokal | `.env` — jangan masukkan ke version control |
+| Layanan lokal            | Alamat / lokasi                             |
+| ------------------------ | ------------------------------------------- |
+| Antarmuka                | `http://127.0.0.1:5173`                     |
+| API / kesehatan          | `http://127.0.0.1:3000/api/health`          |
+| File Service demonstrasi | `http://127.0.0.1:3001`                     |
+| Provider SSO lokal       | `http://127.0.0.1:4402`                     |
+| PostgreSQL 16            | `127.0.0.1:55432`                           |
+| Data persisten           | `.local/postgres`, `.local/file-service`    |
+| Konfigurasi lokal        | `.env` — jangan masukkan ke version control |
 
-`Ctrl+C` menghentikan launcher. Database yang sudah berjalan sebelum launcher tetap merupakan proses terpisah. Data tidak direset saat restart atau seed ulang. `DEMO_MODE=false` menyembunyikan pemilih akun pada landing. Pada `NODE_ENV=production`, demo selalu dinonaktifkan dan konfigurasi SSO kampus wajib diisi. Endpoint login development hanya tersedia pada mode pengujian backend yang secara eksplisit memakai `AUTH_MODE=development`; UI tidak menggunakannya.
+`Ctrl+C` menghentikan launcher. Database yang sudah berjalan sebelum launcher tetap merupakan proses terpisah. Data tidak direset saat restart atau seed ulang. `DEMO_MODE=false` menyembunyikan pemilih akun pada landing. Pada Railway, `DEMO_MODE=true` secara eksplisit menyalakan fixture OIDC dan File Service untuk demonstrasi tanpa layanan kampus; mode ini tidak menggunakan kredensial kampus. Saat `DEMO_MODE=false`, konfigurasi SSO, Redis, File Service, dan webhook production wajib diisi. Endpoint login development hanya tersedia pada mode pengujian backend yang secara eksplisit memakai `AUTH_MODE=development`; UI tidak menggunakannya.
 
 ## Pemeriksaan
 
@@ -63,4 +63,4 @@ SSO memiliki identitas dan kredensial. E-Learning menyimpan referensi identitas 
 
 ## Menghubungkan layanan kampus dan VPS
 
-Baca [kontrak adapter](docs/contracts/IMPLEMENTED-ADAPTERS.md) dan [panduan deployment](deployment/README.md). Kontrak yang dipakai adapter sudah diuji dengan fixture, tetapi penyelarasan pemilik SSO/File Service masih [terbuka](docs/contracts/SSO-File-Service-Questions.md). Kredensial kampus, DNS/TLS, antivirus File Service, pengujian lintas layanan nyata, uji beban pilot, dan latihan restore pada VPS masih diperlukan sebelum penerimaan produksi.
+Baca [kontrak adapter](docs/contracts/IMPLEMENTED-ADAPTERS.md), [panduan deployment VPS](deployment/README.md), atau [panduan Railway](deployment/RAILWAY.md). Kontrak yang dipakai adapter sudah diuji dengan fixture, tetapi penyelarasan pemilik SSO/File Service masih [terbuka](docs/contracts/SSO-File-Service-Questions.md). Kredensial kampus, DNS/TLS, antivirus File Service, pengujian lintas layanan nyata, uji beban pilot, dan latihan restore pada VPS masih diperlukan sebelum penerimaan produksi.

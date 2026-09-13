@@ -9,7 +9,7 @@ try {
   if (error.code !== "ENOENT") throw error;
 }
 export const production = process.env.NODE_ENV === "production";
-export const isDemo = !production && process.env.DEMO_MODE === "true";
+export const isDemo = process.env.DEMO_MODE === "true";
 export const config = {
   port: Number(process.env.PORT ?? 3000),
   origin: (process.env.APP_ORIGIN ?? "http://127.0.0.1:5173")
@@ -48,21 +48,50 @@ export const config = {
     .map((s) => s.trim())
     .filter(Boolean),
 };
-if (
-  production &&
-  (config.authMode !== "oidc" ||
-    !process.env.REDIS_URL ||
-    !process.env.DATABASE_URL ||
-    !config.fileKey ||
-    !config.fileOrigins.length ||
-    !process.env.SSO_WEBHOOK_SECRET ||
+function productionConfigurationErrors() {
+  const invalid: string[] = [];
+  const required = (name: string, value?: string) => {
+    if (!value?.trim()) invalid.push(name);
+  };
+  if (config.authMode !== "oidc") invalid.push("AUTH_MODE=oidc");
+  required("APP_ORIGIN", process.env.APP_ORIGIN);
+  required("DATABASE_URL", process.env.DATABASE_URL);
+  if (isDemo) {
+    if (!config.origin.startsWith("https://")) invalid.push("HTTPS APP_ORIGIN");
+    return [...new Set(invalid)];
+  }
+  required("REDIS_URL", process.env.REDIS_URL);
+  required("SSO_ISSUER", process.env.SSO_ISSUER);
+  required("SSO_CLIENT_ID", process.env.SSO_CLIENT_ID);
+  required("SSO_CLIENT_SECRET", process.env.SSO_CLIENT_SECRET);
+  required("SSO_AUDIENCE", process.env.SSO_AUDIENCE);
+  required("SSO_REDIRECT_URI", process.env.SSO_REDIRECT_URI);
+  required("SSO_WEBHOOK_SECRET", process.env.SSO_WEBHOOK_SECRET);
+  required("FILE_SERVICE_URL", process.env.FILE_SERVICE_URL);
+  required("FILE_SERVICE_KEY", process.env.FILE_SERVICE_KEY);
+  required("FILE_ALLOWED_ORIGINS", process.env.FILE_ALLOWED_ORIGINS);
+  if (
     ![config.origin, config.issuer, config.redirectUri, config.fileUrl].every(
-      (v) => v.startsWith("https://"),
-    ))
-)
-  throw new Error(
-    "Production requires OIDC, HTTPS origins, database, Redis, File Service and webhook credentials.",
-  );
+      (value) => value.startsWith("https://"),
+    )
+  )
+    invalid.push(
+      "HTTPS APP_ORIGIN, SSO_ISSUER, SSO_REDIRECT_URI, FILE_SERVICE_URL",
+    );
+  if (
+    !config.fileOrigins.length ||
+    config.fileOrigins.some((value) => !value.startsWith("https://"))
+  )
+    invalid.push("HTTPS FILE_ALLOWED_ORIGINS");
+  return [...new Set(invalid)];
+}
+if (production) {
+  const invalid = productionConfigurationErrors();
+  if (invalid.length)
+    throw new Error(
+      `Production requires OIDC and valid configuration. Set or correct: ${invalid.join(", ")}.`,
+    );
+}
 export const db = new PrismaClient();
 export const redis = process.env.REDIS_URL
   ? new Redis(process.env.REDIS_URL, {
@@ -73,7 +102,7 @@ export const redis = process.env.REDIS_URL
   : null;
 redis?.on("error", () => console.error("Redis connection unavailable"));
 const memory = new Map<string, { value: string; expires: number }>();
-// Development fallback only; production always uses Redis and fails closed.
+// Local and explicitly enabled hosted demo can use memory. Production requires Redis.
 export const cache = {
   async get(key: string) {
     if (redis) return redis.get(key);

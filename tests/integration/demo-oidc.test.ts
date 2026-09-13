@@ -106,7 +106,10 @@ test("quick demo selection uses the real OIDC callback and rejects bypass", asyn
       },
     );
     assert.notEqual(result.status, 0);
-    assert.match(result.stderr, /Production requires OIDC/);
+    assert.match(
+      result.stderr,
+      /Production requires OIDC and valid configuration/,
+    );
   } finally {
     await new Promise<void>((r) => server.close(() => r()));
     await mock.close();

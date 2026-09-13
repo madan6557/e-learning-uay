@@ -23,6 +23,45 @@ import { registerGrades } from "./grades.js";
 import { registerFiles } from "./files.js";
 import { registerImports } from "./imports.js";
 import { pathToFileURL } from "node:url";
+import { existsSync } from "node:fs";
+import { request as httpRequest } from "node:http";
+import { join, resolve } from "node:path";
+
+function registerLocalFixtureProxy(
+  app: express.Express,
+  prefix: string,
+  target?: string,
+) {
+  if (!target) return;
+  const upstream = new URL(target);
+  if (!["127.0.0.1", "localhost"].includes(upstream.hostname))
+    throw new Error("Demo fixture proxy must target loopback.");
+  app.use(prefix, (req, res, next) => {
+    const path = req.originalUrl.slice(prefix.length) || "/";
+    const headers = { ...req.headers, host: upstream.host };
+    const body = req.is("application/json")
+      ? JSON.stringify(req.body ?? {})
+      : null;
+    if (body !== null)
+      headers["content-length"] = String(Buffer.byteLength(body));
+    const proxy = httpRequest(
+      {
+        hostname: upstream.hostname,
+        port: upstream.port,
+        path,
+        method: req.method,
+        headers,
+      },
+      (response) => {
+        res.writeHead(response.statusCode ?? 502, response.headers);
+        response.pipe(res);
+      },
+    );
+    proxy.once("error", next);
+    if (body !== null) proxy.end(body);
+    else req.pipe(proxy);
+  });
+}
 
 export function createApp() {
   const app = express();
@@ -39,8 +78,7 @@ export function createApp() {
     const isAllowed =
       !origin ||
       config.allowedOrigins.includes(origin) ||
-      config.allowedOrigins.includes("*") ||
-      isDemo;
+      config.allowedOrigins.includes("*");
     if (origin && isAllowed) {
       res.setHeader("Access-Control-Allow-Origin", origin);
       res.setHeader("Access-Control-Allow-Credentials", "true");
@@ -69,6 +107,16 @@ export function createApp() {
     }),
   );
   app.use(cookieParser());
+  registerLocalFixtureProxy(
+    app,
+    "/demo-sso",
+    process.env.DEMO_INTERNAL_SSO_URL,
+  );
+  registerLocalFixtureProxy(
+    app,
+    "/demo-files",
+    process.env.DEMO_INTERNAL_FILE_URL,
+  );
   app.get("/api/health", async (_req, res) => {
     await db.$queryRaw`SELECT 1`;
     if (redis) await redis.ping();
@@ -106,6 +154,13 @@ export function createApp() {
   app.use("/api", (_req, res) =>
     res.status(404).json({ error: { code: "NOT_FOUND" } }),
   );
+  const webDist = resolve(process.env.WEB_DIST_DIR ?? "apps/web/dist");
+  if (production && existsSync(join(webDist, "index.html"))) {
+    app.use(express.static(webDist, { index: false, maxAge: "1h" }));
+    app.get("/{*path}", (_req, res) =>
+      res.sendFile(join(webDist, "index.html")),
+    );
+  }
   app.use(
     (
       error: any,
