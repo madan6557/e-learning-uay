@@ -22,7 +22,7 @@ import {
 
 const isSecure = Boolean(
   process.env.COOKIE_SECURE === "true" ||
-    (process.env.NODE_ENV === "production" && !process.env.COOKIE_SECURE_DISABLE),
+  (process.env.NODE_ENV === "production" && !process.env.COOKIE_SECURE_DISABLE),
 );
 const cookieName =
   process.env.COOKIE_NAME ??
@@ -186,12 +186,17 @@ export function registerAuth(app: Express) {
   app.get("/api/v1/auth/config", (_req, res) =>
     res.json({
       mode: config.authMode,
+      demoEnabled: isDemo && config.authMode === "oidc",
       issuer: config.issuer,
       embedOrigins: config.embedOrigins,
     }),
   );
   app.get("/api/v1/auth/development-users", async (_req, res) => {
-    ensure(config.authMode === "development" || isDemo, 404, "NOT_FOUND");
+    ensure(
+      !production && (config.authMode === "development" || isDemo),
+      404,
+      "NOT_FOUND",
+    );
     res.json(
       await db.user.findMany({
         select: {
@@ -205,7 +210,7 @@ export function registerAuth(app: Express) {
     );
   });
   app.post("/api/v1/auth/development-login", async (req, res) => {
-    ensure(config.authMode === "development" || isDemo, 404, "NOT_FOUND");
+    ensure(!production && config.authMode === "development", 404, "NOT_FOUND");
     const { userId } = z.object({ userId: z.string().uuid() }).parse(req.body);
     const user = await db.user.findUnique({ where: { id: userId } });
     ensure(user && user.isActive, 403, "ACCOUNT_DISABLED");
@@ -216,10 +221,22 @@ export function registerAuth(app: Express) {
     });
     res.json({ ok: true });
   });
-  app.get("/api/v1/auth/login", async (_req, res) => {
-    if (config.authMode === "development" || isDemo) {
-      res.redirect("/#/login");
-      return;
+  app.get("/api/v1/auth/login", async (req, res) => {
+    ensure(config.authMode === "oidc", 503, "SSO_CONFIGURATION");
+    const demoUserId = req.query.demoUserId;
+    let demoSubject: string | undefined;
+    if (demoUserId) {
+      ensure(
+        isDemo &&
+          ["127.0.0.1", "localhost"].includes(new URL(config.issuer).hostname),
+        404,
+        "NOT_FOUND",
+      );
+      const user = await db.user.findUnique({
+        where: { id: z.string().uuid().parse(demoUserId) },
+      });
+      ensure(user?.isActive, 403, "ACCOUNT_DISABLED");
+      demoSubject = user.externalSubjectId;
     }
     const metadata = await oidcMetadata();
     const state = randomBytes(32).toString("base64url");
@@ -227,7 +244,7 @@ export function registerAuth(app: Express) {
     const verifier = randomBytes(48).toString("base64url");
     await cache.set(
       `oidc:${hash(state)}`,
-      JSON.stringify({ nonce, verifier }),
+      JSON.stringify({ nonce, verifier, demoSubject }),
       300,
     );
     res.cookie("uay-oidc-state", state, { ...cookie, maxAge: 300000 });
@@ -242,6 +259,7 @@ export function registerAuth(app: Express) {
       code_challenge: createHash("sha256").update(verifier).digest("base64url"),
       code_challenge_method: "S256",
     }).toString();
+    if (demoSubject) url.searchParams.set("login_hint", demoSubject);
     res.redirect(url.href);
   });
   app.get("/api/v1/auth/callback", async (req, res) => {
@@ -252,7 +270,7 @@ export function registerAuth(app: Express) {
     const saved = await cache.take(`oidc:${hash(state)}`);
     res.clearCookie("uay-oidc-state", cookie);
     ensure(saved, 401, "INVALID_STATE");
-    const { nonce, verifier } = JSON.parse(saved);
+    const { nonce, verifier, demoSubject } = JSON.parse(saved);
     const tokens = await tokenRequest({
       grant_type: "authorization_code",
       code,
@@ -268,6 +286,8 @@ export function registerAuth(app: Express) {
     ensure(id.nonce === nonce, 401, "INVALID_NONCE");
     const access = await verifyAccess(tokens.access_token);
     ensure(access.sub === id.sub, 401, "INVALID_IDENTITY");
+    if (demoSubject)
+      ensure(access.sub === demoSubject, 401, "INVALID_IDENTITY");
     const user = await syncUser({ ...id, ...access });
     await issue(res, {
       userId: user.id,
@@ -277,7 +297,7 @@ export function registerAuth(app: Express) {
       expires: Number(access.exp) * 1000,
       createdAt: Date.now(),
     });
-    res.redirect("/");
+    res.redirect("/#/dashboard");
   });
   app.post("/api/v1/auth/revocations", async (req, res) => {
     const secret = process.env.SSO_WEBHOOK_SECRET;
@@ -338,8 +358,8 @@ export function registerAuth(app: Express) {
       const stored = await cache.take(`session:${hash(id)}`);
       if (stored && config.authMode === "oidc") {
         const session: Session = JSON.parse(stored);
-        const metadata = await oidcMetadata();
-        if (metadata.end_session_endpoint) {
+        const metadata = await oidcMetadata().catch(() => null);
+        if (metadata?.end_session_endpoint) {
           const url = new URL(metadata.end_session_endpoint);
           url.search = new URLSearchParams({
             id_token_hint: session.idToken ?? "",

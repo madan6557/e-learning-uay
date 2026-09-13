@@ -27,7 +27,8 @@ import { pathToFileURL } from "node:url";
 export function createApp() {
   const app = express();
   app.disable("x-powered-by");
-  if (production || isDemo || process.env.TRUST_PROXY) app.set("trust proxy", 1);
+  if (production || isDemo || process.env.TRUST_PROXY)
+    app.set("trust proxy", 1);
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: "cross-origin" },
@@ -90,11 +91,7 @@ export function createApp() {
       req.path !== "/v1/auth/revocations"
     ) {
       const origin = req.get("Origin");
-      const isAllowed =
-        !origin ||
-        config.allowedOrigins.includes(origin) ||
-        config.allowedOrigins.includes("*") ||
-        isDemo;
+      const isAllowed = !!origin && config.allowedOrigins.includes(origin);
       ensure(isAllowed, 403, "INVALID_ORIGIN");
     }
     next();
@@ -310,7 +307,10 @@ if (
     try {
       await runScheduledWork();
     } catch (error: any) {
-      console.error("Scheduled work failed; will retry:", error?.message || error);
+      console.error(
+        "Scheduled work failed; will retry:",
+        error?.message || error,
+      );
     } finally {
       busy = false;
     }

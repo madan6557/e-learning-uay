@@ -1,3 +1,4 @@
+import { confirmAction } from "./confirm";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -398,6 +399,14 @@ export function QuizEditor({
   return (
     <Modal wide title={quiz ? t.edit : t.newQuiz} onClose={onClose}>
       <Form
+        draftKey={`quiz:${quiz?.id ?? sectionId}`}
+        draftValue={{ questions, scoreMode, timerMode, releaseMode }}
+        onRestoreDraft={(v) => {
+          setQuestions(v.questions);
+          setScoreMode(v.scoreMode);
+          setTimerMode(v.timerMode);
+          setReleaseMode(v.releaseMode);
+        }}
         onCancel={onClose}
         onSubmit={async (f) => {
           const data = {
@@ -910,7 +919,7 @@ function AttemptRunner({
   };
   const submit = async (forced = false) => {
     if (submitting || closed.current) return;
-    if (!forced && !window.confirm(t.confirmSubmitQuiz)) return;
+    if (!forced && !(await confirmAction(t.confirmSubmitQuiz))) return;
     setSubmitting(true);
     try {
       if (!forced) await save();
@@ -1199,38 +1208,59 @@ function ManualQuizGrading({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const questions = attempt.questionSnapshot.filter(
-    (q: any) =>
-      ["ESSAY", "FILE_UPLOAD"].includes(q.type) &&
-      (!questionId || q.id === questionId),
+  const questions = attempt.questionSnapshot.filter((q: any) =>
+    ["ESSAY", "FILE_UPLOAD"].includes(q.type),
   );
-  const [values, setValues] = useState<Record<string, number>>({});
-  return (
-    <Modal
-      title={`${t.gradeAnswer} · ${attempt.user.fullName}`}
-      wide
-      onClose={onClose}
-    >
-      {questions.map((q: any) => {
+  const [values, setValues] = useState<
+    Record<string, { score: string; feedback: string }>
+  >(() =>
+    Object.fromEntries(
+      questions.map((q: any) => {
         const existing = attempt.answerGrades?.find(
           (g: any) => g.questionId === q.id,
         );
-        return (
-          <Form
-            key={q.id}
-            onSubmit={async (f) => {
-              await api(`/attempts/${attempt.id}/grades`, "POST", {
-                questionId: q.id,
-                score: numberValue(f, "score"),
-                feedback: textValue(f, "feedback"),
-                ...(textValue(f, "reason")
-                  ? { reason: textValue(f, "reason") }
-                  : {}),
-              });
-              onSaved();
-            }}
-          >
-            <h3>{q.text}</h3>
+        return [
+          q.id,
+          {
+            score: existing ? String(existing.score) : "",
+            feedback: existing?.feedback ?? "",
+          },
+        ];
+      }),
+    ),
+  );
+  const correction = !!attempt.publishedAt || !!attempt.answerGrades?.length;
+  return (
+    <Modal
+      title={"Penilaian kuis · " + attempt.user.fullName}
+      wide
+      onClose={onClose}
+    >
+      <Form
+        draftKey={"quiz-grading:" + attempt.id}
+        draftValue={values}
+        onRestoreDraft={setValues}
+        submitLabel="Simpan semua penilaian"
+        onCancel={onClose}
+        onSubmit={async (f) => {
+          const reason = textValue(f, "reason");
+          await api("/attempts/" + attempt.id + "/grades/batch", "POST", {
+            grades: questions.map((q: any) => ({
+              questionId: q.id,
+              score: Number(values[q.id].score),
+              feedback: values[q.id].feedback,
+            })),
+            ...(reason ? { reason } : {}),
+          });
+          onSaved();
+        }}
+      >
+        <p>Nilai seluruh jawaban, lalu simpan penilaian dalam satu langkah.</p>
+        {questions.map((q: any, index: number) => (
+          <section className="grading-question" key={q.id}>
+            <h3>
+              {index + 1}. {q.text}
+            </h3>
             <div className="student-answer">
               {q.type === "FILE_UPLOAD" ? (
                 attempt.answersJson[q.id] ? (
@@ -1245,50 +1275,52 @@ function ManualQuizGrading({
               )}
             </div>
             {q.rubric?.length > 0 && (
-              <div className="rubric">
-                {q.rubric.map((r: any, index: number) => (
-                  <label key={index}>
-                    <input
-                      type="checkbox"
-                      onChange={(e) =>
-                        setValues((v) => ({
-                          ...v,
-                          [q.id]:
-                            (v[q.id] ?? existing?.score ?? 0) +
-                            (e.target.checked ? r.points : -r.points),
-                        }))
-                      }
-                    />
-                    {r.title} · {r.points}
-                  </label>
+              <details className="rubric">
+                <summary>Panduan rubrik</summary>
+                {q.rubric.map((r: any, i: number) => (
+                  <p key={i}>
+                    {r.title} · {r.points} poin
+                  </p>
                 ))}
-              </div>
+              </details>
             )}
-            <Field label={`${t.score} (0–${q.points})`}>
-              <input
-                name="score"
-                type="number"
-                required
-                min={0}
-                max={q.points}
-                step="0.01"
-                value={values[q.id] ?? existing?.score ?? ""}
-                onChange={(e) =>
-                  setValues((v) => ({ ...v, [q.id]: Number(e.target.value) }))
-                }
-              />
-            </Field>
-            <Field label={t.feedback}>
-              <textarea name="feedback" defaultValue={existing?.feedback} />
-            </Field>
-            {(existing || attempt.publishedAt) && (
-              <Field label={t.reason} hint={t.reasonHint}>
-                <textarea name="reason" minLength={5} required />
+            <div className="form-grid">
+              <Field label={t.score + " (0–" + q.points + ")"}>
+                <input
+                  type="number"
+                  required
+                  min={0}
+                  max={q.points}
+                  step="0.01"
+                  value={values[q.id]?.score ?? ""}
+                  onChange={(e) =>
+                    setValues((v) => ({
+                      ...v,
+                      [q.id]: { ...v[q.id], score: e.target.value },
+                    }))
+                  }
+                />
               </Field>
-            )}
-          </Form>
-        );
-      })}
+              <Field label={t.feedback}>
+                <textarea
+                  value={values[q.id]?.feedback ?? ""}
+                  onChange={(e) =>
+                    setValues((v) => ({
+                      ...v,
+                      [q.id]: { ...v[q.id], feedback: e.target.value },
+                    }))
+                  }
+                />
+              </Field>
+            </div>
+          </section>
+        ))}
+        {correction && (
+          <Field label={t.reason} hint={t.reasonHint}>
+            <textarea name="reason" minLength={5} required />
+          </Field>
+        )}
+      </Form>
     </Modal>
   );
 }
@@ -1311,6 +1343,7 @@ export function AssignmentEditor({
   return (
     <Modal title={assignment ? t.edit : t.newAssignment} wide onClose={onClose}>
       <Form
+        draftKey={`assignment-editor:${assignment?.id ?? sectionId}`}
         onCancel={onClose}
         onSubmit={async (f) => {
           await api(
@@ -1458,26 +1491,8 @@ export function AssignmentPage({ id, user }: { id: string; user: any }) {
     [file, setFile] = useState<any>(null),
     [body, setBody] = useState(""),
     [link, setLink] = useState(""),
-    [receipt, setReceipt] = useState<any>(null),
-    [recovery, setRecovery] = useState<any>(null);
-  const touched = useRef(false),
-    savedServer = useRef(false);
+    [receipt, setReceipt] = useState<any>(null);
   const a = info.data;
-  useEffect(() => {
-    getDraft(user.id, `assignment:${id}`)
-      .then((d) => {
-        if (d) setRecovery(d);
-      })
-      .catch(() => {});
-  }, [id]);
-  useEffect(() => {
-    if (!touched.current) return;
-    const timer = setTimeout(() => {
-      if (!savedServer.current)
-        void saveDraft(user.id, `assignment:${id}`, { body, link, file });
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, [body, link, file]);
   if (info.loading && !a) return <Loading />;
   if (info.error) return <Notice error={info.error} />;
   if (!a) return null;
@@ -1531,24 +1546,14 @@ export function AssignmentPage({ id, user }: { id: string; user: any }) {
               {receipt.status === "LATE" ? t.late : t.onTime}
             </Notice>
           )}
-          {recovery && (
-            <div className="recovery-banner">
-              {t.draftFound}
-              <button
-                className="secondary"
-                onClick={() => {
-                  setBody(recovery.value.body ?? "");
-                  setLink(recovery.value.link ?? "");
-                  setFile(recovery.value.file);
-                  touched.current = true;
-                  setRecovery(null);
-                }}
-              >
-                {t.restoreDraft}
-              </button>
-            </div>
-          )}
           <Form
+            draftKey={`submission:${id}`}
+            draftValue={{ body, link, file }}
+            onRestoreDraft={(v) => {
+              setBody(v.body);
+              setLink(v.link);
+              setFile(v.file);
+            }}
             submitLabel={t.submitAssignment}
             onSubmit={async () => {
               const result = await api(
@@ -1560,8 +1565,6 @@ export function AssignmentPage({ id, user }: { id: string; user: any }) {
                   ...(file ? { fileObjectId: file.id } : {}),
                 },
               );
-              savedServer.current = true;
-              await removeDraft(user.id, `assignment:${id}`);
               setReceipt(result);
               info.reload();
             }}
@@ -1572,8 +1575,6 @@ export function AssignmentPage({ id, user }: { id: string; user: any }) {
                   rows={7}
                   value={body}
                   onChange={(e) => {
-                    touched.current = true;
-                    savedServer.current = false;
                     setBody(e.target.value);
                   }}
                 />
@@ -1585,8 +1586,6 @@ export function AssignmentPage({ id, user }: { id: string; user: any }) {
                   type="url"
                   value={link}
                   onChange={(e) => {
-                    touched.current = true;
-                    savedServer.current = false;
                     setLink(e.target.value);
                   }}
                 />
@@ -1605,8 +1604,6 @@ export function AssignmentPage({ id, user }: { id: string; user: any }) {
                   .join(",")}
                 onUploaded={(f) => {
                   setFile(f);
-                  touched.current = true;
-                  savedServer.current = false;
                 }}
               />
             )}
@@ -1703,6 +1700,8 @@ export function AssignmentPage({ id, user }: { id: string; user: any }) {
         <Modal title={t.gradeSubmission} onClose={() => setGrading(null)}>
           <h3>{grading.user.fullName}</h3>
           <Form
+            draftKey={`submission-grading:${grading.id}`}
+            submitLabel="Simpan semua penilaian"
             onSubmit={async (f) => {
               await api(`/submissions/${grading.id}/grade`, "POST", {
                 score: numberValue(f, "score"),

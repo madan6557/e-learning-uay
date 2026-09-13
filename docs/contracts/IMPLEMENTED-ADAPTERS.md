@@ -41,13 +41,13 @@ Webhook menandai pengguna nonaktif, menulis audit, dan menyimpan pencabutan Redi
 
 Seluruh panggilan server menggunakan `Authorization: Bearer ${FILE_SERVICE_KEY}`. Mutation eksternal membawa `Idempotency-Key`; File Service harus menyimpan hasil berdasarkan key dan menolak reuse key dengan body berbeda. Adapter membatasi tiap panggilan 3 detik, maksimal 3 percobaan dengan jeda eksponensial, serta membuka circuit breaker 30 detik setelah tiga kegagalan beruntun.
 
-| Endpoint layanan eksternal | Request / response utama |
-|---|---|
-| `POST /v1/uploads` | Request `{classId,purpose,contextId?,name,mimeType,sizeBytes,checksum,ownerSubject,retentionDays:7}`. Response `{fileObjectId,uploadUrl,headers?,expiresAt}`. Browser mengunggah langsung dengan PUT. |
-| `GET /v1/files/:id` | `{status:"READY",scanStatus:"CLEAN",checksum,sizeBytes,mimeType}`. Nilai harus cocok dengan metadata awal; PENDING/scan lain ditolak. |
-| `POST /v1/files/:id/download-ticket` | `{ttlSeconds:900,subject,disposition:"inline"|"attachment"}` → `{downloadUrl,expiresAt}`. |
-| `POST /v1/files/:id/trash` | `{}` → JSON sukses; URL lama harus tidak dapat mengunduh objek yang sudah di-trash. |
-| `POST /v1/files/:id/restore` | `{}` → JSON sukses; ID tetap sama, hanya dalam 7 hari. |
+| Endpoint layanan eksternal           | Request / response utama                                                                                                                                                                              |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /v1/uploads`                   | Request `{classId,purpose,contextId?,name,mimeType,sizeBytes,checksum,ownerSubject,retentionDays:7}`. Response `{fileObjectId,uploadUrl,headers?,expiresAt}`. Browser mengunggah langsung dengan PUT. |
+| `GET /v1/files/:id`                  | `{status:"READY",scanStatus:"CLEAN",checksum,sizeBytes,mimeType}`. Nilai harus cocok dengan metadata awal; PENDING/scan lain ditolak.                                                                 |
+| `POST /v1/files/:id/download-ticket` | `{ttlSeconds:900,subject,disposition:"inline"                                                                                                                                                         | "attachment"}`→`{downloadUrl,expiresAt}`. |
+| `POST /v1/files/:id/trash`           | `{}` → JSON sukses; URL lama harus tidak dapat mengunduh objek yang sudah di-trash.                                                                                                                   |
+| `POST /v1/files/:id/restore`         | `{}` → JSON sukses; ID tetap sama, hanya dalam 7 hari.                                                                                                                                                |
 
 Origin upload/download harus termasuk `FILE_ALLOWED_ORIGINS`. Production menggunakan HTTPS. File Service perlu mengizinkan CORS origin aplikasi untuk PUT/GET dan header tiket; signed URL harus cukup untuk PDF.js/native video. File Service bertanggung jawab atas deteksi MIME dari konten, antivirus, checksum SHA-256, karantina, kuota, backup, dan purge setelah retensi. API E-Learning memverifikasi metadata terkonfirmasi sebelum berkas dipakai; ia tidak menerima binary.
 
@@ -62,5 +62,7 @@ Clone mempertahankan referensi berkas materi. File yang dipakai kelas lain tidak
 API menggunakan cookie sesi dan prefix `/api/v1`. Mutation browser mewajibkan `Origin` yang cocok dengan `APP_ORIGIN`; operasi domain membawa `Idempotency-Key` 16–100 karakter. Key terikat pengguna, role/scope, URL, metode dan body. Gunakan key yang sama ketika mengulang request yang hasilnya belum diketahui. Konflik revision autosave kuis menghasilkan `ANSWER_CONFLICT`; klien harus memuat ulang jawaban server sebelum menggabungkan draf.
 
 Impor: `POST /course-classes/:id/imports/preview` lalu `/commit`, body `{kind,categoryId?,bankId?,rows:[{values,exclude,override}],reason?}`. Kind `ENROLLMENT`, `GRADES`, `QUESTIONS`; maksimal 500 baris. Preview tidak menulis data; commit memvalidasi ulang dan menerapkan seluruh baris siap dalam satu transaksi serializable. Tidak ada pembuatan identitas atau penggantian grade diam-diam.
+
+Nilai manual batch: `POST /course-classes/:id/manual-grades/batch`, body `{changes:[{userId,categoryId,score,reason?}],reason?}`. Penilaian attempt batch: `POST /attempts/:id/grades/batch`, body `{grades:[{questionId,score,feedback,reason?}],reason?}`. Keduanya memvalidasi seluruh payload, menolak duplikasi atau perubahan parsial, menghormati kelas/attempt yang terkunci atau diarsipkan, mencatat audit per perubahan, dan mengembalikan ringkasan. `reason` wajib ketika mengoreksi nilai yang sudah dipublikasikan.
 
 Tes runnable: `tests/integration/oidc.test.ts`, `files.test.ts`, `learning.test.ts`. Fixture menandatangani token RSA serta menguji nonce/state/audience, refresh, webhook, checksum, scan, kepemilikan dan retensi. Penerimaan lintas layanan nyata tetap memerlukan penyelarasan dengan kedua pemilik service.

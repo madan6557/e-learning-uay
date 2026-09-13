@@ -1,3 +1,7 @@
+import { confirmAction } from "./confirm";
+import { useId, isValidElement, cloneElement, type ReactElement } from "react";
+import { Button, Skeleton } from "./ui";
+import { useLocalDraft, SaveStatus } from "./useLocalDraft";
 import { useState, useEffect, useRef, type ReactNode } from "react";
 import { X, LoaderCircle, CheckCircle2, AlertCircle } from "lucide-react";
 import labels from "../../../packages/shared/src/id.json";
@@ -50,7 +54,10 @@ export class ApiError extends Error {
 // Preserve a logical write's key when the response is lost, including a manual retry.
 // Successful or rejected writes release the key so a later intentional action stays distinct.
 const uncertainWrites = new Map<string, { key: string; expires: number }>();
-const apiBase = ((import.meta as any).env?.VITE_API_URL ?? "").replace(/\/$/, "");
+const apiBase = ((import.meta as any).env?.VITE_API_URL ?? "").replace(
+  /\/$/,
+  "",
+);
 const isExternalApi = Boolean(apiBase);
 
 export async function api<T = any>(
@@ -125,7 +132,8 @@ export function useApi<T = any>(path: string | null) {
         if (active) setData(value);
       })
       .catch((e) => {
-        if (active) setError(e);
+        if (active)
+          setError(Object.assign(e, { retry: () => setVersion((v) => v + 1) }));
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -151,11 +159,37 @@ export function Field({
   children: ReactNode;
   hint?: string;
 }) {
+  const id = useId();
+  const [validation, setValidation] = useState("");
+  const control =
+    isValidElement(children) &&
+    typeof children.type === "string" &&
+    ["input", "textarea", "select"].includes(children.type)
+      ? cloneElement(children as ReactElement<any>, {
+          "aria-labelledby": `${id}-label`,
+          "aria-describedby":
+            [hint && `${id}-hint`, validation && `${id}-error`]
+              .filter(Boolean)
+              .join(" ") || undefined,
+          "aria-invalid": validation ? true : undefined,
+          onInvalid: (event: any) =>
+            setValidation(event.currentTarget.validationMessage),
+          onInput: (event: any) => {
+            setValidation("");
+            (children.props as any).onInput?.(event);
+          },
+        })
+      : children;
   return (
     <label className="field">
-      <span>{label}</span>
-      {children}
-      {hint && <small>{hint}</small>}
+      <span id={`${id}-label`}>{label}</span>
+      {control}
+      {hint && <small id={`${id}-hint`}>{hint}</small>}
+      {validation && (
+        <small className="danger-text" id={`${id}-error`} role="alert">
+          {validation}
+        </small>
+      )}
     </label>
   );
 }
@@ -181,6 +215,25 @@ export function Notice({
       {error ? <AlertCircle size={18} /> : <CheckCircle2 size={18} />}
       <div>
         {error instanceof Error ? error.message : children}
+        {error instanceof Error &&
+          typeof (error as any).retry === "function" && (
+            <button
+              type="button"
+              className="secondary retry-button"
+              onClick={(error as any).retry}
+            >
+              Coba lagi
+            </button>
+          )}
+        {error instanceof ApiError && error.details?.rows && (
+          <ul>
+            {error.details.rows.map((row: any, index: number) => (
+              <li key={index}>
+                Baris {row.index + 1}: {(t.errors as any)[row.code] ?? row.code}
+              </li>
+            ))}
+          </ul>
+        )}
         {error instanceof ApiError && error.requestId && (
           <small className="request-id">
             {t.requestId}: {error.requestId}
@@ -195,12 +248,15 @@ export function Loading() {
     <div className="loading" role="status">
       <LoaderCircle className="spin" size={24} />
       {t.loading}
+      <Skeleton />
     </div>
   );
 }
 export function Empty({ children }: { children: ReactNode }) {
   return <div className="empty">{children}</div>;
 }
+export const EmptyState = Empty;
+export const Status = Badge;
 export function Modal({
   title,
   children,
@@ -213,27 +269,42 @@ export function Modal({
   wide?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
+  const close = async () => {
+    if (
+      ref.current?.querySelector('[data-dirty="true"]') &&
+      !(await confirmAction(
+        "Perubahan belum dikirim ke server. Tutup editor dan simpan draft di perangkat ini?",
+      ))
+    )
+      return;
+    onClose();
+  };
   useEffect(() => {
     const el = ref.current!;
     el.showModal();
-    const close = () => onClose();
-    el.addEventListener("cancel", close);
-    return () => el.removeEventListener("cancel", close);
+    const cancel = (event: Event) => {
+      event.preventDefault();
+      close();
+    };
+    el.addEventListener("cancel", cancel);
+    return () => el.removeEventListener("cancel", cancel);
   }, []);
   return (
     <dialog
       ref={ref}
+      aria-labelledby={titleId}
       className={wide ? "modal wide" : "modal"}
       onClick={(e) => {
-        if (e.target === ref.current) onClose();
+        if (e.target === ref.current) close();
       }}
     >
       <div className="modal-heading">
-        <h2>{title}</h2>
+        <h2 id={titleId}>{title}</h2>
         <button
           type="button"
           className="icon-button"
-          onClick={onClose}
+          onClick={close}
           aria-label={t.close}
         >
           <X size={20} />
@@ -243,29 +314,115 @@ export function Modal({
     </dialog>
   );
 }
+type FormSnapshot = Record<string, string[]>;
+export function captureForm(form: HTMLFormElement): FormSnapshot {
+  const values: FormSnapshot = {};
+  for (const control of Array.from(form.elements) as HTMLInputElement[]) {
+    if (
+      !control.name ||
+      ["file", "password", "submit", "button"].includes(control.type) ||
+      control.name === "key"
+    )
+      continue;
+    values[control.name] ??= [];
+    if (["checkbox", "radio"].includes(control.type) && !control.checked)
+      continue;
+    values[control.name].push(control.value);
+  }
+  return values;
+}
+function restoreForm(form: HTMLFormElement, values: FormSnapshot) {
+  for (const control of Array.from(form.elements) as HTMLInputElement[]) {
+    if (
+      !control.name ||
+      !(control.name in values) ||
+      ["file", "password"].includes(control.type)
+    )
+      continue;
+    const value = values[control.name];
+    if (["checkbox", "radio"].includes(control.type))
+      control.checked = value.includes(control.value);
+    else {
+      const prototype =
+        control instanceof HTMLTextAreaElement
+          ? HTMLTextAreaElement.prototype
+          : control instanceof HTMLSelectElement
+            ? HTMLSelectElement.prototype
+            : HTMLInputElement.prototype;
+      Object.getOwnPropertyDescriptor(prototype, "value")?.set?.call(
+        control,
+        value[0] ?? "",
+      );
+      control.dispatchEvent(new Event("input", { bubbles: true }));
+      control.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  }
+}
 export function Form({
   onSubmit,
   children,
-  submitLabel = t.save,
+  submitLabel = "Simpan semua perubahan",
   onCancel,
+  draftKey = "form",
+  draftValue,
+  onRestoreDraft,
+  autosave = true,
+  disabled = false,
+  submitDisabled = false,
+  captureFields = true,
+  onDirtyChange,
 }: {
   onSubmit: (form: FormData) => Promise<unknown>;
   children: ReactNode;
   submitLabel?: string;
   onCancel?: () => void;
+  draftKey?: string;
+  draftValue?: any;
+  onRestoreDraft?: (value: any) => void;
+  autosave?: boolean;
+  disabled?: boolean;
+  submitDisabled?: boolean;
+  captureFields?: boolean;
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
   const [busy, setBusy] = useState(false),
     [error, setError] = useState<Error | null>(null);
+  const ref = useRef<HTMLFormElement>(null);
+  const [fields, setFields] = useState<FormSnapshot>({});
+  const draft = useLocalDraft(
+    location.hash + ":" + draftKey,
+    { fields, extra: draftValue },
+    (stored) => {
+      onRestoreDraft?.(stored.extra);
+      setFields(stored.fields ?? {});
+      // Restore named fields after React has rebuilt any dynamic sections.
+      setTimeout(() => {
+        if (ref.current) restoreForm(ref.current, stored.fields ?? {});
+      }, 0);
+    },
+    autosave,
+  );
+  useEffect(() => { onDirtyChange?.(draft.dirty || !!draft.recovery); }, [draft.dirty, draft.recovery, onDirtyChange]);
   return (
     <form
+      ref={ref}
+      data-dirty={draft.dirty ? "true" : undefined}
+      aria-busy={busy}
+      onChange={() => {
+        if (ref.current && captureFields) setFields(captureForm(ref.current));
+      }}
       onSubmit={async (e) => {
         e.preventDefault();
-        if (busy) return;
-        const form = new FormData(e.currentTarget);
+        if (busy || disabled || submitDisabled || draft.recovery) return;
+        const data = new FormData(e.currentTarget);
         setBusy(true);
         setError(null);
         try {
-          await onSubmit(form);
+          const result = await onSubmit(data);
+          if (result !== false) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            await draft.saved();
+          }
         } catch (error) {
           setError(error as Error);
         } finally {
@@ -273,15 +430,32 @@ export function Form({
         }
       }}
     >
-      <fieldset disabled={busy}>{children}</fieldset>
+      {autosave && <SaveStatus draft={draft} busy={busy} />}
+      <fieldset disabled={busy || disabled || !!draft.recovery}>
+        {children}
+      </fieldset>
       {error && <Notice error={error} />}
-      <div className="form-actions">
+      <div className="form-actions sticky-actions">
         {onCancel && (
-          <button type="button" className="secondary" onClick={onCancel}>
+          <Button
+            onClick={async () => {
+              if (
+                !draft.dirty ||
+                (await confirmAction(
+                  "Tutup editor? Draft perubahan tetap tersedia di perangkat ini.",
+                ))
+              )
+                onCancel();
+            }}
+          >
             {t.cancel}
-          </button>
+          </Button>
         )}
-        <button type="submit" className="primary" disabled={busy}>
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={busy || disabled || submitDisabled || !!draft.recovery}
+        >
           {busy ? (
             <>
               <LoaderCircle size={16} className="spin" />
@@ -290,7 +464,7 @@ export function Form({
           ) : (
             submitLabel
           )}
-        </button>
+        </Button>
       </div>
     </form>
   );
@@ -300,11 +474,13 @@ export function Action({
   children,
   className = "secondary",
   disabled = false,
+  label,
 }: {
   run: () => Promise<unknown>;
   children: ReactNode;
   className?: string;
   disabled?: boolean;
+  label?: string;
 }) {
   const [busy, setBusy] = useState(false),
     [error, setError] = useState<Error | null>(null);
@@ -314,6 +490,8 @@ export function Action({
         type="button"
         className={className}
         disabled={disabled || busy}
+        aria-busy={busy}
+        aria-label={label}
         onClick={async () => {
           setBusy(true);
           setError(null);
@@ -326,7 +504,8 @@ export function Action({
           }
         }}
       >
-        {busy ? <LoaderCircle size={16} className="spin" /> : children}
+        {busy && <LoaderCircle size={16} className="spin" aria-hidden="true" />}
+        {children}
       </button>
       {error && <Notice error={error} />}
     </>
@@ -427,7 +606,7 @@ export function FileUpload({
           }}
         />
       </label>
-      {progress !== null && <progress value={progress} max={100} />}{" "}
+      {progress !== null && <progress aria-label="Progres unggahan" value={progress} max={100} />}{" "}
       {error && <Notice error={error} />}
     </div>
   );

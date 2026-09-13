@@ -1,3 +1,4 @@
+import { confirmAction } from "./confirm";
 import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
@@ -29,7 +30,8 @@ import {
   textValue,
   numberValue,
 } from "./lib";
-import { removeDraft } from "./drafts";
+import { countDrafts, removeDraft } from "./drafts";
+import { Avatar, Tabs } from "./ui";
 export function ClassCard({ item, index = 0 }: { item: any; index?: number }) {
   const icons = [Code2, Database, Terminal];
   const Icon = icons[index % 3];
@@ -373,22 +375,16 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
             )}
           </div>
           {page === "classes" && (
-            <div className="filter-tabs">
-              {[
+            <Tabs
+              value={filter}
+              onChange={setFilter}
+              items={[
                 ["ALL", t.all],
                 ["PUBLISHED", t.active],
                 ["DRAFT", t.draft],
                 ["ARCHIVED", t.archived],
-              ].map(([value, label]) => (
-                <button
-                  key={value}
-                  className={filter === value ? "selected" : ""}
-                  onClick={() => setFilter(value)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+              ].map(([id, label]) => ({ id, label }))}
+            />
           )}
           <div className="cards">
             {items.map((item, index) => (
@@ -459,6 +455,7 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
         ) : (
           <Modal title={t.joinClass} onClose={() => setModal(false)}>
             <Form
+              draftKey="join-class"
               onSubmit={async (f) => {
                 await api(
                   `/course-classes/${textValue(f, "classId")}/enroll`,
@@ -496,6 +493,13 @@ export function ClassForm({
   return (
     <Modal title={t.newClass} onClose={onClose}>
       <Form
+        draftKey="new-class"
+        draftValue={{ selected, users, search }}
+        onRestoreDraft={(v) => {
+          setSelected(v?.selected ?? []);
+          setUsers(v?.users ?? []);
+          setSearch(v?.search ?? "");
+        }}
         onCancel={onClose}
         onSubmit={async (f) => {
           await api("/course-classes", "POST", {
@@ -661,6 +665,7 @@ export function Catalog({ user }: { user: any }) {
           onClose={() => setEditing(null)}
         >
           <Form
+            draftKey={`course:${editing?.id ?? "new"}`}
             onSubmit={async (f) => {
               await api(
                 `/courses${editing.id ? `/${editing.id}` : ""}`,
@@ -732,39 +737,121 @@ export function Catalog({ user }: { user: any }) {
   );
 }
 export function Profile({ user, issuer }: { user: any; issuer?: string }) {
-  const [cleared, setCleared] = useState(false);
+  const [count, setCount] = useState<number | null>(null),
+    [cleared, setCleared] = useState(false),
+    [failure, setFailure] = useState<Error | null>(null);
+  useEffect(() => {
+    countDrafts(user.id)
+      .then(setCount)
+      .catch(() =>
+        setFailure(new Error("Jumlah draft lokal belum dapat dibaca.")),
+      );
+  }, [user.id]);
   return (
     <>
       <div className="page-heading">
-        <h1>{t.profile}</h1>
-        <p>{t.profileDescription}</p>
+        <h1>Profil akun</h1>
+        <p>Identitas akademik dan pengaturan data pada perangkat ini.</p>
       </div>
-      <div className="card profile-card">
-        <span className="large-avatar">{user.fullName[0]}</span>
-        <h2>{user.fullName}</h2>
-        <p>{user.email}</p>
-        <dl>
-          <dt>{t.studentNumber}</dt>
-          <dd>{user.studentStaffNumber}</dd>
-          <dt>{t.status}</dt>
-          <dd>{(t.roles as any)[user.role]}</dd>
-        </dl>
-        {issuer && (
-          <a className="button" href={issuer} target="_blank" rel="noreferrer">
-            {t.ssoManagement}
-            <ArrowUpRight size={16} />
-          </a>
-        )}
-        <hr />
-        <Action
-          run={async () => {
-            await removeDraft(user.id);
-            setCleared(true);
-          }}
-        >
-          {t.clearDrafts}
-        </Action>
-        {cleared && <Notice>{t.draftsCleared}</Notice>}
+      <div className="profile-layout">
+        <section className="card" aria-label="Identitas akun">
+          <div className="profile-identity">
+            <Avatar name={user.fullName} large />
+            <div>
+              <h2>{user.fullName}</h2>
+              <p>{user.email}</p>
+              <span className="badge">{(t.roles as any)[user.role]}</span>
+            </div>
+          </div>
+          <dl className="profile-fields">
+            <div>
+              <dt>Nama lengkap</dt>
+              <dd>{user.fullName}</dd>
+            </div>
+            <div>
+              <dt>Alamat email</dt>
+              <dd>{user.email}</dd>
+            </div>
+            <div>
+              <dt>Nomor mahasiswa / staf</dt>
+              <dd>{user.studentStaffNumber || "Belum tersedia"}</dd>
+            </div>
+            <div>
+              <dt>Status akun</dt>
+              <dd>
+                <span
+                  className={
+                    user.isActive === false
+                      ? "badge badge-archived"
+                      : "badge badge-published"
+                  }
+                >
+                  {user.isActive === false ? "Tidak aktif" : "Aktif"}
+                </span>
+              </dd>
+            </div>
+            <div>
+              <dt>Sumber identitas</dt>
+              <dd>SSO UAY</dd>
+            </div>
+            <div>
+              <dt>Peran akademik</dt>
+              <dd>{(t.roles as any)[user.role]}</dd>
+            </div>
+          </dl>
+        </section>
+        <div className="profile-side">
+          <section className="card">
+            <h2>Kelola identitas</h2>
+            <p>
+              Informasi profil mengikuti akun SSO UAY. Perbarui identitas
+              melalui layanan akun akademik.
+            </p>
+            {issuer ? (
+              <a
+                className="secondary"
+                href={issuer}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Kelola akun SSO <ArrowUpRight size={16} />
+                <span className="sr-only">(tab baru)</span>
+              </a>
+            ) : (
+              <p>Pengelolaan SSO belum tersedia.</p>
+            )}
+          </section>
+          <section className="card">
+            <h2>Draft pada perangkat</h2>
+            <p>
+              {count === null
+                ? "Memeriksa draft lokal…"
+                : count + " draft tersimpan pada perangkat ini."}{" "}
+              Draft membantu memulihkan perubahan yang belum dikirim ke server.
+            </p>
+            <Action
+              disabled={count === 0 || count === null}
+              run={async () => {
+                if (
+                  !(await confirmAction(
+                    "Hapus " +
+                      count +
+                      " draft lokal akun ini? Perubahan yang belum dikirim ke server akan hilang dari perangkat ini.",
+                  ))
+                )
+                  return;
+                await removeDraft(user.id);
+                setCount(0);
+                setCleared(true);
+                setFailure(null);
+              }}
+            >
+              Hapus draft lokal
+            </Action>
+            {cleared && <Notice>Draft lokal berhasil dihapus.</Notice>}
+            {failure && <Notice error={failure} />}
+          </section>
+        </div>
       </div>
     </>
   );

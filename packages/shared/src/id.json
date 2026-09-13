@@ -231,7 +231,7 @@
   "category": "Kategori nilai",
   "weight": "Bobot (%)",
   "weights": "Bobot penilaian",
-  "calculate": "Hitung & simpan draf",
+  "calculate": "Hitung nilai akhir",
   "publishFinal": "Publikasikan nilai akhir",
   "finalScore": "Nilai akhir",
   "letter": "Huruf",
@@ -413,6 +413,7 @@
     "FILE_LIFECYCLE": "Berkas tidak dapat dipulihkan atau masa retensinya telah berakhir.",
     "INVALID_ORIGIN": "Sesi berasal dari alamat aplikasi berbeda. Buka aplikasi melalui alamat yang dikonfigurasi.",
     "REQUEST_TOO_LARGE": "Data terlalu besar. Bagi menjadi beberapa bagian.",
-    "ANSWER_TOO_LONG": "Jawaban melebihi batas kata atau panjang teks."
+    "ANSWER_TOO_LONG": "Jawaban melebihi batas kata atau panjang teks.",
+    "DUPLICATE_GRADE": "Nilai yang sama tercantum lebih dari sekali. Periksa perubahan Anda."
   }
 }

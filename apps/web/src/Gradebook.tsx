@@ -1,3 +1,4 @@
+import { useLocalDraft, SaveStatus } from "./useLocalDraft";
 import { useEffect, useState } from "react";
 import { Download, Plus, Upload, GraduationCap } from "lucide-react";
 import {
@@ -58,6 +59,13 @@ export function Gradebook({
     [weights, setWeights] = useState<any[]>([]),
     [acknowledge, setAcknowledge] = useState(false),
     [message, setMessage] = useState("");
+  const [changes, setChanges] = useState<
+    Record<string, { userId: string; categoryId: string; score: string }>
+  >({});
+  const changedCount = Object.keys(changes).length;
+  const [reason, setReason] = useState("");
+  const [unsaved, setUnsaved] = useState(false);
+  useEffect(() => { if (!changedCount) setReason(""); }, [changedCount]);
   const data = info.data;
   if (info.loading && !data) return <Loading />;
   if (info.error) return <Notice error={info.error} />;
@@ -138,6 +146,7 @@ export function Gradebook({
             <>
               <button
                 className="secondary"
+                disabled={unsaved}
                 onClick={() => setModal({ kind: "import" })}
               >
                 <Upload size={16} />
@@ -145,7 +154,7 @@ export function Gradebook({
               </button>
               <button
                 className="secondary"
-                disabled={locked}
+                disabled={locked || unsaved}
                 onClick={() => {
                   setWeights(structuredClone(data.categories));
                   setModal({ kind: "weights" });
@@ -173,71 +182,155 @@ export function Gradebook({
           </span>
         ))}
       </div>
-      <div className="card table-wrap grade-table">
-        <table>
-          <thead>
-            <tr>
-              <th>{t.name}</th>
-              {data.categories.map((c: any) => (
-                <th key={c.id}>
-                  {c.name}
-                  <small className="block">{c.weightPercent}%</small>
-                </th>
-              ))}
-              <th>{t.progress}</th>
-              <th>{t.finalScore}</th>
-              <th>{t.letter}</th>
-              <th>{t.status}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.rows.map((r: any) => (
-              <tr key={r.user.id}>
-                <td>
-                  <strong>{r.user.fullName}</strong>
-                  <small className="block">{r.user.studentStaffNumber}</small>
-                </td>
-                {r.categoryScores.map((c: any) => (
-                  <td key={c.categoryId}>
-                    {writable && c.source !== "PROGRESS" ? (
-                      <button
-                        className="score-cell"
-                        onClick={() =>
-                          setModal({ kind: "manual", row: r, category: c })
-                        }
-                      >
-                        {c.score.toFixed(2)}
-                        {c.source === "MANUAL" && <small> *</small>}
-                      </button>
-                    ) : (
-                      c.score.toFixed(2)
+      <Form
+        draftKey={"gradebook:" + classId}
+        draftValue={{ changes, reason }}
+        captureFields={false}
+        onDirtyChange={setUnsaved}
+        onRestoreDraft={value => { setChanges(value.changes ?? value); setReason(value.reason ?? ""); }}
+        disabled={!writable}
+        submitDisabled={!changedCount}
+        submitLabel={"Simpan semua perubahan (" + changedCount + ")"}
+        onSubmit={async (f) => {
+          if (!changedCount) return false;
+          const reason = textValue(f, "reason");
+          await api(
+            "/course-classes/" + classId + "/manual-grades/batch",
+            "POST",
+            {
+              changes: Object.values(changes).map((c) => ({
+                ...c,
+                score: Number(c.score),
+              })),
+              ...(reason ? { reason } : {}),
+            },
+          );
+          setChanges({});
+          setReason("");
+          setMessage(changedCount + " nilai berhasil disimpan.");
+          info.reload();
+        }}
+      >
+        <div
+          className="card table-wrap grade-table"
+          role="region"
+          aria-label="Daftar nilai peserta"
+          tabIndex={0}
+        >
+          <table>
+            <thead>
+              <tr>
+                <th>{t.name}</th>
+                {data.categories.map((c: any) => (
+                  <th key={c.id}>
+                    {c.name}
+                    <small className="block">{c.weightPercent}%</small>
+                  </th>
+                ))}
+                <th>{t.progress}</th>
+                <th>{t.finalScore}</th>
+                <th>{t.letter}</th>
+                <th>{t.status}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.rows.map((r: any) => (
+                <tr key={r.user.id}>
+                  <td>
+                    <strong>{r.user.fullName}</strong>
+                    <small className="block">{r.user.studentStaffNumber}</small>
+                  </td>
+                  {r.categoryScores.map((c: any) => (
+                    <td key={c.categoryId}>
+                      {writable && c.source !== "PROGRESS" ? (
+                        <input
+                          className={
+                            "score-input " +
+                            (changes[r.user.id + ":" + c.categoryId]
+                              ? "changed"
+                              : "")
+                          }
+                          aria-label={r.user.fullName + " · " + c.name}
+                          type="number"
+                          min={0}
+                          max={100}
+                          step="0.01"
+                          required
+                          value={
+                            changes[r.user.id + ":" + c.categoryId]?.score ??
+                            String(c.score)
+                          }
+                          onChange={(e) => {
+                            const score = e.target.value,
+                              key = r.user.id + ":" + c.categoryId;
+                            setChanges((previous) => {
+                              const next = { ...previous };
+                              if (score !== "" && Number(score) === c.score)
+                                delete next[key];
+                              else
+                                next[key] = {
+                                  userId: r.user.id,
+                                  categoryId: c.categoryId,
+                                  score,
+                                };
+                              return next;
+                            });
+                          }}
+                        />
+                      ) : (
+                        c.score.toFixed(2)
+                      )}
+                    </td>
+                  ))}
+                  <td>
+                    <span>{r.progress}%</span>
+                    <progress value={r.progress} max={100} />
+                  </td>
+                  <td>
+                    <strong>{r.finalScore.toFixed(2)}</strong>
+                  </td>
+                  <td>
+                    <span className="letter-badge">{r.gradeLetter}</span>
+                  </td>
+                  <td>
+                    <Badge
+                      value={r.record?.publishedAt ? "PUBLISHED" : "DRAFT"}
+                    />
+                    {r.pending.length > 0 && (
+                      <small className="block">{t.pendingGrading}</small>
                     )}
                   </td>
-                ))}
-                <td>
-                  <span>{r.progress}%</span>
-                  <progress value={r.progress} max={100} />
-                </td>
-                <td>
-                  <strong>{r.finalScore.toFixed(2)}</strong>
-                </td>
-                <td>
-                  <span className="letter-badge">{r.gradeLetter}</span>
-                </td>
-                <td>
-                  <Badge
-                    value={r.record?.publishedAt ? "PUBLISHED" : "DRAFT"}
-                  />
-                  {r.pending.length > 0 && (
-                    <small className="block">{t.pendingGrading}</small>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {!data.rows.length && <Empty>{t.noParticipants}</Empty>}
-      </div>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {!data.rows.length && <Empty>{t.noParticipants}</Empty>}
+        </div>
+        {changedCount > 0 && (
+          <Field
+            label="Alasan perubahan / koreksi"
+            hint="Wajib untuk mengganti nilai manual sebelumnya atau nilai yang sudah diterbitkan."
+          >
+            <textarea
+              name="reason"
+              value={reason}
+              onChange={e => setReason(e.target.value)}
+              minLength={5}
+              required={Object.values(changes).some((change) => {
+                const row = data.rows.find(
+                  (r: any) => r.user.id === change.userId,
+                );
+                return (
+                  row?.record?.publishedAt ||
+                  row?.categoryScores.find(
+                    (c: any) => c.categoryId === change.categoryId,
+                  )?.source === "MANUAL"
+                );
+              })}
+            />
+          </Field>
+        )}
+      </Form>
       {writable && (
         <>
           <div className="publish-panel">
@@ -259,7 +352,7 @@ export function Gradebook({
             </div>
             <div className="toolbar">
               <Action
-                disabled={!data.weightsValid}
+                disabled={!data.weightsValid || unsaved}
                 run={async () => {
                   await api(
                     `/course-classes/${classId}/gradebook/calculate`,
@@ -275,7 +368,10 @@ export function Gradebook({
               <Action
                 className="primary"
                 disabled={
-                  !data.weightsValid || pending || (missing && !acknowledge)
+                  !data.weightsValid ||
+                  unsaved ||
+                  pending ||
+                  (missing && !acknowledge)
                 }
                 run={async () => {
                   await api(
@@ -296,6 +392,9 @@ export function Gradebook({
       {modal?.kind === "weights" && (
         <Modal title={t.weights} wide onClose={() => setModal(null)}>
           <Form
+            draftKey="weights"
+            draftValue={weights}
+            onRestoreDraft={setWeights}
             onSubmit={async () => {
               await api(`/course-classes/${classId}/grade-categories`, "PUT", {
                 categories: weights,
@@ -368,48 +467,6 @@ export function Gradebook({
               <Plus size={15} />
               {t.category}
             </button>
-          </Form>
-        </Modal>
-      )}
-      {modal?.kind === "manual" && (
-        <Modal title={t.manualGrade} onClose={() => setModal(null)}>
-          <h3>{modal.row.user.fullName}</h3>
-          <p>{modal.category.name}</p>
-          <Form
-            onSubmit={async (f) => {
-              await api(`/course-classes/${classId}/manual-grades`, "POST", {
-                userId: modal.row.user.id,
-                categoryId: modal.category.categoryId,
-                score: numberValue(f, "score"),
-                ...(textValue(f, "reason")
-                  ? { reason: textValue(f, "reason") }
-                  : {}),
-              });
-              setModal(null);
-              info.reload();
-            }}
-          >
-            <Field label={`${t.score} (0–100)`}>
-              <input
-                name="score"
-                required
-                type="number"
-                min={0}
-                max={100}
-                step="0.01"
-                defaultValue={modal.category.score}
-              />
-            </Field>
-            <Field label={t.reason} hint={t.reasonHint}>
-              <textarea
-                name="reason"
-                minLength={5}
-                required={
-                  modal.category.source === "MANUAL" ||
-                  !!modal.row.record?.publishedAt
-                }
-              />
-            </Field>
           </Form>
         </Modal>
       )}
@@ -490,6 +547,17 @@ export function ImportPanel({
     [error, setError] = useState<Error | null>(null),
     [busy, setBusy] = useState(false),
     [reason, setReason] = useState("");
+  const draft = useLocalDraft(
+    "import:" + classId + ":" + initialKind,
+    { kind, target, rows, headers, reason },
+    (v) => {
+      setKind(v.kind);
+      setTarget(v.target);
+      setRows(v.rows);
+      setHeaders(v.headers);
+      setReason(v.reason);
+    },
+  );
   const batch = () => ({
     kind,
     rows,
@@ -501,6 +569,7 @@ export function ImportPanel({
     ...(reason.trim() ? { reason } : {}),
   });
   useEffect(() => {
+    setReview(null);
     if (!rows.length || (kind !== "ENROLLMENT" && !target)) return;
     let active = true;
     const timer = setTimeout(() => {
@@ -547,6 +616,12 @@ export function ImportPanel({
   };
   return (
     <Modal title={t.importTitle} wide onClose={onClose}>
+      <div
+        className="import-draft"
+        data-dirty={draft.dirty ? "true" : undefined}
+      >
+        <SaveStatus draft={draft} />
+      </div>
       <p>{t.importDescription}</p>
       <div className="form-grid">
         <Field label={t.importKind}>
@@ -801,13 +876,19 @@ export function ImportPanel({
             </Action>
             <Action
               className="primary"
-              disabled={!review || review.issues > 0 || review.ready === 0}
+              disabled={
+                !!draft.recovery ||
+                !review ||
+                review.issues > 0 ||
+                review.ready === 0
+              }
               run={async () => {
                 await api(
                   `/course-classes/${classId}/imports/commit`,
                   "POST",
                   batch(),
                 );
+                await draft.saved();
                 onClose();
               }}
             >

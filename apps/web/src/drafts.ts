@@ -7,6 +7,19 @@ type Draft = {
   updatedAt: number;
   bytes: number;
 };
+export async function countDrafts(userId: string) {
+  const db = await database();
+  try {
+    const all = await result<Draft[]>(
+      db.transaction("drafts").objectStore("drafts").getAll(),
+    );
+    return all.filter(
+      (d) => d.userId === userId && Date.now() - d.updatedAt < lifetime,
+    ).length;
+  } finally {
+    db.close();
+  }
+}
 function database() {
   return new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open("uay-learning-drafts", 1);

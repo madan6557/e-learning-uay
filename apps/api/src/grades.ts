@@ -458,79 +458,128 @@ export function registerGrades(app: Express) {
           }),
         ),
     );
-  app.post("/api/v1/course-classes/:id/manual-grades", async (req, res) =>
-    res.json(
-      await mutate(req, async (tx) => {
-        const cls = await classAccess(
-          tx,
-          req.context.user,
-          String(req.params.id),
-          true,
-        );
-        const data = z
-          .object({
+  app.post(
+    [
+      "/api/v1/course-classes/:id/manual-grades",
+      "/api/v1/course-classes/:id/manual-grades/batch",
+    ],
+    async (req, res) =>
+      res.json(
+        await mutate(req, async (tx) => {
+          const cls = await classAccess(
+            tx,
+            req.context.user,
+            String(req.params.id),
+            true,
+          );
+          const item = z.object({
             userId: z.string().uuid(),
             categoryId: z.string().uuid(),
             score: z.number().min(0).max(100),
             reason: z.string().trim().min(5).max(2000).optional(),
-          })
-          .parse(req.body);
-        ensure(
-          await tx.enrollment.findFirst({
-            where: { classId: cls.id, userId: data.userId, isActive: true },
-          }),
-          400,
-          "INVALID_STUDENT",
-        );
-        const category = await tx.gradeCategory.findUnique({
-          where: { id: data.categoryId },
-        });
-        ensure(
-          category &&
-            category.classId === cls.id &&
-            category.kind === "ASSESSMENT",
-          400,
-          "INVALID_CATEGORY",
-        );
-        const where = {
-          classId_userId_categoryId: {
-            classId: cls.id,
-            userId: data.userId,
-            categoryId: data.categoryId,
-          },
-        };
-        const before = await tx.manualGradeRecord.findUnique({ where });
-        if (before) ensure(data.reason, 400, "CORRECTION_REASON_REQUIRED");
-        const after = await tx.manualGradeRecord.upsert({
-          where,
-          create: {
-            classId: cls.id,
-            userId: data.userId,
-            categoryId: data.categoryId,
-            score: data.score,
-          },
-          update: { score: data.score },
-        });
-        await audit(
-          tx,
-          req.context,
-          "MANUAL_GRADE",
-          "MANUAL_GRADE",
-          after.id,
-          cls.id,
-          before,
-          after,
-          data.reason,
-        );
-        await refreshPublishedFinal(
-          tx,
-          req.context,
-          cls.id,
-          data.userId,
-          data.reason,
-        );
-        return after;
-      }),
-    ),
+          });
+          const batch = req.path.endsWith("/batch");
+          const data = z
+            .object({
+              changes: z.array(item).min(1).max(2000),
+              reason: z.string().trim().min(5).max(2000).optional(),
+            })
+            .parse(batch ? req.body : { changes: [req.body] });
+          ensure(
+            new Set(data.changes.map((c) => c.userId + ":" + c.categoryId))
+              .size === data.changes.length,
+            400,
+            "DUPLICATE_GRADE",
+          );
+          const prepared = [];
+          const errors: any[] = [];
+          for (const [index, change] of data.changes.entries()) {
+            const category = await tx.gradeCategory.findUnique({
+              where: { id: change.categoryId },
+            });
+            const enrolled = await tx.enrollment.findFirst({
+              where: { classId: cls.id, userId: change.userId, isActive: true },
+            });
+            const where = {
+              classId_userId_categoryId: {
+                classId: cls.id,
+                userId: change.userId,
+                categoryId: change.categoryId,
+              },
+            };
+            const before = await tx.manualGradeRecord.findUnique({ where });
+            const final = await tx.finalGradeRecord.findUnique({
+              where: {
+                classId_userId: { classId: cls.id, userId: change.userId },
+              },
+            });
+            const reason = change.reason ?? data.reason;
+            const code = !enrolled
+              ? "INVALID_STUDENT"
+              : !category ||
+                  category.classId !== cls.id ||
+                  category.kind !== "ASSESSMENT"
+                ? "INVALID_CATEGORY"
+                : final?.isLocked && !final.publishedAt
+                  ? "GRADEBOOK_LOCKED"
+                  : (before || final?.publishedAt) && !reason
+                    ? "CORRECTION_REASON_REQUIRED"
+                    : null;
+            if (code)
+              errors.push({
+                index,
+                userId: change.userId,
+                categoryId: change.categoryId,
+                code,
+              });
+            prepared.push({ change, where, before, reason });
+          }
+          ensure(!errors.length, 400, errors[0]?.code ?? "VALIDATION_ERROR", {
+            rows: errors,
+          });
+          const results = [];
+          for (const { change, where, before, reason } of prepared) {
+            const after = await tx.manualGradeRecord.upsert({
+              where,
+              create: {
+                classId: cls.id,
+                userId: change.userId,
+                categoryId: change.categoryId,
+                score: change.score,
+              },
+              update: { score: change.score },
+            });
+            await audit(
+              tx,
+              req.context,
+              "MANUAL_GRADE",
+              "MANUAL_GRADE",
+              after.id,
+              cls.id,
+              before,
+              after,
+              reason,
+            );
+            results.push(after);
+          }
+          // Refresh each published total once, after every category has been written.
+          for (const userId of new Set(data.changes.map((c) => c.userId))) {
+            const reason =
+              data.reason ??
+              prepared.find((p) => p.change.userId === userId && p.reason)
+                ?.reason;
+            await refreshPublishedFinal(
+              tx,
+              req.context,
+              cls.id,
+              userId,
+              reason,
+            );
+          }
+          return batch
+            ? { count: results.length, changes: results }
+            : results[0];
+        }),
+      ),
   );
 }

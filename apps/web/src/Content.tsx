@@ -31,7 +31,7 @@ import {
   isoInput,
   uploadFile,
 } from "./lib";
-import { saveDraft, getDraft, removeDraft } from "./drafts";
+
 import "katex/dist/katex.min.css";
 import "highlight.js/styles/github-dark.css";
 
@@ -192,7 +192,7 @@ export function BlockEditor({
                 type="button"
                 draggable
                 onDragStart={() => setDrag(index)}
-                aria-label={t.moveUp}
+                aria-label="Seret untuk memindahkan blok"
               >
                 <GripVertical size={16} />
               </button>
@@ -289,14 +289,15 @@ export function BlockEditor({
                 )}
                 <div className="inline-rich-toolbar">
                   {[
-                    ["B", "strong"],
-                    ["I", "em"],
-                    ["U", "u"],
-                    ["</>", "code"],
-                  ].map(([label, tag]) => (
+                    ["B", "strong", "Tebal"],
+                    ["I", "em", "Miring"],
+                    ["U", "u", "Garis bawah"],
+                    ["</>", "code", "Kode inline"],
+                  ].map(([label, tag, description]) => (
                     <button
                       type="button"
                       key={tag}
+                      aria-label={description}
                       onClick={() => {
                         const el = document.getElementById(
                           `block-${block.id}`,
@@ -534,39 +535,15 @@ export function ResourceEditor({
     availableFrom: resource?.availableFrom ?? null,
     availableUntil: resource?.availableUntil ?? null,
   });
-  const [recovery, setRecovery] = useState<any>(null),
-    [saved, setSaved] = useState<number | null>(null),
-    [draftError, setDraftError] = useState<Error | null>(null);
-  const touched = useRef(false),
-    savedServer = useRef(false),
-    key = resource?.id ?? `new-resource:${sectionId}`;
-  const change = (value: any) => {
-    touched.current = true;
-    setDraft(value);
-  };
+  const change = setDraft;
   const payload = (data: any) =>
     change({ ...draft, dynamicPayload: { ...draft.dynamicPayload, ...data } });
-  useEffect(() => {
-    getDraft(user.id, key)
-      .then((d) => {
-        if (d && d.updatedAt > Date.parse(resource?.updatedAt ?? "1970-01-01"))
-          setRecovery(d);
-      })
-      .catch(() => setDraftError(new Error(t.draftStorageError)));
-  }, []);
-  useEffect(() => {
-    if (!touched.current) return;
-    const timer = setTimeout(() => {
-      if (!savedServer.current)
-        saveDraft(user.id, key, draft)
-          .then(() => setSaved(Date.now()))
-          .catch(() => setDraftError(new Error(t.draftStorageError)));
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, [draft]);
   return (
     <Modal title={resource ? t.edit : t.newResource} onClose={onClose} wide>
       <Form
+        draftKey={`resource:${resource?.id ?? sectionId}`}
+        draftValue={draft}
+        onRestoreDraft={setDraft}
         onCancel={onClose}
         onSubmit={async () => {
           await api(
@@ -576,33 +553,9 @@ export function ResourceEditor({
             resource ? "PATCH" : "POST",
             draft,
           );
-          savedServer.current = true;
-          await removeDraft(user.id, key);
           onSaved();
         }}
       >
-        {recovery && (
-          <div className="recovery-banner">
-            {t.draftFound} {date(new Date(recovery.updatedAt))}
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => {
-                change(recovery.value);
-                setRecovery(null);
-              }}
-            >
-              {t.restoreDraft}
-            </button>
-            <button
-              type="button"
-              className="text-button"
-              onClick={() => setRecovery(null)}
-            >
-              {t.discardDraft}
-            </button>
-          </div>
-        )}
         <Field label={t.title}>
           <input
             required
@@ -735,12 +688,6 @@ export function ResourceEditor({
           />
           {t.visible}
         </label>
-        {saved && (
-          <small>
-            {t.localSaved} · {date(new Date(saved))}
-          </small>
-        )}
-        {draftError && <Notice error={draftError} />}
       </Form>
     </Modal>
   );

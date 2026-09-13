@@ -653,125 +653,161 @@ export function registerAssessment(app: Express) {
       }),
     ),
   );
-  app.post("/api/v1/attempts/:id/grades", async (req, res) =>
-    res.json(
-      await mutate(req, async (tx) => {
-        const attempt = await tx.quizAttempt.findUnique({
-          where: { id: String(req.params.id) },
-          include: { quiz: { include: { section: true } } },
-        });
-        ensure(attempt, 404, "NOT_FOUND");
-        const cls = await itemAccess(
-          tx,
-          req.context.user,
-          attempt.quiz.sectionId,
-          true,
-        );
-        ensure(attempt.status !== "IN_PROGRESS", 409, "ATTEMPT_NOT_SUBMITTED");
-        const data = z
-          .object({
-            questionId: z.string().uuid(),
-            score: z.number().nonnegative(),
-            feedback: z.string().max(20000).default(""),
-            reason: z.string().trim().max(2000).optional(),
-          })
-          .parse(req.body);
-        const question = (
-          attempt.questionSnapshot as unknown as QuestionData[]
-        ).find((q) => q.id === data.questionId);
-        ensure(
-          question &&
-            ["ESSAY", "FILE_UPLOAD"].includes(question.type) &&
-            data.score <= question.points,
-          400,
-          "INVALID_SCORE",
-        );
-        const before = await tx.quizAnswerGrade.findUnique({
-          where: {
-            attemptId_questionId: {
-              attemptId: attempt.id,
-              questionId: data.questionId,
+  app.post(
+    ["/api/v1/attempts/:id/grades", "/api/v1/attempts/:id/grades/batch"],
+    async (req, res) =>
+      res.json(
+        await mutate(req, async (tx) => {
+          const attempt = await tx.quizAttempt.findUnique({
+            where: { id: String(req.params.id) },
+            include: {
+              quiz: { include: { section: true } },
+              answerGrades: true,
             },
-          },
-        });
-        if (before || attempt.publishedAt)
-          ensure(
-            data.reason && data.reason.length >= 5,
-            400,
-            "CORRECTION_REASON_REQUIRED",
-          );
-        const grade = await tx.quizAnswerGrade.upsert({
-          where: {
-            attemptId_questionId: {
-              attemptId: attempt.id,
-              questionId: data.questionId,
-            },
-          },
-          create: {
-            attemptId: attempt.id,
-            questionId: data.questionId,
-            graderId: req.context.user.id,
-            score: data.score,
-            feedback: data.feedback,
-          },
-          update: {
-            score: data.score,
-            feedback: data.feedback,
-            graderId: req.context.user.id,
-            gradedAt: new Date(),
-          },
-        });
-        const grades = await tx.quizAnswerGrade.findMany({
-          where: { attemptId: attempt.id },
-        });
-        const questions = attempt.questionSnapshot as unknown as QuestionData[];
-        const complete = questions
-          .filter((q) => ["ESSAY", "FILE_UPLOAD"].includes(q.type))
-          .every((q) => grades.some((g) => g.questionId === q.id));
-        const score = round(
-          ((attempt.objectiveScore + grades.reduce((s, g) => s + g.score, 0)) /
-            questions.reduce((s, q) => s + q.points, 0)) *
-            100,
-        );
-        const after = await tx.quizAttempt.update({
-          where: { id: attempt.id },
-          data: {
-            score,
-            status: complete ? "GRADED_COMPLETE" : "NEEDS_GRADING",
-            isGraded: complete,
-            isPassed: complete && score >= attempt.quiz.passingScore,
-          },
-        });
-        await audit(
-          tx,
-          req.context,
-          "GRADE_ANSWER",
-          "ANSWER_GRADE",
-          grade.id,
-          cls.id,
-          before,
-          grade,
-          data.reason,
-        );
-        if (attempt.publishedAt)
-          await notify(
+          });
+          ensure(attempt, 404, "NOT_FOUND");
+          const cls = await itemAccess(
             tx,
-            cls.id,
-            "GRADE_CORRECTED",
-            attempt.quiz.title,
-            `quiz-correction:${grade.id}:${grade.gradedAt.toISOString()}`,
-            attempt.userId,
+            req.context.user,
+            attempt.quiz.sectionId,
+            true,
           );
-        await refreshPublishedFinal(
-          tx,
-          req.context,
-          cls.id,
-          attempt.userId,
-          data.reason,
-        );
-        return after;
-      }),
-    ),
+          ensure(
+            attempt.status !== "IN_PROGRESS",
+            409,
+            "ATTEMPT_NOT_SUBMITTED",
+          );
+          const final = await tx.finalGradeRecord.findUnique({
+            where: {
+              classId_userId: { classId: cls.id, userId: attempt.userId },
+            },
+          });
+          ensure(
+            !final?.isLocked || final.publishedAt,
+            423,
+            "GRADEBOOK_LOCKED",
+          );
+          const batch = req.path.endsWith("/batch");
+          const data = z
+            .object({
+              grades: z
+                .array(
+                  z.object({
+                    questionId: z.string().uuid(),
+                    score: z.number().nonnegative(),
+                    feedback: z.string().max(20000).default(""),
+                    reason: z.string().trim().min(5).max(2000).optional(),
+                  }),
+                )
+                .min(1)
+                .max(500),
+              reason: z.string().trim().min(5).max(2000).optional(),
+            })
+            .parse(batch ? req.body : { grades: [req.body] });
+          ensure(
+            new Set(data.grades.map((g) => g.questionId)).size ===
+              data.grades.length,
+            400,
+            "DUPLICATE_GRADE",
+          );
+          const questions =
+            attempt.questionSnapshot as unknown as QuestionData[];
+          const errors: any[] = [];
+          const prepared = data.grades.map((g, index) => {
+            const q = questions.find((q) => q.id === g.questionId);
+            const before = attempt.answerGrades.find(
+              (v) => v.questionId === g.questionId,
+            );
+            const reason = g.reason ?? data.reason;
+            const code =
+              !q ||
+              !["ESSAY", "FILE_UPLOAD"].includes(q.type) ||
+              g.score > q.points
+                ? "INVALID_SCORE"
+                : (before || attempt.publishedAt || final?.publishedAt) &&
+                    !reason
+                  ? "CORRECTION_REASON_REQUIRED"
+                  : null;
+            if (code) errors.push({ index, questionId: g.questionId, code });
+            return { g, before, reason };
+          });
+          ensure(!errors.length, 400, errors[0]?.code ?? "VALIDATION_ERROR", {
+            rows: errors,
+          });
+          for (const { g, before, reason } of prepared) {
+            const grade = await tx.quizAnswerGrade.upsert({
+              where: {
+                attemptId_questionId: {
+                  attemptId: attempt.id,
+                  questionId: g.questionId,
+                },
+              },
+              create: {
+                attemptId: attempt.id,
+                questionId: g.questionId,
+                graderId: req.context.user.id,
+                score: g.score,
+                feedback: g.feedback,
+              },
+              update: {
+                score: g.score,
+                feedback: g.feedback,
+                graderId: req.context.user.id,
+                gradedAt: new Date(),
+              },
+            });
+            await audit(
+              tx,
+              req.context,
+              "GRADE_ANSWER",
+              "ANSWER_GRADE",
+              grade.id,
+              cls.id,
+              before,
+              grade,
+              reason,
+            );
+          }
+          const grades = await tx.quizAnswerGrade.findMany({
+            where: { attemptId: attempt.id },
+          });
+          const complete = questions
+            .filter((q) => ["ESSAY", "FILE_UPLOAD"].includes(q.type))
+            .every((q) => grades.some((g) => g.questionId === q.id));
+          const score = round(
+            ((attempt.objectiveScore +
+              grades.reduce((s, g) => s + g.score, 0)) /
+              questions.reduce((s, q) => s + q.points, 0)) *
+              100,
+          );
+          const after = await tx.quizAttempt.update({
+            where: { id: attempt.id },
+            data: {
+              score,
+              status: complete ? "GRADED_COMPLETE" : "NEEDS_GRADING",
+              isGraded: complete,
+              isPassed: complete && score >= attempt.quiz.passingScore,
+            },
+          });
+          if (attempt.publishedAt)
+            await notify(
+              tx,
+              cls.id,
+              "GRADE_CORRECTED",
+              attempt.quiz.title,
+              "quiz-correction:" + attempt.id + ":" + req.context.requestId,
+              attempt.userId,
+            );
+          await refreshPublishedFinal(
+            tx,
+            req.context,
+            cls.id,
+            attempt.userId,
+            data.reason ?? prepared.find((p) => p.reason)?.reason,
+          );
+          return batch ? { count: data.grades.length, attempt: after } : after;
+        }),
+      ),
   );
   app.post("/api/v1/quizzes/:id/publish-grades", async (req, res) =>
     res.json(

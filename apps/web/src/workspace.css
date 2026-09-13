@@ -699,7 +699,7 @@ fieldset {
   margin: 0;
   min-width: 0;
 }
-input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+input:where(:not([type="checkbox"]):not([type="radio"]):not([type="file"])),
 select,
 textarea {
   display: block;

@@ -1,41 +1,372 @@
+import { ConfirmationHost } from "./confirm";
 import { createRoot } from "react-dom/client";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import {
   BookOpen,
   LayoutDashboard,
   GraduationCap,
   Bell,
-  ChevronRight,
   CalendarDays,
   CircleHelp,
   LogOut,
-  ArrowUpRight,
+  ArrowRight,
   LibraryBig,
+  Menu,
+  X,
+  ShieldCheck,
+  ClipboardCheck,
 } from "lucide-react";
-import { t, api, useApi, Loading, Notice, navigate, Action } from "./lib";
+import {
+  t,
+  api,
+  useApi,
+  Loading,
+  Notice,
+  navigate,
+  Action,
+  Empty,
+} from "./lib";
 import { Dashboard, Catalog, Profile } from "./pages";
+import { Avatar, Breadcrumbs, IconButton, UserChip } from "./ui";
+import {
+  DraftUserContext,
+  confirmUnsaved,
+  useNavigationGuard,
+} from "./useLocalDraft";
 const ClassPage = lazy(() =>
-  import("./ClassPage").then((module) => ({ default: module.ClassPage })),
+  import("./ClassPage").then((m) => ({ default: m.ClassPage })),
 );
 const QuizPage = lazy(() =>
-  import("./Assessment").then((module) => ({ default: module.QuizPage })),
+  import("./Assessment").then((m) => ({ default: m.QuizPage })),
 );
 const AssignmentPage = lazy(() =>
-  import("./Assessment").then((module) => ({ default: module.AssignmentPage })),
+  import("./Assessment").then((m) => ({ default: m.AssignmentPage })),
 );
 import "./styles.css";
 import "./workspace.css";
-
+import "./experience.css";
+function Brand({ home = "#/" }: { home?: string }) {
+  return (
+    <a className="brand" href={home} aria-label="UAY E-Learning beranda">
+      <span className="brand-mark">
+        <GraduationCap size={27} />
+      </span>
+      <span>
+        UAY <small>E-LEARNING</small>
+      </span>
+    </a>
+  );
+}
+function PublicShell({ children }: { children: ReactNode }) {
+  return (
+    <div className="public-shell">
+      <a className="skip-link" href="#main-content">
+        Lewati ke konten
+      </a>
+      <header className="public-header">
+        <Brand />
+        <nav aria-label="Menu publik">
+          <a href="/api/v1/auth/login" className="secondary">
+            Masuk dengan SSO UAY <ArrowRight size={16} />
+          </a>
+        </nav>
+      </header>
+      <main id="main-content">{children}</main>
+      <footer>
+        <span>© 2026 {t.university}</span>
+        <span>Ruang belajar, tumbuh, dan berkolaborasi.</span>
+      </footer>
+    </div>
+  );
+}
+function Landing({ config, error }: { config: any; error?: Error | null }) {
+  const users = useApi<any[]>(
+    config?.demoEnabled ? "/auth/development-users" : null,
+  );
+  return (
+    <PublicShell>
+      {error && <Notice error={error} />}
+      <section className="landing-hero">
+        <div>
+          <span className="eyebrow">UNIVERSITAS ACHMAD YANI BANJARMASIN</span>
+          <h1>
+            Belajar terarah.
+            <br />
+            Berkembang bersama.
+          </h1>
+          <p>
+            Akses materi perkuliahan, kerjakan tugas, dan ikuti perkembangan
+            belajar dalam satu ruang akademik.
+          </p>
+          <a className="button" href="/api/v1/auth/login">
+            Masuk dengan SSO UAY <ArrowRight size={18} />
+          </a>
+          <small className="landing-caption">
+            <ShieldCheck size={16} /> Gunakan akun akademik UAY Anda.
+          </small>
+        </div>
+        <div className="landing-illustration" aria-hidden="true">
+          <div className="illustration-circle">
+            <GraduationCap size={92} strokeWidth={1.3} />
+          </div>
+          <div className="illustration-card">
+            <BookOpen />
+            <span>
+              Materi perkuliahan<small>Terstruktur dan mudah diakses</small>
+            </span>
+          </div>
+          <div className="illustration-card">
+            <ClipboardCheck />
+            <span>
+              Tugas & evaluasi<small>Perkembangan belajar yang jelas</small>
+            </span>
+          </div>
+        </div>
+      </section>
+      <section className="landing-features" aria-label="Fitur pembelajaran">
+        {[
+          [
+            BookOpen,
+            "Ruang kelas digital",
+            "Materi, diskusi, dan pengumuman tersusun per kelas.",
+          ],
+          [
+            ClipboardCheck,
+            "Pembelajaran terarah",
+            "Jadwal, tugas, dan kuis membantu Anda tetap pada jalur.",
+          ],
+          [
+            GraduationCap,
+            "Perkembangan yang terlihat",
+            "Pantau hasil belajar dan umpan balik dari pengajar.",
+          ],
+        ].map(([Icon, title, text]: any) => (
+          <article key={title}>
+            <Icon size={24} />
+            <h2>{title}</h2>
+            <p>{text}</p>
+          </article>
+        ))}
+      </section>
+      {config?.demoEnabled && (
+        <section className="demo-section">
+          <div className="section-heading">
+            <div>
+              <span className="environment-badge">LINGKUNGAN UJI</span>
+              <h2>Mode uji cepat</h2>
+              <p>Pilih akun untuk mencoba pengalaman setiap peran.</p>
+            </div>
+          </div>
+          {users.loading ? (
+            <Loading />
+          ) : users.error ? (
+            <Notice error={users.error} />
+          ) : (
+            <div className="demo-grid">
+              {users.data?.map((u) => (
+                <article className="demo-card" key={u.id}>
+                  <Avatar name={u.fullName} />
+                  <div>
+                    <strong>{u.fullName}</strong>
+                    <small>
+                      {(t.roles as any)[u.role]} · {u.studentStaffNumber}
+                    </small>
+                  </div>
+                  <a
+                    className="secondary"
+                    href={`/api/v1/auth/login?demoUserId=${encodeURIComponent(u.id)}`}
+                    aria-label={`Masuk sebagai ${u.fullName}`}
+                  >
+                    Gunakan akun <ArrowRight size={15} />
+                  </a>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+    </PublicShell>
+  );
+}
+function AuthShell({
+  user,
+  pathname,
+  demo,
+  logout,
+  children,
+}: {
+  user: any;
+  pathname: string;
+  demo: boolean;
+  logout: () => Promise<void>;
+  children: ReactNode;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false),
+    [mobile, setMobile] = useState(
+      () => matchMedia("(max-width:760px)").matches,
+    );
+  useEffect(() => {
+    const media = matchMedia("(max-width:760px)");
+    const update = () => { setMobile(media.matches); if (!media.matches) setMenuOpen(false); };
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+  useEffect(() => {
+    if (!menuOpen) return;
+    document.getElementById("close-mobile-menu")?.focus();
+    const escape = (e: KeyboardEvent) => {
+      if (e.key === "Tab") {
+        const items = [...document.querySelectorAll<HTMLElement>("#academic-navigation a, #academic-navigation button")].filter(el => el.offsetParent !== null);
+        const first = items[0], last = items.at(-1);
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
+      }
+      if (e.key === "Escape") {
+        setMenuOpen(false);
+        setTimeout(
+          () => document.getElementById("open-mobile-menu")?.focus(),
+          0,
+        );
+      }
+    };
+    document.addEventListener("keydown", escape);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", escape);
+      document.body.style.overflow = "";
+    };
+  }, [menuOpen]);
+  useEffect(() => setMenuOpen(false), [pathname]);
+  const links = [
+    ["/dashboard", LayoutDashboard, t.dashboard],
+    ["/classes", BookOpen, t.myClasses],
+    ["/agenda", CalendarDays, t.agenda],
+    ["/grades", GraduationCap, t.grades],
+    ["/notifications", Bell, t.notifications],
+    ...(["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(user.role)
+      ? [["/catalog", LibraryBig, t.catalog]]
+      : []),
+    ["/profile", ShieldCheck, t.profile],
+    ["/help", CircleHelp, t.help],
+  ];
+  const current = String(
+    links.find(
+      ([href]) => pathname === href || pathname.startsWith(`${href}/`),
+    )?.[2] ??
+      (pathname.startsWith("/quizzes")
+        ? "Kuis"
+        : pathname.startsWith("/assignments")
+          ? "Tugas"
+          : t.learningSpace),
+  );
+  return (
+    <div className={`app-shell ${menuOpen ? "menu-open" : ""}`}>
+      <a className="skip-link" href="#main-content">
+        Lewati ke konten
+      </a>
+      {menuOpen && (
+        <button
+          className="nav-scrim"
+          onClick={() => setMenuOpen(false)}
+          aria-label="Tutup navigasi"
+        />
+      )}
+      <aside
+        className="sidebar"
+        id="academic-navigation"
+        inert={mobile && !menuOpen}
+      >
+        <div className="sidebar-brand">
+          <Brand home="#/dashboard" />
+          <IconButton
+            id="close-mobile-menu"
+            label="Tutup menu"
+            className="mobile-menu"
+            onClick={() => setMenuOpen(false)}
+          >
+            <X size={20} />
+          </IconButton>
+        </div>
+        <p className="nav-caption">RUANG AKADEMIK</p>
+        <nav aria-label="Navigasi utama">
+          {links.map(([href, Icon, label]: any) => {
+            const active = pathname === href || pathname.startsWith(`${href}/`);
+            return (
+              <a
+                key={href}
+                href={`#${href}`}
+                className={active ? "active" : ""}
+                aria-current={active ? "page" : undefined}
+              >
+                <Icon size={19} />
+                {label}
+              </a>
+            );
+          })}
+        </nav>
+        <div className="sidebar-bottom">
+          <ShieldCheck size={18} />
+          <span>
+            Akun akademik UAY
+            <small className="block">Terhubung melalui SSO</small>
+          </span>
+        </div>
+      </aside>
+      <div className="workspace" inert={mobile && menuOpen}>
+        <header className="topbar">
+          <div className="topbar-left">
+            <IconButton
+              id="open-mobile-menu"
+              label="Buka menu"
+              className="mobile-menu"
+              aria-expanded={menuOpen}
+              aria-controls="academic-navigation"
+              onClick={() => setMenuOpen(true)}
+            >
+              <Menu size={22} />
+            </IconButton>
+            <Breadcrumbs
+              items={[
+                { label: "Beranda", href: "#/dashboard" },
+                { label: current },
+              ]}
+            />
+          </div>
+          <div className="topbar-right">
+            {demo && <span className="environment-badge">Mode uji</span>}
+            <UserChip user={user} role={(t.roles as any)[user.role]} />
+            <Action
+              label="Keluar"
+              className="text-button logout-button"
+              run={logout}
+            >
+              <LogOut size={17} />
+              <span>Keluar</span>
+            </Action>
+          </div>
+        </header>
+        <main id="main-content">
+          <Suspense fallback={<Loading />}>{children}</Suspense>
+        </main>
+        <footer>
+          <span>© 2026 {t.university}</span>
+          <a href="#/help">Bantuan pembelajaran</a>
+        </footer>
+      </div>
+    </div>
+  );
+}
 function App() {
   const config = useApi("/auth/config"),
     identity = useApi("/me");
   const user = identity.data;
   const [route, setRoute] = useState(location.hash.slice(1) || "/");
+  useNavigationGuard();
   useEffect(() => {
     const change = () => setRoute(location.hash.slice(1) || "/");
     const expired = () => {
       identity.setData(null);
-      change();
+      navigate("/");
     };
     window.addEventListener("hashchange", change);
     window.addEventListener("session-expired", expired);
@@ -44,42 +375,46 @@ function App() {
       window.removeEventListener("session-expired", expired);
     };
   }, []);
-  const [pathname, query = ""] = route.split("?");
-  const params = new URLSearchParams(query);
-  const [, section, id] = pathname.split("/");
-  const links = [
-    ["/", LayoutDashboard, t.dashboard],
-    ["/classes", BookOpen, t.myClasses],
-    ["/agenda", CalendarDays, t.agenda],
-    ["/grades", GraduationCap, t.grades],
-    ["/notifications", Bell, t.notifications],
-    ...(user && ["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(user.role)
-      ? [["/catalog", LibraryBig, t.catalog]]
-      : []),
-  ] as const;
-  const current = String(
-    links.find(([href]) => pathname === href)?.[2] ?? t.learningSpace,
-  );
-  let page;
-  if (identity.loading) page = <Loading />;
-  else if (!user)
-    page = (
-      <Login
-        mode={config.data?.mode}
-        onLogin={() => {
-          identity.reload();
-          navigate("/");
-        }}
+  useEffect(() => {
+    if (user && ["/", "/login"].includes(route)) navigate("/dashboard");
+  }, [user, route]);
+  const logout = async () => {
+    if (!(await confirmUnsaved())) return;
+    const result = await api("/auth/logout", "POST", {});
+    identity.setData(null);
+    if (
+      result.logoutUrl &&
+      new URL(result.logoutUrl).origin !== location.origin
+    )
+      location.assign(result.logoutUrl);
+    else navigate("/");
+  };
+  if (identity.loading && !user)
+    return (
+      <PublicShell>
+        <Loading />
+      </PublicShell>
+    );
+  if (!user)
+    return (
+      <Landing
+        config={config.data}
         error={
-          identity.error &&
-          identity.error.message !== t.errors.LOGIN_REQUIRED &&
-          identity.error.message !== t.errors.SESSION_EXPIRED
+          config.error ??
+          (identity.error &&
+          ![t.errors.LOGIN_REQUIRED, t.errors.SESSION_EXPIRED].includes(
+            identity.error.message,
+          )
             ? identity.error
-            : null
+            : null)
         }
       />
     );
-  else if (section === "classes" && id)
+  const [pathname, query = ""] = route.split("?");
+  const params = new URLSearchParams(query);
+  const [, section, id] = pathname.split("/");
+  let page;
+  if (section === "classes" && id)
     page = (
       <ClassPage
         key={id}
@@ -101,186 +436,69 @@ function App() {
       <>
         <div className="page-heading">
           <h1>{t.help}</h1>
+          <p>Panduan singkat untuk ruang pembelajaran Anda.</p>
         </div>
-        <div className="card">
-          <p>{t.supportText}</p>
-          <p>{t.timeZone}</p>
+        <div className="help-grid">
+          {[
+            [
+              "Akun & akses",
+              "Data akun mengikuti SSO UAY. Buka Profil untuk melihat identitas dan mengakses pengelolaan akun.",
+            ],
+            [
+              "Kelas & pembelajaran",
+              "Buka menu Kelas untuk melihat materi, tugas, kuis, dan pengumuman dari pengajar.",
+            ],
+            [
+              "Draft & penyimpanan",
+              "Perubahan editor tersimpan otomatis di perangkat. Gunakan Simpan semua perubahan untuk mengirimnya ke server.",
+            ],
+            ["Jadwal & bantuan", t.supportText + " " + t.timeZone],
+          ].map(([title, text]) => (
+            <article className="card" key={title}>
+              <h2>{title}</h2>
+              <p>{text}</p>
+            </article>
+          ))}
         </div>
       </>
     );
-  else
+  else if (
+    ["", "dashboard", "classes", "agenda", "grades", "notifications"].includes(
+      section,
+    )
+  )
     page = (
       <Dashboard key={pathname} page={section || "dashboard"} user={user} />
     );
+  else
+    page = (
+      <Empty>
+        <h1>Halaman tidak ditemukan</h1>
+        <p>Gunakan navigasi untuk membuka ruang pembelajaran.</p>
+        <a className="button" href="#/dashboard">
+          Kembali ke beranda
+        </a>
+      </Empty>
+    );
   return (
-    <div className="app-shell">
-      <a className="skip-link" href="#main-content">
-        {t.content}
-      </a>
-      <aside className="sidebar">
-        <a className="brand" href="#/">
-          <span className="brand-mark">
-            <GraduationCap size={28} />
-          </span>
-          <span>
-            UAY <small>E-LEARNING</small>
-          </span>
-        </a>
-        <p className="nav-caption">{t.academicSpace.toUpperCase()}</p>
-        <nav aria-label={t.menu}>
-          {links.map(([href, Icon, label]: any) => (
-            <a
-              key={href}
-              className={
-                pathname === href ||
-                (href === "/classes" && id && section === "classes")
-                  ? "active"
-                  : ""
-              }
-              href={`#${href}`}
-            >
-              <Icon size={19} />
-              {label}
-            </a>
-          ))}
-        </nav>
-        <a href="#/help" className="sidebar-bottom">
-          <CircleHelp size={18} />
-          <span>
-            {t.help}
-            <br />
-            <small>{t.university}</small>
-          </span>
-        </a>
-      </aside>
-      <div className="workspace">
-        <header className="topbar">
-          <span>
-            {t.learningSpace}
-            <ChevronRight size={14} />
-            {current}
-          </span>
-          <div className="topbar-right">
-            <span className="term">{t.semester}</span>
-            {user && (
-              <a href="#/profile" className="user-chip">
-                <span className="avatar">
-                  {user.fullName
-                    .split(" ")
-                    .slice(0, 2)
-                    .map((s: string) => s[0])
-                    .join("")}
-                </span>
-                <span>
-                  {user.fullName.split(",")[0]}
-                  <small>{(t.roles as any)[user.role]}</small>
-                </span>
-              </a>
-            )}
-          </div>
-        </header>
-        {config.data?.mode === "development" && (
-          <div className="environment-tag">{t.development}</div>
-        )}
-        <main id="main-content">
-          <Suspense fallback={<Loading />}>{page}</Suspense>
-        </main>
-        <footer>
-          © 2026 {t.university}
-          <span>{t.timeZone}</span>
-          {user && (
-            <Action
-              className="text-button"
-              run={async () => {
-                const result = await api("/auth/logout", "POST", {});
-                identity.setData(null);
-                if (
-                  result.logoutUrl &&
-                  new URL(result.logoutUrl).origin !== location.origin
-                )
-                  location.assign(result.logoutUrl);
-                else navigate("/");
-              }}
-            >
-              <LogOut size={15} />
-              {t.logout}
-            </Action>
-          )}
-        </footer>
-      </div>
-    </div>
+    <DraftUserContext.Provider value={user.id}>
+      <AuthShell
+        user={user}
+        pathname={pathname}
+        demo={!!config.data?.demoEnabled}
+        logout={logout}
+      >
+        {page}
+      </AuthShell>
+    </DraftUserContext.Provider>
   );
 }
-function Login({
-  mode,
-  onLogin,
-  error,
-}: {
-  mode?: string;
-  onLogin: () => void;
-  error: Error | null;
-}) {
-  const users = useApi<any[]>(
-    mode === "development" ? "/auth/development-users" : null,
-  );
-  return (
-    <>
-      <div className="page-heading">
-        <div className="eyebrow">{t.eyebrow}</div>
-        <h1>{t.welcomeTitle}</h1>
-        <p>{t.welcomeDescription}</p>
-      </div>
-      {error && <Notice error={error} />}
-      <section className="welcome-panel">
-        <div>
-          <span className="pill">{t.semester}</span>
-          <h2>{t.welcomePanel}</h2>
-          <p>{t.welcomeCopy}</p>
-          {mode !== "development" && (
-            <a className="button light" href="/api/v1/auth/login">
-              {t.loginSso}
-              <ArrowUpRight size={18} />
-            </a>
-          )}
-        </div>
-        <div className="welcome-emblem">
-          <GraduationCap size={100} strokeWidth={1} />
-          <span>{t.university}</span>
-        </div>
-      </section>
-      {mode === "development" && (
-        <>
-          <div className="section-heading">
-            <div>
-              <h2>{t.selectAccount}</h2>
-              <p>{t.demoDescription}</p>
-            </div>
-          </div>
-          <div className="login-grid">
-            {users.data?.map((u) => (
-              <article key={u.id} className="card login-card">
-                <span className="avatar">{u.fullName[0]}</span>
-                <h3>{u.fullName}</h3>
-                <p>{(t.roles as any)[u.role]}</p>
-                <small>{u.studentStaffNumber}</small>
-                <Action
-                  className="primary"
-                  run={async () => {
-                    await api("/auth/development-login", "POST", {
-                      userId: u.id,
-                    });
-                    onLogin();
-                  }}
-                >
-                  {t.login}
-                  <ArrowUpRight size={16} />
-                </Action>
-              </article>
-            ))}
-          </div>
-        </>
-      )}
-    </>
-  );
-}
-createRoot(document.getElementById("root")!).render(<App />);
+const hot = (import.meta as any).hot;
+const root = hot?.data.root ?? createRoot(document.getElementById("root")!);
+if (hot) hot.data.root = root;
+root.render(
+  <>
+    <ConfirmationHost />
+    <App />
+  </>,
+);

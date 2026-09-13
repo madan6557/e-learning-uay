@@ -1,3 +1,4 @@
+import { confirmAction } from "./confirm";
 import { useState } from "react";
 import {
   ArrowLeft,
@@ -123,6 +124,7 @@ export function ClassPage({
           <a
             key={value}
             className={tab === value ? "selected" : ""}
+            aria-current={tab === value ? "page" : undefined}
             href={`#/classes/${id}?tab=${value}`}
           >
             {label}
@@ -416,6 +418,7 @@ export function ClassPage({
           onClose={() => setModal(null)}
         >
           <Form
+            draftKey={`section:${modal.section?.id ?? "new"}`}
             onSubmit={async (f) => {
               await api(
                 modal.section
@@ -489,6 +492,7 @@ export function ClassPage({
       {modal?.kind === "announcement" && (
         <Modal title={t.newAnnouncement} onClose={() => setModal(null)}>
           <Form
+            draftKey="announcement:new"
             onSubmit={async (f) => {
               await api(`/course-classes/${id}/announcements`, "POST", {
                 title: textValue(f, "title"),
@@ -523,10 +527,14 @@ export function ClassPage({
       {modal?.kind === "settings" && (
         <Modal title={t.settings} onClose={() => setModal(null)}>
           <Form
+            draftKey="class-settings"
             onSubmit={async (f) => {
               const status = textValue(f, "status");
-              if (status === "ARCHIVED" && !window.confirm(t.confirmArchive))
-                return;
+              if (
+                status === "ARCHIVED" &&
+                !(await confirmAction(t.confirmArchive))
+              )
+                return false;
               await api(`/course-classes/${id}`, "PATCH", {
                 name: textValue(f, "name"),
                 academicYear: textValue(f, "academicYear"),
@@ -567,6 +575,7 @@ export function ClassPage({
         <Modal title={t.cloneClass} onClose={() => setModal(null)}>
           <p>{t.cloneDescription}</p>
           <Form
+            draftKey="clone-class"
             onSubmit={async (f) => {
               const result = await api(`/course-classes/${id}/clone`, "POST", {
                 name: textValue(f, "name"),
@@ -598,7 +607,8 @@ function Participants({
   const members = useApi<any[]>(`/course-classes/${classId}/participants`);
   const [modal, setModal] = useState(""),
     [query, setQuery] = useState(""),
-    [users, setUsers] = useState<any[]>([]);
+    [users, setUsers] = useState<any[]>([]),
+    [selected, setSelected] = useState<any[]>([]);
   return (
     <>
       <div className="section-heading">
@@ -641,7 +651,17 @@ function Participants({
                   <td>
                     {writable && (
                       <Action
+                        className={m.isActive ? "danger" : "secondary"}
                         run={async () => {
+                          if (
+                            m.isActive &&
+                            !(await confirmAction(
+                              "Nonaktifkan kepesertaan " +
+                                m.user.fullName +
+                                "?",
+                            ))
+                          )
+                            return;
                           await api(
                             `/course-classes/${classId}/participants`,
                             "POST",
@@ -673,44 +693,86 @@ function Participants({
       )}
       {modal === "add" && (
         <Modal title={t.enroll} onClose={() => setModal("")}>
-          <div className="inline-form">
-            <input
-              aria-label={t.searchUsers}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={t.searchUsers}
-            />
-            <Action
-              run={async () =>
-                setUsers(await api(`/users?q=${encodeURIComponent(query)}`))
-              }
-            >
-              {t.searchLabel}
-            </Action>
-          </div>
-          {users
-            .filter((u) => u.role === "STUDENT")
-            .map((u) => (
-              <div className="user-result" key={u.id}>
-                <span>
-                  {u.fullName}
-                  <small className="block">{u.studentStaffNumber}</small>
-                </span>
-                <Action
-                  run={async () => {
-                    await api(
-                      `/course-classes/${classId}/participants`,
-                      "POST",
-                      { userId: u.id },
-                    );
-                    members.reload();
-                    setModal("");
-                  }}
-                >
-                  {t.enroll}
-                </Action>
-              </div>
-            ))}
+          <Form
+            draftKey="participants"
+            submitDisabled={!selected.length}
+            draftValue={{ selected, users, query }}
+            onRestoreDraft={(v) => {
+              setSelected(v.selected);
+              setUsers(v.users);
+              setQuery(v.query);
+            }}
+            submitLabel={"Tambahkan peserta (" + selected.length + ")"}
+            onSubmit={async () => {
+              if (!selected.length)
+                throw new Error("Pilih setidaknya satu mahasiswa.");
+              await api(`/course-classes/${classId}/imports/commit`, "POST", {
+                kind: "ENROLLMENT",
+                rows: selected.map((u) => ({
+                  values: {
+                    studentStaffNumber: u.studentStaffNumber,
+                    email: u.email,
+                  },
+                  override: true,
+                })),
+              });
+              setSelected([]);
+              members.reload();
+              setModal("");
+            }}
+          >
+            <div className="inline-form">
+              <input
+                aria-label={t.searchUsers}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t.searchUsers}
+              />
+              <Action
+                run={async () =>
+                  setUsers(await api(`/users?q=${encodeURIComponent(query)}`))
+                }
+              >
+                {t.searchLabel}
+              </Action>
+            </div>
+            {users
+              .filter(
+                (u) =>
+                  u.role === "STUDENT" &&
+                  !members.data?.some((m) => m.userId === u.id && m.isActive),
+              )
+              .map((u) => (
+                <div className="user-result" key={u.id}>
+                  <span>
+                    {u.fullName}
+                    <small className="block">{u.studentStaffNumber}</small>
+                  </span>
+                  <label className="check-row">
+                    <input
+                      type="checkbox"
+                      aria-label={"Pilih " + u.fullName}
+                      checked={selected.some((v) => v.id === u.id)}
+                      onChange={(e) =>
+                        setSelected((v) =>
+                          e.target.checked
+                            ? [...v, u]
+                            : v.filter((x) => x.id !== u.id),
+                        )
+                      }
+                    />
+                    Pilih
+                  </label>
+                </div>
+              ))}
+            {!users.length && (
+              <p>
+                Cari mahasiswa melalui nama, nomor mahasiswa, atau email, lalu
+                pilih peserta yang akan ditambahkan.
+              </p>
+            )}
+            {selected.length > 0 && <p>{selected.length} mahasiswa dipilih.</p>}
+          </Form>
         </Modal>
       )}
     </>
@@ -809,6 +871,7 @@ function QuestionBanks({
       {modal?.kind === "bank" && (
         <Modal title={t.newBank} onClose={() => setModal(null)}>
           <Form
+            draftKey="bank:new"
             onSubmit={async (f) => {
               await api(`/course-classes/${classId}/question-banks`, "POST", {
                 title: textValue(f, "title"),
@@ -827,6 +890,9 @@ function QuestionBanks({
       {modal?.kind === "question" && (
         <Modal title={t.newQuestion} wide onClose={() => setModal(null)}>
           <Form
+            draftKey={`bank-question:${modal.bankId}`}
+            draftValue={question}
+            onRestoreDraft={setQuestion}
             onSubmit={async () => {
               await api(
                 `/course-classes/${classId}/question-banks/${modal.bankId}/questions`,
@@ -898,7 +964,7 @@ function Files({ classId, writable }: { classId: string; writable: boolean }) {
                         run={async () => {
                           if (
                             file.status === "READY" &&
-                            !window.confirm(t.confirmTrash)
+                            !(await confirmAction(t.confirmTrash))
                           )
                             return;
                           await api(
@@ -925,6 +991,7 @@ function Files({ classId, writable }: { classId: string; writable: boolean }) {
 }
 function Audit({ classId }: { classId: string }) {
   const entries = useApi<any[]>(`/course-classes/${classId}/audit`);
+  const [hasMore, setHasMore] = useState(true);
   return (
     <>
       <div className="section-heading">
@@ -963,13 +1030,14 @@ function Audit({ classId }: { classId: string }) {
               </small>
             </details>
           ))}
-          {entries.data?.length === 50 && (
+          {hasMore && (entries.data?.length ?? 0) >= 50 && (
             <Action
               run={async () => {
                 const next = await api(
                   `/course-classes/${classId}/audit?cursor=${entries.data!.at(-1).id}`,
                 );
                 entries.setData([...entries.data!, ...next]);
+                setHasMore(next.length === 50);
               }}
             >
               {t.more}

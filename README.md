@@ -14,20 +14,21 @@ npm run db:generate
 npm run dev
 ```
 
-Perintah `dev` menyalin `.env.example` jika `.env` belum ada, menyalakan PostgreSQL lokal, menerapkan migrasi, mengisi data contoh satu kali, lalu menyalakan API, Vite, dan File Service demonstrasi yang berjalan terpisah.
+Perintah `dev` menyalin `.env.example` jika `.env` belum ada, menyalakan PostgreSQL lokal, menerapkan migrasi, mengisi data contoh satu kali, lalu menyalakan API, Vite, File Service, dan provider SSO lokal. Launcher menggunakan `AUTH_MODE=oidc`, termasuk jika `.env` lama masih menyebut `development`.
 
-Buka **http://127.0.0.1:5173/**. Pilih akun demonstrasi admin, admin prodi, dosen, atau mahasiswa. Kelas contoh adalah **IF2101 – Pemrograman Web / Kelas A**. Gunakan alamat `127.0.0.1` secara konsisten agar origin, cookie, dan upload cocok.
+Buka **http://127.0.0.1:5173/** untuk landing publik. Pilih **Masuk dengan SSO UAY** atau akun pada **Mode uji cepat**. Kedua cara melewati authorization code, PKCE, state/nonce, JWT/JWKS dan callback OIDC yang sama. Dashboard baru muncul setelah login berhasil. Kelas contoh adalah **IF2101 – Pemrograman Web / Kelas A**. Gunakan alamat `127.0.0.1` secara konsisten agar origin, cookie, dan upload cocok.
 
 | Layanan lokal | Alamat / lokasi |
 |---|---|
 | Antarmuka | `http://127.0.0.1:5173` |
 | API / kesehatan | `http://127.0.0.1:3000/api/health` |
 | File Service demonstrasi | `http://127.0.0.1:3001` |
+| Provider SSO lokal | `http://127.0.0.1:4402` |
 | PostgreSQL 16 | `127.0.0.1:55432` |
 | Data persisten | `.local/postgres`, `.local/file-service` |
 | Konfigurasi lokal | `.env` — jangan masukkan ke version control |
 
-`Ctrl+C` menghentikan launcher. Database yang sudah berjalan sebelum launcher tetap merupakan proses terpisah. Data tidak direset saat restart atau seed ulang. Akun demonstrasi hanya aktif dalam `AUTH_MODE=development`; mode ini ditolak ketika `NODE_ENV=production`.
+`Ctrl+C` menghentikan launcher. Database yang sudah berjalan sebelum launcher tetap merupakan proses terpisah. Data tidak direset saat restart atau seed ulang. `DEMO_MODE=false` menyembunyikan pemilih akun pada landing. Pada `NODE_ENV=production`, demo selalu dinonaktifkan dan konfigurasi SSO kampus wajib diisi. Endpoint login development hanya tersedia pada mode pengujian backend yang secara eksplisit memakai `AUTH_MODE=development`; UI tidak menggunakannya.
 
 ## Pemeriksaan
 

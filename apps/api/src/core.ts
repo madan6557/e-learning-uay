@@ -8,9 +8,8 @@ try {
 } catch (error: any) {
   if (error.code !== "ENOENT") throw error;
 }
-export const isDemo =
-  process.env.DEMO_MODE === "true" || process.env.AUTH_MODE === "development";
-export const production = process.env.NODE_ENV === "production" && !isDemo;
+export const production = process.env.NODE_ENV === "production";
+export const isDemo = !production && process.env.DEMO_MODE === "true";
 export const config = {
   port: Number(process.env.PORT ?? 3000),
   origin: (process.env.APP_ORIGIN ?? "http://127.0.0.1:5173")
