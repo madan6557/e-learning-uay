@@ -100,7 +100,11 @@ export default async function handler(req, res) {
       if (done) break;
       chunks.push(value);
     }
-    res.end(Buffer.concat(chunks));
+    const responseBody = Buffer.concat(chunks);
+    // Vercel's response helper finalizes buffered function output reliably;
+    // plain res.end can discard a streamed upstream payload in this runtime.
+    if (typeof res.send === "function") return res.send(responseBody);
+    res.end(responseBody);
   } catch {
     res.statusCode = 502;
     res.setHeader("Content-Type", "application/json");
