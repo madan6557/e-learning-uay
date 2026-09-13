@@ -242,7 +242,7 @@ export function registerAuth(app: Express) {
           (["127.0.0.1", "localhost"].includes(
             new URL(config.issuer).hostname,
           ) ||
-            new URL(config.issuer).origin === config.origin),
+            new URL(config.issuer).origin === config.apiOrigin),
         404,
         "NOT_FOUND",
       );

@@ -11,6 +11,7 @@ export async function startMockSso({
   clientId = "elearning-uay",
   audience = "elearning-uay",
   publicIssuer,
+  redirectUri: configuredRedirectUri,
 } = {}) {
   if (process.env.NODE_ENV === "production" && process.env.DEMO_MODE !== "true")
     throw new Error(
@@ -27,7 +28,8 @@ export async function startMockSso({
   const codes = new Map(),
     refreshes = new Map();
   let issuer;
-  const redirectUri = `${origin}/api/v1/auth/callback`;
+  const redirectUri =
+    configuredRedirectUri ?? `${origin}/api/v1/auth/callback`;
   const escape = (s) =>
     String(s).replace(
       /[&<>"']/g,
@@ -211,6 +213,7 @@ if (
     clientId: process.env.SSO_CLIENT_ID ?? "elearning-uay",
     audience: process.env.SSO_AUDIENCE ?? "elearning-uay",
     publicIssuer: process.env.SSO_PUBLIC_ISSUER,
+    redirectUri: process.env.SSO_REDIRECT_URI,
   });
   console.log(`Local SSO ready at ${sso.issuer}`);
   for (const signal of ["SIGINT", "SIGTERM"])

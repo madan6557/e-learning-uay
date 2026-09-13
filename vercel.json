@@ -6,10 +6,6 @@
   "installCommand": "npm install",
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "https://CHANGE-TO-YOUR-RAILWAY-DOMAIN.up.railway.app/api/$1"
-    },
-    {
       "source": "/((?!api(?:/|$)).*)",
       "destination": "/index.html"
     }

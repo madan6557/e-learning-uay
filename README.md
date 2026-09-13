@@ -28,7 +28,7 @@ Buka **http://127.0.0.1:5173/** untuk landing publik. Pilih **Masuk dengan SSO U
 | Data persisten           | `.local/postgres`, `.local/file-service`    |
 | Konfigurasi lokal        | `.env` — jangan masukkan ke version control |
 
-`Ctrl+C` menghentikan launcher. Database yang sudah berjalan sebelum launcher tetap merupakan proses terpisah. Data tidak direset saat restart atau seed ulang. `DEMO_MODE=false` menyembunyikan pemilih akun pada landing. Pada Railway, `DEMO_MODE=true` secara eksplisit menyalakan fixture OIDC dan File Service untuk demonstrasi tanpa layanan kampus; mode ini tidak menggunakan kredensial kampus. Saat `DEMO_MODE=false`, konfigurasi SSO, Redis, File Service, dan webhook production wajib diisi. Endpoint login development hanya tersedia pada mode pengujian backend yang secara eksplisit memakai `AUTH_MODE=development`; UI tidak menggunakannya.
+`Ctrl+C` menghentikan launcher. Database yang sudah berjalan sebelum launcher tetap merupakan proses terpisah. Data tidak direset saat restart atau seed ulang. `DEMO_MODE=false` menyembunyikan pemilih akun pada landing. Pada Railway, `DEMO_MODE=true` secara eksplisit menyalakan fixture OIDC dan File Service untuk demonstrasi tanpa layanan kampus; mode ini tidak menggunakan kredensial kampus. Jika frontend memakai Vercel, gunakan gateway same-origin `/api/*` dan konfigurasi `APP_ORIGIN`, `API_ORIGIN`, serta `RAILWAY_API_ORIGIN` seperti di [panduan Railway](deployment/RAILWAY.md). Saat `DEMO_MODE=false`, konfigurasi SSO, Redis, File Service, dan webhook production wajib diisi. Endpoint login development hanya tersedia pada mode pengujian backend yang secara eksplisit memakai `AUTH_MODE=development`; UI tidak menggunakannya.
 
 ## Pemeriksaan
 

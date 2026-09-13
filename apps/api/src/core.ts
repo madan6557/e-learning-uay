@@ -10,12 +10,18 @@ try {
 }
 export const production = process.env.NODE_ENV === "production";
 export const isDemo = process.env.DEMO_MODE === "true";
+const originFrom = (value: string | undefined, fallback: string) =>
+  (value ?? fallback).split(",")[0].trim().replace(/\/$/, "");
+const appOrigin = originFrom(
+  process.env.APP_ORIGIN,
+  "http://127.0.0.1:5173",
+);
 export const config = {
   port: Number(process.env.PORT ?? 3000),
-  origin: (process.env.APP_ORIGIN ?? "http://127.0.0.1:5173")
-    .split(",")[0]
-    .trim()
-    .replace(/\/$/, ""),
+  // The browser application can live on Vercel while this API lives on Railway.
+  // API_ORIGIN falls back to APP_ORIGIN for local and single-origin deployments.
+  origin: appOrigin,
+  apiOrigin: originFrom(process.env.API_ORIGIN, appOrigin),
   allowedOrigins: [
     ...(process.env.APP_ORIGIN
       ? process.env.APP_ORIGIN.split(",")
@@ -33,7 +39,7 @@ export const config = {
   clientSecret: process.env.SSO_CLIENT_SECRET ?? "",
   redirectUri:
     process.env.SSO_REDIRECT_URI ??
-    "http://127.0.0.1:5173/api/v1/auth/callback",
+    `${appOrigin}/api/v1/auth/callback`,
   fileUrl: process.env.FILE_SERVICE_URL ?? "",
   fileKey: process.env.FILE_SERVICE_KEY ?? "",
   fileOrigins: (process.env.FILE_ALLOWED_ORIGINS ?? "")
@@ -58,6 +64,7 @@ function productionConfigurationErrors() {
   required("DATABASE_URL", process.env.DATABASE_URL);
   if (isDemo) {
     if (!config.origin.startsWith("https://")) invalid.push("HTTPS APP_ORIGIN");
+    if (!config.apiOrigin.startsWith("https://")) invalid.push("HTTPS API_ORIGIN");
     return [...new Set(invalid)];
   }
   required("REDIS_URL", process.env.REDIS_URL);
@@ -71,12 +78,16 @@ function productionConfigurationErrors() {
   required("FILE_SERVICE_KEY", process.env.FILE_SERVICE_KEY);
   required("FILE_ALLOWED_ORIGINS", process.env.FILE_ALLOWED_ORIGINS);
   if (
-    ![config.origin, config.issuer, config.redirectUri, config.fileUrl].every(
-      (value) => value.startsWith("https://"),
-    )
+    [
+      config.origin,
+      config.apiOrigin,
+      config.issuer,
+      config.redirectUri,
+      config.fileUrl,
+    ].some((value) => !value.startsWith("https://"))
   )
     invalid.push(
-      "HTTPS APP_ORIGIN, SSO_ISSUER, SSO_REDIRECT_URI, FILE_SERVICE_URL",
+      "HTTPS APP_ORIGIN, API_ORIGIN, SSO_ISSUER, SSO_REDIRECT_URI, FILE_SERVICE_URL",
     );
   if (
     !config.fileOrigins.length ||

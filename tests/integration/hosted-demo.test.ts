@@ -3,12 +3,14 @@ import assert from "node:assert/strict";
 import { once } from "node:events";
 import { randomUUID } from "node:crypto";
 
-test("hosted demo runs OIDC through the same public application origin without provider credentials", async () => {
-  const origin = "https://demo.example.test";
+test("hosted demo keeps the browser callback on the frontend origin without provider credentials", async () => {
+  const origin = "https://frontend.example.test";
+  const apiOrigin = "https://api.example.test";
   process.env.NODE_ENV = "production";
   process.env.DEMO_MODE = "true";
   process.env.AUTH_MODE = "oidc";
   process.env.APP_ORIGIN = origin;
+  process.env.API_ORIGIN = apiOrigin;
   delete process.env.REDIS_URL;
   delete process.env.SSO_CLIENT_SECRET;
   delete process.env.SSO_WEBHOOK_SECRET;
@@ -18,7 +20,8 @@ test("hosted demo runs OIDC through the same public application origin without p
   const mock = await startMockSso({
     port: 0,
     origin,
-    publicIssuer: `${origin}/demo-sso`,
+    publicIssuer: `${apiOrigin}/demo-sso`,
+    redirectUri: `${origin}/api/v1/auth/callback`,
     clientId: "elearning-uay-demo",
     audience: "elearning-uay-demo",
   });
@@ -54,12 +57,13 @@ test("hosted demo runs OIDC through the same public application origin without p
     assert.equal(login.status, 302);
     const stateCookie = login.headers.get("set-cookie")!.split(";")[0];
     const authorize = new URL(login.headers.get("location")!);
-    assert.equal(authorize.origin, origin);
+    assert.equal(authorize.origin, apiOrigin);
     assert.equal(authorize.pathname, "/demo-sso/authorize");
     const provider = await fetch(base + authorize.pathname + authorize.search, {
       redirect: "manual",
     });
     const callback = new URL(provider.headers.get("location")!);
+    assert.equal(callback.origin, origin);
     const completed = await fetch(base + callback.pathname + callback.search, {
       headers: { Cookie: stateCookie },
       redirect: "manual",

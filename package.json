@@ -25,8 +25,8 @@
     "test": "tsx --test tests/*.test.ts",
     "test:integration": "node scripts/test-integration.mjs",
     "check": "npm run build && npm test",
-    "start": "node scripts/railway-deploy.mjs && node apps/api/dist/apps/api/src/index.js",
-    "start:railway": "node scripts/railway-deploy.mjs && node apps/api/dist/apps/api/src/index.js",
+    "start": "node scripts/railway-deploy.mjs && node scripts/railway-runtime.mjs",
+    "start:railway": "node scripts/railway-deploy.mjs && node scripts/railway-runtime.mjs",
     "deploy:railway": "node scripts/railway-deploy.mjs"
   },
   "dependencies": {

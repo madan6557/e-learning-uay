@@ -1,0 +1,70 @@
+// Vercel same-origin API gateway. It keeps opaque session cookies on the
+// frontend domain while Railway remains the API and hosted-demo fixture host.
+const hopByHopHeaders = new Set([
+  "connection",
+  "keep-alive",
+  "proxy-authenticate",
+  "proxy-authorization",
+  "te",
+  "trailer",
+  "transfer-encoding",
+  "upgrade",
+]);
+
+export default async function handler(req, res) {
+  const apiOrigin = (process.env.RAILWAY_API_ORIGIN ?? "").replace(/\/$/, "");
+  if (!apiOrigin.startsWith("https://")) {
+    res.statusCode = 503;
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Cache-Control", "no-store");
+    res.end(JSON.stringify({ error: { code: "API_PROXY_CONFIGURATION" } }));
+    return;
+  }
+
+  const incoming = new URL(req.url ?? "/api", "https://frontend.invalid");
+  const target = new URL(`${incoming.pathname}${incoming.search}`, `${apiOrigin}/`);
+  const headers = new Headers();
+  for (const [name, value] of Object.entries(req.headers)) {
+    if (
+      value === undefined ||
+      name === "host" ||
+      hopByHopHeaders.has(name.toLowerCase())
+    )
+      continue;
+    headers.set(name, Array.isArray(value) ? value.join(", ") : value);
+  }
+
+  try {
+    const method = req.method ?? "GET";
+    const hasBody = !["GET", "HEAD"].includes(method);
+    const upstream = await fetch(target, {
+      method,
+      headers,
+      body: hasBody ? req : undefined,
+      duplex: hasBody ? "half" : undefined,
+      redirect: "manual",
+    });
+    res.statusCode = upstream.status;
+    for (const [name, value] of upstream.headers) {
+      if (name !== "set-cookie" && !hopByHopHeaders.has(name))
+        res.setHeader(name, value);
+    }
+    const cookies = upstream.headers.getSetCookie?.() ?? [];
+    if (cookies.length) res.setHeader("Set-Cookie", cookies);
+    else if (upstream.headers.has("set-cookie"))
+      res.setHeader("Set-Cookie", upstream.headers.get("set-cookie"));
+    if (!upstream.body) return res.end();
+    const reader = upstream.body.getReader();
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      res.write(value);
+    }
+    res.end();
+  } catch {
+    res.statusCode = 502;
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Cache-Control", "no-store");
+    res.end(JSON.stringify({ error: { code: "API_UNAVAILABLE" } }));
+  }
+}

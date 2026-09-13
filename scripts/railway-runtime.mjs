@@ -14,22 +14,25 @@ if (!demo) {
   });
   api.on("exit", (code) => process.exit(code ?? 1));
 } else {
-  const origin = (process.env.APP_ORIGIN ?? "").replace(/\/$/, "");
-  if (!origin.startsWith("https://"))
-    throw new Error("Hosted demo requires an HTTPS APP_ORIGIN.");
+  const appOrigin = (process.env.APP_ORIGIN ?? "").replace(/\/$/, "");
+  const apiOrigin = (process.env.API_ORIGIN ?? appOrigin).replace(/\/$/, "");
+  if (!appOrigin.startsWith("https://") || !apiOrigin.startsWith("https://"))
+    throw new Error("Hosted demo requires HTTPS APP_ORIGIN and API_ORIGIN.");
 
   const ssoPort = Number(process.env.DEMO_SSO_PORT ?? 4402);
   const filePort = Number(process.env.DEMO_FILE_PORT ?? 4403);
   const fileKey = randomBytes(32).toString("base64url");
   Object.assign(process.env, {
     AUTH_MODE: "oidc",
-    SSO_ISSUER: `${origin}/demo-sso`,
+    // The browser returns to APP_ORIGIN through the Vercel API proxy. The
+    // fixture itself is public from Railway so Vercel never has to proxy it.
+    SSO_ISSUER: `${apiOrigin}/demo-sso`,
     SSO_CLIENT_ID: "elearning-uay-demo",
     SSO_AUDIENCE: "elearning-uay-demo",
-    SSO_REDIRECT_URI: `${origin}/api/v1/auth/callback`,
+    SSO_REDIRECT_URI: `${appOrigin}/api/v1/auth/callback`,
     FILE_SERVICE_URL: `http://127.0.0.1:${filePort}`,
     FILE_SERVICE_KEY: fileKey,
-    FILE_ALLOWED_ORIGINS: origin,
+    FILE_ALLOWED_ORIGINS: appOrigin,
     DEMO_INTERNAL_SSO_URL: `http://127.0.0.1:${ssoPort}`,
     DEMO_INTERNAL_FILE_URL: `http://127.0.0.1:${filePort}`,
   });
@@ -37,11 +40,12 @@ if (!demo) {
   const fixtureEnv = {
     ...process.env,
     NODE_ENV: "development",
-    APP_ORIGIN: origin,
+    APP_ORIGIN: appOrigin,
     SSO_MOCK_PORT: String(ssoPort),
-    SSO_PUBLIC_ISSUER: `${origin}/demo-sso`,
+    SSO_PUBLIC_ISSUER: `${apiOrigin}/demo-sso`,
+    SSO_REDIRECT_URI: `${appOrigin}/api/v1/auth/callback`,
     FILE_SERVICE_PORT: String(filePort),
-    FILE_PUBLIC_ORIGIN: `${origin}/demo-files`,
+    FILE_PUBLIC_ORIGIN: `${apiOrigin}/demo-files`,
     FILE_SERVICE_DATA_DIRECTORY: "/tmp/uay-demo-files",
   };
   const start = (script) =>
