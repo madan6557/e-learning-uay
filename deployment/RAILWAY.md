@@ -28,7 +28,7 @@ Saat SSO, Redis, dan File Service UAY belum tersedia, gunakan variabel berikut p
 
 Tambahkan `RAILWAY_API_ORIGIN` dengan nilai `API_ORIGIN` yang sama pada environment production di Vercel. Runtime demo menyalakan fixture OIDC dan File Service internal, mengisi akun contoh secara idempoten, dan memublikasikan fixture melalui domain Railway. Redis, webhook, serta kredensial SSO dan File Service kampus tidak diperlukan.
 
-Alur yang dipakai adalah: `Vercel /api/auth/login` → `Railway /demo-sso/authorize` → `Vercel /api/auth/callback` → dashboard Vercel. Jadi pilihan akun demo tetap melalui authorization code, PKCE, state, nonce, token, JWKS, callback, dan sesi yang sama dengan alur OIDC produksi.
+Alur yang dipakai adalah: browser meminta URL otorisasi lewat `Vercel /api/auth/authorization`, lalu langsung berpindah ke `Railway /demo-sso/authorize` dan kembali ke `Vercel /api/auth/callback` sebelum dashboard. Endpoint API tidak tampil sebagai URL transisi pada address bar. Pilihan akun demo tetap melalui authorization code, PKCE, state, nonce, token, JWKS, callback, dan sesi yang sama dengan alur OIDC produksi.
 
 ## Staging dengan layanan kampus
 

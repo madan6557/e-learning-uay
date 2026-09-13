@@ -63,11 +63,24 @@ export default async function handler(req, res) {
   try {
     const method = req.method ?? "GET";
     const hasBody = !["GET", "HEAD"].includes(method);
+    const body =
+      hasBody && req.body !== undefined
+        ? Buffer.isBuffer(req.body) || typeof req.body === "string"
+          ? req.body
+          : JSON.stringify(req.body)
+        : hasBody
+          ? req
+          : undefined;
+    if (hasBody && req.body !== undefined) {
+      headers.delete("content-length");
+      if (!headers.has("content-type"))
+        headers.set("content-type", "application/json");
+    }
     const upstream = await fetch(target, {
       method,
       headers,
-      body: hasBody ? req : undefined,
-      duplex: hasBody ? "half" : undefined,
+      body,
+      duplex: hasBody && req.body === undefined ? "half" : undefined,
       redirect: "manual",
     });
     res.statusCode = upstream.status;

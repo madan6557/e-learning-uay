@@ -56,6 +56,13 @@ function oidcServerEndpoint(endpoint: string) {
     : publicUrl.pathname;
   return new URL(`${path}${publicUrl.search}`, local).href;
 }
+function demoQuickLoginEnabled() {
+  return (
+    isDemo &&
+    (["127.0.0.1", "localhost"].includes(new URL(config.issuer).hostname) ||
+      new URL(config.issuer).origin === config.apiOrigin)
+  );
+}
 export async function oidcMetadata() {
   if (!discovery) {
     const response = await fetch(
@@ -193,6 +200,31 @@ async function issue(res: Response, session: Session) {
   await cache.set(`session:${hash(id)}`, JSON.stringify(session), 8 * 3600);
   res.cookie(cookieName, id, { ...cookie, maxAge: 8 * 3600000 });
 }
+async function authorizationUrl(res: Response, demoSubject?: string) {
+  const metadata = await oidcMetadata();
+  const state = randomBytes(32).toString("base64url");
+  const nonce = randomBytes(32).toString("base64url");
+  const verifier = randomBytes(48).toString("base64url");
+  await cache.set(
+    `oidc:${hash(state)}`,
+    JSON.stringify({ nonce, verifier, demoSubject }),
+    300,
+  );
+  res.cookie("uay-oidc-state", state, { ...cookie, maxAge: 300000 });
+  const url = new URL(metadata.authorization_endpoint);
+  url.search = new URLSearchParams({
+    client_id: config.clientId,
+    redirect_uri: config.redirectUri,
+    response_type: "code",
+    scope: "openid profile email offline_access",
+    state,
+    nonce,
+    code_challenge: createHash("sha256").update(verifier).digest("base64url"),
+    code_challenge_method: "S256",
+  }).toString();
+  if (demoSubject) url.searchParams.set("login_hint", demoSubject);
+  return url.href;
+}
 export function registerAuth(app: Express) {
   app.get("/api/v1/auth/config", (_req, res) =>
     res.json({
@@ -232,49 +264,38 @@ export function registerAuth(app: Express) {
     });
     res.json({ ok: true });
   });
-  app.get("/api/v1/auth/login", async (req, res) => {
+  app.post("/api/v1/auth/authorization", async (req, res) => {
     ensure(config.authMode === "oidc", 503, "SSO_CONFIGURATION");
-    const demoUserId = req.query.demoUserId;
+    const { demoUserId } = z
+      .object({ demoUserId: z.string().uuid().optional() })
+      .parse(req.body);
     let demoSubject: string | undefined;
     if (demoUserId) {
-      ensure(
-        isDemo &&
-          (["127.0.0.1", "localhost"].includes(
-            new URL(config.issuer).hostname,
-          ) ||
-            new URL(config.issuer).origin === config.apiOrigin),
-        404,
-        "NOT_FOUND",
-      );
+      ensure(demoQuickLoginEnabled(), 404, "NOT_FOUND");
       const user = await db.user.findUnique({
         where: { id: z.string().uuid().parse(demoUserId) },
       });
       ensure(user?.isActive, 403, "ACCOUNT_DISABLED");
       demoSubject = user.externalSubjectId;
     }
-    const metadata = await oidcMetadata();
-    const state = randomBytes(32).toString("base64url");
-    const nonce = randomBytes(32).toString("base64url");
-    const verifier = randomBytes(48).toString("base64url");
-    await cache.set(
-      `oidc:${hash(state)}`,
-      JSON.stringify({ nonce, verifier, demoSubject }),
-      300,
-    );
-    res.cookie("uay-oidc-state", state, { ...cookie, maxAge: 300000 });
-    const url = new URL(metadata.authorization_endpoint);
-    url.search = new URLSearchParams({
-      client_id: config.clientId,
-      redirect_uri: config.redirectUri,
-      response_type: "code",
-      scope: "openid profile email offline_access",
-      state,
-      nonce,
-      code_challenge: createHash("sha256").update(verifier).digest("base64url"),
-      code_challenge_method: "S256",
-    }).toString();
-    if (demoSubject) url.searchParams.set("login_hint", demoSubject);
-    res.redirect(url.href);
+    res.json({ authorizationUrl: await authorizationUrl(res, demoSubject) });
+  });
+  // Direct navigation remains available for non-JavaScript clients and legacy
+  // links. The React UI uses the authorization endpoint above, so this path is
+  // never left visible in the browser address bar.
+  app.get("/api/v1/auth/login", async (req, res) => {
+    ensure(config.authMode === "oidc", 503, "SSO_CONFIGURATION");
+    const demoUserId = req.query.demoUserId;
+    let demoSubject: string | undefined;
+    if (demoUserId) {
+      ensure(demoQuickLoginEnabled(), 404, "NOT_FOUND");
+      const user = await db.user.findUnique({
+        where: { id: z.string().uuid().parse(demoUserId) },
+      });
+      ensure(user?.isActive, 403, "ACCOUNT_DISABLED");
+      demoSubject = user.externalSubjectId;
+    }
+    res.redirect(await authorizationUrl(res, demoSubject));
   });
   app.get("/api/v1/auth/callback", async (req, res) => {
     const { state, code } = z

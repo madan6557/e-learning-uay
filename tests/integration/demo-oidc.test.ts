@@ -32,11 +32,17 @@ test("quick demo selection uses the real OIDC callback and rejects bypass", asyn
     ).json();
     assert.equal(config.demoEnabled, true);
     assert.equal(config.mode, "oidc");
-    const login = await fetch(base + `/api/v1/auth/login?demoUserId=${id}`, {
-      redirect: "manual",
+    const selected = await fetch(base + "/api/v1/auth/authorization", {
+      method: "POST",
+      headers: {
+        Origin: "http://127.0.0.1:5173",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ demoUserId: id }),
     });
-    assert.equal(login.status, 302);
-    const authorize = login.headers.get("location")!;
+    assert.equal(selected.status, 200);
+    const stateCookie = selected.headers.get("set-cookie")!.split(";")[0];
+    const authorize = (await selected.json()).authorizationUrl;
     assert.equal(new URL(authorize).searchParams.get("login_hint"), id);
     assert.equal(
       new URL(authorize).searchParams.get("code_challenge_method"),
@@ -46,7 +52,7 @@ test("quick demo selection uses the real OIDC callback and rejects bypass", asyn
     assert.equal(provider.status, 302);
     const callback = new URL(provider.headers.get("location")!);
     const completed = await fetch(base + callback.pathname + callback.search, {
-      headers: { Cookie: login.headers.get("set-cookie")!.split(";")[0] },
+      headers: { Cookie: stateCookie },
       redirect: "manual",
     });
     assert.equal(completed.status, 302);

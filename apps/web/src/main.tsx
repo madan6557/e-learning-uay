@@ -57,6 +57,34 @@ function Brand({ home = "#/" }: { home?: string }) {
     </a>
   );
 }
+function LoginButton({
+  children,
+  className,
+  demoUserId,
+  label,
+}: {
+  children: ReactNode;
+  className: string;
+  demoUserId?: string;
+  label: string;
+}) {
+  return (
+    <Action
+      className={className}
+      label={label}
+      run={async () => {
+        const { authorizationUrl } = await api<{ authorizationUrl: string }>(
+          "/auth/authorization",
+          "POST",
+          demoUserId ? { demoUserId } : {},
+        );
+        location.assign(authorizationUrl);
+      }}
+    >
+      {children}
+    </Action>
+  );
+}
 function PublicShell({ children }: { children: ReactNode }) {
   return (
     <div className="public-shell">
@@ -66,9 +94,9 @@ function PublicShell({ children }: { children: ReactNode }) {
       <header className="public-header">
         <Brand />
         <nav aria-label="Menu publik">
-          <a href="/api/v1/auth/login" className="secondary">
+          <LoginButton className="secondary" label="Masuk dengan SSO UAY">
             Masuk dengan SSO UAY <ArrowRight size={16} />
-          </a>
+          </LoginButton>
         </nav>
       </header>
       <main id="main-content">{children}</main>
@@ -98,9 +126,9 @@ function Landing({ config, error }: { config: any; error?: Error | null }) {
             Akses materi perkuliahan, kerjakan tugas, dan ikuti perkembangan
             belajar dalam satu ruang akademik.
           </p>
-          <a className="button" href="/api/v1/auth/login">
+          <LoginButton className="button" label="Masuk dengan SSO UAY">
             Masuk dengan SSO UAY <ArrowRight size={18} />
-          </a>
+          </LoginButton>
           <small className="landing-caption">
             <ShieldCheck size={16} /> Gunakan akun akademik UAY Anda.
           </small>
@@ -172,13 +200,13 @@ function Landing({ config, error }: { config: any; error?: Error | null }) {
                       {(t.roles as any)[u.role]} · {u.studentStaffNumber}
                     </small>
                   </div>
-                  <a
+                  <LoginButton
                     className="secondary"
-                    href={`/api/v1/auth/login?demoUserId=${encodeURIComponent(u.id)}`}
-                    aria-label={`Masuk sebagai ${u.fullName}`}
+                    label={`Masuk sebagai ${u.fullName}`}
+                    demoUserId={u.id}
                   >
                     Gunakan akun <ArrowRight size={15} />
-                  </a>
+                  </LoginButton>
                 </article>
               ))}
             </div>

@@ -51,12 +51,17 @@ test("hosted demo keeps the browser callback on the frontend origin without prov
       await fetch(`${base}/api/v1/auth/development-users`)
     ).json();
     assert.ok(users.some((user) => user.id === id));
-    const login = await fetch(`${base}/api/v1/auth/login?demoUserId=${id}`, {
-      redirect: "manual",
+    const selected = await fetch(`${base}/api/v1/auth/authorization`, {
+      method: "POST",
+      headers: {
+        Origin: origin,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ demoUserId: id }),
     });
-    assert.equal(login.status, 302);
-    const stateCookie = login.headers.get("set-cookie")!.split(";")[0];
-    const authorize = new URL(login.headers.get("location")!);
+    assert.equal(selected.status, 200);
+    const stateCookie = selected.headers.get("set-cookie")!.split(";")[0];
+    const authorize = new URL((await selected.json()).authorizationUrl);
     assert.equal(authorize.origin, apiOrigin);
     assert.equal(authorize.pathname, "/demo-sso/authorize");
     const provider = await fetch(base + authorize.pathname + authorize.search, {
