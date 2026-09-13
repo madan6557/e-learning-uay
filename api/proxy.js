@@ -11,8 +11,34 @@ const hopByHopHeaders = new Set([
   "upgrade",
 ]);
 
+function apiPath(req) {
+  const value = req.query?.path;
+  const segments = Array.isArray(value) ? value : [value];
+  const path = segments.filter(Boolean).join("/");
+  if (!path || path.split("/").some((segment) => !segment || segment === "." || segment === ".."))
+    return null;
+  return `/api/${path}`;
+}
+
+function requestQuery(req) {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(req.query ?? {})) {
+    if (key === "path" || value === undefined) continue;
+    for (const item of Array.isArray(value) ? value : [value])
+      query.append(key, String(item));
+  }
+  return query;
+}
+
 export default async function handler(req, res) {
   const apiOrigin = (process.env.RAILWAY_API_ORIGIN ?? "").replace(/\/$/, "");
+  const path = apiPath(req);
+  if (!path) {
+    res.statusCode = 404;
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ error: { code: "NOT_FOUND" } }));
+    return;
+  }
   if (!apiOrigin.startsWith("https://")) {
     res.statusCode = 503;
     res.setHeader("Content-Type", "application/json");
@@ -21,8 +47,8 @@ export default async function handler(req, res) {
     return;
   }
 
-  const incoming = new URL(req.url ?? "/api", "https://frontend.invalid");
-  const target = new URL(`${incoming.pathname}${incoming.search}`, `${apiOrigin}/`);
+  const target = new URL(path, `${apiOrigin}/`);
+  target.search = requestQuery(req).toString();
   const headers = new Headers();
   for (const [name, value] of Object.entries(req.headers)) {
     if (
