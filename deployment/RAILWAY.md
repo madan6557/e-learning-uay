@@ -1,6 +1,8 @@
-# Deployment Railway + Vercel
+# Live Development: Railway + Vercel
 
-Frontend publik berjalan di Vercel dan API berjalan di Railway. Vercel menyediakan gateway `/api/*` yang meneruskan request ke Railway. Dengan pola ini cookie sesi tetap berada pada domain frontend, callback OIDC kembali ke domain frontend, dan Railway tidak perlu berbagi cookie lintas domain.
+Panduan ini hanya untuk lingkungan live development atau staging yang memakai frontend Vercel dan API Railway. Vercel menyediakan gateway `/api/*` yang meneruskan request ke Railway. Dengan pola ini cookie sesi tetap berada pada domain frontend dan callback OIDC kembali ke domain frontend.
+
+Ini bukan topologi production VPS. Production mengikuti [panduan VPS](README.md): Nginx menyajikan SPA pada `/` dan meneruskan `/api/*` ke backend pada domain yang sama. Dengan demikian production tidak memakai `RAILWAY_API_ORIGIN`, `VITE_API_URL`, atau gateway Vercel.
 
 ## Sambungkan dua domain
 
@@ -28,7 +30,7 @@ Tambahkan `RAILWAY_API_ORIGIN` dengan nilai `API_ORIGIN` yang sama pada environm
 
 Alur yang dipakai adalah: `Vercel /api/auth/login` → `Railway /demo-sso/authorize` → `Vercel /api/auth/callback` → dashboard Vercel. Jadi pilihan akun demo tetap melalui authorization code, PKCE, state, nonce, token, JWKS, callback, dan sesi yang sama dengan alur OIDC produksi.
 
-## Production dengan layanan kampus
+## Staging dengan layanan kampus
 
 Gunakan variabel dasar berikut pada Railway:
 
@@ -53,7 +55,7 @@ Gunakan variabel dasar berikut pada Railway:
 
 Daftarkan `${APP_ORIGIN}/api/v1/auth/callback` sebagai redirect URI dan `${APP_ORIGIN}` sebagai post-logout URI di SSO. `SSO_CLIENT_SECRET`, `SSO_WEBHOOK_SECRET`, dan `FILE_SERVICE_KEY` adalah secret; jangan masukkan nilainya ke repository atau tangkapan layar.
 
-## Verifikasi
+## Verifikasi staging
 
 Setelah Railway dan Vercel redeploy, periksa kedua URL berikut:
 
@@ -63,3 +65,16 @@ ${APP_ORIGIN}/api/health
 ```
 
 Keduanya harus merespons `200`. Buka `${APP_ORIGIN}/`, pilih akun pada **Mode uji cepat**, pastikan kembali ke dashboard, lalu logout. Logout harus kembali ke landing page Vercel.
+
+## Saat pindah ke production VPS
+
+Gunakan domain VPS tunggal, misalnya `https://elearning.uay.ac.id`. Nginx menjadi gateway untuk React dan API, sesuai topologi desain teknis.
+
+| Variabel di VPS | Nilai |
+| --- | --- |
+| `APP_ORIGIN` | `https://elearning.uay.ac.id` |
+| `API_ORIGIN` | hapus, atau gunakan nilai `APP_ORIGIN` yang sama |
+| `VITE_API_URL` | tidak diisi |
+| `RAILWAY_API_ORIGIN` | tidak digunakan |
+
+Aktifkan `DEMO_MODE=false`, Redis, kredensial SSO resmi, File Service produksi, webhook, dan backup VPS. Detail Docker Compose, Nginx, TLS, backup, serta verifikasi operasi tersedia di [panduan VPS](README.md).
