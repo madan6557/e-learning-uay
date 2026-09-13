@@ -2,6 +2,8 @@
 // frontend domain while Railway remains the API and hosted-demo fixture host.
 const hopByHopHeaders = new Set([
   "connection",
+  "content-encoding",
+  "content-length",
   "keep-alive",
   "proxy-authenticate",
   "proxy-authorization",
