@@ -94,12 +94,13 @@ export default async function handler(req, res) {
       res.setHeader("Set-Cookie", upstream.headers.get("set-cookie"));
     if (!upstream.body) return res.end();
     const reader = upstream.body.getReader();
+    const chunks = [];
     for (;;) {
       const { done, value } = await reader.read();
       if (done) break;
-      res.write(value);
+      chunks.push(value);
     }
-    res.end();
+    res.end(Buffer.concat(chunks));
   } catch {
     res.statusCode = 502;
     res.setHeader("Content-Type", "application/json");
