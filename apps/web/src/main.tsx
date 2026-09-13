@@ -149,46 +149,59 @@ function Landing({ config, error }: { config: any; error?: Error | null }) {
                 <span />
                 <span />
               </div>
-              <span className="preview-title">LMS Universitas Achmad Yani</span>
+              <span className="preview-title">Portal Akademik UAY</span>
               <span className="preview-status">
                 <span className="status-dot online" />
-                Aktif
+                Sistem Aktif
               </span>
             </div>
             <div className="preview-body">
-              <div className="preview-card">
-                <div className="preview-card-header">
-                  <span className="preview-tag">MATA KULIAH AKTIF</span>
-                  <span className="preview-code">IF2101 · 3 SKS</span>
+              <div className="preview-portal-card">
+                <div className="portal-badge-row">
+                  <span className="portal-badge">SEMESTER GANJIL 2026/2027</span>
+                  <span className="portal-subcode">SISTEM TERPADU</span>
                 </div>
-                <h4>Pemrograman Web & Cloud</h4>
-                <p>14 Pertemuan · Teori & Praktikum Lab</p>
-                <div className="preview-progress-track">
-                  <div className="preview-progress-fill" style={{ width: "75%" }} />
-                </div>
-                <div className="preview-progress-meta">
-                  <span>Progres Belajar</span>
-                  <strong>75% Selesai</strong>
-                </div>
+                <h4>Platform Pembelajaran Digital</h4>
+                <p>
+                  Mendukung perkuliahan terstruktur, kolaborasi interaktif, dan
+                  evaluasi capaian pembelajaran berbasis kurikulum resmi.
+                </p>
               </div>
-              <div className="preview-mini-grid">
-                <div className="preview-mini-item">
-                  <span className="mini-icon quiz">
-                    <ClipboardCheck size={16} />
+              <div className="portal-capabilities">
+                <div className="capability-row">
+                  <span className="capability-icon">
+                    <ShieldCheck size={16} />
                   </span>
                   <div>
-                    <strong>Tugas & Kuis</strong>
-                    <small>Evaluasi berkala</small>
+                    <strong>Akses Tunggal SSO</strong>
+                    <small>Masuk otomatis dengan akun akademik resmi UAY</small>
                   </div>
                 </div>
-                <div className="preview-mini-item">
-                  <span className="mini-icon material">
+                <div className="capability-row">
+                  <span className="capability-icon">
                     <BookOpen size={16} />
                   </span>
                   <div>
-                    <strong>11 Blok Materi</strong>
-                    <small>Interaktif & terstruktur</small>
+                    <strong>Materi Multimedia & Lab</strong>
+                    <small>11 variasi blok konten, slide materi, dan video</small>
                   </div>
+                </div>
+                <div className="capability-row">
+                  <span className="capability-icon">
+                    <ClipboardCheck size={16} />
+                  </span>
+                  <div>
+                    <strong>Asesmen & Evaluasi Terbobot</strong>
+                    <small>Penyerahan tugas berversi dan kuis adaptif</small>
+                  </div>
+                </div>
+              </div>
+              <div className="portal-roles-footer">
+                <span>Dukungan Pengguna:</span>
+                <div className="role-tags">
+                  <span>Mahasiswa</span>
+                  <span>Dosen</span>
+                  <span>Pengelola Prodi</span>
                 </div>
               </div>
             </div>

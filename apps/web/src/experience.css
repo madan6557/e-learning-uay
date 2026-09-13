@@ -2398,116 +2398,122 @@ textarea:focus {
   gap: 14px;
 }
 
-.preview-card {
+.preview-portal-card {
   background: #fbfdfb;
   border: 1px solid #e3eee6;
   border-radius: 12px;
   padding: 16px;
 }
 
-.preview-card-header {
+.portal-badge-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
 }
 
-.preview-tag {
+.portal-badge {
   font-size: 0.65rem;
   font-weight: 800;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   color: #164638;
   background: #edf6ef;
-  padding: 2px 7px;
+  padding: 3px 8px;
   border-radius: 4px;
 }
 
-.preview-code {
-  font-size: 0.72rem;
+.portal-subcode {
+  font-size: 0.68rem;
   font-weight: 600;
-  color: #607569;
+  color: #71877b;
+  letter-spacing: 0.04em;
 }
 
-.preview-card h4 {
-  margin: 0 0 4px 0;
-  font-size: 0.98rem;
+.preview-portal-card h4 {
+  margin: 0 0 5px 0;
+  font-size: 1.02rem;
   font-weight: 700;
   color: #163e30;
 }
 
-.preview-card p {
-  margin: 0 0 12px 0;
-  font-size: 0.78rem;
-  color: #657a6e;
+.preview-portal-card p {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: #5a7265;
 }
 
-.preview-progress-track {
-  width: 100%;
-  height: 6px;
-  background: #e7efe9;
-  border-radius: 999px;
-  overflow: hidden;
-  margin-bottom: 6px;
-}
-
-.preview-progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #164638, #3b8769);
-  border-radius: 999px;
-}
-
-.preview-progress-meta {
+.portal-capabilities {
   display: flex;
-  justify-content: space-between;
-  font-size: 0.72rem;
-  color: #607569;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.preview-mini-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.preview-mini-item {
+.capability-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 12px;
+  padding: 10px 14px;
   background: #ffffff;
-  border: 1px solid #e3eee6;
+  border: 1px solid #e5eee7;
   border-radius: 10px;
+  transition: all 140ms ease;
 }
 
-.mini-icon {
-  width: 30px;
-  height: 30px;
+.capability-row:hover {
+  background: #f7faf8;
+  border-color: #c9ded0;
+}
+
+.capability-icon {
+  width: 32px;
+  height: 32px;
   border-radius: 8px;
+  background: #edf6ef;
+  color: #164638;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-.mini-icon.quiz {
-  background: #fef8eb;
-  color: #b7791f;
-}
-
-.mini-icon.material {
-  background: #edf7ef;
-  color: #166534;
-}
-
-.preview-mini-item strong {
+.capability-row strong {
   display: block;
-  font-size: 0.8rem;
-  color: #1d392e;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #1d3d30;
 }
 
-.preview-mini-item small {
-  font-size: 0.7rem;
-  color: #718579;
+.capability-row small {
+  font-size: 0.72rem;
+  color: #6b8275;
+}
+
+.portal-roles-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px dashed #e3ede5;
+  font-size: 0.72rem;
+  color: #73897d;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.role-tags {
+  display: flex;
+  gap: 6px;
+}
+
+.role-tags span {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #164638;
+  background: #edf6ef;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid #d4e5d8;
 }
 
 /* Features Section */
