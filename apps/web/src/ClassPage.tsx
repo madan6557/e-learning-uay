@@ -11,6 +11,8 @@ import {
   ArrowDown,
   Settings2,
   Pin,
+  CheckCircle2,
+  CalendarDays,
 } from "lucide-react";
 import {
   t,
@@ -78,6 +80,25 @@ export function ClassPage({
   const resource = cls.sections
     .flatMap((s: any) => s.resources)
     .find((r: any) => r.id === resourceId);
+  const isResourceDone = (r: any) => {
+    if (!cls?.progress) return false;
+    if (r.resourceType === "VIDEO_MEDIA") {
+      return (
+        (cls.progress.video?.find((p: any) => p.resourceItemId === r.id)
+          ?.percent ?? 0) >= 80
+      );
+    }
+    if (r.resourceType === "DOCUMENT") {
+      return (
+        (cls.progress.slides?.find((p: any) => p.resourceItemId === r.id)
+          ?.percent ?? 0) >= 80
+      );
+    }
+    return [
+      ...(cls.progress.text ?? []),
+      ...(cls.progress.downloads ?? []),
+    ].some((p: any) => p.resourceItemId === r.id);
+  };
   return (
     <>
       <a className="back-link" href="#/classes">
@@ -90,9 +111,21 @@ export function ClassPage({
             {cls.course.code} · {cls.course.credits} {t.credits}
           </div>
           <h1>{cls.course.title}</h1>
-          <p>
-            {cls.name} <span>·</span> {cls.academicYear}
-          </p>
+          <div className="class-submeta">
+            <p>
+              {cls.name} <span>·</span> {cls.academicYear}
+            </p>
+            {cls.instructors?.length > 0 && (
+              <span className="class-instructor-chip">
+                <span className="mini-avatar">
+                  {cls.instructors[0]?.user.fullName[0] ?? "U"}
+                </span>
+                {cls.instructors
+                  .map((i: any) => i.user.fullName.split(",")[0])
+                  .join(", ")}
+              </span>
+            )}
+          </div>
         </div>
         <div className="toolbar">
           <Badge value={cls.status} />
@@ -158,11 +191,18 @@ export function ClassPage({
                   <span className="meeting-number">
                     {String(index + 1).padStart(2, "0")}
                   </span>
-                  <div>
-                    <small>
-                      {(t.sectionTypes as any)[section.type]}
-                      {section.startDate && ` · ${date(section.startDate)}`}
-                    </small>
+                  <div className="meeting-info">
+                    <div className="meeting-tags">
+                      <span className={`meeting-type-tag type-${section.type.toLowerCase()}`}>
+                        {(t.sectionTypes as any)[section.type]}
+                      </span>
+                      {section.startDate && (
+                        <span className="meeting-date">
+                          <CalendarDays size={13} />
+                          {date(section.startDate)}
+                        </span>
+                      )}
+                    </div>
                     <h2>{section.title}</h2>
                   </div>
                   {!section.isVisible && <Badge value="DRAFT" />}
@@ -221,21 +261,32 @@ export function ClassPage({
                   <p className="meeting-description">{section.description}</p>
                 )}
                 <div className="learning-items">
-                  {section.resources.map((r: any) => (
-                    <div className="learning-item" key={r.id}>
-                      <a href={`#/classes/${id}?resource=${r.id}`}>
-                        <span className="activity-icon material">
-                          <BookOpen size={19} />
-                        </span>
-                        <div>
-                          <h3>{r.title}</h3>
-                          <small>
-                            {(t.resourceTypes as any)[r.resourceType]}
-                          </small>
-                        </div>
-                        <ChevronRight size={16} />
-                      </a>
-                      {!r.isVisible && <Badge value="DRAFT" />}
+                  {section.resources.map((r: any) => {
+                    const done = !cls.canManage && isResourceDone(r);
+                    return (
+                      <div
+                        className={`learning-item ${done ? "item-completed" : ""}`}
+                        key={r.id}
+                      >
+                        <a href={`#/classes/${id}?resource=${r.id}`}>
+                          <span className="activity-icon material">
+                            <BookOpen size={19} />
+                          </span>
+                          <div>
+                            <h3>{r.title}</h3>
+                            <small>
+                              {(t.resourceTypes as any)[r.resourceType]}
+                            </small>
+                          </div>
+                          {done && (
+                            <span className="status-pill completed">
+                              <CheckCircle2 size={13} />
+                              {t.completed}
+                            </span>
+                          )}
+                          <ChevronRight size={16} />
+                        </a>
+                        {!r.isVisible && <Badge value="DRAFT" />}
                       {writable && (
                         <button
                           className="text-button"
@@ -251,7 +302,8 @@ export function ClassPage({
                         </button>
                       )}
                     </div>
-                  ))}
+                  );
+                })}
                   {section.quizzes.map((q: any) => (
                     <div className="learning-item" key={q.id}>
                       <a href={`#/quizzes/${q.id}`}>

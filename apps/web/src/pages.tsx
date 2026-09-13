@@ -13,7 +13,16 @@ import {
   Code2,
   Database,
   Terminal,
+  FileText,
 } from "lucide-react";
+
+function getTimeGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour >= 4 && hour < 11) return "Selamat Pagi";
+  if (hour >= 11 && hour < 15) return "Selamat Siang";
+  if (hour >= 15 && hour < 18) return "Selamat Sore";
+  return "Selamat Malam";
+}
 import {
   t,
   api,
@@ -245,12 +254,21 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
     <>
       <div className="page-heading heading-with-action">
         <div>
-          <div className="eyebrow">
-            {page === "dashboard" ? t.eyebrow : t.learningSpace}
+          <div className="eyebrow-row">
+            <span className="eyebrow">
+              {page === "dashboard" ? t.eyebrow : t.learningSpace}
+            </span>
+            <span className="user-role-badge">
+              {user.role === "ADMIN"
+                ? "Administrator"
+                : teacher
+                  ? "Dosen Pengampu"
+                  : "Mahasiswa"}
+            </span>
           </div>
           <h1>
             {page === "dashboard"
-              ? `${t.greeting} ${user.fullName.split(" ")[teacher ? 1 : 0] ?? user.fullName}.`
+              ? `${getTimeGreeting()}, ${user.fullName.split(" ")[teacher ? 1 : 0] ?? user.fullName}.`
               : page === "agenda"
                 ? t.agenda
                 : t.myClasses}
@@ -274,7 +292,7 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
               <p>{teacher ? t.teacherSubtitle : t.studentSubtitle}</p>
               {items[0] && (
                 <a className="button light" href={`#/classes/${items[0].id}`}>
-                  {t.openClass}
+                  <span>{t.openClass} · {items[0].course.code}</span>
                   <ArrowUpRight size={18} />
                 </a>
               )}
@@ -421,7 +439,11 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
                     className="agenda-row"
                   >
                     <span className={`activity-icon ${item.kind}`}>
-                      <ClipboardCheck size={20} />
+                      {item.kind === "quiz" ? (
+                        <ClipboardCheck size={20} />
+                      ) : (
+                        <FileText size={20} />
+                      )}
                     </span>
                     <div>
                       <small>

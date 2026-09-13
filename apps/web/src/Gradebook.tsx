@@ -174,6 +174,22 @@ export function Gradebook({
         <div className="callout warning">{t.pendingGradingWarning}</div>
       )}
       {locked && <div className="callout note">{t.publishedGradeWarning}</div>}
+      <div className="weight-distribution-bar">
+        {data.categories.map((c: any, i: number) => {
+          const colors = ["#164638", "#2c6e58", "#438e73", "#68b093", "#9bd3b9"];
+          return (
+            <div
+              key={c.id}
+              className="weight-bar-segment"
+              style={{
+                width: `${c.weightPercent}%`,
+                backgroundColor: colors[i % colors.length],
+              }}
+              title={`${c.name}: ${c.weightPercent}%`}
+            />
+          );
+        })}
+      </div>
       <div className="weight-strip">
         {data.categories.map((c: any) => (
           <span key={c.id}>

@@ -971,21 +971,65 @@ function AttemptRunner({
   useEffect(() => {
     if (!remaining) void submit(true);
   }, [remaining]);
+  const isAnswered = (q: any) => {
+    const val = answers[q.id];
+    if (val === undefined || val === null || val === "") return false;
+    if (Array.isArray(val)) return val.length > 0;
+    if (typeof val === "object") return Object.keys(val).length > 0;
+    return true;
+  };
+  const totalQuestions = attempt.questionSnapshot.length;
+  const answeredCount = attempt.questionSnapshot.filter(isAnswered).length;
+  const isTimeWarning = remaining > 0 && remaining <= 300;
   return (
     <section className="quiz-runner">
-      <div className="quiz-sticky">
-        <span>
-          <Clock3 size={18} />
-          {t.remaining}{" "}
-          <strong>
-            {Math.floor(remaining / 60)}:
-            {String(remaining % 60).padStart(2, "0")}
-          </strong>
-        </span>
-        <span role="status">
-          <Save size={15} />
-          {status}
-        </span>
+      <div className={`quiz-sticky ${isTimeWarning ? "time-warning" : ""}`}>
+        <div className="quiz-sticky-top">
+          <span className="quiz-timer">
+            <Clock3 size={18} />
+            {t.remaining}{" "}
+            <strong>
+              {Math.floor(remaining / 60)}:
+              {String(remaining % 60).padStart(2, "0")}
+            </strong>
+          </span>
+          <span className="quiz-progress-text">
+            <strong>{answeredCount}</strong> / {totalQuestions} terjawab
+          </span>
+          <span className="quiz-save-status" role="status">
+            <Save size={15} />
+            {status}
+          </span>
+        </div>
+        <div className="quiz-progress-track">
+          <div
+            className="quiz-progress-bar"
+            style={{
+              width: `${(answeredCount / (totalQuestions || 1)) * 100}%`,
+            }}
+          />
+        </div>
+        <div className="question-nav-pills" aria-label="Navigasi nomor soal">
+          {attempt.questionSnapshot.map((q: any, idx: number) => {
+            const answered = isAnswered(q);
+            return (
+              <button
+                key={q.id}
+                type="button"
+                className={`q-pill ${answered ? "answered" : "unanswered"}`}
+                onClick={() => {
+                  document.getElementById(`q-${q.id}`)?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center",
+                  });
+                }}
+                title={`Soal ${idx + 1}: ${answered ? "Sudah dijawab" : "Belum dijawab"}`}
+              >
+                {idx + 1}
+              </button>
+            );
+          })}
+        </div>
       </div>
       {recovery && (
         <div className="recovery-banner">
@@ -1006,7 +1050,7 @@ function AttemptRunner({
       {error && <Notice error={error} />}
       <fieldset disabled={submitting || remaining === 0}>
         {attempt.questionSnapshot.map((q: any, index: number) => (
-          <article className="card answer-card" key={q.id}>
+          <article className="card answer-card" key={q.id} id={`q-${q.id}`}>
             <div className="question-label">
               <span>
                 {t.questions} {index + 1}
@@ -1060,7 +1104,7 @@ function AnswerInput({
     return (
       <div className="answer-options">
         {q.options.map((o: any) => (
-          <label key={o.id}>
+          <label key={o.id} className={value === o.id ? "selected" : ""}>
             <input
               type="radio"
               name={q.id}
@@ -1076,7 +1120,12 @@ function AnswerInput({
     return (
       <div className="answer-options">
         {q.options.map((o: any) => (
-          <label key={o.id}>
+          <label
+            key={o.id}
+            className={
+              Array.isArray(value) && value.includes(o.id) ? "selected" : ""
+            }
+          >
             <input
               type="checkbox"
               checked={Array.isArray(value) && value.includes(o.id)}
