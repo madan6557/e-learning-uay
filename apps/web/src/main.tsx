@@ -142,67 +142,53 @@ function Landing({ config, error }: { config: any; error?: Error | null }) {
           </div>
         </div>
         <div className="landing-preview" aria-hidden="true">
-          <div className="preview-window">
-            <div className="preview-bar">
-              <div className="window-dots">
-                <span />
-                <span />
-                <span />
+          <div className="preview-body">
+            <div className="preview-portal-card">
+              <div className="portal-badge-row">
+                <span className="portal-badge">SEMESTER GANJIL 2026/2027</span>
+                <span className="portal-subcode">SISTEM TERPADU</span>
               </div>
-              <span className="preview-title">Portal Akademik UAY</span>
-              <span className="preview-status">
-                <span className="status-dot online" />
-                Sistem Aktif
-              </span>
+              <h4>Platform Pembelajaran Digital</h4>
+              <p>
+                Mendukung perkuliahan terstruktur, kolaborasi interaktif, dan
+                evaluasi capaian pembelajaran berbasis kurikulum resmi.
+              </p>
             </div>
-            <div className="preview-body">
-              <div className="preview-portal-card">
-                <div className="portal-badge-row">
-                  <span className="portal-badge">SEMESTER GANJIL 2026/2027</span>
-                  <span className="portal-subcode">SISTEM TERPADU</span>
-                </div>
-                <h4>Platform Pembelajaran Digital</h4>
-                <p>
-                  Mendukung perkuliahan terstruktur, kolaborasi interaktif, dan
-                  evaluasi capaian pembelajaran berbasis kurikulum resmi.
-                </p>
-              </div>
-              <div className="portal-capabilities">
-                <div className="capability-row">
-                  <span className="capability-icon">
-                    <ShieldCheck size={16} />
-                  </span>
-                  <div>
-                    <strong>Akses Tunggal SSO</strong>
-                    <small>Masuk otomatis dengan akun akademik resmi UAY</small>
-                  </div>
-                </div>
-                <div className="capability-row">
-                  <span className="capability-icon">
-                    <BookOpen size={16} />
-                  </span>
-                  <div>
-                    <strong>Materi Multimedia & Lab</strong>
-                    <small>11 variasi blok konten, slide materi, dan video</small>
-                  </div>
-                </div>
-                <div className="capability-row">
-                  <span className="capability-icon">
-                    <ClipboardCheck size={16} />
-                  </span>
-                  <div>
-                    <strong>Asesmen & Evaluasi Terbobot</strong>
-                    <small>Penyerahan tugas berversi dan kuis adaptif</small>
-                  </div>
+            <div className="portal-capabilities">
+              <div className="capability-row">
+                <span className="capability-icon">
+                  <ShieldCheck size={16} />
+                </span>
+                <div>
+                  <strong>Akses Tunggal SSO</strong>
+                  <small>Masuk otomatis dengan akun akademik resmi UAY</small>
                 </div>
               </div>
-              <div className="portal-roles-footer">
-                <span>Dukungan Pengguna:</span>
-                <div className="role-tags">
-                  <span>Mahasiswa</span>
-                  <span>Dosen</span>
-                  <span>Pengelola Prodi</span>
+              <div className="capability-row">
+                <span className="capability-icon">
+                  <BookOpen size={16} />
+                </span>
+                <div>
+                  <strong>Materi Multimedia & Lab</strong>
+                  <small>11 variasi blok konten, slide materi, dan video</small>
                 </div>
+              </div>
+              <div className="capability-row">
+                <span className="capability-icon">
+                  <ClipboardCheck size={16} />
+                </span>
+                <div>
+                  <strong>Asesmen & Evaluasi Terbobot</strong>
+                  <small>Penyerahan tugas berversi dan kuis adaptif</small>
+                </div>
+              </div>
+            </div>
+            <div className="portal-roles-footer">
+              <span>Dukungan Pengguna:</span>
+              <div className="role-tags">
+                <span>Mahasiswa</span>
+                <span>Dosen</span>
+                <span>Pengelola Prodi</span>
               </div>
             </div>
           </div>
