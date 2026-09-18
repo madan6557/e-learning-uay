@@ -41,10 +41,14 @@
   --warning: oklch(0.58 0.12 72);
   --warning-foreground: oklch(0.99 0.002 250);
   --warning-soft: oklch(0.96 0.045 85);
+  /* Reading weight for warning text sitting on --warning-soft; the solid
+     --warning above stays at the SSO value for fills and icons. */
+  --warning-on-soft: oklch(0.54 0.12 72);
   --info: oklch(0.5 0.1 245);
   --info-foreground: oklch(0.99 0.002 250);
   --info-soft: oklch(0.955 0.028 245);
   --neutral-soft: oklch(0.945 0.005 250);
+  --neutral-on-soft: oklch(0.52 0.022 254);
   --chart-1: oklch(0.44 0.106 250);
   --chart-2: oklch(0.6 0.09 200);
   --chart-3: oklch(0.5 0.11 155);
@@ -129,7 +133,9 @@ h4 {
   /* Matches the heading tracking of the SSO console. */
   letter-spacing: -0.015em;
   font-weight: 600;
-  color: var(--foreground);
+  /* No colour here on purpose: headings inherit, so one placed on a dark
+     surface (welcome panel, hero) stays legible instead of being forced to
+     the light-surface foreground. */
   margin: 0;
 }
 h1 {
@@ -262,7 +268,7 @@ main {
   font-size: 0.66rem;
   letter-spacing: 0.17em;
   font-weight: 700;
-  color: #647d97;
+  color: var(--muted-foreground);
   margin-bottom: 12px;
 }
 .page-heading {

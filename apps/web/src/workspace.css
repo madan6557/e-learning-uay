@@ -278,7 +278,7 @@
 }
 .course-tone-2 .course-top {
   background: #f3eadc;
-  color: #8c6b36;
+  color: #84632e;
 }
 .course-body {
   padding: 21px;
@@ -314,7 +314,7 @@
   margin-top: 18px;
   padding-top: 16px;
   border-top: 1px solid var(--line);
-  color: #768077;
+  color: var(--muted-foreground);
   font-size: 0.69rem;
 }
 .course-footer > span {
@@ -395,13 +395,13 @@
 }
 .activity-icon.assignment {
   background: #fbf0de;
-  color: #ac8647;
+  color: #a88243;
 }
 .agenda-date {
   display: flex;
   align-items: center;
   gap: 7px;
-  color: #7a857c;
+  color: var(--muted-foreground);
   font-size: 0.75rem;
 }
 .search-field {
@@ -620,7 +620,7 @@ table {
 }
 th {
   background: #f7fafc;
-  color: #6e7e8f;
+  color: #637283;
   font-size: 0.73rem;
   font-weight: 600;
   padding: 16px;
@@ -1200,7 +1200,7 @@ progress::-webkit-progress-value {
 .points-counter.warning {
   background: #fff7eb;
   border-color: #efd5ae;
-  color: #9d7738;
+  color: #8f6a2a;
 }
 .ordering-key {
   display: grid;
@@ -1458,7 +1458,7 @@ progress::-webkit-progress-value {
   font-size: 0.85rem;
 }
 .final-grade-card small {
-  color: #a7bbcf;
+  color: #b6cadf;
   text-align: center;
   line-height: 1.7;
   margin-top: 20px;

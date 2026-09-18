@@ -1483,7 +1483,7 @@ textarea:focus {
 
 .learning-item small {
   font-size: 0.74rem;
-  color: #6c7988;
+  color: var(--muted-foreground);
 }
 
 .learning-item .activity-icon {
@@ -1596,7 +1596,7 @@ textarea:focus {
 }
 
 .time-warning .quiz-timer strong {
-  color: #a16f00;
+  color: #966700;
 }
 
 .quiz-progress-text {
@@ -2019,7 +2019,7 @@ textarea:focus {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #738393;
+  color: var(--muted-foreground);
   font-size: 0.82rem;
 }
 
@@ -2164,7 +2164,7 @@ textarea:focus {
 
 .minimal-logout-btn:hover {
   background: #fef2f1;
-  color: #c24f48;
+  color: #bb4942;
   border-color: #fee2df;
 }
 
@@ -2309,7 +2309,7 @@ textarea:focus {
   align-items: center;
   gap: 7px;
   font-size: 0.82rem;
-  color: #6c7c8c;
+  color: var(--muted-foreground);
   margin-top: 18px;
 }
 
@@ -2362,7 +2362,7 @@ textarea:focus {
 .portal-subcode {
   font-size: 0.68rem;
   font-weight: 600;
-  color: #738393;
+  color: var(--muted-foreground);
   letter-spacing: 0.04em;
 }
 
@@ -2423,7 +2423,7 @@ textarea:focus {
 
 .capability-row small {
   font-size: 0.72rem;
-  color: #6d7e8f;
+  color: var(--muted-foreground);
 }
 
 .portal-roles-footer {
@@ -2433,7 +2433,7 @@ textarea:focus {
   padding-top: 10px;
   border-top: 1px dashed #e3ebf4;
   font-size: 0.72rem;
-  color: #758595;
+  color: var(--muted-foreground);
   flex-wrap: wrap;
   gap: 8px;
 }
@@ -2708,10 +2708,6 @@ textarea:focus {
   font-weight: 500;
   color: var(--foreground);
 }
-.user-chip {
-  border-radius: var(--radius-md);
-  padding: 4px 8px;
-}
 .user-chip:hover {
   background: var(--accent-surface);
 }
@@ -2734,7 +2730,6 @@ textarea:focus {
 /* --- page headings --- */
 .page-heading h1 {
   font-weight: 600;
-  color: var(--foreground);
 }
 
 /* --- status pills: tone, border and dot as in SSO's StatusBadge --- */
@@ -2744,7 +2739,7 @@ textarea:focus {
   border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--neutral-soft);
-  color: var(--muted-foreground);
+  color: var(--neutral-on-soft);
   font-size: 0.75rem;
   font-weight: 500;
   line-height: 1.4;
@@ -2775,14 +2770,14 @@ textarea:focus {
 .badge-in_progress {
   background: var(--warning-soft);
   border-color: color-mix(in oklab, var(--warning) 25%, transparent);
-  color: var(--warning);
+  color: var(--warning-on-soft);
 }
 .badge-archived,
 .badge-superseded,
 .badge-trash {
   background: var(--neutral-soft);
   border-color: var(--border);
-  color: var(--muted-foreground);
+  color: var(--neutral-on-soft);
 }
 .badge-failed,
 .badge-expired,
@@ -2809,7 +2804,6 @@ table th {
 :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
   outline: 2px solid color-mix(in oklab, var(--ring) 55%, transparent);
   outline-offset: 2px;
-  border-radius: var(--radius-sm);
 }
 
 /* --- contained render failure --- */
@@ -2977,5 +2971,5 @@ table th {
 .badge-excluded {
   background: var(--neutral-soft);
   border-color: var(--border);
-  color: var(--muted-foreground);
+  color: var(--neutral-on-soft);
 }
