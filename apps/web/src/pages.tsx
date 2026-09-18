@@ -186,7 +186,7 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
       <>
         <div className="page-heading heading-with-action">
           <div>
-            <div className="eyebrow">{t.learningSpace}</div>
+            <div className="eyebrow">{t.eyebrow}</div>
             <h1>{t.notifications}</h1>
           </div>
           {notifications.data?.some((n) => !n.isRead) && (
@@ -245,7 +245,7 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
     return (
       <>
         <div className="page-heading">
-          <div className="eyebrow">{t.learningSpace}</div>
+          <div className="eyebrow">{t.eyebrow}</div>
           <h1>{t.grades}</h1>
         </div>
         <div className="cards">
@@ -274,7 +274,7 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
         <div>
           <div className="eyebrow-row">
             <span className="eyebrow">
-              {page === "dashboard" ? t.eyebrow : t.learningSpace}
+              {t.eyebrow}
             </span>
             <span className="user-role-badge">
               {user.role === "ADMIN"
@@ -291,7 +291,6 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
                 ? t.agenda
                 : t.myClasses}
           </h1>
-          <p>{teacher ? t.teacherSubtitle : t.studentSubtitle}</p>
         </div>
         {page === "classes" && user.role !== "INSTRUCTOR" && (
           <button className="secondary" onClick={() => setModal(true)}>
@@ -307,7 +306,6 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
             <div>
               <span className="pill">{t.semester}</span>
               <h2>{teacher ? t.manageLearning : t.continueLearning}</h2>
-              <p>{teacher ? t.teacherSubtitle : t.studentSubtitle}</p>
               {items[0] && (
                 <a className="button light" href={`#/classes/${items[0].id}`}>
                   <span>{t.openClass} · {items[0].course.code}</span>

@@ -108,7 +108,7 @@ function PublicShell({ children }: { children: ReactNode }) {
       </main>
       <footer>
         <span>© 2026 {t.university}</span>
-        <span>Ruang belajar, tumbuh, dan berkolaborasi.</span>
+        <span>{t.timeZone}</span>
       </footer>
     </div>
   );
@@ -126,14 +126,10 @@ function Landing({ config, error }: { config: any; error?: Error | null }) {
             <span className="hero-pill-dot" />
             <span>UNIVERSITAS ACHMAD YANI BANJARMASIN</span>
           </div>
-          <h1>
-            Belajar terarah.
-            <br />
-            Berkembang bersama.
-          </h1>
+          <h1>E-Learning UAY</h1>
           <p>
-            Akses materi perkuliahan, kerjakan tugas, dan ikuti perkembangan
-            belajar dalam satu ruang akademik modern.
+            Materi kuliah, tugas, kuis, dan rekap nilai untuk mahasiswa dan
+            dosen Universitas Achmad Yani.
           </p>
           <div className="hero-actions">
             <LoginButton className="button hero-cta" label="Masuk dengan SSO UAY">
@@ -151,12 +147,11 @@ function Landing({ config, error }: { config: any; error?: Error | null }) {
             <div className="preview-portal-card">
               <div className="portal-badge-row">
                 <span className="portal-badge">SEMESTER GANJIL 2026/2027</span>
-                <span className="portal-subcode">SISTEM TERPADU</span>
               </div>
-              <h4>Platform Pembelajaran Digital</h4>
+              <h4>Semester berjalan</h4>
               <p>
-                Mendukung perkuliahan terstruktur, kolaborasi interaktif, dan
-                evaluasi capaian pembelajaran berbasis kurikulum resmi.
+                Kelas dibuka oleh program studi. Materi dan tugas muncul setelah
+                dosen menerbitkannya.
               </p>
             </div>
             <div className="portal-capabilities">
@@ -165,8 +160,8 @@ function Landing({ config, error }: { config: any; error?: Error | null }) {
                   <ShieldCheck size={16} />
                 </span>
                 <div>
-                  <strong>Akses Tunggal SSO</strong>
-                  <small>Masuk otomatis dengan akun akademik resmi UAY</small>
+                  <strong>Masuk dengan akun SSO</strong>
+                  <small>Tidak ada kata sandi terpisah untuk E-Learning</small>
                 </div>
               </div>
               <div className="capability-row">
@@ -174,8 +169,8 @@ function Landing({ config, error }: { config: any; error?: Error | null }) {
                   <BookOpen size={16} />
                 </span>
                 <div>
-                  <strong>Materi Multimedia & Lab</strong>
-                  <small>11 variasi blok konten, slide materi, dan video</small>
+                  <strong>Materi dan praktikum</strong>
+                  <small>Teks, slide PDF, video, dan berkas dataset</small>
                 </div>
               </div>
               <div className="capability-row">
@@ -183,17 +178,17 @@ function Landing({ config, error }: { config: any; error?: Error | null }) {
                   <ClipboardCheck size={16} />
                 </span>
                 <div>
-                  <strong>Asesmen & Evaluasi Terbobot</strong>
-                  <small>Penyerahan tugas berversi dan kuis adaptif</small>
+                  <strong>Tugas dan kuis</strong>
+                  <small>Pengumpulan berversi dan delapan tipe soal</small>
                 </div>
               </div>
             </div>
             <div className="portal-roles-footer">
-              <span>Dukungan Pengguna:</span>
+              <span>Peran:</span>
               <div className="role-tags">
                 <span>Mahasiswa</span>
                 <span>Dosen</span>
-                <span>Pengelola Prodi</span>
+                <span>Admin prodi</span>
               </div>
             </div>
           </div>
@@ -203,18 +198,18 @@ function Landing({ config, error }: { config: any; error?: Error | null }) {
         {[
           [
             BookOpen,
-            "Ruang Kelas Digital",
-            "Materi perkuliahan, diskusi interaktif, dan pengumuman akademik tersusun rapi per kelas.",
+            "Kelas",
+            "Pertemuan, materi, dan pengumuman dari dosen pengampu.",
           ],
           [
             ClipboardCheck,
-            "Pembelajaran Terarah",
-            "Jadwal kuliah, tugas berversi, dan kuis adaptif membantu Anda tetap fokus dan terorganisir.",
+            "Tugas dan kuis",
+            "Kerjakan sebelum tenggat. Setiap versi pengumpulan tersimpan.",
           ],
           [
             GraduationCap,
-            "Perkembangan yang Terlihat",
-            "Pantau rekap nilai terbobot, evaluasi pengajar, dan pencapaian akademik secara transparan.",
+            "Nilai",
+            "Rekap per kategori beserta bobotnya, setelah dosen menerbitkan.",
           ],
         ].map(([Icon, title, text]: any) => (
           <article className="feature-card" key={title}>
@@ -234,8 +229,8 @@ function Landing({ config, error }: { config: any; error?: Error | null }) {
                 <span className="badge-dot" />
                 LINGKUNGAN UJI
               </span>
-              <h2>Mode uji cepat</h2>
-              <p>Pilih akun untuk mencoba pengalaman setiap peran.</p>
+              <h2>Akun demonstrasi</h2>
+              <p>Masuk sebagai salah satu peran. Semua data di sini contoh.</p>
             </div>
           </div>
           {users.loading ? (
@@ -398,7 +393,7 @@ function AuthShell({
             <X size={20} />
           </IconButton>
         </div>
-        <p className="nav-caption">RUANG AKADEMIK</p>
+        <p className="nav-caption">MENU</p>
         <nav aria-label="Navigasi utama">
           {links.map(([href, Icon, label]: any) => {
             const active = pathname === href || pathname.startsWith(`${href}/`);
@@ -426,8 +421,8 @@ function AuthShell({
         <div className="sidebar-bottom">
           <ShieldCheck size={18} />
           <span>
-            Akun akademik UAY
-            <small className="block">Terhubung melalui SSO</small>
+            Akun SSO UAY
+            <small className="block">Identitas dikelola oleh SSO</small>
           </span>
         </div>
         <button
@@ -504,7 +499,7 @@ function AuthShell({
         </main>
         <footer>
           <span>© 2026 {t.university}</span>
-          <a href="#/help">Bantuan pembelajaran</a>
+          <a href="#/help">{t.help}</a>
         </footer>
       </div>
     </div>
@@ -590,7 +585,7 @@ function App() {
       <>
         <div className="page-heading">
           <h1>{t.help}</h1>
-          <p>Panduan singkat untuk ruang pembelajaran Anda.</p>
+          <p>Hal yang paling sering ditanyakan.</p>
         </div>
         <div className="help-grid">
           {[
