@@ -2978,3 +2978,11 @@ table th {
   border-color: var(--border);
   color: var(--neutral-on-soft);
 }
+
+/* `Action` renders its error as a sibling of the button, so inside a grid card
+   the notice becomes a fourth item and stretches the first column, squeezing
+   the name and pushing the button over it. Span the row instead. */
+.demo-card .notice {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+}

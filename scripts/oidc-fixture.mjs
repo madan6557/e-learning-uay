@@ -55,7 +55,14 @@ export async function startMockSso({
       res.end();
     };
     try {
+      // Routing uses the path this server actually received. When the fixture
+      // is mounted behind a proxy prefix (hosted demo serves it at
+      // `${origin}/demo-sso`), `issuer` carries that prefix but `req.url` does
+      // not, so a self-referencing link has to be rebuilt from `issuer` rather
+      // than from `url` — `new URL("/authorize", ".../demo-sso")` drops the
+      // mount path and lands on the SPA instead of the provider.
       const url = new URL(req.url, issuer);
+      const publicHref = () => `${issuer}${url.pathname}${url.search}`;
       for (const map of [codes, refreshes])
         for (const [key, value] of map)
           if (value.expires < Date.now()) map.delete(key);
@@ -100,7 +107,7 @@ export async function startMockSso({
           return res.end(
             `<!doctype html><html lang="id"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SSO UAY · Akun uji</title><style>body{font:16px system-ui;background:#f4f7f5;color:#183d32;margin:0;padding:32px}main{max-width:720px;margin:5vh auto}a{display:block;padding:18px;margin:12px 0;background:white;border:1px solid #cbd8d0;border-radius:12px;color:inherit;text-decoration:none}a:hover,a:focus{outline:3px solid #62977b}small{display:block;margin-top:6px;color:#52665a}p{line-height:1.7}</style><main><small>SSO UAY · Lingkungan pengujian lokal</small><h1>Pilih akun untuk masuk</h1><p>Gunakan identitas uji berikut untuk mengakses ruang pembelajaran.</p>${users
               .map((u) => {
-                const next = new URL(url);
+                const next = new URL(publicHref());
                 next.searchParams.set("login_hint", u.ssoUserId);
                 return `<a href="${escape(next.href)}"><strong>${escape(u.name)}</strong><small>${escape(u.identifierValue)} · ${escape({ SUPER_ADMIN: "Admin", DEPARTMENT_ADMIN: "Admin Prodi", INSTRUCTOR: "Dosen", STUDENT: "Mahasiswa" }[u.role])}</small></a>`;
               })
