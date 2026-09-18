@@ -36,7 +36,7 @@ export async function calculateGradebook(
         },
         include: {
           user: {
-            select: { id: true, fullName: true, studentStaffNumber: true },
+            select: { id: true, name: true, identifierValue: true },
           },
         },
       }),

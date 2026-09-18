@@ -163,6 +163,51 @@ export const cache = {
     return Number(current.value) <= limit;
   },
 };
+/**
+ * Outbound call policy required by Technical Design v4.0 section 2.4: a 3 s
+ * timeout, up to three attempts with exponential backoff for transient
+ * failures, and a circuit breaker so an upstream outage is not amplified.
+ *
+ * Retries are gated on `idempotent` because replaying a request is only safe
+ * when the upstream treats it as repeatable. An authorization-code exchange is
+ * not: the code is single-use, and a timed-out attempt may still have consumed
+ * it, so those calls get one attempt and surface the failure.
+ */
+const breakers = new Map<string, { failures: number; openUntil: number }>();
+
+export async function serviceFetch(
+  service: string,
+  url: string,
+  init: RequestInit = {},
+  { idempotent = false, timeoutMs = 3000, attempts = 3 } = {},
+): Promise<Response> {
+  const unavailable = `${service.toUpperCase()}_UNAVAILABLE`;
+  const breaker = breakers.get(service) ?? { failures: 0, openUntil: 0 };
+  breakers.set(service, breaker);
+  ensure(Date.now() > breaker.openUntil, 503, unavailable);
+  const limit = idempotent ? attempts : 1;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const response = await fetch(url, {
+        ...init,
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      // A 5xx is never the upstream's considered answer, so it is reported as
+      // an outage whether or not the call may be replayed.
+      if (response.status >= 500) throw new Error("upstream");
+      breaker.failures = 0;
+      return response;
+    } catch {
+      if (attempt >= limit - 1) {
+        breaker.failures++;
+        if (breaker.failures >= 3) breaker.openUntil = Date.now() + 30000;
+        throw new HttpError(503, unavailable);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 100 * 2 ** attempt));
+    }
+  }
+}
+
 export class HttpError extends Error {
   constructor(
     public status: number,
@@ -229,6 +274,13 @@ export async function audit(
       entity,
       entityId,
       classId,
+      result: "SUCCESS",
+      // Request provenance is queryable in its own columns, mirroring the SSO
+      // `audit_events` table; metadata stays for anything case-specific.
+      reason: reason ?? null,
+      ipAddress: context.ip || null,
+      userAgent: context.userAgent || null,
+      requestId: context.requestId,
       beforeState: before == null ? Prisma.JsonNull : json(before),
       afterState: after == null ? Prisma.JsonNull : json(after),
       metadata: json({
@@ -289,7 +341,11 @@ export async function classAccess(
     where: { id: classId },
     include: {
       course: true,
-      instructors: true,
+      // The class header renders instructor identities, so the relation is
+      // resolved here instead of leaving callers with bare join rows.
+      instructors: {
+        include: { user: { select: { id: true, name: true } } },
+      },
       enrollments: { where: { userId: user.id, isActive: true } },
     },
   });

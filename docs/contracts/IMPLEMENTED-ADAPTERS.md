@@ -6,7 +6,7 @@ Versi implementasi: 11 September 2026. Ini adalah kontrak **konsumen E-Learning*
 
 `AUTH_MODE=oidc`, discovery pada `${SSO_ISSUER}/.well-known/openid-configuration`. Issuer, authorization endpoint, token endpoint, JWKS dan end-session endpoint harus berada pada origin SSO yang dikonfigurasi. Flow memakai Authorization Code, PKCE S256, state dan nonce sekali pakai. Token endpoint menerima form dengan `client_id` dan `client_secret` (`client_secret_post`); provider yang mewajibkan metode lain perlu penyesuaian adapter.
 
-Access token berupa JWT dengan tanda tangan **RS256 atau ES256**. Contoh claim:
+Access token berupa JWT dengan tanda tangan **RS256 atau ES256**. Nama claim mengikuti kolom basis data SSO agar satu istilah dipakai di kedua sistem; pemetaan lengkap ada di [SSO-DATA-MAPPING.md](SSO-DATA-MAPPING.md). Contoh claim:
 
 ```json
 {
@@ -18,13 +18,33 @@ Access token berupa JWT dengan tanda tangan **RS256 atau ES256**. Contoh claim:
   "account_status": "ACTIVE",
   "name": "Nama Mahasiswa",
   "email": "mahasiswa@example.edu",
-  "student_staff_number": "202601001",
-  "role": "STUDENT",
+  "preferred_username": "202601001",
+  "user_type": "STUDENT",
+  "identifier_type": "NIM",
+  "identifier_value": "202601001",
+  "roles": ["STUDENT"],
   "department_scopes": []
 }
 ```
 
-Timestamp contoh harus diganti saat menerbitkan token. `sub` immutable berbentuk UUID; masa access token paling lama 900 detik. Role yang diterima: `SUPER_ADMIN`, `DEPARTMENT_ADMIN`, `INSTRUCTOR`, `STUDENT`. Admin prodi hanya berwenang pada `department_scopes`; dosen hanya pada kelas yang ditugaskan. ID token diverifikasi terhadap client ID dan nonce; subject ID token/access token wajib sama. Refresh token disimpan di sesi server dan dirotasi tanpa diberikan kepada JavaScript browser.
+Timestamp contoh harus diganti saat menerbitkan token. `sub` immutable berbentuk UUID dan sama dengan `users.user_id` pada SSO; masa access token paling lama 900 detik.
+
+| Claim                | Sumber SSO                                    | Wajib | Catatan                                                                                     |
+| -------------------- | --------------------------------------------- | :---: | ------------------------------------------------------------------------------------------- |
+| `sub`                | `users.user_id`                               |   ya  | UUID immutable.                                                                              |
+| `name`               | `users.name`                                  |   ya  |                                                                                              |
+| `email`              | `users.email`                                 |   ya  |                                                                                              |
+| `account_status`     | `users.status`                                |   ya  | Wajib `ACTIVE`; `DISABLED` maupun `SUSPENDED` ditolak 403.                                   |
+| `user_type`          | `users.user_type`                             | tidak | `STUDENT`, `LECTURER`, `STAFF`, `ADMIN`. Diturunkan dari role bila tidak dikirim.            |
+| `preferred_username` | `accounts.username`                           | tidak |                                                                                              |
+| `identifier_type`    | `user_identifiers.identifier_type` (primary)  | tidak | `NIM`, `NIP`, `NIDN`, `OTHER`. Diturunkan dari `user_type` bila tidak dikirim.                |
+| `identifier_value`   | `user_identifiers.identifier_value` (primary) |   ya  | Alias lama `student_staff_number` masih diterima.                                            |
+| `roles`              | `application_access` → `roles.name`           |   ya  | Hanya role aplikasi E-Learning. Alias lama `role` (nilai tunggal) masih diterima.            |
+| `department_scopes`  | kebijakan otorisasi E-Learning                | tidak | Default array kosong.                                                                        |
+
+Role yang diterima: `SUPER_ADMIN`, `DEPARTMENT_ADMIN`, `INSTRUCTOR`, `STUDENT`. Bila `roles` memuat lebih dari satu, yang paling tinggi dipakai sesuai urutan tersebut. Akun tanpa role E-Learning ditolak 403 `INVALID_IDENTITY`. Admin prodi hanya berwenang pada `department_scopes`; dosen hanya pada kelas yang ditugaskan. ID token diverifikasi terhadap client ID dan nonce; subject ID token/access token wajib sama. Refresh token disimpan di sesi server dan dirotasi tanpa diberikan kepada JavaScript browser.
+
+Adapter SSO memakai kebijakan panggilan yang sama dengan File Service: batas 3 detik per panggilan, hingga 3 percobaan dengan jeda eksponensial untuk panggilan idempotent (discovery/JWKS), dan circuit breaker 30 detik setelah tiga kegagalan beruntun. Penukaran authorization code tidak diulang karena code bersifat sekali pakai.
 
 Daftarkan callback `${APP_ORIGIN}/api/v1/auth/callback` dan post-logout redirect `${APP_ORIGIN}`. Cookie produksi `__Host-uay-session` menggunakan Secure, HttpOnly, SameSite=Lax dan Path=/; Redis menyimpan sesi paling lama 8 jam. Setiap request memvalidasi token/status akun, cache pencabutan dan akun lokal; Redis gagal berarti akses gagal. Akun lokal adalah cache identitas tanpa password. Impor peserta hanya dapat merujuk identitas yang sudah disinkronkan melalui login SSO.
 

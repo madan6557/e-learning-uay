@@ -16,9 +16,9 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
     return db.user.create({
       data: {
         id,
-        externalSubjectId: id,
-        studentStaffNumber: `${suffix}-${role}-${departmentScopes.join("")}`,
-        fullName: `Test ${role}`,
+        ssoUserId: id,
+        identifierValue: `${suffix}-${role}-${departmentScopes.join("")}`,
+        name: `Test ${role}`,
         email: `${id}@example.test`,
         role,
         departmentScopes,
@@ -587,17 +587,17 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
           kind: "ENROLLMENT",
           rows: [
             {
-              values: { studentStaffNumber: outsider.studentStaffNumber },
+              values: { identifierValue: outsider.identifierValue },
               exclude: false,
               override: false,
             },
             {
-              values: { studentStaffNumber: student.studentStaffNumber },
+              values: { identifierValue: student.identifierValue },
               exclude: false,
               override: false,
             },
             {
-              values: { studentStaffNumber: "missing" },
+              values: { identifierValue: "missing" },
               exclude: false,
               override: false,
             },
@@ -844,7 +844,7 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
     await suite.test(
       "disabled account and CSRF protection fail closed",
       async () => {
-        await cache.set(`revoked:${student.externalSubjectId}`, "1", 900);
+        await cache.set(`revoked:${student.ssoUserId}`, "1", 900);
         await request(student, "/me", "GET", undefined, 403);
         const response = await fetch(base + "/courses", {
           method: "POST",

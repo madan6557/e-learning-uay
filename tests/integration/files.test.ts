@@ -74,9 +74,9 @@ test("File Service tickets, scan verification, ownership and trash lifecycle", a
     return db.user.create({
       data: {
         id,
-        externalSubjectId: id,
-        studentStaffNumber: id,
-        fullName: "File Test",
+        ssoUserId: id,
+        identifierValue: id,
+        name: "File Test",
         email: `${id}@example.test`,
         role,
       },

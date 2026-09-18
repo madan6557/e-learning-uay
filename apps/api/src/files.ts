@@ -10,7 +10,7 @@ import {
   mutate,
   audit,
   cache,
-  HttpError,
+  serviceFetch,
 } from "./core.js";
 
 const limits = {
@@ -38,8 +38,6 @@ const allowedTypes = new Set([
   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 ]);
 const blockedExtensions = /\.(html?|svg|js|mjs|exe|dll|bat|cmd|ps1|sh|msi)$/i;
-let failures = 0;
-let openUntil = 0;
 export async function fileRequest(
   path: string,
   method = "GET",
@@ -47,34 +45,24 @@ export async function fileRequest(
   key?: string,
 ): Promise<any> {
   ensure(config.fileUrl && config.fileKey, 503, "FILE_SERVICE_UNAVAILABLE");
-  ensure(Date.now() > openUntil, 503, "FILE_SERVICE_UNAVAILABLE");
-  for (let attempt = 0; attempt < 3; attempt++)
-    try {
-      const response = await fetch(`${config.fileUrl}${path}`, {
-        method,
-        headers: {
-          Authorization: `Bearer ${config.fileKey}`,
-          "Content-Type": "application/json",
-          ...(key ? { "Idempotency-Key": key } : {}),
-        },
-        body: body === undefined ? undefined : JSON.stringify(body),
-        signal: AbortSignal.timeout(3000),
-      });
-      if (response.status >= 500) throw new Error("upstream");
-      ensure(response.ok, 502, "FILE_SERVICE_REJECTED");
-      failures = 0;
-      return await response.json();
-    } catch (error) {
-      if (error instanceof HttpError) throw error;
-      if (attempt === 2) {
-        failures++;
-        if (failures >= 3) openUntil = Date.now() + 30000;
-        throw new HttpError(503, "FILE_SERVICE_UNAVAILABLE");
-      }
-      if (method !== "GET" && !key)
-        throw new HttpError(503, "FILE_SERVICE_UNAVAILABLE");
-      await new Promise((r) => setTimeout(r, 100 * 2 ** attempt));
-    }
+  // A write without an idempotency key cannot be replayed safely, so it takes
+  // the single-attempt path.
+  const response = await serviceFetch(
+    "file_service",
+    `${config.fileUrl}${path}`,
+    {
+      method,
+      headers: {
+        Authorization: `Bearer ${config.fileKey}`,
+        "Content-Type": "application/json",
+        ...(key ? { "Idempotency-Key": key } : {}),
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    },
+    { idempotent: method === "GET" || Boolean(key) },
+  );
+  ensure(response.ok, 502, "FILE_SERVICE_REJECTED");
+  return await response.json();
 }
 export function validateSignedUrl(value: unknown) {
   ensure(typeof value === "string", 502, "INVALID_FILE_TICKET");
@@ -211,7 +199,7 @@ export function registerFiles(app: Express) {
           "POST",
           {
             ...data,
-            ownerSubject: req.context.user.externalSubjectId,
+            ownerSubject: req.context.user.ssoUserId,
             retentionDays: 7,
           },
           req.get("Idempotency-Key"),
@@ -328,7 +316,7 @@ export function registerFiles(app: Express) {
       "POST",
       {
         ttlSeconds: 900,
-        subject: req.context.user.externalSubjectId,
+        subject: req.context.user.ssoUserId,
         disposition: req.body.inline ? "inline" : "attachment",
       },
       req.get("Idempotency-Key") ?? req.context.requestId,

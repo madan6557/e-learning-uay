@@ -86,11 +86,11 @@ export async function startMockSso({
         )
           return send(400, { error: "invalid_request" });
         const users = await db.user.findMany({
-          where: { isActive: true },
+          where: { status: "ACTIVE" },
           orderBy: { role: "asc" },
         });
         const user = users.find(
-          (u) => u.externalSubjectId === p.get("login_hint"),
+          (u) => u.ssoUserId === p.get("login_hint"),
         );
         if (!user) {
           res.writeHead(200, {
@@ -101,8 +101,8 @@ export async function startMockSso({
             `<!doctype html><html lang="id"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SSO UAY · Akun uji</title><style>body{font:16px system-ui;background:#f4f7f5;color:#183d32;margin:0;padding:32px}main{max-width:720px;margin:5vh auto}a{display:block;padding:18px;margin:12px 0;background:white;border:1px solid #cbd8d0;border-radius:12px;color:inherit;text-decoration:none}a:hover,a:focus{outline:3px solid #62977b}small{display:block;margin-top:6px;color:#52665a}p{line-height:1.7}</style><main><small>SSO UAY · Lingkungan pengujian lokal</small><h1>Pilih akun untuk masuk</h1><p>Gunakan identitas uji berikut untuk mengakses ruang pembelajaran.</p>${users
               .map((u) => {
                 const next = new URL(url);
-                next.searchParams.set("login_hint", u.externalSubjectId);
-                return `<a href="${escape(next.href)}"><strong>${escape(u.fullName)}</strong><small>${escape(u.studentStaffNumber)} · ${escape({ SUPER_ADMIN: "Admin", DEPARTMENT_ADMIN: "Admin Prodi", INSTRUCTOR: "Dosen", STUDENT: "Mahasiswa" }[u.role])}</small></a>`;
+                next.searchParams.set("login_hint", u.ssoUserId);
+                return `<a href="${escape(next.href)}"><strong>${escape(u.name)}</strong><small>${escape(u.identifierValue)} · ${escape({ SUPER_ADMIN: "Admin", DEPARTMENT_ADMIN: "Admin Prodi", INSTRUCTOR: "Dosen", STUDENT: "Mahasiswa" }[u.role])}</small></a>`;
               })
               .join(
                 "",
@@ -145,20 +145,23 @@ export async function startMockSso({
         }
         if (!grant) return send(400, { error: "invalid_grant" });
         const user = await db.user.findUnique({ where: { id: grant.userId } });
-        if (!user?.isActive) return send(400, { error: "invalid_grant" });
+        if (user?.status !== "ACTIVE") return send(400, { error: "invalid_grant" });
         const claims = {
-          name: user.fullName,
+          name: user.name,
           email: user.email,
-          student_staff_number: user.studentStaffNumber,
-          role: user.role,
+          preferred_username: user.username ?? user.identifierValue,
+          user_type: user.userType,
+          identifier_type: user.identifierType,
+          identifier_value: user.identifierValue,
+          roles: [user.role],
           department_scopes: user.departmentScopes,
-          account_status: "ACTIVE",
+          account_status: user.status,
         };
         const sign = (extra, aud) =>
           new SignJWT({ ...claims, ...extra })
             .setProtectedHeader({ alg: "RS256", kid: jwk.kid })
             .setIssuer(issuer)
-            .setSubject(user.externalSubjectId)
+            .setSubject(user.ssoUserId)
             .setAudience(aud)
             .setIssuedAt()
             .setExpirationTime("15m")

@@ -1,3 +1,16 @@
+// E-Learning UAY — data model.
+//
+// Two naming layers are deliberate:
+//
+//   * The Prisma/TypeScript surface stays PascalCase models with camelCase
+//     fields, as mandated by Technical Design v4.0 section 6.3.
+//   * The physical PostgreSQL layer uses the UAY SSO convention through
+//     @map/@@map: snake_case tables, snake_case columns and <entity>_id
+//     surrogate keys, so both databases read the same way to an operator.
+//
+// Identity columns mirror the SSO vocabulary one-for-one. See
+// packages/shared/src/sso.ts for the claim-to-column contract.
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -7,9 +20,12 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// ---------------------------------------------------------------------------
+// Identity — projected from UAY SSO, never authored here
+// ---------------------------------------------------------------------------
 
-
-
+/// Role granted to a user for the E-Learning application. Sourced from the SSO
+/// `application_access` -> `roles.name` pair scoped to this client_id.
 enum GlobalRole {
   SUPER_ADMIN
   DEPARTMENT_ADMIN
@@ -17,36 +33,78 @@ enum GlobalRole {
   STUDENT
 }
 
-model User {
-  id                 String       @id @default(uuid())
-  externalSubjectId  String       @unique
-  studentStaffNumber String       @unique
-  fullName           String
-  email              String       @unique
-  role               GlobalRole   @default(STUDENT)
-  departmentScopes   String[]     @default([])
-  isActive           Boolean      @default(true)
-  lastLoginAt        DateTime?
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
-
-  instructedClasses  ClassInstructor[]
-  enrollments        Enrollment[]
-  videoProgresses    VideoProgress[]
-  slideProgresses    SlideProgress[]
-  downloads          MaterialDownload[]
-  quizAttempts       QuizAttempt[]
-  submissions        AssignmentSubmission[]
-  gradedAnswers      QuizAnswerGrade[]
-  finalGrades        FinalGradeRecord[]
-  notifications      Notification[]
-  auditLogs          AuditLog[]
-
-  @@index([role, isActive])
+/// Mirrors SSO `users.user_type`.
+enum UserType {
+  STUDENT
+  LECTURER
+  STAFF
+  ADMIN
 }
 
+/// Mirrors SSO `users.status` and `accounts.status`.
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
 
+/// Mirrors SSO `user_identifiers.identifier_type`.
+enum IdentifierType {
+  NIM
+  NIP
+  NIDN
+  OTHER
+}
 
+model User {
+  /// Local surrogate key. The SSO subject is kept separately so a re-issued
+  /// directory record cannot silently rewrite E-Learning foreign keys.
+  id               String         @id @default(uuid()) @map("user_id")
+  /// SSO `users.user_id`, delivered as the `sub` claim.
+  ssoUserId        String         @unique @map("sso_user_id")
+  /// SSO `accounts.username`, delivered as `preferred_username`.
+  username         String?        @unique @map("username")
+  /// SSO `users.name`.
+  name             String         @map("name")
+  /// SSO `users.email`.
+  email            String         @unique @map("email")
+  /// SSO `users.user_type`.
+  userType         UserType       @default(STUDENT) @map("user_type")
+  /// SSO `user_identifiers.identifier_type` of the primary identifier.
+  identifierType   IdentifierType @default(NIM) @map("identifier_type")
+  /// SSO `user_identifiers.identifier_value` of the primary identifier
+  /// (NIM for students, NIP/NIDN for lecturers and staff).
+  identifierValue  String         @unique @map("identifier_value")
+  /// E-Learning application role, see GlobalRole.
+  role             GlobalRole     @default(STUDENT) @map("role")
+  departmentScopes String[]       @default([]) @map("department_scopes")
+  /// SSO `users.status`. DISABLED blocks every request, including live sessions.
+  status           UserStatus     @default(ACTIVE) @map("status")
+  lastLoginAt      DateTime?      @map("last_login_at")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+
+  instructedClasses ClassInstructor[]
+  enrollments       Enrollment[]
+  videoProgresses   VideoProgress[]
+  slideProgresses   SlideProgress[]
+  downloads         MaterialDownload[]
+  quizAttempts      QuizAttempt[]
+  submissions       AssignmentSubmission[]
+  gradedAnswers     QuizAnswerGrade[]
+  finalGrades       FinalGradeRecord[]
+  notifications     Notification[]
+  auditLogs         AuditLog[]
+
+  @@index([role, status])
+  @@index([status])
+  @@index([userType])
+  @@index([identifierType, identifierValue])
+  @@map("users")
+}
+
+// ---------------------------------------------------------------------------
+// Courses and classes
+// ---------------------------------------------------------------------------
 
 enum CourseStatus {
   DRAFT
@@ -55,30 +113,32 @@ enum CourseStatus {
 }
 
 model Course {
-  id          String       @id @default(uuid())
-  code        String       @unique
-  title       String
-  description String?
-  credits     Int          @default(3)
-  departmentCode   String
-  status      CourseStatus @default(DRAFT)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id             String       @id @default(uuid()) @map("course_id")
+  code           String       @unique @map("code")
+  title          String       @map("title")
+  description    String?      @map("description")
+  credits        Int          @default(3) @map("credits")
+  departmentCode String       @map("department_code")
+  status         CourseStatus @default(DRAFT) @map("status")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
 
   classes       CourseClass[]
   questionBanks QuestionBank[]
+
+  @@map("courses")
 }
 
 model CourseClass {
-  id            String       @id @default(uuid())
-  courseId      String
-  course        Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  name          String
-  academicYear  String
-  enrollmentKeyHash String?
-  status        CourseStatus @default(PUBLISHED)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  id                String       @id @default(uuid()) @map("class_id")
+  courseId          String       @map("course_id")
+  course            Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  name              String       @map("name")
+  academicYear      String       @map("academic_year")
+  enrollmentKeyHash String?      @map("enrollment_key_hash")
+  status            CourseStatus @default(PUBLISHED) @map("status")
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
 
   instructors     ClassInstructor[]
   enrollments     Enrollment[]
@@ -88,35 +148,39 @@ model CourseClass {
   announcements   Announcement[]
 
   @@index([courseId, academicYear])
+  @@map("course_classes")
 }
 
 model ClassInstructor {
-  id        String      @id @default(uuid())
-  classId   String
+  id        String      @id @default(uuid()) @map("class_instructor_id")
+  classId   String      @map("class_id")
   class     CourseClass @relation(fields: [classId], references: [id], onDelete: Cascade)
-  userId    String
+  userId    String      @map("user_id")
   user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  isPrimary Boolean     @default(true)
+  isPrimary Boolean     @default(true) @map("is_primary")
 
   @@unique([classId, userId])
   @@index([userId])
+  @@map("class_instructors")
 }
 
 model Enrollment {
-  id         String      @id @default(uuid())
-  classId    String
+  id         String      @id @default(uuid()) @map("enrollment_id")
+  classId    String      @map("class_id")
   class      CourseClass @relation(fields: [classId], references: [id], onDelete: Cascade)
-  userId     String
+  userId     String      @map("user_id")
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  enrolledAt DateTime    @default(now())
-  isActive   Boolean     @default(true)
+  enrolledAt DateTime    @default(now()) @map("enrolled_at")
+  isActive   Boolean     @default(true) @map("is_active")
 
   @@unique([classId, userId])
   @@index([userId])
+  @@map("enrollments")
 }
 
-
-
+// ---------------------------------------------------------------------------
+// Sections and resources
+// ---------------------------------------------------------------------------
 
 enum SectionType {
   LECTURE
@@ -127,18 +191,18 @@ enum SectionType {
 }
 
 model Section {
-  id          String      @id @default(uuid())
-  classId     String
+  id          String      @id @default(uuid()) @map("section_id")
+  classId     String      @map("class_id")
   class       CourseClass @relation(fields: [classId], references: [id], onDelete: Cascade)
-  title       String
-  description String?
-  type        SectionType @default(LECTURE)
-  order       Int         @default(0)
-  isVisible   Boolean     @default(true)
-  startDate   DateTime?
-  endDate     DateTime?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  title       String      @map("title")
+  description String?     @map("description")
+  type        SectionType @default(LECTURE) @map("type")
+  order       Int         @default(0) @map("order")
+  isVisible   Boolean     @default(true) @map("is_visible")
+  startDate   DateTime?   @map("start_date")
+  endDate     DateTime?   @map("end_date")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
 
   resources   ResourceItem[]
   quizzes     Quiz[]
@@ -146,6 +210,7 @@ model Section {
 
   @@unique([classId, order])
   @@index([classId])
+  @@map("sections")
 }
 
 enum ResourceType {
@@ -159,71 +224,77 @@ enum ResourceType {
 }
 
 model ResourceItem {
-  id                 String       @id @default(uuid())
-  sectionId          String
+  id                 String       @id @default(uuid()) @map("resource_item_id")
+  sectionId          String       @map("section_id")
   section            Section      @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  title              String
-  description        String?
-  resourceType       ResourceType
-  dynamicPayload     Json
-  completionCriteria Json?
-  contentOrder       Int          @default(0)
-  isVisible          Boolean      @default(true)
-  availableFrom      DateTime?
-  availableUntil     DateTime?
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
+  title              String       @map("title")
+  description        String?      @map("description")
+  resourceType       ResourceType @map("resource_type")
+  dynamicPayload     Json         @map("dynamic_payload")
+  completionCriteria Json?        @map("completion_criteria")
+  contentOrder       Int          @default(0) @map("content_order")
+  isVisible          Boolean      @default(true) @map("is_visible")
+  availableFrom      DateTime?    @map("available_from")
+  availableUntil     DateTime?    @map("available_until")
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @updatedAt @map("updated_at")
 
   downloads       MaterialDownload[]
   videoProgresses VideoProgress[]
   slideProgresses SlideProgress[]
 
   @@index([sectionId, contentOrder])
+  @@map("resource_items")
 }
 
-
-
+// ---------------------------------------------------------------------------
+// Learning progress
+// ---------------------------------------------------------------------------
 
 model VideoProgress {
-  userId         String
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  resourceItemId String
-  resourceItem   ResourceItem @relation(fields: [resourceItemId], references: [id], onDelete: Cascade)
-  watchedSeconds Float          @default(0)
-  lastPositionSeconds Float          @default(0)
-  percent        Float        @default(0.0)
-  updatedAt      DateTime     @updatedAt
+  userId              String       @map("user_id")
+  user                User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resourceItemId      String       @map("resource_item_id")
+  resourceItem        ResourceItem @relation(fields: [resourceItemId], references: [id], onDelete: Cascade)
+  watchedSeconds      Float        @default(0) @map("watched_seconds")
+  lastPositionSeconds Float        @default(0) @map("last_position_seconds")
+  percent             Float        @default(0.0) @map("percent")
+  updatedAt           DateTime     @updatedAt @map("updated_at")
 
   @@id([userId, resourceItemId])
+  @@map("video_progress")
 }
 
 model SlideProgress {
-  userId         String
+  userId         String       @map("user_id")
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  resourceItemId String
+  resourceItemId String       @map("resource_item_id")
   resourceItem   ResourceItem @relation(fields: [resourceItemId], references: [id], onDelete: Cascade)
-  viewedPages    Int[]        @default([])
-  currentPage    Int          @default(1)
-  percent        Float        @default(0.0)
-  updatedAt      DateTime     @updatedAt
+  viewedPages    Int[]        @default([]) @map("viewed_pages")
+  currentPage    Int          @default(1) @map("current_page")
+  percent        Float        @default(0.0) @map("percent")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
 
   @@id([userId, resourceItemId])
+  @@map("slide_progress")
 }
 
 model MaterialDownload {
-  id             String       @id @default(uuid())
-  userId         String
+  id             String       @id @default(uuid()) @map("material_download_id")
+  userId         String       @map("user_id")
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  resourceItemId String
+  resourceItemId String       @map("resource_item_id")
   resourceItem   ResourceItem @relation(fields: [resourceItemId], references: [id], onDelete: Cascade)
-  downloadedAt   DateTime     @default(now())
+  downloadedAt   DateTime     @default(now()) @map("downloaded_at")
 
   @@unique([userId, resourceItemId])
   @@index([resourceItemId])
+  @@map("material_downloads")
 }
 
-
-
+// ---------------------------------------------------------------------------
+// Weighted grading
+// ---------------------------------------------------------------------------
 
 enum AggregationMethod {
   SIMPLE_AVERAGE
@@ -232,43 +303,46 @@ enum AggregationMethod {
 }
 
 model GradeCategory {
-  id                String            @id @default(uuid())
-  classId           String
+  id                String            @id @default(uuid()) @map("grade_category_id")
+  classId           String            @map("class_id")
   class             CourseClass       @relation(fields: [classId], references: [id], onDelete: Cascade)
-  name              String
-  weightPercent     Float
-  aggregationMethod AggregationMethod @default(SIMPLE_AVERAGE)
-  dropLowest        Int               @default(0)
-  kind              String            @default("ASSESSMENT")
-  order             Int               @default(0)
-  createdAt         DateTime          @default(now())
+  name              String            @map("name")
+  weightPercent     Float             @map("weight_percent")
+  aggregationMethod AggregationMethod @default(SIMPLE_AVERAGE) @map("aggregation_method")
+  dropLowest        Int               @default(0) @map("drop_lowest")
+  kind              String            @default("ASSESSMENT") @map("kind")
+  order             Int               @default(0) @map("order")
+  createdAt         DateTime          @default(now()) @map("created_at")
 
-  quizzes           Quiz[]
-  assignments       Assignment[]
+  quizzes     Quiz[]
+  assignments Assignment[]
 
   @@index([classId, order])
+  @@map("grade_categories")
 }
 
 model FinalGradeRecord {
-  id                 String      @id @default(uuid())
-  classId            String
+  id                 String      @id @default(uuid()) @map("final_grade_record_id")
+  classId            String      @map("class_id")
   class              CourseClass @relation(fields: [classId], references: [id], onDelete: Cascade)
-  userId             String
+  userId             String      @map("user_id")
   user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  categoryScoresJson Json
-  finalScore         Float
-  gradeLetter        String
-  gradePoint         Float
-  isLocked           Boolean     @default(false)
-  publishedAt        DateTime?
-  updatedAt          DateTime    @updatedAt
+  categoryScoresJson Json        @map("category_scores_json")
+  finalScore         Float       @map("final_score")
+  gradeLetter        String      @map("grade_letter")
+  gradePoint         Float       @map("grade_point")
+  isLocked           Boolean     @default(false) @map("is_locked")
+  publishedAt        DateTime?   @map("published_at")
+  updatedAt          DateTime    @updatedAt @map("updated_at")
 
   @@unique([classId, userId])
   @@index([classId])
+  @@map("final_grade_records")
 }
 
-
-
+// ---------------------------------------------------------------------------
+// Quizzes
+// ---------------------------------------------------------------------------
 
 enum QuestionType {
   SINGLE_CHOICE
@@ -289,114 +363,121 @@ enum QuizReleaseMode {
 }
 
 model QuestionBank {
-  id          String     @id @default(uuid())
-  courseId    String
-  course      Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  title       String
-  description String?
-  createdAt   DateTime   @default(now())
+  id          String   @id @default(uuid()) @map("question_bank_id")
+  courseId    String   @map("course_id")
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title       String   @map("title")
+  description String?  @map("description")
+  createdAt   DateTime @default(now()) @map("created_at")
 
-  questions   Question[]
+  questions Question[]
+
+  @@map("question_banks")
 }
 
 model Question {
-  id             String        @id @default(uuid())
-  questionBankId String?
+  id             String        @id @default(uuid()) @map("question_id")
+  questionBankId String?       @map("question_bank_id")
   questionBank   QuestionBank? @relation(fields: [questionBankId], references: [id], onDelete: SetNull)
-  quizId         String?
+  quizId         String?       @map("quiz_id")
   quiz           Quiz?         @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  text           String
-  type           QuestionType  @default(SINGLE_CHOICE)
-  options        Json
-  points         Float         @default(10.0)
-  answerKey      Json
-  rubric         Json          @default("[]")
-  maxWords       Int           @default(1000)
-  explanation    String?
-  order          Int           @default(0)
-  createdAt      DateTime      @default(now())
+  text           String        @map("text")
+  type           QuestionType  @default(SINGLE_CHOICE) @map("type")
+  options        Json          @map("options")
+  points         Float         @default(10.0) @map("points")
+  answerKey      Json          @map("answer_key")
+  rubric         Json          @default("[]") @map("rubric")
+  maxWords       Int           @default(1000) @map("max_words")
+  explanation    String?       @map("explanation")
+  order          Int           @default(0) @map("order")
+  createdAt      DateTime      @default(now()) @map("created_at")
 
-  answerGrades   QuizAnswerGrade[]
+  answerGrades QuizAnswerGrade[]
 
   @@index([quizId, order])
+  @@map("questions")
 }
 
 model Quiz {
-  id                 String          @id @default(uuid())
-  sectionId          String
+  id                 String          @id @default(uuid()) @map("quiz_id")
+  sectionId          String          @map("section_id")
   section            Section         @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  gradeCategoryId    String?
+  gradeCategoryId    String?         @map("grade_category_id")
   gradeCategory      GradeCategory?  @relation(fields: [gradeCategoryId], references: [id], onDelete: SetNull)
-  title              String
-  description        String?
-  status             CourseStatus    @default(DRAFT)
-  scoreMode          String          @default("STRICT")
-  passingScore       Float           @default(60.0)
-  timeLimitMinutes   Int?
-  timerMode          String          @default("INDEPENDENT")
-  attemptLimit       Int             @default(1)
-  randomizeQuestions Boolean         @default(false)
-  randomizeOptions   Boolean         @default(false)
-  resultReleaseMode  QuizReleaseMode @default(AUTO)
-  resultReleaseAt    DateTime?
-  availableFrom      DateTime?
-  availableUntil     DateTime?
-  contentOrder       Int             @default(0)
-  isVisible          Boolean         @default(true)
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
+  title              String          @map("title")
+  description        String?         @map("description")
+  status             CourseStatus    @default(DRAFT) @map("status")
+  scoreMode          String          @default("STRICT") @map("score_mode")
+  passingScore       Float           @default(60.0) @map("passing_score")
+  timeLimitMinutes   Int?            @map("time_limit_minutes")
+  timerMode          String          @default("INDEPENDENT") @map("timer_mode")
+  attemptLimit       Int             @default(1) @map("attempt_limit")
+  randomizeQuestions Boolean         @default(false) @map("randomize_questions")
+  randomizeOptions   Boolean         @default(false) @map("randomize_options")
+  resultReleaseMode  QuizReleaseMode @default(AUTO) @map("result_release_mode")
+  resultReleaseAt    DateTime?       @map("result_release_at")
+  availableFrom      DateTime?       @map("available_from")
+  availableUntil     DateTime?       @map("available_until")
+  contentOrder       Int             @default(0) @map("content_order")
+  isVisible          Boolean         @default(true) @map("is_visible")
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
 
-  questions          Question[]
-  attempts           QuizAttempt[]
+  questions Question[]
+  attempts  QuizAttempt[]
 
   @@index([sectionId, contentOrder])
+  @@map("quizzes")
 }
 
 model QuizAttempt {
-  id          String            @id @default(uuid())
-  quizId      String
-  quiz        Quiz              @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  userId      String
-  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  attemptNum  Int               @default(1)
-  score       Float             @default(0.0)
-  isPassed    Boolean           @default(false)
-  status      String            @default("IN_PROGRESS")
-  questionSnapshot Json
-  expiresAt   DateTime
-  revision    Int               @default(0)
-  objectiveScore Float          @default(0)
-  publishedAt DateTime?
-  forced      Boolean           @default(false)
-  answersJson Json
-  startedAt   DateTime          @default(now())
-  submittedAt DateTime?
-  isGraded    Boolean           @default(false)
+  id               String    @id @default(uuid()) @map("quiz_attempt_id")
+  quizId           String    @map("quiz_id")
+  quiz             Quiz      @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  userId           String    @map("user_id")
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attemptNum       Int       @default(1) @map("attempt_num")
+  score            Float     @default(0.0) @map("score")
+  isPassed         Boolean   @default(false) @map("is_passed")
+  status           String    @default("IN_PROGRESS") @map("status")
+  questionSnapshot Json      @map("question_snapshot")
+  expiresAt        DateTime  @map("expires_at")
+  revision         Int       @default(0) @map("revision")
+  objectiveScore   Float     @default(0) @map("objective_score")
+  publishedAt      DateTime? @map("published_at")
+  forced           Boolean   @default(false) @map("forced")
+  answersJson      Json      @map("answers_json")
+  startedAt        DateTime  @default(now()) @map("started_at")
+  submittedAt      DateTime? @map("submitted_at")
+  isGraded         Boolean   @default(false) @map("is_graded")
 
   answerGrades QuizAnswerGrade[]
 
   @@unique([quizId, userId, attemptNum])
   @@index([userId, quizId])
+  @@map("quiz_attempts")
 }
 
 model QuizAnswerGrade {
-  id         String      @id @default(uuid())
-  attemptId  String
+  id         String      @id @default(uuid()) @map("quiz_answer_grade_id")
+  attemptId  String      @map("attempt_id")
   attempt    QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
-  questionId String
+  questionId String      @map("question_id")
   question   Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  graderId   String
+  graderId   String      @map("grader_id")
   grader     User        @relation(fields: [graderId], references: [id], onDelete: Cascade)
-  score      Float
-  feedback   String?
-  gradedAt   DateTime    @default(now())
+  score      Float       @map("score")
+  feedback   String?     @map("feedback")
+  gradedAt   DateTime    @default(now()) @map("graded_at")
 
   @@unique([attemptId, questionId])
   @@index([questionId])
+  @@map("quiz_answer_grades")
 }
 
-
-
+// ---------------------------------------------------------------------------
+// Assignments
+// ---------------------------------------------------------------------------
 
 enum SubmissionStatus {
   SUBMITTED
@@ -406,149 +487,187 @@ enum SubmissionStatus {
 }
 
 model Assignment {
-  id              String         @id @default(uuid())
-  sectionId       String
+  id              String         @id @default(uuid()) @map("assignment_id")
+  sectionId       String         @map("section_id")
   section         Section        @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  gradeCategoryId String?
+  gradeCategoryId String?        @map("grade_category_id")
   gradeCategory   GradeCategory? @relation(fields: [gradeCategoryId], references: [id], onDelete: SetNull)
-  title           String
-  instructions    String
-  maxScore        Float          @default(100.0)
-  allowedFormats  Json
-  availableFrom   DateTime?
-  deadline        DateTime?
-  cutoffDate      DateTime?
-  allowLate       Boolean        @default(true)
-  maxAttempts     Int            @default(3)
-  contentOrder    Int            @default(0)
-  isVisible       Boolean        @default(true)
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  title           String         @map("title")
+  instructions    String         @map("instructions")
+  maxScore        Float          @default(100.0) @map("max_score")
+  allowedFormats  Json           @map("allowed_formats")
+  availableFrom   DateTime?      @map("available_from")
+  deadline        DateTime?      @map("deadline")
+  cutoffDate      DateTime?      @map("cutoff_date")
+  allowLate       Boolean        @default(true) @map("allow_late")
+  maxAttempts     Int            @default(3) @map("max_attempts")
+  contentOrder    Int            @default(0) @map("content_order")
+  isVisible       Boolean        @default(true) @map("is_visible")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
 
-  submissions     AssignmentSubmission[]
+  submissions AssignmentSubmission[]
 
   @@index([sectionId, contentOrder])
+  @@map("assignments")
 }
 
 model AssignmentSubmission {
-  id           String           @id @default(uuid())
-  assignmentId String
-  assignment   Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  userId       String
-  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  version      Int              @default(1)
-  status       SubmissionStatus @default(SUBMITTED)
-  textContent  String?
-  fileObjectId String?
-  fileName     String?
-  fileSizeBytes Int?
-  externalUrl  String?
-  score        Float?
-  feedback     String?
-  isPublished  Boolean          @default(false)
-  submittedAt  DateTime         @default(now())
-  gradedAt     DateTime?
+  id            String           @id @default(uuid()) @map("assignment_submission_id")
+  assignmentId  String           @map("assignment_id")
+  assignment    Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  userId        String           @map("user_id")
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  version       Int              @default(1) @map("version")
+  status        SubmissionStatus @default(SUBMITTED) @map("status")
+  textContent   String?          @map("text_content")
+  fileObjectId  String?          @map("file_object_id")
+  fileName      String?          @map("file_name")
+  fileSizeBytes Int?             @map("file_size_bytes")
+  externalUrl   String?          @map("external_url")
+  score         Float?           @map("score")
+  feedback      String?          @map("feedback")
+  isPublished   Boolean          @default(false) @map("is_published")
+  submittedAt   DateTime         @default(now()) @map("submitted_at")
+  gradedAt      DateTime?        @map("graded_at")
 
   @@unique([assignmentId, userId, version])
   @@index([assignmentId, userId])
+  @@map("assignment_submissions")
 }
 
-
-
+// ---------------------------------------------------------------------------
+// Communication
+// ---------------------------------------------------------------------------
 
 model Announcement {
-  id          String      @id @default(uuid())
-  classId     String
+  id          String      @id @default(uuid()) @map("announcement_id")
+  classId     String      @map("class_id")
   class       CourseClass @relation(fields: [classId], references: [id], onDelete: Cascade)
-  title       String
-  content     String
-  authorId    String
-  isImportant Boolean     @default(false)
-  isPublished Boolean     @default(true)
-  publishedAt DateTime    @default(now())
-  createdAt   DateTime    @default(now())
+  title       String      @map("title")
+  content     String      @map("content")
+  authorId    String      @map("author_id")
+  isImportant Boolean     @default(false) @map("is_important")
+  isPublished Boolean     @default(true) @map("is_published")
+  publishedAt DateTime    @default(now()) @map("published_at")
+  createdAt   DateTime    @default(now()) @map("created_at")
 
   @@index([classId, publishedAt])
+  @@map("announcements")
 }
 
 model Notification {
-  id        String    @id @default(uuid())
-  userId    String
+  id        String    @id @default(uuid()) @map("notification_id")
+  userId    String    @map("user_id")
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type      String
-  title     String
-  message   String
-  linkUrl   String?
-  eventKey  String
-  isRead    Boolean   @default(false)
-  readAt    DateTime?
-  createdAt DateTime  @default(now())
+  type      String    @map("type")
+  title     String    @map("title")
+  message   String    @map("message")
+  linkUrl   String?   @map("link_url")
+  eventKey  String    @map("event_key")
+  isRead    Boolean   @default(false) @map("is_read")
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
 
   @@unique([userId, eventKey])
   @@index([userId, isRead])
+  @@map("notifications")
 }
 
+// ---------------------------------------------------------------------------
+// Audit — column vocabulary mirrors SSO `audit_events`
+// ---------------------------------------------------------------------------
 
-
+enum AuditResult {
+  SUCCESS
+  FAILED
+}
 
 model AuditLog {
-  id          String   @id @default(uuid())
-  actorId     String?
-  user        User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
-  actorRole   String
-  action      String
-  entity      String
-  entityId    String
-  classId     String?
-  beforeState Json?
-  afterState  Json?
-  metadata    Json
-  createdAt   DateTime @default(now())
+  id          String      @id @default(uuid()) @map("audit_log_id")
+  /// SSO `audit_events.actor_user_id`.
+  actorId     String?     @map("actor_user_id")
+  user        User?       @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  actorRole   String      @map("actor_role")
+  action      String      @map("action")
+  /// SSO `audit_events.target_type`.
+  entity      String      @map("target_type")
+  /// SSO `audit_events.target_id`.
+  entityId    String      @map("target_id")
+  classId     String?     @map("class_id")
+  result      AuditResult @default(SUCCESS) @map("result")
+  /// Operator-supplied justification for reversible academic corrections.
+  reason      String?     @map("reason")
+  ipAddress   String?     @map("ip_address")
+  userAgent   String?     @map("user_agent")
+  requestId   String?     @map("request_id")
+  /// SSO `audit_events.before_data`.
+  beforeState Json?       @map("before_data")
+  /// SSO `audit_events.after_data`.
+  afterState  Json?       @map("after_data")
+  metadata    Json        @map("metadata")
+  createdAt   DateTime    @default(now()) @map("created_at")
 
   @@index([actorId, createdAt])
   @@index([entity, entityId])
   @@index([classId, createdAt])
+  @@index([action])
+  @@index([requestId])
+  @@map("audit_logs")
 }
+
+// ---------------------------------------------------------------------------
+// Operational records
+// ---------------------------------------------------------------------------
+
 model FileReference {
-  id String @id
-  classId String
-  ownerId String
-  purpose String
-  contextId String?
-  name String
-  mimeType String
-  sizeBytes Int
-  checksum String
-  status String @default("PENDING")
-  createdAt DateTime @default(now())
-  trashedAt DateTime?
+  id        String    @id @map("file_reference_id")
+  classId   String    @map("class_id")
+  ownerId   String    @map("owner_id")
+  purpose   String    @map("purpose")
+  contextId String?   @map("context_id")
+  name      String    @map("name")
+  mimeType  String    @map("mime_type")
+  sizeBytes Int       @map("size_bytes")
+  checksum  String    @map("checksum")
+  status    String    @default("PENDING") @map("status")
+  createdAt DateTime  @default(now()) @map("created_at")
+  trashedAt DateTime? @map("trashed_at")
+
   @@index([classId, purpose])
   @@index([ownerId])
+  @@map("file_references")
 }
 
 model ResourceProgress {
-  userId String
-  resourceItemId String
-  completedAt DateTime @default(now())
-  checklistIds String[] @default([])
+  userId         String   @map("user_id")
+  resourceItemId String   @map("resource_item_id")
+  completedAt    DateTime @default(now()) @map("completed_at")
+  checklistIds   String[] @default([]) @map("checklist_ids")
+
   @@id([userId, resourceItemId])
+  @@map("resource_progress")
 }
 
 model IdempotencyRecord {
-  userId String
-  key String
-  requestHash String
-  result Json
-  createdAt DateTime @default(now())
+  userId      String   @map("user_id")
+  key         String   @map("key")
+  requestHash String   @map("request_hash")
+  result      Json     @map("result")
+  createdAt   DateTime @default(now()) @map("created_at")
+
   @@id([userId, key])
+  @@map("idempotency_records")
 }
 
 model ManualGradeRecord {
-  id String @id @default(uuid())
-  classId String
-  userId String
-  categoryId String
-  score Float
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(uuid()) @map("manual_grade_record_id")
+  classId    String   @map("class_id")
+  userId     String   @map("user_id")
+  categoryId String   @map("grade_category_id")
+  score      Float    @map("score")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
   @@unique([classId, userId, categoryId])
+  @@map("manual_grade_records")
 }

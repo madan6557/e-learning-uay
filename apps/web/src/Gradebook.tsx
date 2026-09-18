@@ -128,8 +128,8 @@ export function Gradebook({
                   t.status,
                 ],
                 data.rows.map((r: any) => [
-                  r.user.studentStaffNumber,
-                  r.user.fullName,
+                  r.user.identifierValue,
+                  r.user.name,
                   ...r.categoryScores.map((c: any) => c.score),
                   r.progress,
                   r.finalScore,
@@ -176,7 +176,14 @@ export function Gradebook({
       {locked && <div className="callout note">{t.publishedGradeWarning}</div>}
       <div className="weight-distribution-bar">
         {data.categories.map((c: any, i: number) => {
-          const colors = ["#164638", "#2c6e58", "#438e73", "#68b093", "#9bd3b9"];
+          // Shared categorical ramp: the chart tokens of the UAY design system.
+          const colors = [
+            "var(--chart-1)",
+            "var(--chart-2)",
+            "var(--chart-3)",
+            "var(--chart-4)",
+            "var(--chart-5)",
+          ];
           return (
             <div
               key={c.id}
@@ -253,8 +260,8 @@ export function Gradebook({
               {data.rows.map((r: any) => (
                 <tr key={r.user.id}>
                   <td>
-                    <strong>{r.user.fullName}</strong>
-                    <small className="block">{r.user.studentStaffNumber}</small>
+                    <strong>{r.user.name}</strong>
+                    <small className="block">{r.user.identifierValue}</small>
                   </td>
                   {r.categoryScores.map((c: any) => (
                     <td key={c.categoryId}>
@@ -266,7 +273,7 @@ export function Gradebook({
                               ? "changed"
                               : "")
                           }
-                          aria-label={r.user.fullName + " · " + c.name}
+                          aria-label={r.user.name + " · " + c.name}
                           type="number"
                           min={0}
                           max={100}
@@ -608,9 +615,9 @@ export function ImportPanel({
   const template = async () => {
     const cols =
       kind === "ENROLLMENT"
-        ? ["studentStaffNumber", "email"]
+        ? ["identifierValue", "email"]
         : kind === "GRADES"
-          ? ["studentStaffNumber", "score"]
+          ? ["identifierValue", "score"]
           : ["text", "type", "points", "options", "answerKey", "rubric"];
     const example =
       kind === "ENROLLMENT"
@@ -819,7 +826,7 @@ export function ImportPanel({
                       {review?.rows[index]?.status === "READY" ? (
                         <Badge value="READY" />
                       ) : (
-                        review?.rows[index]?.issues.map((code: string) => (
+                        review?.rows[index]?.issues?.map((code: string) => (
                           <small className="block danger-text" key={code}>
                             {(t.errors as any)[code] ?? code}
                           </small>

@@ -7,6 +7,7 @@ import {
   timingSafeEqual,
 } from "node:crypto";
 import { z } from "zod";
+import { identityClaims } from "../../../packages/shared/src/sso.js";
 import {
   db,
   cache,
@@ -14,6 +15,7 @@ import {
   production,
   isDemo,
   ensure,
+  serviceFetch,
   hash,
   audit,
   transaction,
@@ -65,9 +67,11 @@ function demoQuickLoginEnabled() {
 }
 export async function oidcMetadata() {
   if (!discovery) {
-    const response = await fetch(
+    const response = await serviceFetch(
+      "sso",
       oidcServerEndpoint(`${config.issuer}/.well-known/openid-configuration`),
-      { signal: AbortSignal.timeout(3000) },
+      {},
+      { idempotent: true },
     );
     ensure(response.ok, 503, "SSO_UNAVAILABLE");
     const data: any = await response.json();
@@ -120,45 +124,30 @@ async function verifyAccess(token: string) {
   return payload;
 }
 async function syncUser(claims: JWTPayload) {
-  const profile = z
-    .object({
-      sub: z.string().uuid(),
-      name: z.string().min(1),
-      email: z.string().email(),
-      student_staff_number: z.string().min(1),
-      role: z.enum([
-        "SUPER_ADMIN",
-        "DEPARTMENT_ADMIN",
-        "INSTRUCTOR",
-        "STUDENT",
-      ]),
-      department_scopes: z.array(z.string()).default([]),
-    })
-    .parse(claims);
+  const parsed = identityClaims.safeParse(claims);
+  ensure(parsed.success, 403, "INVALID_IDENTITY");
+  const { ssoUserId, ...profile } = parsed.data;
   const data = {
-    fullName: profile.name,
-    email: profile.email,
-    studentStaffNumber: profile.student_staff_number,
-    role: profile.role,
-    departmentScopes: profile.department_scopes,
-    isActive: true,
+    ...profile,
+    // Tokens only reach this point once account_status is ACTIVE, so a
+    // successful sync also re-activates a previously revoked cache row.
+    status: "ACTIVE" as const,
     lastLoginAt: new Date(),
   };
   return transaction(async (tx) => {
-    const before = await tx.user.findUnique({
-      where: { externalSubjectId: profile.sub },
-    });
+    const before = await tx.user.findUnique({ where: { ssoUserId } });
     const user = await tx.user.upsert({
-      where: { externalSubjectId: profile.sub },
-      create: { externalSubjectId: profile.sub, ...data },
+      where: { ssoUserId },
+      create: { ssoUserId, ...data },
       update: data,
     });
     if (
       !before ||
       before.role !== user.role ||
+      before.userType !== user.userType ||
       JSON.stringify(before.departmentScopes) !==
         JSON.stringify(user.departmentScopes) ||
-      !before.isActive
+      before.status !== "ACTIVE"
     )
       await audit(
         tx,
@@ -180,16 +169,21 @@ async function syncUser(claims: JWTPayload) {
 }
 async function tokenRequest(values: Record<string, string>) {
   const metadata = await oidcMetadata();
-  const response = await fetch(oidcServerEndpoint(metadata.token_endpoint), {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      ...values,
-      client_id: config.clientId,
-      ...(config.clientSecret ? { client_secret: config.clientSecret } : {}),
-    }),
-    signal: AbortSignal.timeout(3000),
-  });
+  // An authorization code is single-use, so only attempts that never reached
+  // the provider are replayed.
+  const response = await serviceFetch(
+    "sso",
+    oidcServerEndpoint(metadata.token_endpoint),
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        ...values,
+        client_id: config.clientId,
+        ...(config.clientSecret ? { client_secret: config.clientSecret } : {}),
+      }),
+    },
+  );
   ensure(response.ok, 401, "SESSION_EXPIRED");
   const data: any = await response.json();
   ensure(typeof data.access_token === "string", 401, "INVALID_TOKEN");
@@ -244,9 +238,9 @@ export function registerAuth(app: Express) {
       await db.user.findMany({
         select: {
           id: true,
-          fullName: true,
+          name: true,
           role: true,
-          studentStaffNumber: true,
+          identifierValue: true,
         },
         orderBy: { role: "asc" },
       }),
@@ -256,7 +250,7 @@ export function registerAuth(app: Express) {
     ensure(!production && config.authMode === "development", 404, "NOT_FOUND");
     const { userId } = z.object({ userId: z.string().uuid() }).parse(req.body);
     const user = await db.user.findUnique({ where: { id: userId } });
-    ensure(user && user.isActive, 403, "ACCOUNT_DISABLED");
+    ensure(user && user.status === "ACTIVE", 403, "ACCOUNT_DISABLED");
     await issue(res, {
       userId,
       expires: Date.now() + 900000,
@@ -275,8 +269,8 @@ export function registerAuth(app: Express) {
       const user = await db.user.findUnique({
         where: { id: z.string().uuid().parse(demoUserId) },
       });
-      ensure(user?.isActive, 403, "ACCOUNT_DISABLED");
-      demoSubject = user.externalSubjectId;
+      ensure(user?.status === "ACTIVE", 403, "ACCOUNT_DISABLED");
+      demoSubject = user.ssoUserId;
     }
     res.json({ authorizationUrl: await authorizationUrl(res, demoSubject) });
   });
@@ -292,8 +286,8 @@ export function registerAuth(app: Express) {
       const user = await db.user.findUnique({
         where: { id: z.string().uuid().parse(demoUserId) },
       });
-      ensure(user?.isActive, 403, "ACCOUNT_DISABLED");
-      demoSubject = user.externalSubjectId;
+      ensure(user?.status === "ACTIVE", 403, "ACCOUNT_DISABLED");
+      demoSubject = user.ssoUserId;
     }
     res.redirect(await authorizationUrl(res, demoSubject));
   });
@@ -360,12 +354,12 @@ export function registerAuth(app: Express) {
     await cache.set(`revoked:${subject}`, "1", 900);
     await transaction(async (tx) => {
       const user = await tx.user.findUnique({
-        where: { externalSubjectId: subject },
+        where: { ssoUserId: subject },
       });
       if (user) {
         const after = await tx.user.update({
           where: { id: user.id },
-          data: { isActive: false },
+          data: { status: "DISABLED" },
         });
         await audit(
           tx,
@@ -437,7 +431,7 @@ export async function authenticate(
           where: { id: session.userId },
         });
         ensure(
-          existing?.externalSubjectId === claims.sub,
+          existing?.ssoUserId === claims.sub,
           401,
           "INVALID_IDENTITY",
         );
@@ -472,7 +466,8 @@ export async function authenticate(
     );
   const user = await db.user.findUnique({ where: { id: session.userId } });
   ensure(
-    user?.isActive && !(await cache.get(`revoked:${user?.externalSubjectId}`)),
+    user?.status === "ACTIVE" &&
+      !(await cache.get(`revoked:${user?.ssoUserId}`)),
     403,
     "ACCOUNT_DISABLED",
   );

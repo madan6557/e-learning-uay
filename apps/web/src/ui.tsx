@@ -64,11 +64,11 @@ export function UserChip({ user, role }: { user: any; role: string }) {
     <a
       href="#/profile"
       className="user-chip"
-      aria-label={`Profil akun ${user.fullName}`}
+      aria-label={`Profil akun ${user.name}`}
     >
-      <Avatar name={user.fullName} />
+      <Avatar name={user.name} />
       <span className="user-chip-details">
-        <span className="user-chip-name">{user.fullName}</span>
+        <span className="user-chip-name">{user.name}</span>
         <small className="user-chip-role">{role}</small>
       </span>
     </a>

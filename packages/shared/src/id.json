@@ -340,7 +340,30 @@
     "INSTRUCTOR": "Dosen",
     "STUDENT": "Mahasiswa"
   },
+  "collapseNav": "Perkecil navigasi",
+  "unreadNotifications": "notifikasi belum dibaca",
+  "markAllRead": "Tandai semua dibaca",
+  "allNotificationsRead": "Semua notifikasi sudah ditandai dibaca.",
+  "renderErrorTitle": "Halaman ini gagal ditampilkan",
+  "renderErrorBody": "Terjadi kendala saat menampilkan bagian ini. Data Anda di server tidak terpengaruh. Coba muat ulang bagian ini atau kembali ke beranda.",
+  "renderErrorRetry": "Muat ulang bagian ini",
+  "renderErrorDetail": "Rincian teknis",
+  "userTypes": {
+    "STUDENT": "Mahasiswa",
+    "LECTURER": "Dosen",
+    "STAFF": "Tenaga kependidikan",
+    "ADMIN": "Administrator"
+  },
+  "identifierTypes": {
+    "NIM": "NIM",
+    "NIP": "NIP",
+    "NIDN": "NIDN",
+    "OTHER": "Nomor identitas"
+  },
   "statuses": {
+    "ACTIVE": "Aktif",
+    "INACTIVE": "Nonaktif",
+    "DISABLED": "Dinonaktifkan",
     "DRAFT": "Draf",
     "PUBLISHED": "Terbit",
     "ARCHIVED": "Diarsipkan",

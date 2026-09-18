@@ -1,4 +1,5 @@
 import { ConfirmationHost } from "./confirm";
+import { ErrorBoundary } from "./ErrorBoundary";
 import { createRoot } from "react-dom/client";
 import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import {
@@ -15,6 +16,8 @@ import {
   X,
   ShieldCheck,
   ClipboardCheck,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import {
   t,
@@ -45,15 +48,15 @@ const AssignmentPage = lazy(() =>
 import "./styles.css";
 import "./workspace.css";
 import "./experience.css";
+// The square mark and product-name lockup is shared with the UAY SSO console
+// so the two applications read as one environment.
 function Brand({ home = "#/" }: { home?: string }) {
   return (
     <a className="brand" href={home} aria-label="UAY E-Learning beranda">
-      <span className="brand-mark">
-        <GraduationCap size={27} />
+      <span className="brand-mark" aria-hidden="true">
+        UAY
       </span>
-      <span>
-        UAY <small>E-LEARNING</small>
-      </span>
+      <span className="brand-name">E-Learning UAY</span>
     </a>
   );
 }
@@ -100,7 +103,9 @@ function PublicShell({ children }: { children: ReactNode }) {
           </LoginButton>
         </nav>
       </header>
-      <main id="main-content">{children}</main>
+      <main id="main-content">
+        <ErrorBoundary>{children}</ErrorBoundary>
+      </main>
       <footer>
         <span>© 2026 {t.university}</span>
         <span>Ruang belajar, tumbuh, dan berkolaborasi.</span>
@@ -241,16 +246,16 @@ function Landing({ config, error }: { config: any; error?: Error | null }) {
             <div className="demo-grid">
               {users.data?.map((u) => (
                 <article className="demo-card" key={u.id}>
-                  <Avatar name={u.fullName} />
+                  <Avatar name={u.name} />
                   <div>
-                    <strong>{u.fullName}</strong>
+                    <strong>{u.name}</strong>
                     <small>
-                      {(t.roles as any)[u.role]} · {u.studentStaffNumber}
+                      {(t.roles as any)[u.role]} · {u.identifierValue}
                     </small>
                   </div>
                   <LoginButton
                     className="demo-login-btn"
-                    label={`Masuk sebagai ${u.fullName}`}
+                    label={`Masuk sebagai ${u.name}`}
                     demoUserId={u.id}
                   >
                     <span>Gunakan</span>
@@ -314,6 +319,31 @@ function AuthShell({
     };
   }, [menuOpen]);
   useEffect(() => setMenuOpen(false), [pathname]);
+  // Sidebar width preference is per-device, like the SSO console's.
+  const [collapsed, setCollapsed] = useState(
+    () => localStorage.getItem("uay-nav-collapsed") === "1",
+  );
+  useEffect(() => {
+    localStorage.setItem("uay-nav-collapsed", collapsed ? "1" : "0");
+  }, [collapsed]);
+  const [unread, setUnread] = useState(0);
+  useEffect(() => {
+    let active = true;
+    const load = () =>
+      api<{ count: number }>("/notifications/unread-count")
+        .then((r) => {
+          if (active) setUnread(r.count);
+        })
+        .catch(() => {});
+    load();
+    const timer = setInterval(load, 60000);
+    window.addEventListener("notifications-changed", load);
+    return () => {
+      active = false;
+      clearInterval(timer);
+      window.removeEventListener("notifications-changed", load);
+    };
+  }, [pathname]);
   const links = [
     ["/dashboard", LayoutDashboard, t.dashboard],
     ["/classes", BookOpen, t.myClasses],
@@ -337,7 +367,11 @@ function AuthShell({
           : t.learningSpace),
   );
   return (
-    <div className={`app-shell ${menuOpen ? "menu-open" : ""}`}>
+    <div
+      className={`app-shell ${menuOpen ? "menu-open" : ""} ${
+        collapsed ? "nav-collapsed" : ""
+      }`}
+    >
       <a className="skip-link" href="#main-content">
         Lewati ke konten
       </a>
@@ -368,15 +402,23 @@ function AuthShell({
         <nav aria-label="Navigasi utama">
           {links.map(([href, Icon, label]: any) => {
             const active = pathname === href || pathname.startsWith(`${href}/`);
+            const badge = href === "/notifications" ? unread : 0;
             return (
               <a
                 key={href}
                 href={`#${href}`}
                 className={active ? "active" : ""}
                 aria-current={active ? "page" : undefined}
+                title={collapsed ? label : undefined}
               >
                 <Icon size={19} />
-                {label}
+                <span className="nav-label">{label}</span>
+                {badge > 0 && (
+                  <span className="nav-badge">
+                    {badge > 99 ? "99+" : badge}
+                    <span className="sr-only"> {t.unreadNotifications}</span>
+                  </span>
+                )}
               </a>
             );
           })}
@@ -388,6 +430,19 @@ function AuthShell({
             <small className="block">Terhubung melalui SSO</small>
           </span>
         </div>
+        <button
+          type="button"
+          className="nav-collapse-toggle"
+          onClick={() => setCollapsed((value) => !value)}
+          aria-pressed={collapsed}
+        >
+          {collapsed ? (
+            <PanelLeftOpen size={16} />
+          ) : (
+            <PanelLeftClose size={16} />
+          )}
+          <span className="nav-label">{t.collapseNav}</span>
+        </button>
       </aside>
       <div className="workspace" inert={mobile && menuOpen}>
         <header className="topbar">
@@ -402,6 +457,14 @@ function AuthShell({
             >
               <Menu size={22} />
             </IconButton>
+            {/* The SSO console shows the same mark once its rail is hidden. */}
+            <a
+              className="brand-mark topbar-mark"
+              href="#/dashboard"
+              aria-label="UAY E-Learning beranda"
+            >
+              UAY
+            </a>
             <Breadcrumbs
               items={
                 pathname === "/dashboard"
@@ -435,7 +498,9 @@ function AuthShell({
           </div>
         </header>
         <main id="main-content">
-          <Suspense fallback={<Loading />}>{children}</Suspense>
+          <ErrorBoundary key={pathname}>
+            <Suspense fallback={<Loading />}>{children}</Suspense>
+          </ErrorBoundary>
         </main>
         <footer>
           <span>© 2026 {t.university}</span>

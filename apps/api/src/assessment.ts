@@ -499,7 +499,7 @@ export function registerAssessment(app: Express) {
         ...(!cls.canManage ? { userId: req.context.user.id } : {}),
       },
       include: {
-        user: { select: { fullName: true, studentStaffNumber: true } },
+        user: { select: { name: true, identifierValue: true } },
         answerGrades: true,
       },
       orderBy: { startedAt: "desc" },
@@ -971,7 +971,7 @@ export function registerAssessment(app: Express) {
         ...(!cls.canManage ? { userId: req.context.user.id } : {}),
       },
       include: {
-        user: { select: { fullName: true, studentStaffNumber: true } },
+        user: { select: { name: true, identifierValue: true } },
       },
       orderBy: [{ submittedAt: "desc" }],
     });

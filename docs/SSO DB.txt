@@ -1,0 +1,184 @@
+Table users {
+  user_id uuid [pk]
+  name varchar(255) [not null]
+  email varchar(255)
+  user_type varchar(50) [not null, note: 'STUDENT, LECTURER, STAFF, ADMIN']
+  status varchar(30) [not null, note: 'ACTIVE, DISABLED']
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  indexes {
+    status
+    user_type
+    email
+  }
+}
+
+Table user_identifiers {
+  user_identifier_id uuid [pk]
+  user_id uuid [not null]
+  identifier_type varchar(30) [not null, note: 'NIM, NIP, NIDN, OTHER']
+  identifier_value varchar(100) [not null]
+  is_primary boolean [not null, default: false]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  indexes {
+    (identifier_type, identifier_value) [unique]
+    user_id
+    (user_id, is_primary)
+  }
+}
+
+Table accounts {
+  account_id uuid [pk]
+  user_id uuid [not null, unique]
+  username varchar(255) [not null, unique]
+  status varchar(30) [not null, note: 'ACTIVE, DISABLED']
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  indexes {
+    status
+  }
+}
+
+Table applications {
+  application_id uuid [pk]
+  name varchar(100) [not null, unique]
+  client_id varchar(255) [not null, unique]
+  status varchar(30) [not null, note: 'ACTIVE, DISABLED']
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  indexes {
+    status
+  }
+}
+
+Table roles {
+  role_id uuid [pk]
+  application_id uuid [not null]
+  name varchar(100) [not null]
+  description text
+  status varchar(30) [not null, note: 'ACTIVE, DISABLED']
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  indexes {
+    (application_id, name) [unique]
+    application_id
+    status
+  }
+}
+
+Table application_access {
+  application_access_id uuid [pk]
+  user_id uuid [not null]
+  application_id uuid [not null]
+  role_id uuid [not null]
+  status varchar(30) [not null, note: 'ACTIVE, DISABLED']
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  indexes {
+    (user_id, application_id, role_id) [unique]
+    user_id
+    application_id
+    role_id
+    status
+  }
+}
+
+Table admin_delegations {
+  admin_delegation_id uuid [pk]
+  admin_user_id uuid [not null]
+  application_id uuid [not null]
+  role_id uuid [not null]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  indexes {
+    (admin_user_id, application_id, role_id) [unique]
+    admin_user_id
+    application_id
+    role_id
+  }
+}
+
+Table import_jobs {
+  import_job_id uuid [pk]
+  created_by uuid [not null]
+  file_name varchar(255) [not null]
+  status varchar(30) [not null, note: 'PENDING, PROCESSING, COMPLETED, FAILED']
+  total_records integer [not null, default: 0]
+  success_count integer [not null, default: 0]
+  failed_count integer [not null, default: 0]
+  duplicate_count integer [not null, default: 0]
+  created_at timestamp [not null]
+  completed_at timestamp
+
+  indexes {
+    created_by
+    status
+    created_at
+  }
+}
+
+Table import_items {
+  import_item_id uuid [pk]
+  import_job_id uuid [not null]
+  row_number integer [not null]
+  status varchar(30) [not null, note: 'SUCCESS, FAILED, DUPLICATE']
+  identifier_type varchar(30)
+  identifier_value varchar(100)
+  error_code varchar(50)
+  error_message text
+  created_at timestamp [not null]
+
+  indexes {
+    (import_job_id, row_number) [unique]
+    import_job_id
+    status
+  }
+}
+
+Table audit_events {
+  audit_event_id uuid [pk]
+  timestamp timestamp [not null]
+  actor_user_id uuid
+  action varchar(100) [not null]
+  target_type varchar(50)
+  target_id uuid
+  application_id uuid
+  result varchar(30) [not null, note: 'SUCCESS, FAILED']
+  reason text
+  ip_address varchar(45)
+  user_agent text
+  request_id varchar(100)
+  before_data json
+  after_data json
+
+  indexes {
+    timestamp
+    actor_user_id
+    action
+    target_id
+    application_id
+    request_id
+  }
+}
+
+Ref: user_identifiers.user_id > users.user_id
+Ref: accounts.user_id - users.user_id
+Ref: roles.application_id > applications.application_id
+Ref: application_access.user_id > users.user_id
+Ref: application_access.application_id > applications.application_id
+Ref: application_access.role_id > roles.role_id
+Ref: admin_delegations.admin_user_id > users.user_id
+Ref: admin_delegations.application_id > applications.application_id
+Ref: admin_delegations.role_id > roles.role_id
+Ref: import_jobs.created_by > users.user_id
+Ref: import_items.import_job_id > import_jobs.import_job_id
+Ref: audit_events.actor_user_id > users.user_id
+Ref: audit_events.application_id > applications.application_id

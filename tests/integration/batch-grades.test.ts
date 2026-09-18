@@ -14,10 +14,10 @@ test("batch grading validates, commits and audits one atomic operation", async (
     return db.user.create({
       data: {
         id,
-        externalSubjectId: id,
-        fullName: `Batch ${role}`,
+        ssoUserId: id,
+        name: `Batch ${role}`,
         email: `${id}@example.test`,
-        studentStaffNumber: id,
+        identifierValue: id,
         role,
       },
     });

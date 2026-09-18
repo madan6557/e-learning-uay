@@ -16,11 +16,11 @@ test("quick demo selection uses the real OIDC callback and rejects bypass", asyn
   await db.user.create({
     data: {
       id,
-      externalSubjectId: id,
-      fullName: "Demo OIDC",
+      ssoUserId: id,
+      name: "Demo OIDC",
       role: "INSTRUCTOR",
       email: `${id}@example.test`,
-      studentStaffNumber: id,
+      identifierValue: id,
     },
   });
   const server = createApp().listen(0, "127.0.0.1");

@@ -36,10 +36,10 @@ test("hosted demo keeps the browser callback on the frontend origin without prov
   await db.user.create({
     data: {
       id,
-      externalSubjectId: id,
-      fullName: "Demo Railway",
+      ssoUserId: id,
+      name: "Demo Railway",
       email: `${id}@example.test`,
-      studentStaffNumber: id,
+      identifierValue: id,
       role: "INSTRUCTOR",
     },
   });

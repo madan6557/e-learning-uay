@@ -14,6 +14,7 @@ import {
   Database,
   Terminal,
   FileText,
+  CheckCheck,
 } from "lucide-react";
 
 function getTimeGreeting(): string {
@@ -69,10 +70,10 @@ export function ClassCard({ item, index = 0 }: { item: any; index?: number }) {
         </p>
         <div className="instructor-line">
           <span className="mini-avatar">
-            {item.instructors[0]?.user.fullName[0] ?? "U"}
+            {item.instructors[0]?.user?.name?.[0] ?? "U"}
           </span>
           {item.instructors
-            .map((i: any) => i.user.fullName.split(",")[0])
+            .map((i: any) => i.user?.name?.split(",")[0] ?? "—")
             .join(", ")}
         </div>
         <div className="course-footer">
@@ -183,9 +184,24 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
   if (page === "notifications")
     return (
       <>
-        <div className="page-heading">
-          <div className="eyebrow">{t.learningSpace}</div>
-          <h1>{t.notifications}</h1>
+        <div className="page-heading heading-with-action">
+          <div>
+            <div className="eyebrow">{t.learningSpace}</div>
+            <h1>{t.notifications}</h1>
+          </div>
+          {notifications.data?.some((n) => !n.isRead) && (
+            <Action
+              label={t.markAllRead}
+              run={async () => {
+                await api("/notifications/read-all", "POST", {});
+                window.dispatchEvent(new Event("notifications-changed"));
+                notifications.reload();
+              }}
+            >
+              <CheckCheck size={16} />
+              {t.markAllRead}
+            </Action>
+          )}
         </div>
         {notifications.loading ? (
           <Loading />
@@ -202,13 +218,15 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
                   <a href={n.linkUrl ?? "#/"}>
                     <h3>{n.title}</h3>
                   </a>
-                  <p>{n.message}</p>
+                  {/* Several events carry the same text in both fields. */}
+                  {n.message && n.message !== n.title && <p>{n.message}</p>}
                   <small>{date(n.createdAt)}</small>
                 </div>
                 {!n.isRead && (
                   <Action
                     run={async () => {
                       await api(`/notifications/${n.id}/read`, "POST", {});
+                      window.dispatchEvent(new Event("notifications-changed"));
                       notifications.reload();
                     }}
                   >
@@ -268,7 +286,7 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
           </div>
           <h1>
             {page === "dashboard"
-              ? `${getTimeGreeting()}, ${user.fullName.split(" ")[teacher ? 1 : 0] ?? user.fullName}.`
+              ? `${getTimeGreeting()}, ${user.name.split(" ")[teacher ? 1 : 0] ?? user.name}.`
               : page === "agenda"
                 ? t.agenda
                 : t.myClasses}
@@ -608,7 +626,7 @@ export function ClassForm({
                   )
                 }
               />
-              {u.fullName}
+              {u.name}
             </label>
           ))}
         {error && <Notice error={error} />}
@@ -778,9 +796,9 @@ export function Profile({ user, issuer }: { user: any; issuer?: string }) {
       <div className="profile-layout">
         <section className="card" aria-label="Identitas akun">
           <div className="profile-identity">
-            <Avatar name={user.fullName} large />
+            <Avatar name={user.name} large />
             <div>
-              <h2>{user.fullName}</h2>
+              <h2>{user.name}</h2>
               <p>{user.email}</p>
               <span className="badge">{(t.roles as any)[user.role]}</span>
             </div>
@@ -788,37 +806,48 @@ export function Profile({ user, issuer }: { user: any; issuer?: string }) {
           <dl className="profile-fields">
             <div>
               <dt>Nama lengkap</dt>
-              <dd>{user.fullName}</dd>
+              <dd>{user.name}</dd>
             </div>
             <div>
               <dt>Alamat email</dt>
               <dd>{user.email}</dd>
             </div>
             <div>
-              <dt>Nomor mahasiswa / staf</dt>
-              <dd>{user.studentStaffNumber || "Belum tersedia"}</dd>
+              <dt>Nama pengguna SSO</dt>
+              <dd>{user.username || "Belum tersedia"}</dd>
+            </div>
+            <div>
+              <dt>{(t.identifierTypes as any)[user.identifierType] ?? "Nomor identitas"}</dt>
+              <dd>{user.identifierValue || "Belum tersedia"}</dd>
+            </div>
+            <div>
+              <dt>Jenis pengguna</dt>
+              <dd>{(t.userTypes as any)[user.userType] ?? user.userType}</dd>
             </div>
             <div>
               <dt>Status akun</dt>
               <dd>
                 <span
                   className={
-                    user.isActive === false
+                    user.status === "DISABLED"
                       ? "badge badge-archived"
                       : "badge badge-published"
                   }
                 >
-                  {user.isActive === false ? "Tidak aktif" : "Aktif"}
+                  {user.status === "DISABLED" ? "Tidak aktif" : "Aktif"}
                 </span>
               </dd>
             </div>
             <div>
-              <dt>Sumber identitas</dt>
-              <dd>SSO UAY</dd>
-            </div>
-            <div>
               <dt>Peran akademik</dt>
               <dd>{(t.roles as any)[user.role]}</dd>
+            </div>
+            <div>
+              <dt>Sumber identitas</dt>
+              <dd>
+                SSO UAY
+                <small className="block mono">{user.ssoUserId}</small>
+              </dd>
             </div>
           </dl>
         </section>

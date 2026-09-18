@@ -139,7 +139,7 @@ test("OIDC authorization code with PKCE, JWT validation, refresh, logout and rev
         });
         assert.equal(me.status, 200);
         const user: any = await me.json();
-        assert.equal(user.externalSubjectId, subject);
+        assert.equal(user.ssoUserId, subject);
         assert.equal(user.role, "STUDENT");
         assert.equal(user.password, undefined);
       },
@@ -200,9 +200,9 @@ test("OIDC authorization code with PKCE, JWT validation, refresh, logout and rev
         });
         assert.equal(blocked.status, 403);
         const user = await db.user.findUniqueOrThrow({
-          where: { externalSubjectId: subject },
+          where: { ssoUserId: subject },
         });
-        assert.equal(user.isActive, false);
+        assert.equal(user.status, "DISABLED");
       },
     );
     await suite.test(

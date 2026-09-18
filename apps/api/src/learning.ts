@@ -266,7 +266,7 @@ export function registerLearning(app: Express) {
         status: true,
         course: true,
         instructors: {
-          include: { user: { select: { fullName: true, id: true } } },
+          include: { user: { select: { name: true, id: true } } },
         },
         _count: {
           select: {
@@ -305,7 +305,7 @@ export function registerLearning(app: Express) {
         const users = await tx.user.findMany({
           where: {
             id: { in: data.instructorIds },
-            isActive: true,
+            status: "ACTIVE",
             role: { in: ["INSTRUCTOR", "DEPARTMENT_ADMIN", "SUPER_ADMIN"] },
           },
         });
@@ -367,16 +367,16 @@ export function registerLearning(app: Express) {
     res.json(
       await db.user.findMany({
         where: {
-          isActive: true,
+          status: "ACTIVE",
           OR: [
-            { fullName: { contains: search, mode: "insensitive" } },
-            { studentStaffNumber: { contains: search } },
+            { name: { contains: search, mode: "insensitive" } },
+            { identifierValue: { contains: search } },
           ],
         },
         select: {
           id: true,
-          fullName: true,
-          studentStaffNumber: true,
+          name: true,
+          identifierValue: true,
           role: true,
         },
         take: 30,
@@ -597,10 +597,10 @@ export function registerLearning(app: Express) {
           user: {
             select: {
               id: true,
-              fullName: true,
-              studentStaffNumber: true,
+              name: true,
+              identifierValue: true,
               email: true,
-              isActive: true,
+              status: true,
             },
           },
         },
@@ -625,7 +625,7 @@ export function registerLearning(app: Express) {
           .parse(req.body);
         const user = await tx.user.findUnique({ where: { id: userId } });
         ensure(
-          user?.isActive && user.role === "STUDENT",
+          user?.status === "ACTIVE" && user.role === "STUDENT",
           400,
           "INVALID_STUDENT",
         );
@@ -671,7 +671,7 @@ export function registerLearning(app: Express) {
         const users = await tx.user.findMany({
           where: {
             id: { in: userIds },
-            isActive: true,
+            status: "ACTIVE",
             role: { in: ["INSTRUCTOR", "DEPARTMENT_ADMIN", "SUPER_ADMIN"] },
           },
         });
@@ -1039,12 +1039,27 @@ export function registerLearning(app: Express) {
       }),
     ),
   );
+  // Cheap enough for the navigation badge to poll without pulling the list.
+  app.get("/api/v1/notifications/unread-count", async (req, res) =>
+    res.json({
+      count: await db.notification.count({
+        where: { userId: req.context.user.id, isRead: false },
+      }),
+    }),
+  );
   app.post("/api/v1/notifications/:id/read", async (req, res) => {
     await db.notification.updateMany({
       where: { id: String(req.params.id), userId: req.context.user.id },
       data: { isRead: true, readAt: new Date() },
     });
     res.json({ ok: true });
+  });
+  app.post("/api/v1/notifications/read-all", async (req, res) => {
+    const { count } = await db.notification.updateMany({
+      where: { userId: req.context.user.id, isRead: false },
+      data: { isRead: true, readAt: new Date() },
+    });
+    res.json({ count });
   });
   app.get("/api/v1/course-classes/:id/audit", async (req, res) => {
     const cls = await classAccess(db, req.context.user, String(req.params.id));
@@ -1057,7 +1072,7 @@ export function registerLearning(app: Express) {
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: 50,
         ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-        include: { user: { select: { fullName: true } } },
+        include: { user: { select: { name: true } } },
       }),
     );
   });

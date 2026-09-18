@@ -788,8 +788,8 @@ export function QuizPage({ id, user }: { id: string; user: any }) {
               <tr key={a.id}>
                 {quiz.canManage && (
                   <td>
-                    {a.user.fullName}
-                    <small className="block">{a.user.studentStaffNumber}</small>
+                    {a.user.name}
+                    <small className="block">{a.user.identifierValue}</small>
                   </td>
                 )}
                 <td>{a.attemptNum}</td>
@@ -1281,7 +1281,7 @@ function ManualQuizGrading({
   const correction = !!attempt.publishedAt || !!attempt.answerGrades?.length;
   return (
     <Modal
-      title={"Penilaian kuis · " + attempt.user.fullName}
+      title={"Penilaian kuis · " + attempt.user.name}
       wide
       onClose={onClose}
     >
@@ -1680,7 +1680,7 @@ export function AssignmentPage({ id, user }: { id: string; user: any }) {
             <div className="section-heading">
               <div>
                 <h3>
-                  {a.canManage ? s.user.fullName : `${t.version} ${s.version}`}
+                  {a.canManage ? s.user.name : `${t.version} ${s.version}`}
                 </h3>
                 <small>
                   {t.version} {s.version} · {date(s.submittedAt)}
@@ -1747,7 +1747,7 @@ export function AssignmentPage({ id, user }: { id: string; user: any }) {
       )}
       {grading && (
         <Modal title={t.gradeSubmission} onClose={() => setGrading(null)}>
-          <h3>{grading.user.fullName}</h3>
+          <h3>{grading.user.name}</h3>
           <Form
             draftKey={`submission-grading:${grading.id}`}
             submitLabel="Simpan semua penilaian"

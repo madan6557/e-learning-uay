@@ -39,7 +39,7 @@ import { questionSchema } from "../../../packages/shared/src/domain";
 
 export function ClassPage({
   id,
-  tab,
+  tab: requestedTab,
   user,
   resourceId,
 }: {
@@ -72,6 +72,11 @@ export function ClassPage({
         ]
       : []),
   ];
+  // A bookmarked or hand-typed tab that this role cannot see would otherwise
+  // render an empty page with no explanation.
+  const tab = tabs.some(([value]) => value === requestedTab)
+    ? requestedTab
+    : "content";
   const saved = () => {
     setModal(null);
     setMessage(t.saved);
@@ -118,10 +123,10 @@ export function ClassPage({
             {cls.instructors?.length > 0 && (
               <span className="class-instructor-chip">
                 <span className="mini-avatar">
-                  {cls.instructors[0]?.user.fullName[0] ?? "U"}
+                  {cls.instructors[0]?.user?.name?.[0] ?? "U"}
                 </span>
                 {cls.instructors
-                  .map((i: any) => i.user.fullName.split(",")[0])
+                  .map((i: any) => i.user?.name?.split(",")[0] ?? "—")
                   .join(", ")}
               </span>
             )}
@@ -696,10 +701,12 @@ function Participants({
             <tbody>
               {members.data?.map((m) => (
                 <tr key={m.id}>
-                  <td>{m.user.fullName}</td>
-                  <td>{m.user.studentStaffNumber}</td>
+                  <td>{m.user.name}</td>
+                  <td>{m.user.identifierValue}</td>
                   <td>{m.user.email}</td>
-                  <td>{m.isActive ? t.active : t.archived}</td>
+                  <td>
+                    <Badge value={m.isActive ? "ACTIVE" : "INACTIVE"} />
+                  </td>
                   <td>
                     {writable && (
                       <Action
@@ -709,7 +716,7 @@ function Participants({
                             m.isActive &&
                             !(await confirmAction(
                               "Nonaktifkan kepesertaan " +
-                                m.user.fullName +
+                                m.user.name +
                                 "?",
                             ))
                           )
@@ -762,7 +769,7 @@ function Participants({
                 kind: "ENROLLMENT",
                 rows: selected.map((u) => ({
                   values: {
-                    studentStaffNumber: u.studentStaffNumber,
+                    identifierValue: u.identifierValue,
                     email: u.email,
                   },
                   override: true,
@@ -797,13 +804,13 @@ function Participants({
               .map((u) => (
                 <div className="user-result" key={u.id}>
                   <span>
-                    {u.fullName}
-                    <small className="block">{u.studentStaffNumber}</small>
+                    {u.name}
+                    <small className="block">{u.identifierValue}</small>
                   </span>
                   <label className="check-row">
                     <input
                       type="checkbox"
-                      aria-label={"Pilih " + u.fullName}
+                      aria-label={"Pilih " + u.name}
                       checked={selected.some((v) => v.id === u.id)}
                       onChange={(e) =>
                         setSelected((v) =>
@@ -1061,7 +1068,7 @@ function Audit({ classId }: { classId: string }) {
                 <span>
                   <strong>{entry.action}</strong>
                   <small className="block">
-                    {entry.user?.fullName ?? entry.actorRole} · {entry.entity}
+                    {entry.user?.name ?? entry.actorRole} · {entry.entity}
                   </small>
                 </span>
                 <time>{date(entry.createdAt)}</time>

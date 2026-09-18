@@ -1,16 +1,92 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
+
+/*
+ * UAY design system — shared with the SSO administration console.
+ * Values below are the same OKLCH tokens defined in UAY-System/SSO
+ * apps/admin/src/styles.css, so both applications render one environment.
+ */
 :root {
-  font-family: "DM Sans", sans-serif;
-  color: #243a32;
-  background: #f5f7f6;
+  color-scheme: light;
+
+  --radius: 0.5rem;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans: "Inter Tight", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --background: oklch(0.972 0.004 250);
+  --foreground: oklch(0.24 0.024 254);
+  --surface: oklch(1 0 0);
+  --surface-muted: oklch(0.978 0.004 250);
+  --card: oklch(1 0 0);
+  --primary: oklch(0.44 0.106 250);
+  --primary-foreground: oklch(0.99 0.002 250);
+  --primary-hover: oklch(0.38 0.1 250);
+  --secondary: oklch(0.955 0.006 250);
+  --secondary-foreground: oklch(0.31 0.03 254);
+  --muted-surface: oklch(0.962 0.005 250);
+  --muted-foreground: oklch(0.53 0.022 254);
+  --accent-surface: oklch(0.945 0.018 245);
+  --accent-foreground: oklch(0.36 0.078 250);
+  --destructive: oklch(0.52 0.19 26);
+  --destructive-foreground: oklch(0.99 0.002 250);
+  --danger-soft: oklch(0.955 0.03 25);
+  --success: oklch(0.5 0.11 155);
+  --success-foreground: oklch(0.99 0.002 250);
+  --success-soft: oklch(0.955 0.035 158);
+  --warning: oklch(0.58 0.12 72);
+  --warning-foreground: oklch(0.99 0.002 250);
+  --warning-soft: oklch(0.96 0.045 85);
+  --info: oklch(0.5 0.1 245);
+  --info-foreground: oklch(0.99 0.002 250);
+  --info-soft: oklch(0.955 0.028 245);
+  --neutral-soft: oklch(0.945 0.005 250);
+  --chart-1: oklch(0.44 0.106 250);
+  --chart-2: oklch(0.6 0.09 200);
+  --chart-3: oklch(0.5 0.11 155);
+  --chart-4: oklch(0.58 0.12 72);
+  --chart-5: oklch(0.52 0.19 26);
+  --border: oklch(0.906 0.008 250);
+  --border-strong: oklch(0.855 0.012 250);
+  --input: oklch(0.895 0.009 250);
+  --ring: oklch(0.55 0.09 250);
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.32 0.024 254);
+  --sidebar-accent: oklch(0.955 0.014 245);
+  --sidebar-accent-foreground: oklch(0.36 0.078 250);
+  --sidebar-border: oklch(0.912 0.008 250);
+
+  --shadow-panel: 0 1px 2px 0 oklch(0.25 0.03 250 / 0.06);
+  --shadow-raised: 0 4px 16px -6px oklch(0.25 0.03 250 / 0.16);
+
+  /* Names the E-Learning stylesheets already use, resolved to the tokens
+     above so there is a single source of truth for every surface. */
+  --green: var(--primary);
+  --green-deep: var(--primary-hover);
+  --green-soft: var(--sidebar-accent);
+  --accent: var(--accent-surface);
+  --accent-strong: oklch(0.9 0.03 245);
+  --muted: var(--muted-foreground);
+  --line: var(--border);
+  --canvas: var(--background);
+  --danger: var(--destructive);
+  --shadow: var(--shadow-panel);
+  --shadow-sm: var(--shadow-panel);
+  --shadow-md: var(--shadow-raised);
+
+  font-family: var(--font-sans);
+  color: var(--foreground);
+  background: var(--background);
   font-synthesis: none;
-  --green: #183d32;
-  --muted: #708078;
-  --line: #e1e8e3;
-  --accent: #d9edb5;
-  --danger: #a83232;
-  --shadow: 0 6px 24px #15372905;
+  letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
 * {
   box-sizing: border-box;
 }
@@ -47,20 +123,32 @@ button:disabled {
 }
 h1,
 h2,
-h3 {
-  font-family: "Manrope", sans-serif;
-  letter-spacing: -0.04em;
+h3,
+h4 {
+  font-family: var(--font-sans);
+  /* Matches the heading tracking of the SSO console. */
+  letter-spacing: -0.015em;
+  font-weight: 600;
+  color: var(--foreground);
   margin: 0;
 }
 h1 {
-  font-size: 2rem;
-  line-height: 1.3;
+  font-size: 1.75rem;
+  line-height: 1.25;
 }
 h2 {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
 }
 h3 {
-  font-size: 1.05rem;
+  font-size: 1rem;
+}
+code,
+kbd,
+samp,
+pre,
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
 }
 p {
   color: var(--muted);
@@ -88,7 +176,7 @@ small {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-family: "Manrope";
+  font-family: var(--font-sans);
   font-size: 1.7rem;
   font-weight: 800;
   letter-spacing: 0.01em;
@@ -124,13 +212,13 @@ small {
   padding: 14px;
   border-radius: 8px;
   font-size: 0.9rem;
-  color: #67776e;
+  color: #636d79;
 }
 .sidebar nav a:hover {
-  background: #f4f7f4;
+  background: #f4f6f9;
 }
 .sidebar nav a.active {
-  background: #edf4ee;
+  background: #e9f1f9;
   color: var(--green);
   font-weight: 700;
 }
@@ -174,7 +262,7 @@ main {
   font-size: 0.66rem;
   letter-spacing: 0.17em;
   font-weight: 700;
-  color: #608471;
+  color: #647d97;
   margin-bottom: 12px;
 }
 .page-heading {
@@ -202,7 +290,7 @@ main {
   margin: 18px 0 10px;
 }
 .welcome-panel p {
-  color: #c0d0c5;
+  color: #c0cdda;
   font-size: 0.9rem;
 }
 .pill {
@@ -291,18 +379,18 @@ footer {
   text-align: center;
 }
 .error {
-  background: #fff0f0;
-  border: 1px solid #f1cccc;
-  color: #8e2929;
+  background: #fff0ee;
+  border: 1px solid #f1cdc8;
+  color: #8e2927;
   padding: 16px;
   border-radius: 8px;
 }
 .success {
-  background: #eaf5ed;
-  border: 1px solid #b8dbc1;
+  background: #eaf3fc;
+  border: 1px solid #c1d3e5;
   padding: 16px;
   border-radius: 8px;
-  color: #245433;
+  color: #254b70;
 }
 @media (min-width: 1500px) {
   main {

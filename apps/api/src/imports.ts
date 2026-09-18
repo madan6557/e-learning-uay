@@ -45,7 +45,7 @@ async function review(
     String(
       batch.kind === "QUESTIONS"
         ? (r.values.text ?? "")
-        : (r.values.studentStaffNumber ?? ""),
+        : (r.values.identifierValue ?? ""),
     ).trim(),
   );
   const output = [];
@@ -70,8 +70,8 @@ async function review(
         where: { questionBankId: batch.bankId, quizId: null, text: key },
       });
     } else {
-      user = await tx.user.findUnique({ where: { studentStaffNumber: key } });
-      if (!user?.isActive || user.role !== "STUDENT")
+      user = await tx.user.findUnique({ where: { identifierValue: key } });
+      if (user?.status !== "ACTIVE" || user.role !== "STUDENT")
         issues.push("SSO_IDENTITY_NOT_FOUND");
       if (user) {
         existing =

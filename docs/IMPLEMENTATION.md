@@ -20,6 +20,37 @@ Tanggal: 13 September 2026. Sumber: `Presentation - Technical Design E-Learning 
 | Komunikasi dan audit | Pengumuman terjadwal, notifikasi tugas/tenggat/nilai, status baca, antrean penilaian aktual, audit before/after/reason dengan trigger database append-only.                                                                                                                                                          |
 | Operasional          | Migrasi PostgreSQL, data contoh idempotent, launcher lokal, health endpoint, rate limit, origin check, Docker/Nginx TLS, backup/checksum/restore dan panduan operator.                                                                                                                                               |
 
+## Penyelarasan lingkungan UAY (18 September 2026)
+
+| Area          | Perubahan                                                                                                                                                                                                                                                                                       |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tema antarmuka | Token desain diambil langsung dari `apps/admin/src/styles.css` pada repositori SSO: primary `oklch(0.44 0.106 250)`, kanvas `oklch(0.972 0.004 250)`, radius `0.5rem`, bayangan panel/raised, tipografi Inter Tight dan IBM Plex Mono. Seluruh warna hijau lama dipetakan ulang ke keluarga biru institusional dengan lightness dipertahankan; status memakai hue success/warning/danger/info milik SSO, dan ramp kategorikal memakai `--chart-1..5`. |
+| Kerangka layar | Lockup merek (kotak `UAY` + nama produk), tinggi header 56 px, rail 256 px dengan item 13 px/ikon 16 px, pil status bertitik, kerapatan tabel `data-cell`, dan cincin fokus mengikuti komponen SSO. Rail dapat diperkecil seperti pada konsol SSO. Mode gelap tidak diaktifkan karena konsol SSO juga belum mengaktifkannya. |
+| Penamaan basis data | Tabel dan kolom PostgreSQL berpindah ke `snake_case` dengan primary key `<entitas>_id`, mengikuti konvensi basis data SSO, sementara model Prisma tetap `PascalCase`/`camelCase` sesuai Technical Design v4.0 sub-bab 6.3. Jembatannya adalah `@map`/`@@map`. |
+| Kosakata identitas | Kolom identitas memakai nama SSO: `sso_user_id`, `name`, `username`, `user_type`, `identifier_type`, `identifier_value`, `status`. Enum `UserType`, `UserStatus`, dan `IdentifierType` bernilai sama persis dengan SSO. Kontrak claim tunggal berada di `packages/shared/src/sso.ts`, menerima nama bergaya SSO dan alias lama (`role`, `student_staff_number`) selama masa transisi. |
+| Kosakata audit | `audit_logs` memakai kolom `actor_user_id`, `target_type`, `target_id`, `before_data`, `after_data` seperti `audit_events` SSO, ditambah kolom `result`, `reason`, `ip_address`, `user_agent`, dan `request_id` yang sebelumnya hanya tersimpan di JSON `metadata`. |
+| Keandalan lintas layanan | Kebijakan sub-bab 2.4 kini berlaku untuk SSO, bukan hanya File Service: timeout 3 detik, hingga 3 percobaan dengan jeda eksponensial untuk panggilan idempotent, dan circuit breaker 30 detik. Penukaran authorization code tidak diulang karena code bersifat sekali pakai. |
+
+Migrasi `202609180003_sso_naming_alignment` memindahkan basis data yang sudah ada
+tanpa kehilangan data. Pemetaan lengkap ada di
+[contracts/SSO-DATA-MAPPING.md](contracts/SSO-DATA-MAPPING.md).
+
+## Perbaikan cacat pada siklus ini
+
+1. **Halaman kelas kosong (blocker).** `classAccess` mengembalikan baris pengampu tanpa relasi `user`, sedangkan header kelas membaca `instructors[0].user.name`. Setiap pembukaan detail kelas berakhir dengan layar putih. Relasi kini di-resolve di `classAccess`, dan pembacaan nama pengampu diberi penjaga.
+2. **Layar putih tanpa pemulihan.** Kesalahan render apa pun mengosongkan seluruh aplikasi. `ErrorBoundary` kini membatasi kegagalan pada satu halaman dan menawarkan muat ulang.
+3. **Tab kelas tak dikenal.** `?tab=` yang tidak valid atau tidak berhak dilihat peran tersebut menghasilkan halaman kosong tanpa penjelasan; nilai tab kini dinormalisasi ke tab yang tersedia.
+4. **Judul halaman melayang.** `.page-heading` memakai `space-between` untuk semua pemakaian, sehingga eyebrow dan `h1` pada halaman Notifikasi dan Hasil belajar terlempar ke sisi berlawanan. Tata letak baris kini khusus untuk `heading-with-action`.
+5. **Notifikasi ganda.** Kartu notifikasi menampilkan judul dua kali ketika `message` sama dengan `title`.
+
+## Peningkatan pengalaman pengguna
+
+- Lencana jumlah notifikasi belum dibaca pada navigasi, menyusut menjadi titik saat rail diperkecil.
+- Aksi **Tandai semua dibaca**; sebelumnya setiap notifikasi harus ditandai satu per satu.
+- Rail yang dapat diperkecil dengan preferensi tersimpan per perangkat.
+- Status peserta memakai pil status yang sama dengan seluruh aplikasi.
+- Profil menampilkan identitas bergaya SSO: nama pengguna, jenis identitas (NIM/NIP/NIDN), jenis pengguna, dan subject SSO.
+
 ## Keputusan implementasi
 
 - Frontend React dan backend Express tetap terpisah; dependency berat PDF/Excel serta halaman asesmen dimuat saat diperlukan. Tidak ada dependency pada database atau filesystem OMNI.
