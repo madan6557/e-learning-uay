@@ -469,7 +469,7 @@ export function QuizEditor({
               name="timeLimit"
               type="number"
               min={1}
-              max={240}
+              max={300}
               required
               defaultValue={quiz?.timeLimitMinutes ?? 30}
             />

@@ -41,7 +41,7 @@ const quizSchema = z
     gradeCategoryId: z.string().uuid().nullable().default(null),
     status: z.enum(["DRAFT", "PUBLISHED"]).default("DRAFT"),
     scoreMode: z.enum(["STRICT", "NORMALIZED"]).default("STRICT"),
-    timeLimitMinutes: z.number().int().min(1).max(240).default(30),
+    timeLimitMinutes: z.number().int().min(1).max(300).default(30),
     timerMode: z.enum(["INDEPENDENT", "GLOBAL"]).default("INDEPENDENT"),
     passingScore: z.number().min(0).max(100).default(60),
     attemptLimit: z.number().int().min(1).max(10).default(1),

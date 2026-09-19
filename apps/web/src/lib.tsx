@@ -48,7 +48,10 @@ export class ApiError extends Error {
     public details?: any,
     public requestId?: string,
   ) {
-    super((t.errors as Record<string, string>)[code] ?? code);
+    // Schedule blockers carry the moment they refer to, so the message states
+    // the date instead of sending the reader off to find it.
+    const base = (t.errors as Record<string, string>)[code] ?? code;
+    super(details?.at ? `${base} ${date(details.at)}.` : base);
   }
 }
 // Preserve a logical write's key when the response is lost, including a manual retry.
