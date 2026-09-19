@@ -2385,77 +2385,31 @@ textarea:focus {
   color: #5c6d7f;
 }
 
-.portal-capabilities {
+.portal-notes {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 2px;
+  margin: 0;
 }
 
-.capability-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.portal-notes > div {
   padding: 10px 14px;
-  background: #ffffff;
-  border: 1px solid #e5ecf4;
-  border-radius: 10px;
-  transition: all 140ms ease;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
 }
 
-.capability-row:hover {
-  background: #f7f9fc;
-  border-color: #cadaeb;
-}
-
-.capability-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: #e9f1f9;
-  color: #1a558a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.capability-row strong {
-  display: block;
-  font-size: 0.82rem;
+.portal-notes dt {
+  font-size: 0.8125rem;
   font-weight: 600;
-  color: #23374c;
+  color: var(--foreground);
 }
 
-.capability-row small {
-  font-size: 0.72rem;
+.portal-notes dd {
+  margin: 2px 0 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
   color: var(--muted-foreground);
-}
-
-.portal-roles-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 10px;
-  border-top: 1px dashed #e3ebf4;
-  font-size: 0.72rem;
-  color: var(--muted-foreground);
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.role-tags {
-  display: flex;
-  gap: 6px;
-}
-
-.role-tags span {
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: #1a558a;
-  background: #e9f1f9;
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid #d4e2f0;
 }
 
 /* Features Section */

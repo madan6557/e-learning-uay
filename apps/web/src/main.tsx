@@ -142,57 +142,37 @@ function Landing({ config, error }: { config: any; error?: Error | null }) {
             <span>Gunakan akun akademik UAY Anda.</span>
           </div>
         </div>
-        <div className="landing-preview" aria-hidden="true">
+        {/* A visitor here has exactly one job: sign in. The panel answers the
+            three things that actually confuse people afterwards, instead of
+            repeating the feature cards below the hero. */}
+        <aside className="landing-preview" aria-label="Sebelum masuk">
           <div className="preview-body">
             <div className="preview-portal-card">
               <div className="portal-badge-row">
                 <span className="portal-badge">SEMESTER GANJIL 2026/2027</span>
               </div>
-              <h4>Semester berjalan</h4>
+              <h4>Sebelum masuk</h4>
               <p>
-                Kelas dibuka oleh program studi. Materi dan tugas muncul setelah
-                dosen menerbitkannya.
+                Akses diatur oleh program studi dan dosen pengampu, bukan oleh
+                aplikasi ini.
               </p>
             </div>
-            <div className="portal-capabilities">
-              <div className="capability-row">
-                <span className="capability-icon">
-                  <ShieldCheck size={16} />
-                </span>
-                <div>
-                  <strong>Masuk dengan akun SSO</strong>
-                  <small>Tidak ada kata sandi terpisah untuk E-Learning</small>
-                </div>
+            <dl className="portal-notes">
+              <div>
+                <dt>Daftar kelas kosong</dt>
+                <dd>Program studi belum mendaftarkan Anda pada kelas semester ini.</dd>
               </div>
-              <div className="capability-row">
-                <span className="capability-icon">
-                  <BookOpen size={16} />
-                </span>
-                <div>
-                  <strong>Materi dan praktikum</strong>
-                  <small>Teks, slide PDF, video, dan berkas dataset</small>
-                </div>
+              <div>
+                <dt>Kelas terbuka tetapi belum ada isinya</dt>
+                <dd>Dosen belum menerbitkan materi atau aktivitas.</dd>
               </div>
-              <div className="capability-row">
-                <span className="capability-icon">
-                  <ClipboardCheck size={16} />
-                </span>
-                <div>
-                  <strong>Tugas dan kuis</strong>
-                  <small>Pengumpulan berversi dan delapan tipe soal</small>
-                </div>
+              <div>
+                <dt>Tidak dapat masuk</dt>
+                <dd>Hubungi bagian akademik program studi Anda.</dd>
               </div>
-            </div>
-            <div className="portal-roles-footer">
-              <span>Peran:</span>
-              <div className="role-tags">
-                <span>Mahasiswa</span>
-                <span>Dosen</span>
-                <span>Admin prodi</span>
-              </div>
-            </div>
+            </dl>
           </div>
-        </div>
+        </aside>
       </section>
       <section className="landing-features" aria-label="Fitur pembelajaran">
         {[
