@@ -66,7 +66,7 @@ tanpa kehilangan data. Pemetaan lengkap ada di
 
 Hasil akhir: **build lulus, 10/10 tes domain lulus, 29/29 tes integrasi lulus, npm audit 0 kerentanan**. Pemeriksaan browser mencakup landing tanpa sidebar, login SSO biasa dan callback demo OIDC, dashboard dan profil desktop/mobile, editor materi, peserta, pengumuman, bank soal, berkas, audit, serta gradebook dengan satu tombol simpan global. Hosted demo juga diverifikasi memakai origin publik aplikasi, callback OIDC internal, dan File Service fixture.
 
-Tes integrasi memakai service fixture dan database `_test`. Keberhasilan tes ini tidak menyatakan bahwa SSO/File Service kampus atau VPS telah diterima. Rincian matriks audit UI/UX tersedia di [UI-UX-AUDIT.md](UI-UX-AUDIT.md).
+Tes integrasi memakai service fixture dan database `_test`. Keberhasilan tes ini tidak menyatakan bahwa SSO/File Service kampus atau VPS telah diterima. Rincian matriks audit UI/UX tersedia di [UI-UX-AUDIT.md](UI-UX-AUDIT.md). Daftar periksa untuk pengujian manual per modul ada di [PANDUAN-PENGUJIAN.md](PANDUAN-PENGUJIAN.md).
 
 ## Pekerjaan yang membutuhkan pihak/lingkungan luar
 

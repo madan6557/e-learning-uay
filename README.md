@@ -40,6 +40,8 @@ npm audit
 
 `check` menghasilkan build web/API dan menjalankan tes aturan domain. Tes integrasi membutuhkan PostgreSQL lokal aktif (`npm run dev` atau `npm run db:local` pada terminal lain), memakai database terpisah `elearning_test`, dan menjalankan fixture HTTP untuk OIDC dan File Service. Override dengan `TEST_DATABASE_URL` yang nama databasenya berakhiran `_test`. Tes tidak membersihkan database aplikasi. Data pengujian memakai ID unik dan tersimpan hanya di database uji.
 
+Untuk pengujian manual, [panduan pengujian](docs/PANDUAN-PENGUJIAN.md) memuat daftar periksa langkah demi langkah per modul beserta hasil yang diharapkan.
+
 Pada Windows, hentikan proses API sebelum menjalankan `db:generate`/`build` apabila Prisma melaporkan DLL sedang dipakai. Jika port sibuk, gunakan proses lokal yang sudah berjalan atau hentikan proses proyek yang bersangkutan; jangan menghapus direktori data.
 
 ## Alur mencoba
