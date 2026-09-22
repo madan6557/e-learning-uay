@@ -2,6 +2,7 @@ import { ConfirmationHost } from "./confirm";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { createRoot } from "react-dom/client";
 import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import {
   BookOpen,
   LayoutDashboard,
@@ -629,5 +630,6 @@ root.render(
   <>
     <ConfirmationHost />
     <App />
+    <Analytics />
   </>,
 );
