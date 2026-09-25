@@ -45,8 +45,37 @@ export type ApplicationRole = (typeof APPLICATION_ROLES)[number];
 /** Most privileged first: SSO may grant several roles for one application. */
 const ROLE_PRECEDENCE: readonly ApplicationRole[] = APPLICATION_ROLES;
 
+export function normalizeRole(raw: string): ApplicationRole | null {
+  const upper = raw.trim().toUpperCase();
+  if (upper === "MAHASISWA" || upper === "STUDENT") return "STUDENT";
+  if (
+    upper === "DOSEN" ||
+    upper === "LECTURER" ||
+    upper === "INSTRUCTOR" ||
+    upper === "PENGAJAR"
+  )
+    return "INSTRUCTOR";
+  if (
+    upper === "ADMIN_PRODI" ||
+    upper === "STAFF" ||
+    upper === "DEPARTMENT_ADMIN"
+  )
+    return "DEPARTMENT_ADMIN";
+  if (
+    upper === "SUPER_ADMIN" ||
+    upper === "ADMIN" ||
+    upper === "ADMIN_PUSAT" ||
+    upper === "ADMIN_IT"
+  )
+    return "SUPER_ADMIN";
+  return null;
+}
+
 export function highestRole(roles: readonly string[]): ApplicationRole | null {
-  return ROLE_PRECEDENCE.find((role) => roles.includes(role)) ?? null;
+  const normalized = roles
+    .map(normalizeRole)
+    .filter((r): r is ApplicationRole => r !== null);
+  return ROLE_PRECEDENCE.find((role) => normalized.includes(role)) ?? null;
 }
 
 /**
@@ -88,12 +117,13 @@ export const identityClaims = z
     identifier_type: identifierType.optional(),
     identifier_value: z.string().min(1).optional(),
     roles: z.array(z.string()).optional(),
-    role: applicationRole.optional(),
+    role: z.string().optional(),
     student_staff_number: z.string().min(1).optional(),
     department_scopes: z.array(z.string()).default([]),
   })
   .transform((claims, ctx) => {
-    const role = claims.role ?? highestRole(claims.roles ?? []);
+    const directRole = claims.role ? normalizeRole(claims.role) : null;
+    const role = directRole ?? highestRole(claims.roles ?? []);
     if (!role) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

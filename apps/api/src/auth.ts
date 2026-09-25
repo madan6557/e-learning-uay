@@ -103,11 +103,14 @@ async function verifyAccess(token: string) {
     issuer: config.issuer,
     audience: config.audience,
     algorithms: ["RS256", "ES256"],
-    requiredClaims: ["sub", "exp", "iat", "account_status"],
+    requiredClaims: ["sub", "exp", "iat"],
     maxTokenAge: "15m",
     clockTolerance: 5,
   });
-  ensure(payload.account_status === "ACTIVE", 403, "ACCOUNT_DISABLED");
+  const accountStatus = (payload.account_status ?? payload.status) as
+    | string
+    | undefined;
+  ensure(accountStatus === "ACTIVE", 403, "ACCOUNT_DISABLED");
   ensure(
     z.string().uuid().safeParse(payload.sub).success,
     403,
