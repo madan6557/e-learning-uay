@@ -1,0 +1,300 @@
+650: actor_user_id uuid
+651: action varchar(100) [not null]
+652: target_type varchar(50)
+653: target_id uuid
+654: application_id uuid
+655: result varchar(30) [not null, note: 'SUCCESS, FAILED']
+656: reason text
+657: ip_address varchar(45)
+658: user_agent text
+659: request_id varchar(100)
+660: before_data json
+661: after_data json
+662: indexes {
+663: timestamp
+664: actor_user_id
+665: action
+666: target_id
+667: application_id
+668: request_id
+669: }
+670: }
+671: Ref: user_identifiers.user_id > users.user_id
+672: Ref: accounts.user_id - users.user_id
+673: Ref: roles.application_id > applications.application_id
+674: Ref: application_access.user_id > users.user_id
+675: Ref: application_access.application_id > applications.application_id
+676: Ref: application_access.role_id > roles.role_id
+677: Ref: admin_delegations.admin_user_id > users.user_id
+678: Ref: admin_delegations.application_id > applications.application_id
+679: Ref: admin_delegations.role_id > roles.role_id
+680: Ref: import_jobs.created_by > users.user_id
+681: Ref: import_items.import_job_id > import_jobs.import_job_id
+682: Ref: audit_events.actor_user_id > users.user_id
+683: Ref: audit_events.application_id > applications.application_id
+684: 7. Authentication & Session
+685: 7.1 Login Flow
+686: Proses autentikasi pada UAY SSO menggunakan Keycloak sebagai Identity Provider (IdP) dan OpenID Connect (OIDC) sebagai protokol autentikasi. Aplikasi yang terintegrasi dengan SSO tidak menangani username dan password secara langsung, tetapi mengarahkan pengguna ke Keycloak untuk melakukan proses autentikasi. Setelah autentikasi berhasil, Keycloak mengembalikan authorization code kepada aplikasi melalui redirect URI yang telah terdaftar. Aplikasi kemudian melakukan pertukaran authorization code tersebut untuk memperoleh token yang diperlukan. Dengan mekanisme tersebut, credential pengguna tetap berada dalam pengelolaan Keycloak dan tidak dikirimkan kepada aplikasi.
+687: Alur dasar autentikasi adalah sebagai berikut:
+688: User
+689: │
+690: │ membuka aplikasi
+691: ▼
+692: Application
+693: │
+694: │ belum memiliki session
+695: ▼
+696: Keycloak
+697: │
+698: │ login
+699: │ username + password
+700: ▼
+701: Authentication Success
+702: │
+703: │ authorization code
+704: ▼
+705: Application Callback
+706: │
+707: │ token exchange
+708: ▼
+709: Access Token + ID Token
+710: │
+711: ▼
+712: Application Backend
+713: │
+714: │ validate token
+715: │ validate application access
+716: │ resolve role
+717: ▼
+718: Application Session / Access
+719: Aplikasi hanya dapat menerima hasil autentikasi apabila redirect URI dan client yang digunakan telah terdaftar pada Keycloak. Setiap aplikasi memiliki client_id yang berbeda sehingga identitas aplikasi dapat dibedakan oleh SSO. Konfigurasi client dikelola pada Keycloak dan metadata integrasinya dicatat pada entity applications pada database UAY. Informasi seperti client_id, status aplikasi, dan relasi aplikasi dengan role digunakan sebagai bagian dari pengelolaan integrasi SSO.
+720: 7.2 OpenID Connect
+721: OpenID Connect digunakan sebagai lapisan identity pada OAuth 2.0 untuk memungkinkan aplikasi memperoleh informasi identitas pengguna yang telah berhasil diautentikasi. Keycloak bertindak sebagai OpenID Provider yang menerbitkan token berdasarkan konfigurasi client dan hasil autentikasi pengguna. Aplikasi tidak perlu membuat mekanisme autentikasi username dan password sendiri. Identitas pengguna direpresentasikan menggunakan identifier yang diterbitkan oleh Keycloak dan dapat dipetakan ke account pada database UAY. Dengan demikian, autentikasi terpusat dan dapat digunakan oleh berbagai aplikasi dalam environment UAY.
+722: Setiap aplikasi yang menggunakan SSO harus didaftarkan sebagai client pada Keycloak. Client tersebut memiliki konfigurasi seperti client_id, redirect URI, allowed origin, dan parameter OIDC lain yang diperlukan. Database UAY menyimpan client_id sebagai referensi integrasi pada entity applications, sedangkan detail credential dan konfigurasi autentikasi tetap dikelola oleh Keycloak. Aplikasi tidak diperbolehkan menggunakan credential client milik aplikasi lain.
+723: 7.3 Authorization Code + PKCE
+724: Aplikasi frontend menggunakan Authorization Code Flow dengan Proof Key for Code Exchange (PKCE). PKCE digunakan untuk mengurangi risiko penyalahgunaan authorization code selama proses autentikasi, terutama pada aplikasi yang berjalan pada browser. Frontend membuat code_verifier dan code_challenge sebelum mengarahkan pengguna ke Keycloak. Setelah pengguna berhasil melakukan autentikasi, Keycloak mengembalikan authorization code ke callback aplikasi. Aplikasi kemudian menggunakan authorization code dan code_verifier untuk memperoleh token dari Keycloak.
+725: Alur PKCE:
+726: Application
+727: │
+728: ├── generate code_verifier
+729: ├── generate code_challenge
+730: │
+731: ▼
+732: Keycloak
+733: │
+734: │ authenticate user
+735: │
+736: ▼
+737: Authorization Code
+738: │
+739: ▼
+740: Application Callback
+741: │
+742: ├── authorization code
+743: └── code_verifier
+744: │
+745: ▼
+746: Keycloak Token Endpoint
+747: │
+748: ▼
+749: Tokens
+750: Password pengguna tidak pernah dikirimkan dari frontend aplikasi kepada backend aplikasi untuk kemudian diteruskan ke Keycloak. Password hanya dimasukkan pada halaman autentikasi yang dikelola Keycloak. Implementasi frontend menggunakan OIDC client library untuk menangani state autentikasi, callback, token, dan logout sesuai konfigurasi SSO.
+751: 7.4 Access Token
+752: Access Token merupakan credential yang digunakan untuk memberikan akses kepada resource yang dilindungi. Dalam arsitektur UAY, Access Token diterbitkan oleh Keycloak dan digunakan oleh aplikasi atau backend aplikasi ketika mengakses resource yang membutuhkan autentikasi. Backend tidak boleh hanya mempercayai keberadaan token, tetapi harus melakukan validasi terhadap token sebelum memberikan akses. Validasi sekurang-kurangnya mencakup signature, issuer, audience, expiration, dan klaim lain yang relevan dengan client aplikasi. Token tidak boleh dicatat ke dalam audit log, application log, maupun database UAY.
+753: Untuk komunikasi dengan backend API, token dikirim menggunakan mekanisme HTTP Authorization Bearer. Backend kemudian menentukan identity pengguna berdasarkan token yang telah tervalidasi. Identity tersebut dipetakan dengan account UAY melalui keycloak_user_id dan selanjutnya dapat dikaitkan dengan users.user_id.
+754: Contoh konsep request:
+755: Authorization: Bearer <access_token>
+756: Nilai token pada contoh tersebut hanya digunakan sebagai ilustrasi dan tidak boleh disimpan atau ditampilkan dalam bentuk plaintext pada log.
+757: 7.5 Identity Claims
+758: Token dan endpoint identity yang disediakan oleh Keycloak dapat membawa informasi identitas pengguna yang diperlukan oleh aplikasi. Informasi tersebut harus dibatasi pada data yang memang diperlukan dan tidak digunakan sebagai pengganti database domain aplikasi. Identifier utama untuk pemetaan identity adalah sub, yang merepresentasikan subject identifier dari Keycloak. Aplikasi dapat menggunakan claim standar seperti preferred_username dan name untuk kebutuhan tampilan, sedangkan status dan data domain lainnya tetap mengikuti sumber data yang telah ditentukan.
+759: Contoh informasi identity yang dapat tersedia:
+760: sub
+761: preferred_username
+762: name
+763: iss
+764: aud
+765: iat
+766: exp
+767: sub digunakan sebagai identifier identity dari Keycloak, sedangkan preferred_username digunakan sebagai username login yang ditampilkan atau digunakan oleh aplikasi apabila diperlukan. iss, aud, iat, dan exp digunakan dalam konteks validasi token dan lifecycle token. Claim tambahan hanya ditambahkan apabila terdapat kebutuhan teknis atau bisnis yang jelas. Password, credential, refresh token, client secret, dan data sensitif lainnya tidak menjadi bagian dari identity information yang diberikan kepada aplikasi.
+768: 7.6 Application Integration
+769: Setiap aplikasi yang membutuhkan SSO harus terdaftar sebagai application pada database UAY dan sebagai client pada Keycloak. Entity applications menyimpan informasi integrasi seperti nama aplikasi, client_id, dan status aplikasi. Keycloak menggunakan client tersebut untuk mengenali aplikasi yang meminta autentikasi, sedangkan SSO menggunakan metadata aplikasi untuk menentukan application access dan konteks authorization pengguna. Aplikasi yang berstatus DISABLED tidak boleh digunakan untuk memperoleh akses melalui SSO. Pengelolaan registrasi, perubahan, dan penonaktifan aplikasi dilakukan oleh Super Admin.
+770: Hubungan konseptual integrasi adalah sebagai berikut:
+771: ┌───────────────────────┐
+772: │        UAY SSO        │
+773: │                       │
+774: │ PostgreSQL            │
+775: │                       │
+776: │ Application           │
+777: │ ApplicationAccess     │
+778: │ Role                  │
+779: │ User / Account        │
+780: └──────────┬────────────┘
+781: │
+782: │ authorization context
+783: │
+784: ▼
+785: User ───────► Application ───────► Keycloak
+786: │                     │
+787: │                     │ authentication
+788: │                     ▼
+789: │               Access / ID Token
+790: │                     │
+791: ◄─────────────────────┘
+792: │
+793: ▼
+794: Application Backend
+795: │
+796: │ authorization check
+797: ▼
+798: Application
+799: Integrasi tersebut memiliki pemisahan tanggung jawab yang jelas. Keycloak bertanggung jawab terhadap proses autentikasi dan penerbitan token, sedangkan UAY SSO bertanggung jawab terhadap data account, application access, role assignment, dan aturan authorization yang berada di luar identity provider. Aplikasi bertanggung jawab terhadap permission dan aturan bisnis internal aplikasinya. Dengan demikian, aplikasi tidak perlu mengetahui password pengguna dan tidak perlu mengambil alih fungsi identity management dari SSO.
+800: 7.7 Application Access Validation
+801: Authentication yang berhasil tidak secara otomatis berarti pengguna boleh menggunakan seluruh aplikasi UAY. Setelah identity pengguna diketahui, sistem harus menentukan apakah pengguna memiliki ApplicationAccess yang aktif untuk aplikasi yang sedang diakses. Pemeriksaan tersebut mempertimbangkan user, application, status access, waktu mulai akses, dan waktu berakhir apabila access bersifat sementara. Application access yang berstatus DISABLED atau telah melewati expires_at tidak dapat digunakan. Pemeriksaan ini menjadi bagian dari authorization sebelum aplikasi memberikan akses kepada pengguna.
+802: Konsep pemeriksaannya adalah:
+803: Valid Keycloak Token
+804: │
+805: ▼
+806: Identify User
+807: │
+808: ▼
+809: Find Application
+810: │
+811: ▼
+812: Find ApplicationAccess
+813: │
+814: ├── tidak ada ──────► DENY
+815: │
+816: ├── DISABLED ───────► DENY
+817: │
+818: ├── belum starts_at ─► DENY
+819: │
+820: ├── expired ─────────► DENY
+821: │
+822: ▼
+823: ACTIVE
+824: │
+825: ▼
+826: ALLOW
+827: Pemeriksaan application access harus dilakukan pada backend atau komponen authorization yang dipercaya dan tidak boleh hanya mengandalkan kondisi UI frontend. Frontend dapat menyembunyikan menu atau route berdasarkan informasi access yang diterima, tetapi keputusan keamanan tetap dilakukan pada backend. Hal ini mencegah pengguna memperoleh akses hanya dengan memodifikasi state atau kode pada browser.
+828: 7.8 Role & Authorization Context
+829: Setelah application access dinyatakan aktif, sistem menentukan role yang terkait dengan access tersebut melalui application_access.role_id. Role tersebut harus berasal dari application yang sama dengan application yang sedang diakses. Sebagai contoh, user dapat memiliki role DOSEN pada E-Learning dan role ADMIN pada File Service tanpa menjadikan kedua role tersebut sebagai role global. Dengan model tersebut, role selalu mempunyai konteks application dan tidak boleh diperlakukan sebagai hak akses universal. Validasi hubungan antara application, role, dan application access harus ditegakkan pada backend dan database sesuai kemampuan constraint yang digunakan.
+830: Konsep authorization context:
+831: User
+832: │
+833: ▼
+834: ApplicationAccess
+835: │
+836: ├── Application: E-Learning
+837: │
+838: └── Role: DOSEN
+839: Authorization context dapat digunakan oleh aplikasi untuk menentukan konteks akses pengguna. Namun role dari SSO tidak menggantikan permission internal aplikasi. Sebagai contoh, role DOSEN dapat menjadi dasar untuk menentukan bahwa pengguna merupakan dosen pada suatu aplikasi, tetapi permission seperti membuat materi, menghapus materi, atau melakukan publikasi tetap menjadi tanggung jawab aplikasi tersebut. SSO memberikan identity dan application-level authorization context, sedangkan aplikasi menentukan resource-level authorization sesuai domainnya.
+840: 7.9 Authorization Context Retrieval
+841: Karena database UAY merupakan sumber data untuk ApplicationAccess dan role assignment, authorization context tidak harus dimasukkan seluruhnya ke dalam JWT Keycloak. Pendekatan baseline yang digunakan adalah Keycloak menjadi sumber autentikasi, sedangkan SSO Backend menjadi sumber otorisasi aplikasi. Setelah token Keycloak tervalidasi, backend aplikasi dapat meminta authorization context kepada SSO Backend menggunakan identity dari token dan konteks application yang sedang digunakan. SSO Backend kemudian membaca data ApplicationAccess dan role dari PostgreSQL sebelum mengembalikan hasil authorization.
+842: Contoh konseptual response:
+843: {
+844: "user": {
+845: "id": "user-uuid",
+846: "username": "23012345@uay.ac.id"
+847: },
+848: "application": {
+849: "client_id": "elearning-service"
+850: },
+851: "access": {
+852: "status": "ACTIVE",
+853: "starts_at": "2026-09-01T00:00:00Z",
+854: "expires_at": null
+855: },
+856: "roles": [
+857: "DOSEN"
+858: ]
+859: }
+860: Response tersebut merupakan authorization context dan bukan representasi seluruh data pengguna pada database SSO. Informasi yang dikembalikan harus dibatasi sesuai kebutuhan aplikasi. Aplikasi tidak boleh memperoleh data internal SSO yang tidak diperlukan untuk proses authorization. Pendekatan ini juga menjaga agar perubahan application access pada database UAY dapat menjadi sumber keputusan authorization tanpa harus menggandakan seluruh data authorization ke setiap aplikasi.
+861: 7.10 Refresh Token
+862: Refresh Token digunakan untuk memperoleh Access Token baru setelah Access Token sebelumnya mendekati atau mencapai masa berlaku. Pengelolaan refresh token dilakukan oleh Keycloak dan tidak menjadi data yang disimpan dalam database aplikasi UAY. Aplikasi harus mengikuti konfigurasi lifecycle token yang ditetapkan pada Keycloak. Refresh token tidak boleh dicatat pada log dan tidak boleh dikirimkan ke service yang tidak membutuhkan fungsi refresh. Apabila session Keycloak telah berakhir atau refresh token tidak lagi valid, pengguna harus melakukan autentikasi kembali.
+863: 7.11 Session Lifetime
+864: Session SSO dikelola oleh Keycloak dan tidak direplikasi sebagai session authentication table pada PostgreSQL UAY. Lifecycle session mencakup batas waktu idle, batas waktu maksimum, token lifetime, dan kondisi logout sesuai konfigurasi Keycloak. Nilai konkret lifetime ditentukan pada konfigurasi deployment setelah mempertimbangkan kebutuhan keamanan dan usability UAY. Aplikasi tidak boleh menganggap session yang tersimpan di browser sebagai bukti autentikasi yang berdiri sendiri. Setiap request ke resource yang dilindungi harus tetap memiliki mekanisme validasi authentication dan authorization yang sesuai.
+865: 7.12 Logout
+866: Logout dilakukan melalui mekanisme logout OIDC/Keycloak sehingga session authentication pada Keycloak dapat dihentikan. Setelah logout, aplikasi harus membersihkan state autentikasi lokal yang digunakan pada browser dan tidak mempertahankan access token yang masih dapat digunakan. Logout normal hanya ditujukan untuk mengakhiri session pengguna pada perangkat atau konteks aplikasi yang sedang digunakan. Aplikasi tidak boleh menganggap logout dari satu aplikasi sebagai penghapusan seluruh account pengguna pada SSO.
+867: Konsep logout:
+868: User
+869: │
+870: ▼
+871: Application
+872: │
+873: │ logout
+874: ▼
+875: Keycloak Logout
+876: │
+877: ▼
+878: SSO Session Ended
+879: │
+880: ▼
+881: Application clears local auth state
+882: 7.13 Logout All Sessions
+883: Logout all sessions digunakan untuk mengakhiri seluruh session aktif pengguna yang dikelola oleh SSO. Fitur ini berbeda dari logout normal karena targetnya bukan hanya session pada perangkat saat ini. Keycloak menjadi komponen yang mengelola session authentication dan penghentian session tersebut. Setelah seluruh session dihentikan, token yang bergantung pada session yang telah berakhir tidak boleh digunakan untuk memperoleh akses baru. Implementasi detail penghentian session mengikuti kemampuan dan konfigurasi Keycloak yang digunakan pada deployment UAY.
+884: 7.14 Token Expiration
+885: Access Token memiliki masa berlaku dan tidak boleh digunakan setelah exp terlewati. Backend harus menolak token yang telah expired meskipun token tersebut sebelumnya valid. Ketika token expired, aplikasi dapat menggunakan mekanisme refresh yang tersedia atau mengarahkan pengguna untuk melakukan autentikasi kembali apabila refresh session juga telah berakhir. Expiration token tidak menggantikan pemeriksaan application access karena status akses merupakan authorization concern. Dengan demikian, token yang masih valid secara kriptografis tetap tidak boleh digunakan untuk aplikasi apabila application access pengguna telah dicabut.
+886: 7.15 Account Disablement
+887: Account yang berstatus DISABLED tidak boleh digunakan untuk memperoleh akses ke aplikasi UAY. Perubahan status account harus menyebabkan akses pengguna dihentikan sesuai mekanisme session dan token yang diterapkan pada Keycloak serta authorization layer UAY. Backend aplikasi tetap harus mempertimbangkan status authorization ketika memproses request yang dilindungi. Hal ini diperlukan agar perubahan status account tidak hanya terlihat pada administrative UI tetapi benar-benar mempengaruhi akses ke resource.
+888: Alur konseptual:
+889: Admin
+890: │
+891: │ disable account
+892: ▼
+893: UAY SSO
+894: │
+895: ├── Account = DISABLED
+896: │
+897: ├── revoke / terminate relevant session
+898: │
+899: └── future authorization = DENY
+900: │
+901: ▼
+902: Application
+903: │
+904: └── access rejected
+905: Account disablement harus dicatat sebagai audit event yang mencatat actor, target account, waktu perubahan, hasil tindakan, dan request identifier. Perubahan status tidak boleh dilakukan langsung melalui database dalam kondisi operasional normal karena mekanisme tersebut dapat melewati proses authorization, audit, dan sinkronisasi yang diperlukan.
+906: 8. Authentication & Session
+907: 8.1 Create User
+908: Pembuatan user dilakukan melalui SSO Web Application oleh administrator yang memiliki kewenangan sesuai scope yang ditetapkan. Proses pembuatan user menghasilkan entity users, identifier pada user_identifiers, serta account pada accounts apabila user tersebut memerlukan akses autentikasi. User harus memiliki minimal satu identifier yang valid dan personal email yang dapat digunakan untuk kebutuhan account recovery serta pengiriman informasi awal account. Password tidak dibuat atau disimpan pada database PostgreSQL UAY karena pengelolaan credential dilakukan oleh Keycloak.
+909: Pada saat account dibuat, sistem melakukan pembuatan identity pada Keycloak dan memperoleh keycloak_user_id. Identifier tersebut kemudian disimpan pada accounts.keycloak_user_id untuk menghubungkan account UAY dengan identity Keycloak. Username dibuat berdasarkan aturan identitas yang telah ditetapkan, sedangkan username tidak dianggap sebagai alamat email institusi. Setelah proses pembuatan berhasil, sistem dapat mengirimkan informasi awal atau temporary password ke personal email pengguna sesuai mekanisme yang telah ditentukan.
+910: Admin
+911: │
+912: ▼
+913: Create User
+914: │
+915: ├── Create users
+916: ├── Create UserIdentifier
+917: ├── Create Keycloak Identity
+918: │       │
+919: │       └── keycloak_user_id
+920: │
+921: └── Create Account
+922: │
+923: └── username
+924: Apabila pengiriman temporary password mengalami kegagalan, account tetap dapat dibuat sesuai hasil proses administrasi, tetapi kegagalan pengiriman harus dicatat dan administrator harus mendapatkan informasi bahwa delivery tidak berhasil. Pengguna yang tidak memiliki personal email tidak dapat menyelesaikan proses pembuatan account normal.
+925: 8.2 Update User
+926: Data user dapat diperbarui oleh user sendiri untuk field yang diperbolehkan dan oleh administrator untuk field yang berada dalam kewenangan administratif. Perubahan data harus dilakukan melalui SSO Web Application atau API resmi agar validasi, authorization, dan audit dapat diterapkan secara konsisten. Tidak semua field user dapat diubah secara bebas karena beberapa data merupakan identitas institusional yang harus mengikuti sumber data resmi. Setiap perubahan data penting harus menghasilkan audit event yang mencatat actor, target, waktu, dan perubahan yang dilakukan.
+927: Data seperti nama dan personal email dapat memiliki mekanisme perubahan yang berbeda dari identifier institusional. Perubahan identifier seperti NIM, NIP, atau NIDN tidak diperlakukan sebagai perubahan profile biasa apabila identifier tersebut merupakan bagian dari identitas resmi institusi. Perubahan tersebut harus mengikuti prosedur administratif yang ditetapkan dan tetap mempertahankan history identifier apabila diperlukan untuk kebutuhan audit dan integritas data.
+928: 8.3 Enable User
+929: User atau account yang sebelumnya berstatus disabled dapat diaktifkan kembali oleh administrator yang memiliki kewenangan. Proses enable harus melewati pemeriksaan terhadap status user, status account, dan kondisi application access yang terkait. Mengaktifkan account tidak secara otomatis memberikan seluruh application access apabila access tersebut memang telah dinonaktifkan atau telah berakhir. Setelah account aktif, pengguna dapat melakukan autentikasi kembali apabila seluruh kondisi authorization telah terpenuhi.
+930: Enable Account
+931: │
+932: ├── User status valid
+933: ├── Account → ACTIVE
+934: │
+935: └── ApplicationAccess
+936: │
+937: ├── ACTIVE → available
+938: ├── DISABLED → remains disabled
+939: └── EXPIRED → remains expired
+940: Tindakan enable harus dicatat sebagai audit event. Sistem harus menyimpan actor yang melakukan perubahan, target account, waktu perubahan, hasil tindakan, dan request identifier.
+941: 8.4 Disable User
+942: Disable digunakan untuk menghentikan kemampuan user atau account dalam melakukan autentikasi dan memperoleh akses. Administrator hanya dapat melakukan disable terhadap user yang berada dalam scope kewenangannya. Setelah disable dilakukan, authentication dan authorization terhadap user tersebut harus ditolak. Session aktif yang berkaitan dengan account juga harus dihentikan atau dibuat tidak dapat digunakan kembali sesuai mekanisme session dan token yang diterapkan.
+943: Disable tidak menghapus data user dari database. Data tetap dipertahankan agar history, audit, identifier, application access, dan relasi administratif tetap dapat ditelusuri. Jika user diaktifkan kembali pada masa mendatang, data historis tidak perlu dibuat ulang selama masih valid.
+944: 8.5 User Status
+945: Status user digunakan untuk merepresentasikan lifecycle atau kelayakan user pada environment SSO. Status user dan status account merupakan dua konsep yang berbeda. users.status menggambarkan kondisi user pada domain SSO, sedangkan accounts.status menggambarkan apakah account authentication dapat digunakan. Pemisahan ini memungkinkan kondisi lifecycle user dikelola tanpa menjadikan account sebagai satu-satunya sumber informasi.
+946: Status dasar yang digunakan adalah:
+947: ACTIVE
+948: DISABLED
+949: Perubahan status user dapat berasal dari administrasi manual, proses import, maupun integrasi dengan sumber data institusi pada tahap pengembangan berikutnya. Apapun sumber perubahan tersebut, hasil akhirnya harus menggunakan aturan authorization dan audit yang sama. Status user yang tidak aktif tidak boleh menghasilkan access baru terhadap aplikasi.
