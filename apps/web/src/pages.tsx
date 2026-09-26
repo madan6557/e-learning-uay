@@ -774,7 +774,13 @@ export function Catalog({ user }: { user: any }) {
     </>
   );
 }
-export function Profile({ user, issuer }: { user: any; issuer?: string }) {
+export function Profile({
+  user,
+  accountUrl,
+}: {
+  user: any;
+  accountUrl?: string;
+}) {
   const [count, setCount] = useState<number | null>(null),
     [cleared, setCleared] = useState(false),
     [failure, setFailure] = useState<Error | null>(null);
@@ -853,13 +859,13 @@ export function Profile({ user, issuer }: { user: any; issuer?: string }) {
           <section className="card">
             <h2>Kelola identitas</h2>
             <p>
-              Informasi profil mengikuti akun SSO UAY. Perbarui identitas
-              melalui layanan akun akademik.
+              Informasi profil mengikuti akun SSO UAY. Jika ada data yang
+              keliru, hubungi pengelola akun akademik.
             </p>
-            {issuer ? (
+            {accountUrl ? (
               <a
                 className="secondary"
-                href={issuer}
+                href={accountUrl}
                 target="_blank"
                 rel="noreferrer"
               >
@@ -867,7 +873,7 @@ export function Profile({ user, issuer }: { user: any; issuer?: string }) {
                 <span className="sr-only">(tab baru)</span>
               </a>
             ) : (
-              <p>Pengelolaan SSO belum tersedia.</p>
+              <p>Tautan pengelolaan akun SSO belum tersedia.</p>
             )}
           </section>
           <section className="card">

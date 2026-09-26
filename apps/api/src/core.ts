@@ -16,6 +16,21 @@ const appOrigin = originFrom(
   process.env.APP_ORIGIN,
   "http://127.0.0.1:5173",
 );
+const accountUrlFromEnv = process.env.SSO_ACCOUNT_URL?.trim() ?? "";
+function accountManagementUrl() {
+  if (!accountUrlFromEnv) return "";
+  try {
+    const url = new URL(accountUrlFromEnv);
+    if (
+      url.protocol === "https:" ||
+      (!production &&
+        url.protocol === "http:" &&
+        ["127.0.0.1", "localhost"].includes(url.hostname))
+    )
+      return url.href;
+  } catch {}
+  return "";
+}
 export const config = {
   port: Number(process.env.PORT ?? 3000),
   // The browser application can live on Vercel while this API lives on Railway.
@@ -34,6 +49,7 @@ export const config = {
     .filter(Boolean),
   authMode: process.env.AUTH_MODE ?? (isDemo ? "development" : "oidc"),
   issuer: process.env.SSO_ISSUER ?? "",
+  accountUrl: accountManagementUrl(),
   clientId: process.env.SSO_CLIENT_ID ?? "elearning-uay",
   audience: process.env.SSO_AUDIENCE ?? "elearning-uay",
   clientSecret: process.env.SSO_CLIENT_SECRET ?? "",
@@ -77,6 +93,8 @@ function productionConfigurationErrors() {
   required("FILE_SERVICE_URL", process.env.FILE_SERVICE_URL);
   required("FILE_SERVICE_KEY", process.env.FILE_SERVICE_KEY);
   required("FILE_ALLOWED_ORIGINS", process.env.FILE_ALLOWED_ORIGINS);
+  if (accountUrlFromEnv && !config.accountUrl)
+    invalid.push("HTTPS SSO_ACCOUNT_URL");
   if (
     [
       config.origin,

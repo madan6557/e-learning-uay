@@ -122,8 +122,14 @@ export const identityClaims = z
     department_scopes: z.array(z.string()).default([]),
   })
   .transform((claims, ctx) => {
-    const directRole = claims.role ? normalizeRole(claims.role) : null;
-    const role = directRole ?? highestRole(claims.roles ?? []);
+    // The legacy scalar is only a fallback for issuers that do not send the
+    // application-specific roles claim. An explicit (even empty) roles list
+    // must never be overridden by a conflicting legacy role.
+    const role = claims.roles !== undefined
+      ? highestRole(claims.roles)
+      : claims.role
+        ? normalizeRole(claims.role)
+        : null;
     if (!role) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

@@ -2,7 +2,13 @@ import { confirmAction } from "./confirm";
 import { useId, isValidElement, cloneElement, type ReactElement } from "react";
 import { Button, Skeleton } from "./ui";
 import { useLocalDraft, SaveStatus } from "./useLocalDraft";
-import { useState, useEffect, useRef, type ReactNode } from "react";
+import {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  type ReactNode,
+} from "react";
 import { X, LoaderCircle, CheckCircle2, AlertCircle } from "lucide-react";
 import labels from "../../../packages/shared/src/id.json";
 export const t = labels;
@@ -405,6 +411,12 @@ export function Form({
     },
     autosave,
   );
+  useLayoutEffect(() => {
+    if (!captureFields || !ref.current) return;
+    const initialFields = captureForm(ref.current);
+    setFields(initialFields);
+    draft.initialize({ fields: initialFields, extra: draftValue });
+  }, []);
   useEffect(() => { onDirtyChange?.(draft.dirty || !!draft.recovery); }, [draft.dirty, draft.recovery, onDirtyChange]);
   return (
     <form

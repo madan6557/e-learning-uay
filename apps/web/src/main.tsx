@@ -558,9 +558,20 @@ function App() {
     page = <QuizPage key={id} id={id} user={user} />;
   else if (section === "assignments" && id)
     page = <AssignmentPage key={id} id={id} user={user} />;
-  else if (section === "catalog") page = <Catalog user={user} />;
+  else if (section === "catalog")
+    page = ["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(user.role) ? (
+      <Catalog user={user} />
+    ) : (
+      <Empty>
+        <h1>Katalog tidak tersedia</h1>
+        <p>Pengelolaan katalog hanya tersedia untuk administrator.</p>
+        <a className="button" href="#/classes">
+          Buka kelas saya
+        </a>
+      </Empty>
+    );
   else if (section === "profile")
-    page = <Profile user={user} issuer={config.data?.issuer} />;
+    page = <Profile user={user} accountUrl={config.data?.accountUrl} />;
   else if (section === "help")
     page = (
       <>
@@ -572,7 +583,7 @@ function App() {
           {[
             [
               "Akun & akses",
-              "Data akun mengikuti SSO UAY. Buka Profil untuk melihat identitas dan mengakses pengelolaan akun.",
+              "Data akun mengikuti SSO UAY. Buka Profil untuk melihat identitas dan informasi pengelolaannya.",
             ],
             [
               "Kelas & pembelajaran",

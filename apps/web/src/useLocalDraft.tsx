@@ -160,6 +160,10 @@ export function useLocalDraft<T>(
     status,
     error,
     recovery,
+    initialize: (initial: T) => {
+      latest.current = { value: initial, dirty: false };
+      setBaseline(JSON.stringify(initial));
+    },
     restore: () => {
       if (recovery) {
         restore(recovery.value);

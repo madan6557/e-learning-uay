@@ -228,6 +228,7 @@ export function registerAuth(app: Express) {
       mode: config.authMode,
       demoEnabled: isDemo && config.authMode === "oidc",
       issuer: config.issuer,
+      accountUrl: config.accountUrl || undefined,
       embedOrigins: config.embedOrigins,
     }),
   );
