@@ -34,7 +34,7 @@ const date = z
   .nullable()
   .optional()
   .transform((v) => (v ? new Date(v) : null));
-const quizSchema = z
+export const quizSchema = z
   .object({
     title,
     description: z.string().max(20000).default(""),
@@ -60,7 +60,7 @@ const quizSchema = z
     message: "GLOBAL_DEADLINE_REQUIRED",
     path: ["availableUntil"],
   });
-const assignmentSchema = z.object({
+export const assignmentSchema = z.object({
   title,
   instructions: z.string().trim().min(1).max(50000),
   gradeCategoryId: z.string().uuid().nullable().default(null),
@@ -131,7 +131,7 @@ export function presentSubmission(submission: any, manage = false) {
     user: manage ? submission.user : undefined,
   };
 }
-async function checkCategory(
+export async function checkCategory(
   tx: Prisma.TransactionClient,
   id: string | null,
   classId: string,

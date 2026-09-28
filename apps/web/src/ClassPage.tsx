@@ -1,4 +1,5 @@
 import { confirmAction } from "./confirm";
+import { PublishButton } from "./PublishButton";
 import { useState } from "react";
 import {
   ArrowLeft,
@@ -59,6 +60,36 @@ export function ClassPage({
     cls.canManage &&
     cls.status !== "ARCHIVED" &&
     cls.course.status !== "ARCHIVED";
+  const published = (kind: string, itemId: string) => {
+    info.setData((current: any) => ({
+      ...current,
+      announcements: current.announcements.map((a: any) =>
+        kind === "announcements" && a.id === itemId
+          ? { ...a, isPublished: true }
+          : a,
+      ),
+      sections: current.sections.map((s: any) => ({
+        ...s,
+        ...(kind === "sections" && s.id === itemId ? { isVisible: true } : {}),
+        resources: s.resources.map((r: any) =>
+          kind === "resources" && r.id === itemId
+            ? { ...r, isVisible: true }
+            : r,
+        ),
+        quizzes: s.quizzes.map((q: any) =>
+          kind === "quizzes" && q.id === itemId
+            ? { ...q, status: "PUBLISHED", isVisible: true }
+            : q,
+        ),
+        assignments: s.assignments.map((a: any) =>
+          kind === "assignments" && a.id === itemId
+            ? { ...a, isVisible: true }
+            : a,
+        ),
+      })),
+    }));
+    setMessage(t.contentPublished);
+  };
   const tabs = [
     ["content", t.content],
     ["gradebook", t.gradebook],
@@ -213,6 +244,13 @@ export function ClassPage({
                   {!section.isVisible && <Badge value="DRAFT" />}
                   {writable && (
                     <div className="toolbar">
+                      {!section.isVisible && (
+                        <PublishButton
+                          path={`/sections/${section.id}`}
+                          title={section.title}
+                          onPublished={() => published("sections", section.id)}
+                        />
+                      )}
                       <Action
                         className="icon-button"
                         disabled={index === 0}
@@ -292,23 +330,30 @@ export function ClassPage({
                           <ChevronRight size={16} />
                         </a>
                         {!r.isVisible && <Badge value="DRAFT" />}
-                      {writable && (
-                        <button
-                          className="text-button"
-                          onClick={() =>
-                            setModal({
-                              kind: "resource",
-                              sectionId: section.id,
-                              resource: r,
-                            })
-                          }
-                        >
-                          {t.edit}
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
+                        {writable && !r.isVisible && (
+                          <PublishButton
+                            path={`/resources/${r.id}`}
+                            title={r.title}
+                            onPublished={() => published("resources", r.id)}
+                          />
+                        )}
+                        {writable && (
+                          <button
+                            className="text-button"
+                            onClick={() =>
+                              setModal({
+                                kind: "resource",
+                                sectionId: section.id,
+                                resource: r,
+                              })
+                            }
+                          >
+                            {t.edit}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
                   {section.quizzes.map((q: any) => (
                     <div className="learning-item" key={q.id}>
                       <a href={`#/quizzes/${q.id}`}>
@@ -325,6 +370,13 @@ export function ClassPage({
                         <ChevronRight size={16} />
                       </a>
                       <Badge value={q.status} />
+                      {writable && (q.status === "DRAFT" || !q.isVisible) && (
+                        <PublishButton
+                          path={`/quizzes/${q.id}`}
+                          title={q.title}
+                          onPublished={() => published("quizzes", q.id)}
+                        />
+                      )}
                     </div>
                   ))}
                   {section.assignments.map((a: any) => (
@@ -343,6 +395,13 @@ export function ClassPage({
                         <ChevronRight size={16} />
                       </a>
                       {!a.isVisible && <Badge value="DRAFT" />}
+                      {writable && !a.isVisible && (
+                        <PublishButton
+                          path={`/assignments/${a.id}`}
+                          title={a.title}
+                          onPublished={() => published("assignments", a.id)}
+                        />
+                      )}
                     </div>
                   ))}
                   {!section.resources.length &&
@@ -423,6 +482,13 @@ export function ClassPage({
                     </span>
                   )}
                   {!a.isPublished && <Badge value="DRAFT" />}
+                  {writable && !a.isPublished && (
+                    <PublishButton
+                      path={`/announcements/${a.id}`}
+                      title={a.title}
+                      onPublished={() => published("announcements", a.id)}
+                    />
+                  )}
                   <small>{date(a.publishedAt)}</small>
                 </div>
                 <h2>{a.title}</h2>

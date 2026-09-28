@@ -18,6 +18,7 @@ import {
 } from "./core.js";
 import { registerAuth, authenticate } from "./auth.js";
 import { registerLearning } from "./learning.js";
+import { registerPublication } from "./publication.js";
 import { registerAssessment, expireAttempts } from "./assessment.js";
 import { registerGrades } from "./grades.js";
 import { registerFiles } from "./files.js";
@@ -160,6 +161,7 @@ export function createApp() {
   registerAuth(app);
   app.use("/api/v1", authenticate);
   registerLearning(app);
+  registerPublication(app);
   registerAssessment(app);
   registerGrades(app);
   registerFiles(app);

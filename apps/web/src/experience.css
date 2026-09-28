@@ -1469,6 +1469,28 @@ textarea:focus {
   color: inherit;
 }
 
+.publish-content-button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .learning-item {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .learning-item > a {
+    flex-basis: 100%;
+  }
+  .meeting-heading {
+    flex-wrap: wrap;
+  }
+  .meeting-heading > .toolbar {
+    flex-basis: 100%;
+    justify-content: flex-end;
+  }
+}
+
 .learning-item a > div {
   flex: 1;
   min-width: 0;
