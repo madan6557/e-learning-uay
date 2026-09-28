@@ -34,7 +34,7 @@ test("administrators see academic management with their actual scope and no inst
       createElement(Dashboard, { page: "dashboard", user }),
     );
     assert.match(html, /Dashboard administrasi/);
-    assert.match(html, /Pendaftaran kelas aktif/);
+    assert.match(html, /Pendaftaran aktif/);
     assert.match(html, /Kelas draf/);
     assert.match(html, /Kelola kelas/);
     assert.match(html, /Rekap nilai/);
