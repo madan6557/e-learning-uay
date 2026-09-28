@@ -185,7 +185,7 @@ function Landing({ config, error }: { config: any; error?: Error | null }) {
           [
             BookOpen,
             "Kelas",
-            "Pertemuan, materi, dan pengumuman dari dosen pengampu.",
+            "Section, materi, dan pengumuman dari dosen pengampu.",
           ],
           [
             ClipboardCheck,
