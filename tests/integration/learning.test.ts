@@ -135,6 +135,7 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
           undefined,
           403,
         );
+        assert.deepEqual(await request(outsider, "/course-classes?summary=true"), []);
         await request(
           department,
           `/course-classes/${cls.id}`,
@@ -839,6 +840,82 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
           }),
           1,
         );
+      },
+    );
+    await suite.test(
+      "dashboard summaries preserve visibility, progress and grading counts",
+      async () => {
+        // The import test enrolled the original outsider; they now have student access.
+        for (const user of [student, teacher, admin, outsider]) {
+          const summaries = await request(user, "/course-classes?summary=true");
+          const summary = summaries.find((c: any) => c.id === cls.id);
+          assert(summary);
+          const detail = await request(user, `/course-classes/${cls.id}`);
+          const sectionShape = (s: any) => ({
+            id: s.id,
+            resources: s.resources.map((r: any) => ({
+              id: r.id,
+              resourceType: r.resourceType,
+            })),
+            assignments: s.assignments.map((a: any) => ({
+              id: a.id,
+              title: a.title,
+              deadline: a.deadline,
+              isVisible: a.isVisible,
+            })),
+            quizzes: s.quizzes
+              .map((q: any) => ({
+                id: q.id,
+                title: q.title,
+                status: q.status,
+                availableUntil: q.availableUntil,
+                isVisible: q.isVisible,
+              }))
+              .sort((a: any, b: any) => a.id.localeCompare(b.id)),
+          });
+          assert.deepEqual(
+            summary.sections.map(sectionShape),
+            detail.sections.map(sectionShape),
+          );
+          const ids = new Set(
+            summary.sections.flatMap((s: any) =>
+              s.resources.map((r: any) => r.id),
+            ),
+          );
+          for (const kind of ["video", "slides", "downloads", "text"]) {
+            const shape = (p: any) => ({
+              resourceItemId: p.resourceItemId,
+              ...(["video", "slides"].includes(kind)
+                ? { percent: p.percent }
+                : {}),
+            });
+            const sort = (a: any, b: any) =>
+              a.resourceItemId.localeCompare(b.resourceItemId);
+            assert.deepEqual(
+              summary.progress[kind].map(shape).sort(sort),
+              detail.progress[kind]
+                .filter((p: any) => ids.has(p.resourceItemId))
+                .map(shape)
+                .sort(sort),
+            );
+          }
+          const sortQueue = (a: any, b: any) => a.id.localeCompare(b.id);
+          assert.deepEqual(
+            summary.gradingQueue.sort(sortQueue),
+            detail.gradingQueue.sort(sortQueue),
+          );
+          assert(!JSON.stringify(summary).includes("dynamicPayload"));
+          assert(!JSON.stringify(summary).includes("questionSnapshot"));
+          assert(!("enrollmentKeyHash" in summary));
+          const summaryBytes = Buffer.byteLength(JSON.stringify(summary));
+          const detailBytes = Buffer.byteLength(JSON.stringify(detail));
+          assert(summaryBytes < detailBytes);
+          suite.diagnostic(`${user.role} class payload: ${detailBytes} -> ${summaryBytes} bytes`);
+        }
+        for (const user of [department]) {
+          const summaries = await request(user, "/course-classes?summary=true");
+          assert(!summaries.some((c: any) => c.id === cls.id));
+        }
       },
     );
     await suite.test(

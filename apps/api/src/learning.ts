@@ -1,4 +1,5 @@
 import type { Express } from "express";
+import { dashboardClasses } from "./dashboard.js";
 import { z } from "zod";
 import createDOMPurify from "dompurify";
 import { JSDOM } from "jsdom";
@@ -277,7 +278,11 @@ export function registerLearning(app: Express) {
       },
       orderBy: { createdAt: "desc" },
     });
-    res.json(classes);
+    res.json(
+      req.query.summary === "true"
+        ? await dashboardClasses(classes, u)
+        : classes,
+    );
   });
   app.post("/api/v1/course-classes", async (req, res) =>
     res.status(201).json(
@@ -423,74 +428,76 @@ export function registerLearning(app: Express) {
         ),
         assignments: s.assignments.filter((a) => cls.canManage || a.isVisible),
       }));
-    const announcements = await db.announcement.findMany({
-      where: {
-        classId: cls.id,
-        ...(!cls.canManage
-          ? { isPublished: true, publishedAt: { lte: new Date() } }
-          : {}),
-      },
-      orderBy: [{ isImportant: "desc" }, { publishedAt: "desc" }],
-    });
-    const progress = {
-      video: await db.videoProgress.findMany({
-        where: {
-          userId: req.context.user.id,
-          resourceItem: { section: { classId: cls.id } },
-        },
-      }),
-      slides: await db.slideProgress.findMany({
-        where: {
-          userId: req.context.user.id,
-          resourceItem: { section: { classId: cls.id } },
-        },
-      }),
-      downloads: await db.materialDownload.findMany({
-        where: {
-          userId: req.context.user.id,
-          resourceItem: { section: { classId: cls.id } },
-        },
-      }),
-      text: await db.resourceProgress.findMany({
-        where: {
-          userId: req.context.user.id,
-          resourceItemId: {
-            in: sections.flatMap((s) => s.resources.map((r) => r.id)),
+    const [announcements, video, slides, downloads, text, gradingQueue] =
+      await Promise.all([
+        db.announcement.findMany({
+          where: {
+            classId: cls.id,
+            ...(!cls.canManage
+              ? { isPublished: true, publishedAt: { lte: new Date() } }
+              : {}),
           },
-        },
-      }),
-    };
-    const gradingQueue = cls.canManage
-      ? await Promise.all([
-          db.assignmentSubmission.groupBy({
-            by: ["assignmentId"],
-            where: {
-              assignment: { section: { classId: cls.id } },
-              status: { in: ["SUBMITTED", "LATE"] },
+          orderBy: [{ isImportant: "desc" }, { publishedAt: "desc" }],
+        }),
+        db.videoProgress.findMany({
+          where: {
+            userId: req.context.user.id,
+            resourceItem: { section: { classId: cls.id } },
+          },
+        }),
+        db.slideProgress.findMany({
+          where: {
+            userId: req.context.user.id,
+            resourceItem: { section: { classId: cls.id } },
+          },
+        }),
+        db.materialDownload.findMany({
+          where: {
+            userId: req.context.user.id,
+            resourceItem: { section: { classId: cls.id } },
+          },
+        }),
+        db.resourceProgress.findMany({
+          where: {
+            userId: req.context.user.id,
+            resourceItemId: {
+              in: sections.flatMap((s) => s.resources.map((r) => r.id)),
             },
-            _count: true,
-          }),
-          db.quizAttempt.groupBy({
-            by: ["quizId"],
-            where: {
-              quiz: { section: { classId: cls.id } },
-              status: "NEEDS_GRADING",
-            },
-            _count: true,
-          }),
-        ]).then(([assignments, quizzes]) => [
-          ...assignments.map((a) => ({
-            id: a.assignmentId,
-            kind: "assignment",
-            count: a._count,
-          })),
-          ...quizzes.map((q) => ({
-            id: q.quizId,
-            kind: "quiz",
-            count: q._count,
-          })),
-        ])
-      : [];
+          },
+        }),
+        cls.canManage
+          ? Promise.all([
+              db.assignmentSubmission.groupBy({
+                by: ["assignmentId"],
+                where: {
+                  assignment: { section: { classId: cls.id } },
+                  status: { in: ["SUBMITTED", "LATE"] },
+                },
+                _count: true,
+              }),
+              db.quizAttempt.groupBy({
+                by: ["quizId"],
+                where: {
+                  quiz: { section: { classId: cls.id } },
+                  status: "NEEDS_GRADING",
+                },
+                _count: true,
+              }),
+            ]).then(([assignments, quizzes]) => [
+              ...assignments.map((a) => ({
+                id: a.assignmentId,
+                kind: "assignment",
+                count: a._count,
+              })),
+              ...quizzes.map((q) => ({
+                id: q.quizId,
+                kind: "quiz",
+                count: q._count,
+              })),
+            ])
+          : [],
+      ]);
+    const progress = { video, slides, downloads, text };
     res.json({
       ...cls,
       enrollmentKeyHash: undefined,

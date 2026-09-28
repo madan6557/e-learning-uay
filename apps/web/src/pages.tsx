@@ -91,30 +91,20 @@ export function ClassCard({ item, index = 0 }: { item: any; index?: number }) {
   );
 }
 export function Dashboard({ page, user }: { page: string; user: any }) {
-  const classes = useApi<any[]>("/course-classes");
+  const needsSummary = page === "dashboard" || page === "agenda";
+  const classes = useApi<any[]>(
+    page === "notifications"
+      ? null
+      : `/course-classes${needsSummary ? "?summary=true" : ""}`,
+  );
   const notifications = useApi<any[]>(
     page === "notifications" ? "/notifications" : null,
   );
-  const [details, setDetails] = useState<any[]>([]),
-    [detailError, setDetailError] = useState<Error | null>(null);
+  const details = needsSummary ? (classes.data ?? []) : [];
   const [search, setSearch] = useState(""),
     [filter, setFilter] = useState("ALL"),
     [modal, setModal] = useState(false);
   const teacher = user.role !== "STUDENT";
-  useEffect(() => {
-    let active = true;
-    if (classes.data)
-      Promise.all(classes.data.map((c) => api(`/course-classes/${c.id}`)))
-        .then((data) => {
-          if (active) setDetails(data);
-        })
-        .catch((e) => {
-          if (active) setDetailError(e);
-        });
-    return () => {
-      active = false;
-    };
-  }, [classes.data]);
   if (classes.loading) return <Loading />;
   if (classes.error) return <Notice error={classes.error} />;
   const items = (classes.data ?? []).filter(
@@ -273,9 +263,7 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
       <div className="page-heading heading-with-action">
         <div>
           <div className="eyebrow-row">
-            <span className="eyebrow">
-              {t.eyebrow}
-            </span>
+            <span className="eyebrow">{t.eyebrow}</span>
             <span className="user-role-badge">
               {user.role === "ADMIN"
                 ? "Administrator"
@@ -299,7 +287,6 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
           </button>
         )}
       </div>
-      {detailError && <Notice error={detailError} />}
       {page === "dashboard" && (
         <>
           <section className="welcome-panel compact">
@@ -308,7 +295,9 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
               <h2>{teacher ? t.manageLearning : t.continueLearning}</h2>
               {items[0] && (
                 <a className="button light" href={`#/classes/${items[0].id}`}>
-                  <span>{t.openClass} · {items[0].course.code}</span>
+                  <span>
+                    {t.openClass} · {items[0].course.code}
+                  </span>
                   <ArrowUpRight size={18} />
                 </a>
               )}
@@ -821,7 +810,10 @@ export function Profile({
               <dd>{user.username || "Belum tersedia"}</dd>
             </div>
             <div>
-              <dt>{(t.identifierTypes as any)[user.identifierType] ?? "Nomor identitas"}</dt>
+              <dt>
+                {(t.identifierTypes as any)[user.identifierType] ??
+                  "Nomor identitas"}
+              </dt>
               <dd>{user.identifierValue || "Belum tersedia"}</dd>
             </div>
             <div>
