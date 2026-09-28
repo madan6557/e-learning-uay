@@ -91,7 +91,8 @@ export function ClassCard({ item, index = 0 }: { item: any; index?: number }) {
   );
 }
 export function Dashboard({ page, user }: { page: string; user: any }) {
-  const needsSummary = page === "dashboard" || page === "agenda";
+  const admin = ["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(user.role);
+  const needsSummary = (page === "dashboard" && !admin) || page === "agenda";
   const classes = useApi<any[]>(
     page === "notifications"
       ? null
@@ -100,11 +101,14 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
   const notifications = useApi<any[]>(
     page === "notifications" ? "/notifications" : null,
   );
+  const courses = useApi<any[]>(
+    admin && page === "dashboard" ? "/courses" : null,
+  );
   const details = needsSummary ? (classes.data ?? []) : [];
   const [search, setSearch] = useState(""),
     [filter, setFilter] = useState("ALL"),
     [modal, setModal] = useState(false);
-  const teacher = user.role !== "STUDENT";
+  const teacher = user.role === "INSTRUCTOR";
   if (classes.loading) return <Loading />;
   if (classes.error) return <Notice error={classes.error} />;
   const items = (classes.data ?? []).filter(
@@ -114,6 +118,15 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
         .toLowerCase()
         .includes(search.toLowerCase()),
   );
+  if (admin && page === "dashboard")
+    return (
+      <AdminOverview
+        user={user}
+        classes={classes.data ?? []}
+        courses={courses}
+        reload={classes.reload}
+      />
+    );
   const activities = details
     .filter((c) => c.status === "PUBLISHED")
     .flatMap((c) =>
@@ -236,7 +249,7 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
       <>
         <div className="page-heading">
           <div className="eyebrow">{t.eyebrow}</div>
-          <h1>{t.grades}</h1>
+          <h1>{admin ? t.gradeOverview : t.grades}</h1>
         </div>
         <div className="cards">
           {items.map((c) => (
@@ -265,25 +278,25 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
           <div className="eyebrow-row">
             <span className="eyebrow">{t.eyebrow}</span>
             <span className="user-role-badge">
-              {user.role === "ADMIN"
-                ? "Administrator"
-                : teacher
-                  ? "Dosen Pengampu"
-                  : "Mahasiswa"}
+              {(t.roles as Record<string, string>)[user.role] ?? user.role}
             </span>
           </div>
           <h1>
             {page === "dashboard"
               ? `${getTimeGreeting()}, ${user.name.split(" ")[teacher ? 1 : 0] ?? user.name}.`
               : page === "agenda"
-                ? t.agenda
-                : t.myClasses}
+                ? admin
+                  ? t.academicAgenda
+                  : t.agenda
+                : admin
+                  ? t.manageClasses
+                  : t.myClasses}
           </h1>
         </div>
-        {page === "classes" && user.role !== "INSTRUCTOR" && (
+        {page === "classes" && (admin || user.role === "STUDENT") && (
           <button className="secondary" onClick={() => setModal(true)}>
             <Plus size={16} />
-            {teacher ? t.newClass : t.joinClass}
+            {admin ? t.newClass : t.joinClass}
           </button>
         )}
       </div>
@@ -378,7 +391,8 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
         <>
           <div className="section-heading">
             <h2>
-              {t.myClasses} <span className="count">{items.length}</span>
+              {admin ? t.manageClasses : t.myClasses}{" "}
+              <span className="count">{items.length}</span>
             </h2>
             {page === "dashboard" ? (
               <a className="text-link" href="#/classes">
@@ -417,7 +431,7 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
           {!items.length && (
             <Empty>
               <h3>{t.emptyClasses}</h3>
-              <p>{t.emptyDescription}</p>
+              <p>{admin ? t.adminEmptyClasses : t.emptyDescription}</p>
             </Empty>
           )}
         </>
@@ -471,7 +485,7 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
         </>
       )}
       {modal &&
-        (teacher ? (
+        (admin ? (
           <ClassForm
             onClose={() => setModal(false)}
             onSaved={() => {
@@ -502,6 +516,164 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
             </Form>
           </Modal>
         ))}
+    </>
+  );
+}
+function AdminOverview({
+  user,
+  classes,
+  courses,
+  reload,
+}: {
+  user: any;
+  classes: any[];
+  courses: { data: any[] | null; loading: boolean; error: Error | null };
+  reload: () => void;
+}) {
+  const [creating, setCreating] = useState(false);
+  const departmentAdmin = user.role === "DEPARTMENT_ADMIN";
+  const drafts = classes.filter((c) => c.status === "DRAFT");
+  const scope = departmentAdmin
+    ? user.departmentScopes?.join(", ") || t.noDepartmentScope
+    : t.allDepartments;
+  return (
+    <>
+      <div className="page-heading heading-with-action">
+        <div>
+          <div className="eyebrow-row">
+            <span className="eyebrow">{t.academicSpace}</span>
+            <span className="user-role-badge">
+              {(t.roles as Record<string, string>)[user.role]}
+            </span>
+          </div>
+          <h1>{t.adminDashboard}</h1>
+          <p>
+            {user.name} · {t.managementScope}: {scope}
+          </p>
+        </div>
+        <button className="secondary" onClick={() => setCreating(true)}>
+          <Plus size={16} />
+          {t.newClass}
+        </button>
+      </div>
+      <section className="welcome-panel compact">
+        <div>
+          <span className="pill">{t.semester}</span>
+          <h2>
+            {departmentAdmin ? t.departmentManagement : t.academicManagement}
+          </h2>
+          <p>{t.adminDashboardDescription}</p>
+          <a className="button light" href="#/catalog">
+            {t.catalog}
+            <ArrowUpRight size={18} />
+          </a>
+        </div>
+        <div className="welcome-emblem">
+          <Database size={80} strokeWidth={1} />
+          <span>{scope}</span>
+        </div>
+      </section>
+      {courses.error && <Notice error={courses.error} />}
+      <div className="stats-grid">
+        {[
+          [
+            Database,
+            t.courses,
+            courses.loading || courses.error
+              ? "—"
+              : (courses.data?.length ?? 0),
+          ],
+          [
+            BookOpen,
+            t.activeClasses,
+            classes.filter((c) => c.status === "PUBLISHED").length,
+          ],
+          [FileText, t.draftClasses, drafts.length],
+          [
+            Users,
+            t.activeEnrollments,
+            classes.reduce((sum, c) => sum + c._count.enrollments, 0),
+          ],
+        ].map(([Icon, label, value]: any) => (
+          <div className="stat" key={label}>
+            <span className="stat-icon">
+              <Icon size={19} />
+            </span>
+            <div>
+              <span>{label}</span>
+              <strong>{String(value).padStart(2, "0")}</strong>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="section-heading">
+        <h2>{t.academicAdministration}</h2>
+      </div>
+      <div className="cards">
+        {[
+          ["#/catalog", Database, t.catalog, t.manageCatalogDescription],
+          ["#/classes", BookOpen, t.manageClasses, t.manageClassesDescription],
+          [
+            "#/grades",
+            ClipboardCheck,
+            t.gradeOverview,
+            t.gradeOverviewDescription,
+          ],
+        ].map(([href, Icon, title, description]: any) => (
+          <a className="card" href={href} key={href}>
+            <Icon size={24} />
+            <h3>{title}</h3>
+            <p>{description}</p>
+            <span className="text-link">
+              {t.open}
+              <ChevronRight size={16} />
+            </span>
+          </a>
+        ))}
+      </div>
+      <div className="section-heading">
+        <h2>
+          {t.draftClasses} <span className="count">{drafts.length}</span>
+        </h2>
+        <a className="text-link" href="#/classes">
+          {t.manageClasses}
+          <ArrowUpRight size={15} />
+        </a>
+      </div>
+      <div className="card activity-list">
+        {drafts.length ? (
+          drafts.slice(0, 5).map((cls) => (
+            <a
+              className="activity-row"
+              key={cls.id}
+              href={`#/classes/${cls.id}`}
+            >
+              <span className="activity-icon">
+                <FileText size={18} />
+              </span>
+              <div>
+                <h3>{cls.course.title}</h3>
+                <p>
+                  {cls.name} · {cls.academicYear}
+                </p>
+              </div>
+              <Badge value={cls.status} />
+              <ChevronRight size={18} />
+            </a>
+          ))
+        ) : (
+          <Empty>{t.noDraftClasses}</Empty>
+        )}
+      </div>
+      {creating && (
+        <ClassForm
+          onClose={() => setCreating(false)}
+          onSaved={() => {
+            setCreating(false);
+            reload();
+          }}
+        />
+      )}
     </>
   );
 }

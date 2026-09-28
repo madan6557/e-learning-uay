@@ -338,15 +338,14 @@ function AuthShell({
       window.removeEventListener("notifications-changed", load);
     };
   }, []);
+  const admin = ["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(user.role);
   const links = [
     ["/dashboard", LayoutDashboard, t.dashboard],
-    ["/classes", BookOpen, t.myClasses],
-    ["/agenda", CalendarDays, t.agenda],
-    ["/grades", GraduationCap, t.grades],
+    ...(admin ? [["/catalog", LibraryBig, t.catalog]] : []),
+    ["/classes", BookOpen, admin ? t.manageClasses : t.myClasses],
+    ["/agenda", CalendarDays, admin ? t.academicAgenda : t.agenda],
+    ["/grades", GraduationCap, admin ? t.gradeOverview : t.grades],
     ["/notifications", Bell, t.notifications],
-    ...(["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(user.role)
-      ? [["/catalog", LibraryBig, t.catalog]]
-      : []),
     ["/profile", ShieldCheck, t.profile],
     ["/help", CircleHelp, t.help],
   ];
