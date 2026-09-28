@@ -17,7 +17,12 @@ function apiPath(req) {
   const value = req.query?.path;
   const segments = Array.isArray(value) ? value : [value];
   const path = segments.filter(Boolean).join("/");
-  if (!path || path.split("/").some((segment) => !segment || segment === "." || segment === ".."))
+  if (
+    !path ||
+    path
+      .split("/")
+      .some((segment) => !segment || segment === "." || segment === "..")
+  )
     return null;
   return `/api/${path}`;
 }
@@ -78,6 +83,7 @@ export default async function handler(req, res) {
       if (!headers.has("content-type"))
         headers.set("content-type", "application/json");
     }
+    const upstreamStarted = performance.now();
     const upstream = await fetch(target, {
       method,
       headers,
@@ -103,6 +109,11 @@ export default async function handler(req, res) {
       chunks.push(value);
     }
     const responseBody = Buffer.concat(chunks);
+    const timing = upstream.headers.get("server-timing");
+    res.setHeader(
+      "Server-Timing",
+      `${timing ? `${timing}, ` : ""}upstream;dur=${(performance.now() - upstreamStarted).toFixed(1)}`,
+    );
     // Vercel's response helper finalizes buffered function output reliably;
     // plain res.end can discard a streamed upstream payload in this runtime.
     if (typeof res.send === "function") return res.send(responseBody);

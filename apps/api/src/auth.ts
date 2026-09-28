@@ -108,8 +108,7 @@ async function verifyAccess(token: string) {
     clockTolerance: 5,
   });
   const accountStatus = (payload.account_status ?? payload.status) as
-    | string
-    | undefined;
+    string | undefined;
   ensure(accountStatus === "ACTIVE", 403, "ACCOUNT_DISABLED");
   ensure(
     z.string().uuid().safeParse(payload.sub).success,
@@ -412,6 +411,7 @@ export async function authenticate(
   _res: Response,
   next: NextFunction,
 ) {
+  const authStarted = performance.now();
   const id = req.cookies[cookieName];
   ensure(typeof id === "string", 401, "LOGIN_REQUIRED");
   const key = `session:${hash(id)}`;
@@ -434,11 +434,7 @@ export async function authenticate(
         const existing = await db.user.findUnique({
           where: { id: session.userId },
         });
-        ensure(
-          existing?.ssoUserId === claims.sub,
-          401,
-          "INVALID_IDENTITY",
-        );
+        ensure(existing?.ssoUserId === claims.sub, 401, "INVALID_IDENTITY");
         await syncUser(claims);
         session = {
           ...session,
@@ -459,7 +455,6 @@ export async function authenticate(
         throw error;
       }
     }
-    await verifyAccess(session.accessToken!);
   } else
     ensure(
       !production &&
@@ -468,7 +463,10 @@ export async function authenticate(
       401,
       "SESSION_EXPIRED",
     );
-  const user = await db.user.findUnique({ where: { id: session.userId } });
+  const [user] = await Promise.all([
+    db.user.findUnique({ where: { id: session.userId } }),
+    session.accessToken ? verifyAccess(session.accessToken) : Promise.resolve(),
+  ]);
   ensure(
     user?.status === "ACTIVE" &&
       !(await cache.get(`revoked:${user?.ssoUserId}`)),
@@ -482,5 +480,9 @@ export async function authenticate(
     ip: req.ip ?? "",
     userAgent: req.get("User-Agent")?.slice(0, 500) ?? "",
   };
+  _res.setHeader(
+    "Server-Timing",
+    `auth;dur=${(performance.now() - authStarted).toFixed(1)}`,
+  );
   next();
 }

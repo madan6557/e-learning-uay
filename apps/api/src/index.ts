@@ -66,6 +66,19 @@ function registerLocalFixtureProxy(
 export function createApp() {
   const app = express();
   app.disable("x-powered-by");
+  app.use((req, res, next) => {
+    const started = performance.now();
+    const json = res.json.bind(res);
+    res.json = (body) => {
+      const auth = res.getHeader("Server-Timing");
+      res.setHeader(
+        "Server-Timing",
+        `${auth ? `${auth}, ` : ""}api;dur=${(performance.now() - started).toFixed(1)}`,
+      );
+      return json(body);
+    };
+    next();
+  });
   if (production || isDemo || process.env.TRUST_PROXY)
     app.set("trust proxy", 1);
   app.use(
@@ -230,7 +243,7 @@ export function createApp() {
   );
   return app;
 }
-export async function runScheduledWork() {
+export async function runScheduledWork(scanNotifications = true) {
   await expireAttempts();
   const scheduled = await db.quizAttempt.findMany({
     where: {
@@ -271,6 +284,9 @@ export async function runScheduledWork() {
         );
       }
     });
+  // Expiring attempts and publishing grades remain on the fast timer. The full
+  // notification scan runs less often to avoid competing with page reads.
+  if (!scanNotifications) return;
   const announcements = await db.announcement.findMany({
     where: {
       isPublished: true,
@@ -356,11 +372,14 @@ if (
     ),
   );
   let busy = false;
+  let nextNotificationScan = 0;
   const timer = setInterval(async () => {
     if (busy) return;
     busy = true;
     try {
-      await runScheduledWork();
+      const scanNotifications = Date.now() >= nextNotificationScan;
+      await runScheduledWork(scanNotifications);
+      if (scanNotifications) nextNotificationScan = Date.now() + 60000;
     } catch (error: any) {
       console.error(
         "Scheduled work failed; will retry:",

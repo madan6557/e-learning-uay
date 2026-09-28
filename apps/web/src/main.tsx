@@ -133,7 +133,10 @@ function Landing({ config, error }: { config: any; error?: Error | null }) {
             dosen Universitas Achmad Yani.
           </p>
           <div className="hero-actions">
-            <LoginButton className="button hero-cta" label="Masuk dengan SSO UAY">
+            <LoginButton
+              className="button hero-cta"
+              label="Masuk dengan SSO UAY"
+            >
               <span>Masuk dengan SSO UAY</span>
               <ArrowRight size={18} />
             </LoginButton>
@@ -161,7 +164,9 @@ function Landing({ config, error }: { config: any; error?: Error | null }) {
             <dl className="portal-notes">
               <div>
                 <dt>Daftar kelas kosong</dt>
-                <dd>Program studi belum mendaftarkan Anda pada kelas semester ini.</dd>
+                <dd>
+                  Program studi belum mendaftarkan Anda pada kelas semester ini.
+                </dd>
               </div>
               <div>
                 <dt>Kelas terbuka tetapi belum ada isinya</dt>
@@ -265,7 +270,10 @@ function AuthShell({
     );
   useEffect(() => {
     const media = matchMedia("(max-width:760px)");
-    const update = () => { setMobile(media.matches); if (!media.matches) setMenuOpen(false); };
+    const update = () => {
+      setMobile(media.matches);
+      if (!media.matches) setMenuOpen(false);
+    };
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
@@ -274,10 +282,20 @@ function AuthShell({
     document.getElementById("close-mobile-menu")?.focus();
     const escape = (e: KeyboardEvent) => {
       if (e.key === "Tab") {
-        const items = [...document.querySelectorAll<HTMLElement>("#academic-navigation a, #academic-navigation button")].filter(el => el.offsetParent !== null);
-        const first = items[0], last = items.at(-1);
-        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
-        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
+        const items = [
+          ...document.querySelectorAll<HTMLElement>(
+            "#academic-navigation a, #academic-navigation button",
+          ),
+        ].filter((el) => el.offsetParent !== null);
+        const first = items[0],
+          last = items.at(-1);
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last?.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
+        }
       }
       if (e.key === "Escape") {
         setMenuOpen(false);
@@ -319,7 +337,7 @@ function AuthShell({
       clearInterval(timer);
       window.removeEventListener("notifications-changed", load);
     };
-  }, [pathname]);
+  }, []);
   const links = [
     ["/dashboard", LayoutDashboard, t.dashboard],
     ["/classes", BookOpen, t.myClasses],
@@ -365,6 +383,19 @@ function AuthShell({
       >
         <div className="sidebar-brand">
           <Brand home="#/dashboard" />
+          <button
+            type="button"
+            className="nav-collapse-toggle"
+            onClick={() => setCollapsed((value) => !value)}
+            aria-pressed={collapsed}
+            aria-label={collapsed ? "Perluas navigasi" : t.collapseNav}
+          >
+            {collapsed ? (
+              <PanelLeftOpen size={16} />
+            ) : (
+              <PanelLeftClose size={16} />
+            )}
+          </button>
           <IconButton
             id="close-mobile-menu"
             label="Tutup menu"
@@ -406,19 +437,6 @@ function AuthShell({
             <small className="block">Identitas dikelola oleh SSO</small>
           </span>
         </div>
-        <button
-          type="button"
-          className="nav-collapse-toggle"
-          onClick={() => setCollapsed((value) => !value)}
-          aria-pressed={collapsed}
-        >
-          {collapsed ? (
-            <PanelLeftOpen size={16} />
-          ) : (
-            <PanelLeftClose size={16} />
-          )}
-          <span className="nav-label">{t.collapseNav}</span>
-        </button>
       </aside>
       <div className="workspace" inert={mobile && menuOpen}>
         <header className="topbar">

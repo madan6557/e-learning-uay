@@ -6,6 +6,22 @@ Ini bukan topologi production VPS. Production mengikuti [panduan VPS](README.md)
 
 ## Sambungkan dua domain
 
+Untuk memeriksa request lambat, buka Network → Timing di DevTools. Respons JSON
+menyertakan `Server-Timing`: `auth` untuk pemeriksaan sesi, `api` untuk total
+pemrosesan backend, dan `upstream` untuk perjalanan dari gateway Vercel sampai
+respons Railway selesai diterima. Durasi tersebut bertumpang tindih; jangan
+dijumlahkan. Jika `upstream` jauh lebih besar daripada `api`, periksa jalur
+gateway, lokasi layanan, atau proses startup. Jika `api` besar, periksa database
+dan pemrosesan backend.
+
+Browser menggunakan cache di memori selama 10–30 detik untuk daftar kelas,
+ringkasan dashboard, detail kelas, nilai, dan notifikasi. Permintaan identik yang
+sedang berjalan digabungkan. Setiap operasi tulis, logout, sesi kedaluwarsa, atau
+reload data membersihkan cache. Status pengerjaan kuis/tugas, identitas, audit,
+dan URL akses file tetap mengambil data baru. Pemindaian notifikasi umum berjalan
+setiap 60 detik; kedaluwarsa percobaan kuis dan publikasi nilai tetap diperiksa
+setiap 5 detik.
+
 1. Aktifkan domain HTTPS untuk service aplikasi Railway dan salin domain tersebut, misalnya `https://elearning-api-production.up.railway.app`.
 2. Tetapkan domain Vercel yang dipakai pengguna sebagai `APP_ORIGIN`, misalnya `https://e-learning-uay.vercel.app`.
 3. Pada **Railway**, set `API_ORIGIN` ke domain Railway dari langkah 1.

@@ -1,4 +1,5 @@
 import { confirmAction } from "./confirm";
+import { readCache, readTtl } from "./readCache";
 import { useId, isValidElement, cloneElement, type ReactElement } from "react";
 import { Button, Skeleton } from "./ui";
 import { useLocalDraft, SaveStatus } from "./useLocalDraft";
@@ -75,6 +76,35 @@ export async function api<T = any>(
   body?: unknown,
   key?: string,
 ): Promise<T> {
+  if (method === "GET") {
+    // Dashboard and agenda already contain the class cards; reuse those fields
+    // when opening the class list instead of asking the server a second time.
+    const summary =
+      path === "/course-classes"
+        ? readCache.peek<any[]>("/course-classes?summary=true")
+        : undefined;
+    if (summary)
+      return summary.map(
+        ({ sections, progress, gradingQueue, ...cls }) => cls,
+      ) as T;
+    return readCache.load(path, readTtl(path), () =>
+      requestApi<T>(path, method, body, key),
+    );
+  }
+  readCache.clear();
+  try {
+    return await requestApi<T>(path, method, body, key);
+  } finally {
+    readCache.clear();
+  }
+}
+
+async function requestApi<T>(
+  path: string,
+  method: string,
+  body?: unknown,
+  key?: string,
+): Promise<T> {
   const encoded = body === undefined ? undefined : JSON.stringify(body);
   const fingerprint = `${method}:${path}:${encoded ?? ""}`;
   for (const [entry, value] of uncertainWrites)
@@ -92,7 +122,7 @@ export async function api<T = any>(
         method,
         credentials: isExternalApi ? "include" : "same-origin",
         headers: {
-          "Content-Type": "application/json",
+          ...(method !== "GET" ? { "Content-Type": "application/json" } : {}),
           ...(method !== "GET" ? { "Idempotency-Key": key } : {}),
         },
         body: encoded,
@@ -112,6 +142,7 @@ export async function api<T = any>(
       }
       if (response.status === 401) {
         uncertainWrites.clear();
+        readCache.clear();
         window.dispatchEvent(new Event("session-expired"));
       }
       throw new ApiError(
@@ -124,9 +155,10 @@ export async function api<T = any>(
   }
 }
 export function useApi<T = any>(path: string | null) {
-  const [data, setData] = useState<T | null>(null),
+  const cached = path ? readCache.peek<T>(path) : undefined;
+  const [data, setData] = useState<T | null>(cached ?? null),
     [error, setError] = useState<Error | null>(null),
-    [loading, setLoading] = useState(true),
+    [loading, setLoading] = useState(Boolean(path && cached === undefined)),
     [version, setVersion] = useState(0);
   useEffect(() => {
     let active = true;
@@ -135,7 +167,9 @@ export function useApi<T = any>(path: string | null) {
       setLoading(false);
       return;
     }
-    setLoading(true);
+    const cached = readCache.peek<T>(path);
+    setData(cached ?? null);
+    setLoading(cached === undefined);
     api<T>(path)
       .then((value) => {
         if (active) setData(value);
@@ -156,7 +190,10 @@ export function useApi<T = any>(path: string | null) {
     setData,
     error,
     loading,
-    reload: () => setVersion((v) => v + 1),
+    reload: () => {
+      readCache.clear();
+      setVersion((v) => v + 1);
+    },
   };
 }
 export function Field({
@@ -417,7 +454,9 @@ export function Form({
     setFields(initialFields);
     draft.initialize({ fields: initialFields, extra: draftValue });
   }, []);
-  useEffect(() => { onDirtyChange?.(draft.dirty || !!draft.recovery); }, [draft.dirty, draft.recovery, onDirtyChange]);
+  useEffect(() => {
+    onDirtyChange?.(draft.dirty || !!draft.recovery);
+  }, [draft.dirty, draft.recovery, onDirtyChange]);
   return (
     <form
       ref={ref}
@@ -621,7 +660,9 @@ export function FileUpload({
           }}
         />
       </label>
-      {progress !== null && <progress aria-label="Progres unggahan" value={progress} max={100} />}{" "}
+      {progress !== null && (
+        <progress aria-label="Progres unggahan" value={progress} max={100} />
+      )}{" "}
       {error && <Notice error={error} />}
     </div>
   );

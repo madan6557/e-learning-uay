@@ -43,28 +43,49 @@ export async function calculateGradebook(
       tx.resourceItem.findMany({
         where: { section: { classId, isVisible: true }, isVisible: true },
         include: {
-          videoProgresses: true,
-          slideProgresses: true,
-          downloads: true,
+          videoProgresses: { where: onlyUserId ? { userId: onlyUserId } : {} },
+          slideProgresses: { where: onlyUserId ? { userId: onlyUserId } : {} },
+          downloads: { where: onlyUserId ? { userId: onlyUserId } : {} },
         },
       }),
       tx.quiz.findMany({
         where: { section: { classId }, status: "PUBLISHED" },
         include: {
-          attempts: { where: { status: { not: "IN_PROGRESS" } } },
+          attempts: {
+            where: {
+              status: { not: "IN_PROGRESS" },
+              ...(onlyUserId ? { userId: onlyUserId } : {}),
+            },
+          },
           questions: { select: { points: true } },
         },
       }),
       tx.assignment.findMany({
         where: { section: { classId }, isVisible: true },
-        include: { submissions: { where: { status: { not: "SUPERSEDED" } } } },
+        include: {
+          submissions: {
+            where: {
+              status: { not: "SUPERSEDED" },
+              ...(onlyUserId ? { userId: onlyUserId } : {}),
+            },
+          },
+        },
       }),
-      tx.manualGradeRecord.findMany({ where: { classId } }),
+      tx.manualGradeRecord.findMany({
+        where: { classId, ...(onlyUserId ? { userId: onlyUserId } : {}) },
+      }),
     ]);
-  const textProgress = await tx.resourceProgress.findMany({
-    where: { resourceItemId: { in: resources.map((r) => r.id) } },
-  });
-  const saved = await tx.finalGradeRecord.findMany({ where: { classId } });
+  const [textProgress, saved] = await Promise.all([
+    tx.resourceProgress.findMany({
+      where: {
+        resourceItemId: { in: resources.map((r) => r.id) },
+        ...(onlyUserId ? { userId: onlyUserId } : {}),
+      },
+    }),
+    tx.finalGradeRecord.findMany({
+      where: { classId, ...(onlyUserId ? { userId: onlyUserId } : {}) },
+    }),
+  ]);
   const rows = enrollments.map(({ user }) => {
     const progress = round(
       resources.length

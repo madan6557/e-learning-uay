@@ -2859,9 +2859,12 @@ table th {
   display: flex;
   align-items: center;
   gap: 10px;
-  width: 100%;
-  margin-top: 8px;
-  padding: 8px 10px;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  margin-left: auto;
+  padding: 0;
   border: 0;
   border-radius: var(--radius-md);
   background: none;
@@ -2897,7 +2900,13 @@ table th {
   }
   .nav-collapsed .sidebar-brand {
     justify-content: center;
-    padding-inline: 8px;
+    flex-direction: column;
+    gap: 8px;
+    height: 88px;
+    padding-inline: 0;
+  }
+  .nav-collapsed .nav-collapse-toggle {
+    margin-left: 0;
   }
   .nav-collapsed .sidebar-bottom {
     justify-content: center;
@@ -2912,6 +2921,10 @@ table th {
     padding: 0;
     font-size: 0;
   }
+}
+
+@media (max-width: 760px) {
+  .nav-collapse-toggle { display: none; }
 }
 
 /* Class header: the action cluster stays top-right and wraps as one block
