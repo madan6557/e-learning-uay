@@ -66,3 +66,7 @@ SSO memiliki identitas dan kredensial. E-Learning menyimpan referensi identitas 
 ## Menghubungkan layanan kampus dan VPS
 
 Baca [kontrak adapter](docs/contracts/IMPLEMENTED-ADAPTERS.md), [panduan deployment VPS](deployment/README.md), atau [panduan Railway](deployment/RAILWAY.md). Kontrak yang dipakai adapter sudah diuji dengan fixture, tetapi penyelarasan pemilik SSO/File Service masih [terbuka](docs/contracts/SSO-File-Service-Questions.md). Kredensial kampus, DNS/TLS, antivirus File Service, pengujian lintas layanan nyata, uji beban pilot, dan latihan restore pada VPS masih diperlukan sebelum penerimaan produksi.
+
+## Produksi VPS Hostinger
+
+Deployment tanpa Docker menggunakan PM2 dan Nginx: lihat [panduan Hostinger](deployment/HOSTINGER-PM2.md).

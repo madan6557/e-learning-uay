@@ -1,3 +1,5 @@
+import { DraftRouteContext } from "./useLocalDraft";
+import { navigate } from "./router";
 import { confirmAction } from "./confirm";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -656,13 +658,25 @@ export function QuizEditor({
     </Modal>
   );
 }
-export function QuizPage({ id, user }: { id: string; user: any }) {
+export function QuizPage({
+  id,
+  user,
+  backHref = "/classes",
+}: {
+  id: string;
+  user: any;
+  backHref?: string;
+}) {
   const info = useApi(`/quizzes/${id}`);
   const [active, setActive] = useState<any>(null),
     [editing, setEditing] = useState(false),
     [grading, setGrading] = useState<any>(null),
     [byQuestion, setByQuestion] = useState("");
   const quiz = info.data;
+  useEffect(() => {
+    if (quiz?.path && location.pathname.startsWith("/quizzes/"))
+      navigate(quiz.path, true);
+  }, [quiz?.path]);
   if (info.loading && !quiz) return <Loading />;
   if (info.error) return <Notice error={info.error} />;
   if (!quiz) return null;
@@ -672,8 +686,8 @@ export function QuizPage({ id, user }: { id: string; user: any }) {
       (a: any) => a.status === "IN_PROGRESS" && !quiz.canManage,
     );
   return (
-    <>
-      <a className="back-link" href={`#/classes/${quiz.classId}`}>
+    <DraftRouteContext.Provider value={`#/quizzes/${id}`}>
+      <a className="back-link" href={quiz.classPath ?? backHref}>
         <ArrowLeft size={16} />
         {t.back}
       </a>
@@ -841,7 +855,7 @@ export function QuizPage({ id, user }: { id: string; user: any }) {
           }}
         />
       )}
-    </>
+    </DraftRouteContext.Provider>
   );
 }
 function ClipboardCheckIcon() {
@@ -1533,7 +1547,15 @@ export function AssignmentEditor({
     </Modal>
   );
 }
-export function AssignmentPage({ id, user }: { id: string; user: any }) {
+export function AssignmentPage({
+  id,
+  user,
+  backHref = "/classes",
+}: {
+  id: string;
+  user: any;
+  backHref?: string;
+}) {
   const info = useApi(`/assignments/${id}`);
   const [editing, setEditing] = useState(false),
     [grading, setGrading] = useState<any>(null),
@@ -1542,12 +1564,16 @@ export function AssignmentPage({ id, user }: { id: string; user: any }) {
     [link, setLink] = useState(""),
     [receipt, setReceipt] = useState<any>(null);
   const a = info.data;
+  useEffect(() => {
+    if (a?.path && location.pathname.startsWith("/assignments/"))
+      navigate(a.path, true);
+  }, [a?.path]);
   if (info.loading && !a) return <Loading />;
   if (info.error) return <Notice error={info.error} />;
   if (!a) return null;
   return (
-    <>
-      <a className="back-link" href={`#/classes/${a.classId}`}>
+    <DraftRouteContext.Provider value={`#/assignments/${id}`}>
+      <a className="back-link" href={a.classPath ?? backHref}>
         <ArrowLeft size={16} />
         {t.back}
       </a>
@@ -1785,6 +1811,6 @@ export function AssignmentPage({ id, user }: { id: string; user: any }) {
           </Form>
         </Modal>
       )}
-    </>
+    </DraftRouteContext.Provider>
   );
 }

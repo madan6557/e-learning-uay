@@ -189,7 +189,7 @@ export async function startMockSso({
       if (url.pathname === "/") {
         res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
         return res.end(
-          `<html lang="id"><title>Akun SSO UAY</title><main style="font:18px system-ui;max-width:600px;margin:80px auto;padding:24px"><h1>Akun SSO UAY</h1><p>Identitas pada lingkungan uji dikelola melalui data akun demo.</p><a href="${escape(origin)}/#/profile">Kembali ke profil</a></main></html>`,
+          `<html lang="id"><title>Akun SSO UAY</title><main style="font:18px system-ui;max-width:600px;margin:80px auto;padding:24px"><h1>Akun SSO UAY</h1><p>Identitas pada lingkungan uji dikelola melalui data akun demo.</p><a href="${escape(origin)}/profile">Kembali ke profil</a></main></html>`,
         );
       }
       send(404, { error: "not_found" });

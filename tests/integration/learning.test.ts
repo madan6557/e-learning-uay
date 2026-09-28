@@ -150,6 +150,16 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
           undefined,
           403,
         );
+        const publicClass = await request(teacher, `/course-classes/${cls.id}`);
+        assert.ok(publicClass.slug && !publicClass.slug.includes(cls.id));
+        assert.equal((await request(student, `/course-classes/${publicClass.slug}`)).id, cls.id);
+        await request(outsider, `/course-classes/${publicClass.slug}`, "GET", undefined, 403);
+        const duplicate = await db.courseClass.create({ data: {
+          courseId: course.id, name: publicClass.name, academicYear: publicClass.academicYear,
+        } });
+        assert.notEqual(duplicate.slug, publicClass.slug);
+        await db.courseClass.update({ where: { id: duplicate.id }, data: { name: "Renamed" } });
+        assert.equal((await db.courseClass.findUniqueOrThrow({ where: { id: duplicate.id } })).slug, duplicate.slug);
         categories = await request(
           teacher,
           `/course-classes/${cls.id}/grade-categories`,
@@ -653,6 +663,12 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
         );
         const cloned = await request(teacher, `/course-classes/${copy.id}`);
         assert.equal(cloned.status, "DRAFT");
+        assert.equal(copy.path, `/classes/${cloned.slug}`);
+        assert.equal((await request(teacher, `/course-classes/${cloned.slug}`)).id, copy.id);
+        const original = await request(teacher, `/course-classes/${cls.id}`);
+        for (const kind of ["resources", "quizzes", "assignments"]) {
+          assert.notEqual(cloned.sections[0][kind][0].slug, original.sections[0][kind][0].slug);
+        }
         assert.equal(cloned.sections.length, 1);
         assert.equal(
           await db.enrollment.count({ where: { classId: copy.id } }),

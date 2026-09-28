@@ -23,6 +23,7 @@ import {
   advanceVideo,
   webUrl,
 } from "../../../packages/shared/src/domain.js";
+import { classPath } from "../../../packages/shared/src/urls.js";
 import { resourceFileIds, resourcesUsingFile } from "./files.js";
 const purifier = createDOMPurify(new JSDOM("").window);
 const clean = (text: string) =>
@@ -262,6 +263,7 @@ export function registerLearning(app: Express) {
       where,
       select: {
         id: true,
+        slug: true,
         name: true,
         academicYear: true,
         status: true,
@@ -398,6 +400,7 @@ export function registerLearning(app: Express) {
         quizzes: {
           select: {
             id: true,
+            slug: true,
             title: true,
             status: true,
             timeLimitMinutes: true,
@@ -1037,15 +1040,31 @@ export function registerLearning(app: Express) {
       }),
     ),
   );
-  app.get("/api/v1/notifications", async (req, res) =>
+  app.get("/api/v1/notifications", async (req, res) => {
+    const notifications = await db.notification.findMany({
+      where: { userId: req.context.user.id },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    });
+    const legacy = (url: string | null) =>
+      url?.match(/^#?\/classes\/([a-f0-9-]{36})$/i)?.[1];
+    const ids = notifications.flatMap((n) =>
+      legacy(n.linkUrl) ? [legacy(n.linkUrl)!] : [],
+    );
+    const classes = ids.length
+      ? await db.courseClass.findMany({
+          where: { id: { in: ids } },
+          select: { id: true, slug: true },
+        })
+      : [];
+    const urls = new Map(classes.map((cls) => [cls.id, classPath(cls)]));
     res.json(
-      await db.notification.findMany({
-        where: { userId: req.context.user.id },
-        orderBy: { createdAt: "desc" },
-        take: 100,
-      }),
-    ),
-  );
+      notifications.map((n) => ({
+        ...n,
+        linkUrl: urls.get(legacy(n.linkUrl) ?? "") ?? n.linkUrl,
+      })),
+    );
+  });
   // Cheap enough for the navigation badge to poll without pulling the list.
   app.get("/api/v1/notifications/unread-count", async (req, res) =>
     res.json({
@@ -1138,7 +1157,7 @@ export function registerLearning(app: Express) {
             },
           });
           for (const r of section.resources) {
-            const { id, sectionId, createdAt, updatedAt, ...fields } = r;
+            const { id, slug, sectionId, createdAt, updatedAt, ...fields } = r;
             await tx.resourceItem.create({
               data: {
                 ...fields,
@@ -1156,6 +1175,7 @@ export function registerLearning(app: Express) {
           for (const q of section.quizzes) {
             const {
               id,
+              slug,
               sectionId,
               createdAt,
               updatedAt,
@@ -1194,7 +1214,7 @@ export function registerLearning(app: Express) {
             });
           }
           for (const a of section.assignments) {
-            const { id, sectionId, createdAt, updatedAt, ...fields } = a;
+            const { id, slug, sectionId, createdAt, updatedAt, ...fields } = a;
             await tx.assignment.create({
               data: {
                 ...fields,
@@ -1220,7 +1240,7 @@ export function registerLearning(app: Express) {
           { sourceClassId: cls.id },
           copy,
         );
-        return { id: copy.id };
+        return { id: copy.id, path: classPath(copy) };
       }),
     ),
   );

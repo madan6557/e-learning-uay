@@ -40,7 +40,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <RotateCcw size={16} />
             {t.renderErrorRetry}
           </button>
-          <a className="secondary" href="#/dashboard" onClick={this.reset}>
+          <a className="secondary" href="/dashboard" onClick={this.reset}>
             {t.dashboard}
           </a>
         </div>

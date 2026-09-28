@@ -15,6 +15,7 @@ ARCHIVE="$(realpath -- "$1")"
 FORCE_FLAG="${2:-}"
 DB_NAME="${DB_NAME:-elearning_prod}"
 DB_USER="${DB_USER:-postgres}"
+DB_OWNER="${DB_OWNER:-elearning}"
 
 test -f "$ARCHIVE" && test -f "${ARCHIVE}.sha256" || { echo 'Archive and SHA-256 sidecar are required.' >&2; exit 1; }
 
@@ -36,25 +37,26 @@ bash "${DEPLOY_DIR}/scripts/backup-native.sh"
 
 # Hentikan backend PM2 sementara waktu agar tidak ada transaksi baru
 echo "Menghentikan layanan backend di PM2..."
-pm2 stop uay-api uay-worker || true
+pm2 stop uay-api
 
 # Putuskan seluruh koneksi aktif ke database
-sudo -u "${DB_USER}" psql -d postgres -c "
-SELECT pg_terminate_backend(pid) FROM pg_stat_activity 
-WHERE datname = '${DB_NAME}' AND pid <> pg_backend_pid();"
+sudo -u "${DB_USER}" psql -d postgres -v ON_ERROR_STOP=1 -v db_name="$DB_NAME" <<'SQL'
+SELECT pg_terminate_backend(pid) FROM pg_stat_activity
+WHERE datname = :'db_name' AND pid <> pg_backend_pid();
+SQL
 
 # Eksekusi Restore dengan single-transaction
 echo "Mengeksekusi pg_restore..."
-gzip -dc "$ARCHIVE" | sudo -u "${DB_USER}" pg_restore -d "$DB_NAME" --clean --if-exists --single-transaction --exit-on-error --no-owner
+gzip -dc "$ARCHIVE" | sudo -u "${DB_USER}" pg_restore -d "$DB_NAME" --role="$DB_OWNER" --clean --if-exists --single-transaction --exit-on-error --no-owner
 
 # Verifikasi integritas tabel
 sudo -u "${DB_USER}" psql -d "$DB_NAME" -v ON_ERROR_STOP=1 <<'SQL'
-SELECT count(*) AS audit_records FROM "AuditLog";
-SELECT count(*) AS users FROM "User";
+SELECT count(*) AS audit_records FROM audit_logs;
+SELECT count(*) AS users FROM users;
 SQL
 
 # Nyalakan kembali backend PM2
 echo "Menyalakan kembali proses PM2..."
-pm2 start ecosystem.config.js --env production
+pm2 start "${DEPLOY_DIR}/../ecosystem.config.cjs" --env production
 
-echo 'Restore transaction and verification completed. Check /api/v1/health before reopening access.'
+echo 'Restore transaction and verification completed. Check /api/health before reopening access.'

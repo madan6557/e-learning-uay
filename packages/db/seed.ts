@@ -1,3 +1,4 @@
+import { classPath } from '../shared/src/urls.js';
 import { PrismaClient } from '@prisma/client';
 import { loadEnvFile } from 'node:process';
 import { questionSchema } from '../shared/src/domain.js';
@@ -30,7 +31,7 @@ if(!await db.courseClass.findUnique({where:{id:ids.class}})){
     await tx.quiz.create({data:{id:ids.quiz,sectionId:ids.section,title:'Kuis 01 · Fondasi web',description:'Evaluasi delapan bentuk soal untuk menguji pemahaman konsep web.',status:'PUBLISHED',gradeCategoryId:categories[1].id,timeLimitMinutes:30,attemptLimit:3,randomizeQuestions:true,randomizeOptions:true,resultReleaseMode:'MANUAL',questions:{create:questions.map(({id,...q},order)=>({...q,order,questionBankId:bank.id}))}}});
     const now=Date.now();await tx.assignment.create({data:{id:ids.assignment,sectionId:ids.section,title:'Praktikum 01 · Halaman profil',instructions:'Buat halaman profil menggunakan HTML semantik. Sertakan judul, deskripsi singkat, daftar kegiatan, dan formulir kontak. Kumpulkan kode sebagai ZIP, tautan repositori, atau penjelasan dalam teks.',gradeCategoryId:categories[0].id,maxScore:100,allowedFormats:['TEXT','LINK','ZIP','PDF','PNG'],deadline:new Date(now+7*86400000),cutoffDate:new Date(now+9*86400000),maxAttempts:3,isVisible:true}});
     await tx.announcement.create({data:{classId:ids.class,title:'Selamat datang di Pemrograman Web',content:'Pertemuan pertama dimulai dengan fondasi HTTP dan HTML semantik. Baca materi pengantar sebelum mengerjakan praktikum. Gunakan ruang ini untuk memantau progres dan hasil belajar Anda.',authorId:ids.instructor,isImportant:true}});
-    await tx.notification.create({data:{userId:ids.student,type:'ANNOUNCEMENT',title:'Kelas Pemrograman Web sudah tersedia',message:'Mulai dari pertemuan pertama.',eventKey:'demo-welcome',linkUrl:`#/classes/${ids.class}`}});
+    await tx.notification.create({data:{userId:ids.student,type:'ANNOUNCEMENT',title:'Kelas Pemrograman Web sudah tersedia',message:'Mulai dari pertemuan pertama.',eventKey:'demo-welcome',linkUrl:classPath(await tx.courseClass.findUniqueOrThrow({where:{id:ids.class}}))}});
     await tx.auditLog.create({data:{actorId:ids.admin,actorRole:'SUPER_ADMIN',action:'SEED_DEVELOPMENT',entity:'CLASS',entityId:ids.class,classId:ids.class,afterState:{name:'Kelas A'},metadata:{requestId:'local-seed',reason:'Isolated demonstration data'}}});
   });
 }

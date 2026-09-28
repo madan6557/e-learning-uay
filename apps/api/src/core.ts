@@ -1,3 +1,4 @@
+import { classPath } from "../../../packages/shared/src/urls.js";
 import { Prisma, PrismaClient, type User } from "@prisma/client";
 import { Redis } from "ioredis";
 import { createHash, randomUUID } from "node:crypto";
@@ -355,8 +356,8 @@ export async function classAccess(
   write = false,
   studentWrite = false,
 ) {
-  const item = await tx.courseClass.findUnique({
-    where: { id: classId },
+  const item = await tx.courseClass.findFirst({
+    where: { OR: [{ id: classId }, { slug: classId }] },
     include: {
       course: true,
       // The class header renders instructor identities, so the relation is
@@ -431,6 +432,7 @@ export async function notify(
         where: { classId, isActive: true },
         select: { userId: true },
       });
+  const cls = await tx.courseClass.findUniqueOrThrow({ where: { id: classId } });
   await tx.notification.createMany({
     data: members.map((m) => ({
       userId: m.userId,
@@ -438,7 +440,7 @@ export async function notify(
       title,
       message: title,
       eventKey,
-      linkUrl: `#/classes/${classId}`,
+      linkUrl: classPath(cls),
     })),
     skipDuplicates: true,
   });

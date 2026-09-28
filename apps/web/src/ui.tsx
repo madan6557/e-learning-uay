@@ -62,7 +62,7 @@ export function Avatar({
 export function UserChip({ user, role }: { user: any; role: string }) {
   return (
     <a
-      href="#/profile"
+      href="/profile"
       className="user-chip"
       aria-label={`Profil akun ${user.name}`}
     >

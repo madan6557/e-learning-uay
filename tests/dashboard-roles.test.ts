@@ -38,7 +38,7 @@ test("administrators see academic management with their actual scope and no inst
     assert.match(html, /Kelas draf/);
     assert.match(html, /Kelola kelas/);
     assert.match(html, /Rekap nilai/);
-    assert.match(html, /href="#\/catalog"/);
+    assert.match(html, /href="\/catalog"/);
     assert.match(
       html,
       role === "SUPER_ADMIN" ? /Seluruh program studi/ : /Cakupan: IF/,

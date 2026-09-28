@@ -49,11 +49,18 @@ export async function dashboardClasses<T extends DashboardClass>(
       },
       assignments: {
         orderBy: { contentOrder: "asc" },
-        select: { id: true, title: true, deadline: true, isVisible: true },
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          deadline: true,
+          isVisible: true,
+        },
       },
       quizzes: {
         select: {
           id: true,
+          slug: true,
           title: true,
           status: true,
           availableUntil: true,

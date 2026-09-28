@@ -2,8 +2,9 @@ import { confirmAction } from "./confirm";
 import { readCache, readTtl } from "./readCache";
 import { useId, isValidElement, cloneElement, type ReactElement } from "react";
 import { Button, Skeleton } from "./ui";
-import { useLocalDraft, SaveStatus } from "./useLocalDraft";
+import { useLocalDraft, SaveStatus, DraftRouteContext } from "./useLocalDraft";
 import {
+  useContext,
   useState,
   useEffect,
   useLayoutEffect,
@@ -11,6 +12,7 @@ import {
   type ReactNode,
 } from "react";
 import { X, LoaderCircle, CheckCircle2, AlertCircle } from "lucide-react";
+import { navigate } from "./router";
 import labels from "../../../packages/shared/src/id.json";
 export const t = labels;
 export const date = (value: string | Date | null | undefined) =>
@@ -46,9 +48,7 @@ export const textValue = (form: FormData, key: string) =>
   String(form.get(key) ?? "").trim();
 export const numberValue = (form: FormData, key: string) =>
   Number(form.get(key));
-export const navigate = (path: string) => {
-  location.hash = path;
-};
+export { navigate };
 export class ApiError extends Error {
   constructor(
     public code: string,
@@ -435,8 +435,9 @@ export function Form({
     [error, setError] = useState<Error | null>(null);
   const ref = useRef<HTMLFormElement>(null);
   const [fields, setFields] = useState<FormSnapshot>({});
+  const draftRoute = useContext(DraftRouteContext);
   const draft = useLocalDraft(
-    location.hash + ":" + draftKey,
+    (draftRoute || "#" + location.pathname + location.search) + ":" + draftKey,
     { fields, extra: draftValue },
     (stored) => {
       onRestoreDraft?.(stored.extra);

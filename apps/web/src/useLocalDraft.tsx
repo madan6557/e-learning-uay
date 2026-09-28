@@ -1,7 +1,14 @@
 import { confirmAction } from "./confirm";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { getDraft, removeDraft, saveDraft } from "./drafts";
+import {
+  navigate,
+  notifyRoute,
+  routeIndex,
+  setNavigationConfirmation,
+} from "./router";
 
+export const DraftRouteContext = createContext<string>("");
 export const DraftUserContext = createContext<string>("");
 const guards = new Set<() => boolean>();
 export async function confirmUnsaved() {
@@ -14,8 +21,14 @@ export async function confirmUnsaved() {
 }
 export function useNavigationGuard() {
   useEffect(() => {
-    let previousHash = location.hash;
-    let approvedHash = "";
+    let acceptedIndex = routeIndex();
+    let restoring = false;
+    let approvedIndex: number | undefined;
+    let pendingIndex: number | undefined;
+    setNavigationConfirmation(confirmUnsaved);
+    const routeChanged = () => {
+      acceptedIndex = routeIndex();
+    };
     const before = (e: BeforeUnloadEvent) => {
       if ([...guards].some((check) => check())) {
         e.preventDefault();
@@ -23,6 +36,7 @@ export function useNavigationGuard() {
       }
     };
     const click = (e: MouseEvent) => {
+      if (e.defaultPrevented) return;
       const link = (e.target as Element).closest<HTMLAnchorElement>("a[href]");
       if (link?.getAttribute("href")?.startsWith("#main-")) {
         e.preventDefault();
@@ -33,49 +47,76 @@ export function useNavigationGuard() {
         return;
       }
       if (
-        link &&
-        link.target !== "_blank" &&
-        link.href !== location.href &&
-        [...guards].some((check) => check())
-      ) {
-        e.preventDefault();
-        e.stopPropagation();
-        void confirmUnsaved().then((ok) => {
-          if (ok) {
-            approvedHash = new URL(link.href).hash;
-            location.assign(link.href);
-          }
-        });
-      } else if (link) approvedHash = new URL(link.href).hash;
-    };
-    const hash = (event: HashChangeEvent) => {
-      if (
-        location.hash !== approvedHash &&
-        [...guards].some((check) => check())
-      ) {
-        const desired = location.hash;
-        history.replaceState(
-          null,
-          "",
-          location.pathname + location.search + previousHash,
+        !link ||
+        e.button !== 0 ||
+        e.metaKey ||
+        e.ctrlKey ||
+        e.shiftKey ||
+        e.altKey ||
+        link.target === "_blank" ||
+        link.hasAttribute("download")
+      )
+        return;
+      const href = link.getAttribute("href") ?? "";
+      const legacyRoute = href.startsWith("#/");
+      let target: URL;
+      try {
+        target = new URL(
+          legacyRoute ? href.slice(1) : link.href,
+          location.origin,
         );
-        event.stopImmediatePropagation();
+      } catch {
+        return;
+      }
+      const appRoute =
+        target.origin === location.origin &&
+        (legacyRoute ||
+          target.pathname === "/" ||
+          /^\/(classes|quizzes|assignments|catalog|profile|help|dashboard|agenda|grades|notifications)(\/|$)/.test(
+            target.pathname,
+          ));
+      if (!appRoute) return;
+      e.preventDefault();
+      const destination = target.pathname + target.search + target.hash;
+      navigate(destination);
+    };
+    const popstate = () => {
+      const targetIndex = routeIndex();
+      if (restoring) {
+        restoring = false;
+        const desired = pendingIndex!;
+        pendingIndex = undefined;
         void confirmUnsaved().then((ok) => {
           if (ok) {
-            approvedHash = desired;
-            location.hash = desired;
+            approvedIndex = desired;
+            history.go(desired - acceptedIndex);
           }
         });
-      } else previousHash = location.hash;
-      approvedHash = "";
+        return;
+      }
+      if (
+        approvedIndex === targetIndex ||
+        ![...guards].some((check) => check())
+      ) {
+        approvedIndex = undefined;
+        acceptedIndex = targetIndex;
+        notifyRoute();
+      } else if (targetIndex !== acceptedIndex) {
+        pendingIndex = targetIndex;
+        restoring = true;
+        history.go(acceptedIndex - targetIndex);
+      }
     };
+    window.addEventListener("routechange", routeChanged);
     window.addEventListener("beforeunload", before);
-    document.addEventListener("click", click, true);
-    window.addEventListener("hashchange", hash);
+    document.addEventListener("click", click);
+    window.addEventListener("popstate", popstate);
     return () => {
+      setNavigationConfirmation();
+      window.removeEventListener("routechange", routeChanged);
       window.removeEventListener("beforeunload", before);
-      document.removeEventListener("click", click, true);
-      window.removeEventListener("hashchange", hash);
+      document.removeEventListener("click", click);
+      window.removeEventListener("popstate", popstate);
     };
   }, []);
 }

@@ -68,7 +68,7 @@ Kelas contoh: **IF2101 – Pemrograman Web / Kelas A**.
 | 2.2 | Pilih satu akun | Kembali ke aplikasi dalam keadaan masuk; dashboard tampil | [ ] |
 | 2.3 | Klik **Keluar** | Kembali ke landing publik; sidebar hilang | [ ] |
 | 2.4 | Setelah keluar, tekan tombol *Back* peramban | Tidak masuk kembali; tetap di landing | [ ] |
-| 2.5 | Buka `#/dashboard` langsung tanpa masuk | Diarahkan ke landing, bukan halaman kosong | [ ] |
+| 2.5 | Buka `/dashboard` langsung tanpa masuk | Diarahkan ke landing, bukan halaman kosong | [ ] |
 
 ---
 
@@ -84,7 +84,7 @@ Kelas contoh: **IF2101 – Pemrograman Web / Kelas A**.
 | 3.6 | Buka laci lalu tekan `Esc` | Laci tertutup; fokus kembali ke tombol menu | [ ] |
 | 3.7 | Tekan `Tab` dari awal halaman | Tautan **Lewati ke konten** muncul lebih dulu | [ ] |
 | 3.8 | Telusuri halaman dengan `Tab` | Setiap elemen fokus punya cincin biru yang jelas | [ ] |
-| 3.9 | Buka alamat ngawur, mis. `#/tidakada` | Halaman "tidak ditemukan" dengan tautan kembali, bukan layar kosong | [ ] |
+| 3.9 | Buka alamat ngawur, mis. `/tidakada` | Halaman "tidak ditemukan" dengan tautan kembali, bukan layar kosong | [ ] |
 
 ---
 

@@ -1,5 +1,9 @@
 # Menjalankan dan mengoperasikan server
 
+Target produksi saat ini: **VPS Hostinger dengan PM2 tanpa Docker**. Ikuti
+[HOSTINGER-PM2.md](HOSTINGER-PM2.md). Konfigurasi Docker di bawah dipertahankan
+sebagai alternatif deployment.
+
 Target desain: Linux VPS, Docker Engine + Compose v2, PostgreSQL 16, Redis 7, Nginx dan Node.js 22. Build aplikasi diuji pada Windows; container, TLS, beban 50 mahasiswa dan restore pada VPS **belum dijalankan** di lingkungan kerja ini karena Docker/VPS tidak tersedia.
 
 ## Pengembangan dengan Docker

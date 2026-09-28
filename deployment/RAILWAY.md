@@ -2,7 +2,7 @@
 
 Panduan ini hanya untuk lingkungan live development atau staging yang memakai frontend Vercel dan API Railway. Vercel menyediakan gateway `/api/*` yang meneruskan request ke Railway. Dengan pola ini cookie sesi tetap berada pada domain frontend dan callback OIDC kembali ke domain frontend.
 
-Ini bukan topologi production VPS. Production mengikuti [panduan VPS](README.md): Nginx menyajikan SPA pada `/` dan meneruskan `/api/*` ke backend pada domain yang sama. Dengan demikian production tidak memakai `RAILWAY_API_ORIGIN`, `VITE_API_URL`, atau gateway Vercel.
+Ini bukan topologi production VPS. Production mengikuti [panduan VPS PM2](HOSTINGER-PM2.md): Nginx menyajikan SPA pada `/` dan meneruskan `/api/*` ke backend pada domain yang sama. Dengan demikian production tidak memakai `RAILWAY_API_ORIGIN`, `VITE_API_URL`, atau gateway Vercel.
 
 ## Sambungkan dua domain
 
@@ -93,4 +93,39 @@ Gunakan domain VPS tunggal, misalnya `https://elearning.uay.ac.id`. Nginx menjad
 | `VITE_API_URL` | tidak diisi |
 | `RAILWAY_API_ORIGIN` | tidak digunakan |
 
-Aktifkan `DEMO_MODE=false`, Redis, kredensial SSO resmi, File Service produksi, webhook, dan backup VPS. Detail Docker Compose, Nginx, TLS, backup, serta verifikasi operasi tersedia di [panduan VPS](README.md).
+Aktifkan `DEMO_MODE=false`, Redis, kredensial SSO resmi, File Service produksi, webhook, dan backup VPS. Detail PM2, Nginx, TLS, backup, serta verifikasi operasi tersedia di [panduan VPS PM2](HOSTINGER-PM2.md).
+
+## Bucket Railway untuk uji coba
+
+Bucket `ember` dapat digunakan oleh File Service demo. Pada service aplikasi
+`e-learning-uay`, tambahkan reference variables berikut (bukan nilai secret ke Git):
+
+| Variabel aplikasi | Reference Railway |
+| --- | --- |
+| `FILE_STORAGE_PROVIDER` | `s3` |
+| `AWS_ENDPOINT_URL` | `${{ember.ENDPOINT}}` |
+| `AWS_S3_BUCKET_NAME` | `${{ember.BUCKET}}` |
+| `AWS_ACCESS_KEY_ID` | `${{ember.ACCESS_KEY_ID}}` |
+| `AWS_SECRET_ACCESS_KEY` | `${{ember.SECRET_ACCESS_KEY}}` |
+| `AWS_DEFAULT_REGION` | `${{ember.REGION}}` |
+
+Runtime memeriksa akses bucket saat mulai dan gagal secara jelas jika konfigurasi
+salah. Berkas dan metadata disimpan di prefix `uay-demo-files/`; keduanya bertahan
+saat aplikasi redeploy. Berkas yang sebelumnya hanya berada di `/tmp` tidak otomatis
+berpindah, sehingga perlu diunggah ulang. Bucket tetap private. Browser menggunakan
+URL tiket sementara pada API Railway, sehingga tidak memerlukan CORS bucket atau
+kredensial S3 di frontend. Checksum dan batas ukuran tetap diperiksa sebelum upload
+ke bucket. Mode ini memakai fixture demo tanpa antivirus, sesuai batasan File
+Service uji coba; produksi kampus tetap memakai File Service resmi.
+
+Railway saat ini memakai virtual-hosted URLs. Jika tab Credentials bucket lama
+meminta path-style, tambahkan `AWS_S3_FORCE_PATH_STYLE=true`.
+Referensi: https://docs.railway.com/storage-buckets
+
+## URL aplikasi
+
+Navigasi menggunakan path seperti `/classes/<nama-kelas>/assignments/<nama-tugas>`.
+Slug disimpan di database dan tetap saat judul berubah. Migrasi database harus
+berjalan sebelum frontend baru dipublikasikan. UUID tetap dipakai internal oleh API.
+Rewrite Vercel yang sudah tersedia dan `try_files` Nginx menyajikan `index.html`
+untuk deep link. Tautan lama `#/...` diarahkan ke path baru setelah data dimuat.

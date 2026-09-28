@@ -6,18 +6,14 @@ import {
   createHmac,
   timingSafeEqual,
 } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { createFileStorage } from "./file-storage.mjs";
 import { loadEnvFile } from "node:process";
 try {
   loadEnvFile();
 } catch {}
 if (process.env.NODE_ENV === "production")
   throw new Error("Development File Service cannot run in production.");
-const root = resolve(
-  process.env.FILE_SERVICE_DATA_DIRECTORY ?? ".local/file-service",
-);
-await mkdir(root, { recursive: true });
+const storage = await createFileStorage();
 const key = process.env.FILE_SERVICE_KEY ?? "local-development-only";
 const origin = process.env.APP_ORIGIN ?? "http://127.0.0.1:5173";
 const port = Number(process.env.FILE_SERVICE_PORT ?? 3001);
@@ -43,7 +39,7 @@ async function readBody(req, max) {
 async function metadata(id) {
   if (!/^[a-zA-Z0-9-]{1,100}$/.test(id))
     throw Object.assign(new Error("not found"), { status: 404 });
-  return JSON.parse(await readFile(resolve(root, `${id}.json`), "utf8"));
+  return JSON.parse((await storage.read(`${id}.json`)).toString("utf8"));
 }
 const send = (res, status, value) => {
   res.writeHead(status, { "Content-Type": "application/json" });
@@ -64,7 +60,10 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, base);
   try {
     if (url.pathname === "/health") {
-      send(res, 200, { status: "development-fixture" });
+      send(res, 200, {
+        status: "development-fixture",
+        storage: storage.provider,
+      });
       return;
     }
     if (url.pathname.startsWith("/v1/")) {
@@ -84,7 +83,8 @@ const server = http.createServer(async (req, res) => {
         let record;
         try {
           record = await metadata(id);
-        } catch {
+        } catch (error) {
+          if (error.code !== "ENOENT") throw error;
           record = {
             id,
             ...body,
@@ -92,7 +92,16 @@ const server = http.createServer(async (req, res) => {
             scanStatus: "PENDING",
             createdAt: new Date().toISOString(),
           };
-          await writeFile(resolve(root, `${id}.json`), JSON.stringify(record));
+          try {
+            await storage.write(`${id}.json`, JSON.stringify(record), true);
+          } catch (error) {
+            if (
+              error.code !== "EEXIST" &&
+              error.$metadata?.httpStatusCode !== 412
+            )
+              throw error;
+            record = await metadata(id);
+          }
         }
         send(res, 200, {
           fileObjectId: id,
@@ -134,7 +143,7 @@ const server = http.createServer(async (req, res) => {
         record.status = "READY";
         record.trashedAt = null;
       } else throw Object.assign(new Error("not found"), { status: 404 });
-      await writeFile(resolve(root, `${id}.json`), JSON.stringify(record));
+      await storage.write(`${id}.json`, JSON.stringify(record));
       send(res, 200, record);
       return;
     }
@@ -160,11 +169,18 @@ const server = http.createServer(async (req, res) => {
       const checksum = createHash("sha256").update(binary).digest("hex");
       if (binary.length !== record.sizeBytes || checksum !== record.checksum)
         throw Object.assign(new Error("checksum mismatch"), { status: 400 });
-      await writeFile(resolve(root, `${id}.bin`), binary);
+      try {
+        await storage.write(`${id}.bin`, binary, true);
+      } catch (error) {
+        // A retry after a lost response is safe because checksum and length
+        // have already been checked against the immutable upload metadata.
+        if (error.code !== "EEXIST" && error.$metadata?.httpStatusCode !== 412)
+          throw error;
+      }
       record.status = "READY";
       record.scanStatus = "CLEAN";
       record.fixtureScan = true;
-      await writeFile(resolve(root, `${id}.json`), JSON.stringify(record));
+      await storage.write(`${id}.json`, JSON.stringify(record));
       send(res, 200, { ok: true });
       return;
     }
@@ -173,7 +189,7 @@ const server = http.createServer(async (req, res) => {
       action === "download" &&
       record.status === "READY"
     ) {
-      const binary = await readFile(resolve(root, `${id}.bin`));
+      const binary = await storage.read(`${id}.bin`);
       res.writeHead(200, {
         "Content-Type": record.mimeType,
         "Content-Length": binary.length,
@@ -193,7 +209,7 @@ const server = http.createServer(async (req, res) => {
 });
 server.listen(port, process.env.FILE_BIND_HOST ?? "127.0.0.1", () =>
   console.log(
-    `Development File Service at ${base}; binaries isolated in File Service storage; no antivirus in fixture.`,
+    `Development File Service at ${base}; storage=${storage.provider}; no antivirus in fixture.`,
   ),
 );
 process.on("SIGINT", () => server.close());

@@ -1,6 +1,7 @@
+import { DraftRouteContext } from "./useLocalDraft";
 import { confirmAction } from "./confirm";
 import { PublishButton } from "./PublishButton";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   Plus,
@@ -34,25 +35,51 @@ import {
   navigate,
 } from "./lib";
 import { ResourceEditor, ResourceViewer } from "./Content";
-import { QuizEditor, AssignmentEditor, QuestionEditor } from "./Assessment";
+import {
+  QuizEditor,
+  AssignmentEditor,
+  QuestionEditor,
+  QuizPage,
+  AssignmentPage,
+} from "./Assessment";
 import { Gradebook, ImportPanel } from "./Gradebook";
 import { questionSchema } from "../../../packages/shared/src/domain";
+import { classPath, contentPath, itemSlug } from "./router";
 
 export function ClassPage({
   id,
   tab: requestedTab,
   user,
-  resourceId,
+  resourceSlug,
+  selectedKind,
+  selectedSlug,
 }: {
   id: string;
   tab: string;
   user: any;
-  resourceId: string | null;
+  resourceSlug: string | null;
+  selectedKind: "quizzes" | "assignments" | null;
+  selectedSlug: string | null;
 }) {
   const info = useApi(`/course-classes/${id}`);
   const [modal, setModal] = useState<any>(null),
     [message, setMessage] = useState("");
   const cls = info.data;
+  useEffect(() => {
+    if (!cls) return;
+    const query = new URLSearchParams(location.search);
+    let destination = classPath(cls);
+    if (selectedKind && selectedSlug)
+      destination += `/${selectedKind}/${selectedSlug}`;
+    else if (resourceSlug) destination += `/resources/${resourceSlug}`;
+    else if (query.get("resource")) {
+      const items = cls.sections.flatMap((s: any) => s.resources);
+      const item = items.find((r: any) => r.id === query.get("resource"));
+      if (item) destination = contentPath(cls, "resources", item, items);
+    } else if (requestedTab !== "content") destination += `/${requestedTab}`;
+    if (location.pathname + location.search !== destination)
+      navigate(destination, true);
+  }, [cls, resourceSlug, selectedKind, selectedSlug, requestedTab]);
   if (info.loading && !cls) return <Loading />;
   if (info.error) return <Notice error={info.error} />;
   if (!cls) return null;
@@ -113,9 +140,39 @@ export function ClassPage({
     setMessage(t.saved);
     info.reload();
   };
+  const classUrl = classPath(cls);
   const resource = cls.sections
-    .flatMap((s: any) => s.resources)
-    .find((r: any) => r.id === resourceId);
+    .flatMap((s: any) => s.resources.map((r: any) => ({ section: s, item: r })))
+    .find(
+      ({ section, item }: any) =>
+        itemSlug(section.resources, item) === resourceSlug,
+    )?.item;
+  if (selectedKind && selectedSlug) {
+    for (const section of cls.sections) {
+      const item = section[selectedKind].find(
+        (candidate: any) =>
+          itemSlug(section[selectedKind], candidate) === selectedSlug,
+      );
+      if (item)
+        return selectedKind === "quizzes" ? (
+          <QuizPage
+            key={item.id}
+            id={item.id}
+            user={user}
+            backHref={classUrl}
+          />
+        ) : (
+          <AssignmentPage
+            key={item.id}
+            id={item.id}
+            user={user}
+            backHref={classUrl}
+          />
+        );
+    }
+    return <Empty>Konten tidak ditemukan.</Empty>;
+  }
+  if (resourceSlug && !resource) return <Empty>Materi tidak ditemukan.</Empty>;
   const isResourceDone = (r: any) => {
     if (!cls?.progress) return false;
     if (r.resourceType === "VIDEO_MEDIA") {
@@ -136,8 +193,10 @@ export function ClassPage({
     ].some((p: any) => p.resourceItemId === r.id);
   };
   return (
-    <>
-      <a className="back-link" href="#/classes">
+    <DraftRouteContext.Provider
+      value={`#/classes/${cls.id}${tab !== "content" ? `?tab=${tab}` : ""}`}
+    >
+      <a className="back-link" href="/classes">
         <ArrowLeft size={16} />
         {t.myClasses}
       </a>
@@ -194,7 +253,7 @@ export function ClassPage({
             key={value}
             className={tab === value ? "selected" : ""}
             aria-current={tab === value ? "page" : undefined}
-            href={`#/classes/${id}?tab=${value}`}
+            href={value === "content" ? classUrl : `${classUrl}/${value}`}
           >
             {label}
           </a>
@@ -229,7 +288,9 @@ export function ClassPage({
                   </span>
                   <div className="meeting-info">
                     <div className="meeting-tags">
-                      <span className={`meeting-type-tag type-${section.type.toLowerCase()}`}>
+                      <span
+                        className={`meeting-type-tag type-${section.type.toLowerCase()}`}
+                      >
                         {(t.sectionTypes as any)[section.type]}
                       </span>
                       {section.startDate && (
@@ -261,7 +322,7 @@ export function ClassPage({
                             ids[index],
                           ];
                           await api(
-                            `/course-classes/${id}/section-order`,
+                            `/course-classes/${cls.id}/section-order`,
                             "PUT",
                             { ids },
                           );
@@ -281,7 +342,7 @@ export function ClassPage({
                             ids[index],
                           ];
                           await api(
-                            `/course-classes/${id}/section-order`,
+                            `/course-classes/${cls.id}/section-order`,
                             "PUT",
                             { ids },
                           );
@@ -311,7 +372,14 @@ export function ClassPage({
                         className={`learning-item ${done ? "item-completed" : ""}`}
                         key={r.id}
                       >
-                        <a href={`#/classes/${id}?resource=${r.id}`}>
+                        <a
+                          href={contentPath(
+                            cls,
+                            "resources",
+                            r,
+                            section.resources,
+                          )}
+                        >
                           <span className="activity-icon material">
                             <BookOpen size={19} />
                           </span>
@@ -356,7 +424,7 @@ export function ClassPage({
                   })}
                   {section.quizzes.map((q: any) => (
                     <div className="learning-item" key={q.id}>
-                      <a href={`#/quizzes/${q.id}`}>
+                      <a href={contentPath(cls, "quizzes", q, section.quizzes)}>
                         <span className="activity-icon quiz">
                           <ClipboardCheck size={19} />
                         </span>
@@ -381,7 +449,14 @@ export function ClassPage({
                   ))}
                   {section.assignments.map((a: any) => (
                     <div className="learning-item" key={a.id}>
-                      <a href={`#/assignments/${a.id}`}>
+                      <a
+                        href={contentPath(
+                          cls,
+                          "assignments",
+                          a,
+                          section.assignments,
+                        )}
+                      >
                         <span className="activity-icon assignment">
                           <FileText size={19} />
                         </span>
@@ -446,17 +521,19 @@ export function ClassPage({
           </div>
         </>
       )}
-      {tab === "gradebook" && <Gradebook classId={id} writable={writable} />}
+      {tab === "gradebook" && (
+        <Gradebook classId={cls.id} writable={writable} />
+      )}
       {tab === "participants" && cls.canManage && (
-        <Participants classId={id} writable={writable} />
+        <Participants classId={cls.id} writable={writable} />
       )}
       {tab === "banks" && cls.canManage && (
-        <QuestionBanks classId={id} writable={writable} />
+        <QuestionBanks classId={cls.id} writable={writable} />
       )}
       {tab === "files" && cls.canManage && (
-        <Files classId={id} writable={writable} />
+        <Files classId={cls.id} writable={writable} />
       )}
-      {tab === "audit" && cls.canManage && <Audit classId={id} />}
+      {tab === "audit" && cls.canManage && <Audit classId={cls.id} />}
       {tab === "announcements" && (
         <>
           <div className="section-heading">
@@ -506,13 +583,13 @@ export function ClassPage({
           cls={cls}
           user={user}
           reload={info.reload}
-          onClose={() => navigate(`/classes/${id}`)}
+          onClose={() => navigate(classUrl)}
         />
       )}
       {modal?.kind === "resource" && (
         <ResourceEditor
           user={user}
-          classId={id}
+          classId={cls.id}
           sectionId={modal.sectionId}
           resource={modal.resource}
           onClose={() => setModal(null)}
@@ -521,7 +598,7 @@ export function ClassPage({
       )}
       {modal?.kind === "quiz" && (
         <QuizEditor
-          classId={id}
+          classId={cls.id}
           sectionId={modal.sectionId}
           onClose={() => setModal(null)}
           onSaved={saved}
@@ -529,7 +606,7 @@ export function ClassPage({
       )}
       {modal?.kind === "assignment" && (
         <AssignmentEditor
-          classId={id}
+          classId={cls.id}
           sectionId={modal.sectionId}
           onClose={() => setModal(null)}
           onSaved={saved}
@@ -546,7 +623,7 @@ export function ClassPage({
               await api(
                 modal.section
                   ? `/sections/${modal.section.id}`
-                  : `/course-classes/${id}/sections`,
+                  : `/course-classes/${cls.id}/sections`,
                 modal.section ? "PATCH" : "POST",
                 {
                   title: textValue(f, "title"),
@@ -617,7 +694,7 @@ export function ClassPage({
           <Form
             draftKey="announcement:new"
             onSubmit={async (f) => {
-              await api(`/course-classes/${id}/announcements`, "POST", {
+              await api(`/course-classes/${cls.id}/announcements`, "POST", {
                 title: textValue(f, "title"),
                 content: textValue(f, "content"),
                 isImportant: f.has("important"),
@@ -658,7 +735,7 @@ export function ClassPage({
                 !(await confirmAction(t.confirmArchive))
               )
                 return false;
-              await api(`/course-classes/${id}`, "PATCH", {
+              await api(`/course-classes/${cls.id}`, "PATCH", {
                 name: textValue(f, "name"),
                 academicYear: textValue(f, "academicYear"),
                 status,
@@ -700,12 +777,16 @@ export function ClassPage({
           <Form
             draftKey="clone-class"
             onSubmit={async (f) => {
-              const result = await api(`/course-classes/${id}/clone`, "POST", {
-                name: textValue(f, "name"),
-                academicYear: textValue(f, "academicYear"),
-              });
+              const result = await api(
+                `/course-classes/${cls.id}/clone`,
+                "POST",
+                {
+                  name: textValue(f, "name"),
+                  academicYear: textValue(f, "academicYear"),
+                },
+              );
               setModal(null);
-              navigate(`/classes/${result.id}`);
+              navigate(result.path);
             }}
           >
             <Field label={t.className}>
@@ -717,7 +798,7 @@ export function ClassPage({
           </Form>
         </Modal>
       )}
-    </>
+    </DraftRouteContext.Provider>
   );
 }
 function Participants({
@@ -781,9 +862,7 @@ function Participants({
                           if (
                             m.isActive &&
                             !(await confirmAction(
-                              "Nonaktifkan kepesertaan " +
-                                m.user.name +
-                                "?",
+                              "Nonaktifkan kepesertaan " + m.user.name + "?",
                             ))
                           )
                             return;

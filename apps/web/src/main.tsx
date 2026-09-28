@@ -37,6 +37,7 @@ import {
   confirmUnsaved,
   useNavigationGuard,
 } from "./useLocalDraft";
+import { routeFromLocation } from "./router";
 const ClassPage = lazy(() =>
   import("./ClassPage").then((m) => ({ default: m.ClassPage })),
 );
@@ -51,7 +52,7 @@ import "./workspace.css";
 import "./experience.css";
 // The square mark and product-name lockup is shared with the UAY SSO console
 // so the two applications read as one environment.
-function Brand({ home = "#/" }: { home?: string }) {
+function Brand({ home = "/" }: { home?: string }) {
   return (
     <a className="brand" href={home} aria-label="UAY E-Learning beranda">
       <span className="brand-mark" aria-hidden="true">
@@ -81,6 +82,10 @@ function LoginButton({
           "/auth/authorization",
           "POST",
           demoUserId ? { demoUserId } : {},
+        );
+        sessionStorage.setItem(
+          "uay-return-path",
+          location.pathname + location.search,
         );
         location.assign(authorizationUrl);
       }}
@@ -381,7 +386,7 @@ function AuthShell({
         inert={mobile && !menuOpen}
       >
         <div className="sidebar-brand">
-          <Brand home="#/dashboard" />
+          <Brand home="/dashboard" />
           <button
             type="button"
             className="nav-collapse-toggle"
@@ -412,7 +417,7 @@ function AuthShell({
             return (
               <a
                 key={href}
-                href={`#${href}`}
+                href={href}
                 className={active ? "active" : ""}
                 aria-current={active ? "page" : undefined}
                 title={collapsed ? label : undefined}
@@ -453,7 +458,7 @@ function AuthShell({
             {/* The SSO console shows the same mark once its rail is hidden. */}
             <a
               className="brand-mark topbar-mark"
-              href="#/dashboard"
+              href="/dashboard"
               aria-label="UAY E-Learning beranda"
             >
               UAY
@@ -463,7 +468,7 @@ function AuthShell({
                 pathname === "/dashboard"
                   ? [{ label: "Beranda" }]
                   : [
-                      { label: "Beranda", href: "#/dashboard" },
+                      { label: "Beranda", href: "/dashboard" },
                       { label: current },
                     ]
               }
@@ -497,7 +502,7 @@ function AuthShell({
         </main>
         <footer>
           <span>© 2026 {t.university}</span>
-          <a href="#/help">{t.help}</a>
+          <a href="/help">{t.help}</a>
         </footer>
       </div>
     </div>
@@ -507,23 +512,36 @@ function App() {
   const config = useApi("/auth/config"),
     identity = useApi("/me");
   const user = identity.data;
-  const [route, setRoute] = useState(location.hash.slice(1) || "/");
+  const [route, setRoute] = useState(routeFromLocation);
   useNavigationGuard();
   useEffect(() => {
-    const change = () => setRoute(location.hash.slice(1) || "/");
+    const change = () => setRoute(location.pathname + location.search || "/");
     const expired = () => {
       identity.setData(null);
       navigate("/");
     };
-    window.addEventListener("hashchange", change);
+    window.addEventListener("routechange", change);
     window.addEventListener("session-expired", expired);
     return () => {
-      window.removeEventListener("hashchange", change);
+      window.removeEventListener("routechange", change);
       window.removeEventListener("session-expired", expired);
     };
   }, []);
   useEffect(() => {
-    if (user && ["/", "/login"].includes(route)) navigate("/dashboard");
+    if (!user) return;
+    const pending = sessionStorage.getItem("uay-return-path");
+    if (pending) {
+      sessionStorage.removeItem("uay-return-path");
+      if (
+        pending.startsWith("/") &&
+        !pending.startsWith("//") &&
+        !["/", "/login", "/dashboard"].includes(pending)
+      ) {
+        navigate(pending, true);
+        return;
+      }
+    }
+    if (["/", "/login"].includes(route)) navigate("/dashboard", true);
   }, [user, route]);
   const logout = async () => {
     if (!(await confirmUnsaved())) return;
@@ -557,18 +575,32 @@ function App() {
         }
       />
     );
-  const [pathname, query = ""] = route.split("?");
-  const params = new URLSearchParams(query);
-  const [, section, id] = pathname.split("/");
+  const parsedRoute = new URL(route, location.origin);
+  const pathname = parsedRoute.pathname;
+  const params = parsedRoute.searchParams;
+  const [, section, id, itemKind, itemSlug] = pathname.split("/");
   let page;
   if (section === "classes" && id)
     page = (
       <ClassPage
         key={id}
         id={id}
-        tab={params.get("tab") ?? "content"}
+        tab={
+          itemKind &&
+          !["resources", "quizzes", "assignments"].includes(itemKind)
+            ? itemKind
+            : (params.get("tab") ?? "content")
+        }
         user={user}
-        resourceId={params.get("resource")}
+        resourceSlug={itemKind === "resources" ? (itemSlug ?? null) : null}
+        selectedKind={
+          itemKind === "quizzes" || itemKind === "assignments" ? itemKind : null
+        }
+        selectedSlug={
+          itemKind === "quizzes" || itemKind === "assignments"
+            ? (itemSlug ?? null)
+            : null
+        }
       />
     );
   else if (section === "quizzes" && id)
@@ -582,7 +614,7 @@ function App() {
       <Empty>
         <h1>Katalog tidak tersedia</h1>
         <p>Pengelolaan katalog hanya tersedia untuk administrator.</p>
-        <a className="button" href="#/classes">
+        <a className="button" href="/classes">
           Buka kelas saya
         </a>
       </Empty>
@@ -633,7 +665,7 @@ function App() {
       <Empty>
         <h1>Halaman tidak ditemukan</h1>
         <p>Gunakan navigasi untuk membuka ruang pembelajaran.</p>
-        <a className="button" href="#/dashboard">
+        <a className="button" href="/dashboard">
           Kembali ke beranda
         </a>
       </Empty>

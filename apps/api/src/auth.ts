@@ -329,7 +329,7 @@ export function registerAuth(app: Express) {
       expires: Number(access.exp) * 1000,
       createdAt: Date.now(),
     });
-    res.redirect("/#/dashboard");
+    res.redirect("/dashboard");
   });
   app.post("/api/v1/auth/revocations", async (req, res) => {
     const secret = process.env.SSO_WEBHOOK_SECRET;

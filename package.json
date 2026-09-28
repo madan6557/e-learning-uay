@@ -25,11 +25,14 @@
     "test": "tsx --test tests/*.test.ts",
     "test:integration": "node scripts/test-integration.mjs",
     "check": "npm run build && npm test",
-    "start": "node scripts/railway-deploy.mjs && node scripts/railway-runtime.mjs",
+    "start": "node apps/api/dist/apps/api/src/index.js",
+    "start:prod": "pm2 start ecosystem.config.cjs --env production",
+    "reload:prod": "pm2 startOrReload ecosystem.config.cjs --env production --update-env",
     "start:railway": "node scripts/railway-deploy.mjs && node scripts/railway-runtime.mjs",
     "deploy:railway": "node scripts/railway-deploy.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1141.0",
     "@prisma/client": "^6.19.0",
     "@vercel/analytics": "^2.0.1",
     "cookie-parser": "^1.4.7",

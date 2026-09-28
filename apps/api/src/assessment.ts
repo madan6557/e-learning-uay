@@ -1,3 +1,4 @@
+import { classPath, contentPath } from "../../../packages/shared/src/urls.js";
 import type { Express } from "express";
 import type { Prisma, QuizAttempt } from "@prisma/client";
 import { z } from "zod";
@@ -510,6 +511,8 @@ export function registerAssessment(app: Express) {
       attempts: attempts.map((a) => presentAttempt(a, cls.canManage)),
       canManage: cls.canManage,
       classId: cls.id,
+      classPath: classPath(cls),
+      path: contentPath(cls, "quizzes", quiz, []),
     });
   });
   app.post("/api/v1/quizzes/:id/attempts", async (req, res) =>
@@ -980,6 +983,8 @@ export function registerAssessment(app: Express) {
       submissions: submissions.map((s) => presentSubmission(s, cls.canManage)),
       canManage: cls.canManage,
       classId: cls.id,
+      classPath: classPath(cls),
+      path: contentPath(cls, "assignments", assignment, []),
     });
   });
   app.post("/api/v1/assignments/:id/submissions", async (req, res) =>

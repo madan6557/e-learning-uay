@@ -368,11 +368,10 @@ if (
   const host =
     process.env.API_HOST ??
     (process.env.PORT || production || isDemo ? "0.0.0.0" : "127.0.0.1");
-  const server = createApp().listen(config.port, host, () =>
-    console.log(
-      `E-Learning UAY API listening on http://${host}:${config.port}`,
-    ),
-  );
+  const server = createApp().listen(config.port, host, () => {
+    console.log(`E-Learning UAY API listening on http://${host}:${config.port}`);
+    if (process.send) process.send("ready");
+  });
   let busy = false;
   let nextNotificationScan = 0;
   const timer = setInterval(async () => {

@@ -12,3 +12,4 @@ coverage/
 Thumbs.db
 __pycache__/
 *.pyc
+deployment/backups/

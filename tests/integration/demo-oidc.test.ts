@@ -56,7 +56,7 @@ test("quick demo selection uses the real OIDC callback and rejects bypass", asyn
       redirect: "manual",
     });
     assert.equal(completed.status, 302);
-    assert.equal(completed.headers.get("location"), "/#/dashboard");
+    assert.equal(completed.headers.get("location"), "/dashboard");
     const session = completed.headers
       .getSetCookie()
       .find((c) => c.startsWith("uay-session="))!

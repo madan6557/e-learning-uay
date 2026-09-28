@@ -42,13 +42,14 @@ import {
 } from "./lib";
 import { countDrafts, removeDraft } from "./drafts";
 import { Avatar, Tabs } from "./ui";
+import { classPath, contentPath } from "./router";
 export function ClassCard({ item, index = 0 }: { item: any; index?: number }) {
   const icons = [Code2, Database, Terminal];
   const Icon = icons[index % 3];
   return (
     <a
       className={`course-card course-tone-${index % 3}`}
-      href={`#/classes/${item.id}`}
+      href={classPath(item)}
     >
       <div className="course-top">
         <span className="course-icon">
@@ -136,6 +137,8 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
           kind: "assignment",
           classTitle: c.course.title,
           classId: c.id,
+          classInfo: c,
+          siblings: s.assignments,
           date: a.deadline,
         })),
         ...s.quizzes
@@ -145,6 +148,8 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
             kind: "quiz",
             classTitle: c.course.title,
             classId: c.id,
+            classInfo: c,
+            siblings: s.quizzes,
             date: q.availableUntil,
           })),
       ]),
@@ -155,13 +160,23 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
         (b.date ? Date.parse(b.date) : Infinity),
     );
   const gradingQueue = details.flatMap((c) =>
-    (c.gradingQueue ?? []).map((item: any) => ({
-      ...item,
-      title: c.sections
-        .flatMap((s: any) => [...s.assignments, ...s.quizzes])
-        .find((a: any) => a.id === item.id)?.title,
-      classTitle: c.course.title,
-    })),
+    (c.gradingQueue ?? []).map((item: any) => {
+      const kind = item.kind === "quiz" ? "quizzes" : "assignments";
+      const section = c.sections.find((s: any) =>
+        s[kind].some((content: any) => content.id === item.id),
+      );
+      const siblings = section?.[kind] ?? [];
+      const content = siblings.find(
+        (candidate: any) => candidate.id === item.id,
+      );
+      return {
+        ...item,
+        title: content?.title,
+        classTitle: c.course.title,
+        classInfo: c,
+        siblings,
+      };
+    }),
   );
   const materialProgress = details.flatMap((c) =>
     c.sections.flatMap((s: any) =>
@@ -218,7 +233,7 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
                   <Bell size={18} />
                 </span>
                 <div>
-                  <a href={n.linkUrl ?? "#/"}>
+                  <a href={n.linkUrl ?? "/"}>
                     <h3>{n.title}</h3>
                   </a>
                   {/* Several events carry the same text in both fields. */}
@@ -253,11 +268,7 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
         </div>
         <div className="cards">
           {items.map((c) => (
-            <a
-              key={c.id}
-              href={`#/classes/${c.id}?tab=gradebook`}
-              className="card"
-            >
+            <a key={c.id} href={`${classPath(c)}/gradebook`} className="card">
               <span className="eyebrow">{c.course.code}</span>
               <h3>{c.course.title}</h3>
               <p>{c.name}</p>
@@ -307,7 +318,7 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
               <span className="pill">{t.semester}</span>
               <h2>{teacher ? t.manageLearning : t.continueLearning}</h2>
               {items[0] && (
-                <a className="button light" href={`#/classes/${items[0].id}`}>
+                <a className="button light" href={classPath(items[0])}>
                   <span>
                     {t.openClass} · {items[0].course.code}
                   </span>
@@ -367,7 +378,12 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
                 {gradingQueue.map((item) => (
                   <a
                     className="activity-row"
-                    href={`#/${item.kind === "quiz" ? "quizzes" : "assignments"}/${item.id}`}
+                    href={contentPath(
+                      item.classInfo,
+                      item.kind === "quiz" ? "quizzes" : "assignments",
+                      item,
+                      item.siblings,
+                    )}
                     key={item.id}
                   >
                     <span className="activity-icon">
@@ -395,7 +411,7 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
               <span className="count">{items.length}</span>
             </h2>
             {page === "dashboard" ? (
-              <a className="text-link" href="#/classes">
+              <a className="text-link" href="/classes">
                 {t.viewAll}
                 <ArrowUpRight size={15} />
               </a>
@@ -441,7 +457,7 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
           <div className="section-heading">
             <h2>{t.upcoming}</h2>
             {page === "dashboard" && (
-              <a className="text-link" href="#/agenda">
+              <a className="text-link" href="/agenda">
                 {t.viewAll}
                 <ArrowUpRight size={15} />
               </a>
@@ -454,7 +470,12 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
                 .map((item: any) => (
                   <a
                     key={item.id}
-                    href={`#/${item.kind === "quiz" ? "quizzes" : "assignments"}/${item.id}`}
+                    href={contentPath(
+                      item.classInfo,
+                      item.kind === "quiz" ? "quizzes" : "assignments",
+                      item,
+                      item.siblings,
+                    )}
                     className="agenda-row"
                   >
                     <span className={`activity-icon ${item.kind}`}>
@@ -563,7 +584,7 @@ function AdminOverview({
             {departmentAdmin ? t.departmentManagement : t.academicManagement}
           </h2>
           <p>{t.adminDashboardDescription}</p>
-          <a className="button light" href="#/catalog">
+          <a className="button light" href="/catalog">
             {t.catalog}
             <ArrowUpRight size={18} />
           </a>
@@ -611,10 +632,10 @@ function AdminOverview({
       </div>
       <div className="cards">
         {[
-          ["#/catalog", Database, t.catalog, t.manageCatalogDescription],
-          ["#/classes", BookOpen, t.manageClasses, t.manageClassesDescription],
+          ["/catalog", Database, t.catalog, t.manageCatalogDescription],
+          ["/classes", BookOpen, t.manageClasses, t.manageClassesDescription],
           [
-            "#/grades",
+            "/grades",
             ClipboardCheck,
             t.gradeOverview,
             t.gradeOverviewDescription,
@@ -635,7 +656,7 @@ function AdminOverview({
         <h2>
           {t.draftClasses} <span className="count">{drafts.length}</span>
         </h2>
-        <a className="text-link" href="#/classes">
+        <a className="text-link" href="/classes">
           {t.manageClasses}
           <ArrowUpRight size={15} />
         </a>
@@ -643,11 +664,7 @@ function AdminOverview({
       <div className="card activity-list">
         {drafts.length ? (
           drafts.slice(0, 5).map((cls) => (
-            <a
-              className="activity-row"
-              key={cls.id}
-              href={`#/classes/${cls.id}`}
-            >
+            <a className="activity-row" key={cls.id} href={classPath(cls)}>
               <span className="activity-icon">
                 <FileText size={18} />
               </span>

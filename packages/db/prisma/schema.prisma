@@ -130,6 +130,7 @@ model Course {
 }
 
 model CourseClass {
+  slug String @unique @default(dbgenerated()) @map("slug")
   id                String       @id @default(uuid()) @map("class_id")
   courseId          String       @map("course_id")
   course            Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -224,6 +225,7 @@ enum ResourceType {
 }
 
 model ResourceItem {
+  slug String @unique @default(dbgenerated()) @map("slug")
   id                 String       @id @default(uuid()) @map("resource_item_id")
   sectionId          String       @map("section_id")
   section            Section      @relation(fields: [sectionId], references: [id], onDelete: Cascade)
@@ -399,6 +401,7 @@ model Question {
 }
 
 model Quiz {
+  slug String @unique @default(dbgenerated()) @map("slug")
   id                 String          @id @default(uuid()) @map("quiz_id")
   sectionId          String          @map("section_id")
   section            Section         @relation(fields: [sectionId], references: [id], onDelete: Cascade)
@@ -487,6 +490,7 @@ enum SubmissionStatus {
 }
 
 model Assignment {
+  slug String @unique @default(dbgenerated()) @map("slug")
   id              String         @id @default(uuid()) @map("assignment_id")
   sectionId       String         @map("section_id")
   section         Section        @relation(fields: [sectionId], references: [id], onDelete: Cascade)
