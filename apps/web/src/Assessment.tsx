@@ -402,6 +402,15 @@ export function QuizEditor({
     <Modal wide title={quiz ? t.edit : t.newQuiz} onClose={onClose}>
       <Form
         draftKey={`quiz:${quiz?.id ?? sectionId}`}
+        publication={{
+          published: quiz?.status === "PUBLISHED" && quiz?.isVisible,
+          onUnpublish: quiz
+            ? async () => {
+                await api(`/quizzes/${quiz.id}/unpublish`, "POST", {});
+                onSaved();
+              }
+            : undefined,
+        }}
         draftValue={{ questions, scoreMode, timerMode, releaseMode }}
         onRestoreDraft={(v) => {
           setQuestions(v.questions);
@@ -410,7 +419,7 @@ export function QuizEditor({
           setReleaseMode(v.releaseMode);
         }}
         onCancel={onClose}
-        onSubmit={async (f) => {
+        onSubmit={async (f, intent) => {
           const data = {
             title: textValue(f, "title"),
             description: textValue(f, "description"),
@@ -426,8 +435,8 @@ export function QuizEditor({
             resultReleaseAt: isoInput(f.get("releaseAt")),
             availableFrom: isoInput(f.get("opens")),
             availableUntil: isoInput(f.get("closes")),
-            status: textValue(f, "status"),
-            isVisible: true,
+            status: intent === "publish" ? "PUBLISHED" : "DRAFT",
+            isVisible: intent === "publish",
             questions: questions.map((q) => questionSchema.parse(q)),
           };
           await api(
@@ -648,12 +657,6 @@ export function QuizEditor({
             ))}
           </select>
         </div>
-        <Field label={t.status}>
-          <select name="status" defaultValue={quiz?.status ?? "DRAFT"}>
-            <option value="DRAFT">{t.draft}</option>
-            <option value="PUBLISHED">{t.published}</option>
-          </select>
-        </Field>
       </Form>
     </Modal>
   );
@@ -698,7 +701,7 @@ export function QuizPage({
           <p>{quiz.description}</p>
         </div>
         <div className="toolbar">
-          <Badge value={quiz.status} />
+          <Badge value={quiz.isVisible ? quiz.status : "DRAFT"} />
           {quiz.canManage && (
             <button className="secondary" onClick={() => setEditing(true)}>
               {t.edit}
@@ -1408,7 +1411,20 @@ export function AssignmentEditor({
       <Form
         draftKey={`assignment-editor:${assignment?.id ?? sectionId}`}
         onCancel={onClose}
-        onSubmit={async (f) => {
+        publication={{
+          published: assignment?.isVisible ?? false,
+          onUnpublish: assignment
+            ? async () => {
+                await api(
+                  `/assignments/${assignment.id}/unpublish`,
+                  "POST",
+                  {},
+                );
+                onSaved();
+              }
+            : undefined,
+        }}
+        onSubmit={async (f, intent) => {
           await api(
             assignment
               ? `/assignments/${assignment.id}`
@@ -1425,7 +1441,7 @@ export function AssignmentEditor({
               cutoffDate: isoInput(f.get("cutoff")),
               allowLate: f.has("late"),
               maxAttempts: numberValue(f, "maxAttempts"),
-              isVisible: f.has("visible"),
+              isVisible: intent === "publish",
             },
           );
           onSaved();
@@ -1534,14 +1550,6 @@ export function AssignmentEditor({
             defaultChecked={assignment?.allowLate ?? true}
           />
           {t.allowLate}
-        </label>
-        <label className="check-row">
-          <input
-            name="visible"
-            type="checkbox"
-            defaultChecked={assignment?.isVisible ?? false}
-          />
-          {t.visible}
         </label>
       </Form>
     </Modal>

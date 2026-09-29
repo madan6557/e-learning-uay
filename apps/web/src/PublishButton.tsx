@@ -1,27 +1,29 @@
-import { Send } from "lucide-react";
+import { EyeOff, Send } from "lucide-react";
 import { Action, api, t } from "./lib";
 
 export function PublishButton({
   path,
   title,
   onPublished,
+  published = false,
 }: {
   path: string;
   title: string;
   onPublished: () => void;
+  published?: boolean;
 }) {
   return (
     <Action
       className="secondary publish-content-button"
-      label={`${t.publish} ${title}`}
+      label={`${published ? "Tarik Publikasi" : t.publish} ${title}`}
       run={async () => {
-        await api(`${path}/publish`, "POST", {});
+        await api(`${path}/${published ? "unpublish" : "publish"}`, "POST", {});
         onPublished();
         window.dispatchEvent(new Event("notifications-changed"));
       }}
     >
-      <Send size={15} />
-      {t.publish}
+      {published ? <EyeOff size={15} /> : <Send size={15} />}
+      {published ? "Tarik Publikasi" : t.publish}
     </Action>
   );
 }

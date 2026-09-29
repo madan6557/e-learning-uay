@@ -419,8 +419,12 @@ export function Form({
   submitDisabled = false,
   captureFields = true,
   onDirtyChange,
+  publication,
 }: {
-  onSubmit: (form: FormData) => Promise<unknown>;
+  onSubmit: (
+    form: FormData,
+    intent: "save" | "publish" | "draft",
+  ) => Promise<unknown>;
   children: ReactNode;
   submitLabel?: string;
   onCancel?: () => void;
@@ -432,9 +436,14 @@ export function Form({
   submitDisabled?: boolean;
   captureFields?: boolean;
   onDirtyChange?: (dirty: boolean) => void;
+  publication?: {
+    published: boolean;
+    onUnpublish?: () => Promise<unknown>;
+  };
 }) {
   const [busy, setBusy] = useState(false),
-    [error, setError] = useState<Error | null>(null);
+    [error, setError] = useState<Error | null>(null),
+    [pendingAction, setPendingAction] = useState<string | null>(null);
   const ref = useRef<HTMLFormElement>(null);
   const [fields, setFields] = useState<FormSnapshot>({});
   const draftRoute = useContext(DraftRouteContext);
@@ -472,18 +481,29 @@ export function Form({
         e.preventDefault();
         if (busy || disabled || submitDisabled || draft.recovery) return;
         const data = new FormData(e.currentTarget);
+        const submitter = (e.nativeEvent as SubmitEvent)
+          .submitter as HTMLButtonElement | null;
+        const intent = publication
+          ? submitter?.value === "draft"
+            ? "draft"
+            : "publish"
+          : "save";
         setBusy(true);
+        setPendingAction(intent);
         setError(null);
         try {
-          const result = await onSubmit(data);
+          const result = await onSubmit(data, intent);
           if (result !== false) {
             await new Promise((resolve) => setTimeout(resolve, 0));
             await draft.saved();
+            if (publication)
+              window.dispatchEvent(new Event("notifications-changed"));
           }
         } catch (error) {
           setError(error as Error);
         } finally {
           setBusy(false);
+          setPendingAction(null);
         }
       }}
     >
@@ -492,9 +512,12 @@ export function Form({
         {children}
       </fieldset>
       {error && <Notice error={error} />}
-      <div className="form-actions sticky-actions">
+      <div
+        className={`form-actions sticky-actions${publication ? " publication-actions" : ""}`}
+      >
         {onCancel && (
           <Button
+            disabled={busy}
             onClick={async () => {
               if (
                 !draft.dirty ||
@@ -510,18 +533,66 @@ export function Form({
         )}
         <Button
           type="submit"
+          value={publication ? "publish" : "save"}
           variant="primary"
           disabled={busy || disabled || submitDisabled || !!draft.recovery}
         >
-          {busy ? (
+          {busy &&
+          pendingAction !== "draft" &&
+          pendingAction !== "unpublish" ? (
             <>
               <LoaderCircle size={16} className="spin" />
               {t.saving}
             </>
+          ) : publication ? (
+            "Simpan dan Publikasikan"
           ) : (
             submitLabel
           )}
         </Button>
+        {publication && (
+          <Button
+            type={
+              publication.published && publication.onUnpublish
+                ? "button"
+                : "submit"
+            }
+            value="draft"
+            disabled={busy || disabled || submitDisabled || !!draft.recovery}
+            onClick={
+              publication.published && publication.onUnpublish
+                ? async () => {
+                    if (busy || disabled || submitDisabled || draft.recovery)
+                      return;
+                    setBusy(true);
+                    setPendingAction("unpublish");
+                    setError(null);
+                    try {
+                      await publication.onUnpublish!();
+                      window.dispatchEvent(new Event("notifications-changed"));
+                    } catch (error) {
+                      setError(error as Error);
+                    } finally {
+                      setBusy(false);
+                      setPendingAction(null);
+                    }
+                  }
+                : undefined
+            }
+          >
+            {busy &&
+            (pendingAction === "draft" || pendingAction === "unpublish") ? (
+              <>
+                <LoaderCircle size={16} className="spin" />
+                {t.saving}
+              </>
+            ) : publication.published && publication.onUnpublish ? (
+              "Tarik Publikasi"
+            ) : (
+              "Simpan Sebagai Draf"
+            )}
+          </Button>
+        )}
       </div>
     </form>
   );

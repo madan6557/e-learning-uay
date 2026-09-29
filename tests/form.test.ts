@@ -92,3 +92,122 @@ test("profile only links to a configured account-management page", async () => {
   );
   assert.match(withUrl, /href="https:\/\/sso\.example\.test\/account"/);
 });
+
+test("publication form submits the selected intent and keeps native validation", async () => {
+  const dom = new JSDOM('<div id="root"></div>', {
+    url: "http://localhost/classes/test",
+  });
+  Object.assign(globalThis, {
+    window: dom.window,
+    document: dom.window.document,
+    location: dom.window.location,
+    FormData: dom.window.FormData,
+    Event: dom.window.Event,
+    indexedDB,
+    IS_REACT_ACT_ENVIRONMENT: true,
+  });
+  const calls: { title: unknown; intent: string }[] = [];
+  const root = createRoot(document.getElementById("root")!);
+  try {
+    await act(async () =>
+      root.render(
+        createElement(
+          Form,
+          {
+            autosave: false,
+            publication: { published: false },
+            onCancel: () => {},
+            onSubmit: async (data: FormData, intent: string) => {
+              calls.push({ title: data.get("title"), intent });
+            },
+          },
+          createElement("input", { name: "title", required: true }),
+        ),
+      ),
+    );
+    const buttons = [...document.querySelectorAll("button")];
+    assert.deepEqual(
+      buttons.map((b) => b.textContent),
+      ["Batal", "Simpan dan Publikasikan", "Simpan Sebagai Draf"],
+    );
+    await act(async () => buttons[1].click());
+    assert.equal(calls.length, 0);
+    document.querySelector("input")!.value = "Artikel";
+    for (const button of [buttons[2], buttons[1]]) {
+      await act(async () => {
+        button.click();
+        await new Promise((r) => setTimeout(r, 20));
+      });
+    }
+    assert.deepEqual(calls, [
+      { title: "Artikel", intent: "draft" },
+      { title: "Artikel", intent: "publish" },
+    ]);
+  } finally {
+    await act(async () => root.unmount());
+    dom.window.close();
+  }
+});
+
+test("withdrawing bypasses content submission and locks actions until completion", async () => {
+  const dom = new JSDOM('<div id="root"></div>', {
+    url: "http://localhost/classes/test",
+  });
+  Object.assign(globalThis, {
+    window: dom.window,
+    document: dom.window.document,
+    location: dom.window.location,
+    FormData: dom.window.FormData,
+    Event: dom.window.Event,
+    indexedDB,
+    IS_REACT_ACT_ENVIRONMENT: true,
+  });
+  let submits = 0,
+    withdrawals = 0;
+  let finish!: () => void;
+  const pending = new Promise<void>((resolve) => {
+    finish = resolve;
+  });
+  const root = createRoot(document.getElementById("root")!);
+  try {
+    await act(async () =>
+      root.render(
+        createElement(
+          Form,
+          {
+            autosave: false,
+            onCancel: () => {},
+            publication: {
+              published: true,
+              onUnpublish: async () => {
+                withdrawals++;
+                await pending;
+              },
+            },
+            onSubmit: async () => {
+              submits++;
+            },
+          },
+          createElement("input", { name: "title", required: true }),
+        ),
+      ),
+    );
+    const buttons = [...document.querySelectorAll("button")];
+    assert.equal(buttons[2].textContent, "Tarik Publikasi");
+    await act(async () => buttons[2].click());
+    assert.equal(withdrawals, 1);
+    assert.equal(submits, 0);
+    assert.ok(buttons.every((button) => button.disabled));
+    await act(async () => {
+      buttons[2].click();
+      finish();
+      await pending;
+    });
+    assert.equal(withdrawals, 1);
+    assert.ok(buttons.every((button) => !button.disabled));
+    assert.equal(document.querySelector("input")!.value, "");
+  } finally {
+    await act(async () => root.unmount());
+    dom.window.close();
+  }
+});

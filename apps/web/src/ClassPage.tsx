@@ -87,35 +87,45 @@ export function ClassPage({
     cls.canManage &&
     cls.status !== "ARCHIVED" &&
     cls.course.status !== "ARCHIVED";
-  const published = (kind: string, itemId: string) => {
+  const published = (kind: string, itemId: string, visible = true) => {
     info.setData((current: any) => ({
       ...current,
       announcements: current.announcements.map((a: any) =>
         kind === "announcements" && a.id === itemId
-          ? { ...a, isPublished: true }
+          ? { ...a, isPublished: visible }
           : a,
       ),
       sections: current.sections.map((s: any) => ({
         ...s,
-        ...(kind === "sections" && s.id === itemId ? { isVisible: true } : {}),
+        ...(kind === "sections" && s.id === itemId
+          ? { isVisible: visible }
+          : {}),
         resources: s.resources.map((r: any) =>
           kind === "resources" && r.id === itemId
-            ? { ...r, isVisible: true }
+            ? { ...r, isVisible: visible }
             : r,
         ),
         quizzes: s.quizzes.map((q: any) =>
           kind === "quizzes" && q.id === itemId
-            ? { ...q, status: "PUBLISHED", isVisible: true }
+            ? {
+                ...q,
+                ...(visible ? { status: "PUBLISHED" } : {}),
+                isVisible: visible,
+              }
             : q,
         ),
         assignments: s.assignments.map((a: any) =>
           kind === "assignments" && a.id === itemId
-            ? { ...a, isVisible: true }
+            ? { ...a, isVisible: visible }
             : a,
         ),
       })),
     }));
-    setMessage(t.contentPublished);
+    setMessage(
+      visible
+        ? t.contentPublished
+        : "Publikasi ditarik. Konten tidak ditampilkan kepada mahasiswa.",
+    );
   };
   const tabs = [
     ["content", t.content],
@@ -305,13 +315,14 @@ export function ClassPage({
                   {!section.isVisible && <Badge value="DRAFT" />}
                   {writable && (
                     <div className="toolbar">
-                      {!section.isVisible && (
-                        <PublishButton
-                          path={`/sections/${section.id}`}
-                          title={section.title}
-                          onPublished={() => published("sections", section.id)}
-                        />
-                      )}
+                      <PublishButton
+                        path={`/sections/${section.id}`}
+                        title={section.title}
+                        published={section.isVisible}
+                        onPublished={() =>
+                          published("sections", section.id, !section.isVisible)
+                        }
+                      />
                       <Action
                         className="icon-button"
                         disabled={index === 0}
@@ -398,11 +409,14 @@ export function ClassPage({
                           <ChevronRight size={16} />
                         </a>
                         {!r.isVisible && <Badge value="DRAFT" />}
-                        {writable && !r.isVisible && (
+                        {writable && (
                           <PublishButton
                             path={`/resources/${r.id}`}
                             title={r.title}
-                            onPublished={() => published("resources", r.id)}
+                            published={r.isVisible}
+                            onPublished={() =>
+                              published("resources", r.id, !r.isVisible)
+                            }
                           />
                         )}
                         {writable && (
@@ -437,12 +451,19 @@ export function ClassPage({
                         </div>
                         <ChevronRight size={16} />
                       </a>
-                      <Badge value={q.status} />
-                      {writable && (q.status === "DRAFT" || !q.isVisible) && (
+                      <Badge value={q.isVisible ? q.status : "DRAFT"} />
+                      {writable && (
                         <PublishButton
                           path={`/quizzes/${q.id}`}
                           title={q.title}
-                          onPublished={() => published("quizzes", q.id)}
+                          published={q.status === "PUBLISHED" && q.isVisible}
+                          onPublished={() =>
+                            published(
+                              "quizzes",
+                              q.id,
+                              !(q.status === "PUBLISHED" && q.isVisible),
+                            )
+                          }
                         />
                       )}
                     </div>
@@ -470,11 +491,14 @@ export function ClassPage({
                         <ChevronRight size={16} />
                       </a>
                       {!a.isVisible && <Badge value="DRAFT" />}
-                      {writable && !a.isVisible && (
+                      {writable && (
                         <PublishButton
                           path={`/assignments/${a.id}`}
                           title={a.title}
-                          onPublished={() => published("assignments", a.id)}
+                          published={a.isVisible}
+                          onPublished={() =>
+                            published("assignments", a.id, !a.isVisible)
+                          }
                         />
                       )}
                     </div>
@@ -559,11 +583,14 @@ export function ClassPage({
                     </span>
                   )}
                   {!a.isPublished && <Badge value="DRAFT" />}
-                  {writable && !a.isPublished && (
+                  {writable && (
                     <PublishButton
                       path={`/announcements/${a.id}`}
                       title={a.title}
-                      onPublished={() => published("announcements", a.id)}
+                      published={a.isPublished}
+                      onPublished={() =>
+                        published("announcements", a.id, !a.isPublished)
+                      }
                     />
                   )}
                   <small>{date(a.publishedAt)}</small>
@@ -619,7 +646,21 @@ export function ClassPage({
         >
           <Form
             draftKey={`section:${modal.section?.id ?? "new"}`}
-            onSubmit={async (f) => {
+            onCancel={() => setModal(null)}
+            publication={{
+              published: modal.section?.isVisible ?? false,
+              onUnpublish: modal.section
+                ? async () => {
+                    await api(
+                      `/sections/${modal.section.id}/unpublish`,
+                      "POST",
+                      {},
+                    );
+                    saved();
+                  }
+                : undefined,
+            }}
+            onSubmit={async (f, intent) => {
               await api(
                 modal.section
                   ? `/sections/${modal.section.id}`
@@ -629,7 +670,7 @@ export function ClassPage({
                   title: textValue(f, "title"),
                   description: textValue(f, "description"),
                   type: textValue(f, "type"),
-                  isVisible: f.has("isVisible"),
+                  isVisible: intent === "publish",
                   startDate: isoInput(f.get("startDate")),
                   endDate: isoInput(f.get("endDate")),
                 },
@@ -678,14 +719,6 @@ export function ClassPage({
                 />
               </Field>
             </div>
-            <label className="check-row">
-              <input
-                type="checkbox"
-                name="isVisible"
-                defaultChecked={modal.section?.isVisible ?? false}
-              />
-              {t.visible}
-            </label>
           </Form>
         </Modal>
       )}
@@ -693,12 +726,14 @@ export function ClassPage({
         <Modal title={t.newAnnouncement} onClose={() => setModal(null)}>
           <Form
             draftKey="announcement:new"
-            onSubmit={async (f) => {
+            onCancel={() => setModal(null)}
+            publication={{ published: false }}
+            onSubmit={async (f, intent) => {
               await api(`/course-classes/${cls.id}/announcements`, "POST", {
                 title: textValue(f, "title"),
                 content: textValue(f, "content"),
                 isImportant: f.has("important"),
-                isPublished: f.has("published"),
+                isPublished: intent === "publish",
                 publishedAt: isoInput(f.get("publishedAt")),
               });
               saved();
@@ -716,10 +751,6 @@ export function ClassPage({
             <label className="check-row">
               <input name="important" type="checkbox" />
               {t.important}
-            </label>
-            <label className="check-row">
-              <input name="published" type="checkbox" defaultChecked />
-              {t.publish}
             </label>
           </Form>
         </Modal>

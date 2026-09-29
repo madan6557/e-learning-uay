@@ -559,13 +559,22 @@ export function ResourceEditor({
         draftValue={draft}
         onRestoreDraft={setDraft}
         onCancel={onClose}
-        onSubmit={async () => {
+        publication={{
+          published: resource?.isVisible ?? false,
+          onUnpublish: resource
+            ? async () => {
+                await api(`/resources/${resource.id}/unpublish`, "POST", {});
+                onSaved();
+              }
+            : undefined,
+        }}
+        onSubmit={async (_, intent) => {
           await api(
             resource
               ? `/resources/${resource.id}`
               : `/sections/${sectionId}/resources`,
             resource ? "PATCH" : "POST",
-            draft,
+            { ...draft, isVisible: intent === "publish" },
           );
           onSaved();
         }}
@@ -722,14 +731,6 @@ export function ResourceEditor({
             />
           </Field>
         </div>
-        <label className="check-row">
-          <input
-            type="checkbox"
-            checked={draft.isVisible}
-            onChange={(e) => change({ ...draft, isVisible: e.target.checked })}
-          />
-          {t.visible}
-        </label>
       </Form>
     </Modal>
   );

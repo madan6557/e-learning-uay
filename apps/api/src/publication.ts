@@ -168,5 +168,74 @@ export function registerPublication(app: Express) {
         }),
       ),
     );
+    app.post(`/api/v1/${kind}/:id/unpublish`, async (req, res) =>
+      res.json(
+        await mutate(req, async (tx) => {
+          const id = String(req.params.id);
+          z.object({})
+            .strict()
+            .parse(req.body ?? {});
+          const before =
+            kind === "sections"
+              ? await tx.section.findUnique({ where: { id } })
+              : kind === "resources"
+                ? await tx.resourceItem.findUnique({ where: { id } })
+                : kind === "quizzes"
+                  ? await tx.quiz.findUnique({ where: { id } })
+                  : kind === "assignments"
+                    ? await tx.assignment.findUnique({ where: { id } })
+                    : await tx.announcement.findUnique({ where: { id } });
+          ensure(before, 404, "NOT_FOUND");
+          const cls =
+            "classId" in before
+              ? await classAccess(tx, req.context.user, before.classId, true)
+              : await itemAccess(tx, req.context.user, before.sectionId, true);
+          // Hiding a quiz keeps its published status and question IDs so
+          // existing attempts and grades remain intact and can be resumed.
+          const after =
+            kind === "sections"
+              ? await tx.section.update({
+                  where: { id },
+                  data: { isVisible: false },
+                })
+              : kind === "resources"
+                ? await tx.resourceItem.update({
+                    where: { id },
+                    data: { isVisible: false },
+                  })
+                : kind === "quizzes"
+                  ? await tx.quiz.update({
+                      where: { id },
+                      data: { isVisible: false },
+                    })
+                  : kind === "assignments"
+                    ? await tx.assignment.update({
+                        where: { id },
+                        data: { isVisible: false },
+                      })
+                    : await tx.announcement.update({
+                        where: { id },
+                        data: { isPublished: false },
+                      });
+          await audit(
+            tx,
+            req.context,
+            "UNPUBLISH",
+            {
+              sections: "SECTION",
+              resources: "RESOURCE",
+              quizzes: "QUIZ",
+              assignments: "ASSIGNMENT",
+              announcements: "ANNOUNCEMENT",
+            }[kind],
+            id,
+            cls.id,
+            before,
+            after,
+          );
+          return { id, published: false };
+        }),
+      ),
+    );
   }
 }
