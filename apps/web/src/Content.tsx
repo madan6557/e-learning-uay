@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import DOMPurify from "dompurify";
 import katex from "katex";
 import hljs from "highlight.js/lib/common";
+import { ArticleTools } from "./ArticleTools";
+import { importArticle } from "./articleImport";
 import {
   GripVertical,
   Plus,
@@ -407,24 +409,36 @@ export function BlockEditor({
               </Field>
             )}
             {["image", "file_attachment"].includes(block.type) && (
-              <>
-                <FileUpload
-                  classId={classId}
-                  accept={
-                    block.type === "image"
-                      ? "image/png,image/jpeg,image/webp"
-                      : undefined
-                  }
-                  onUploaded={(f) =>
-                    update(index, {
-                      fileObjectId: f.id,
-                      ...(block.type === "image"
-                        ? { altText: f.name }
-                        : { displayName: f.name }),
-                    })
-                  }
-                />
-                {data.fileObjectId && <small>{t.saved}</small>}
+              <div className="editor-media-fields">
+                <div className="editor-media-upload">
+                  <FileUpload
+                    classId={classId}
+                    accept={
+                      block.type === "image"
+                        ? "image/png,image/jpeg,image/webp"
+                        : undefined
+                    }
+                    onUploaded={(f) =>
+                      update(index, {
+                        fileObjectId: f.id,
+                        ...(block.type === "image"
+                          ? { altText: f.name }
+                          : { displayName: f.name }),
+                      })
+                    }
+                  />
+                  {data.fileObjectId && (
+                    <small className="editor-file-saved">
+                      <CheckCircle2 size={14} aria-hidden="true" /> {t.saved}
+                    </small>
+                  )}
+                  {block.type === "file_attachment" && (
+                    <small className="editor-upload-hint">
+                      Maksimal 50 MB. Peserta dapat mengunduh lampiran dari
+                      artikel.
+                    </small>
+                  )}
+                </div>
                 <Field label={block.type === "image" ? t.altText : t.filename}>
                   <input
                     value={
@@ -448,7 +462,7 @@ export function BlockEditor({
                     />
                   </Field>
                 )}
-              </>
+              </div>
             )}
             {block.type === "embed_media" && (
               <>
@@ -556,26 +570,30 @@ export function ResourceEditor({
           onSaved();
         }}
       >
-        <Field label={t.title}>
-          <input
-            required
-            value={draft.title}
-            onChange={(e) => change({ ...draft, title: e.target.value })}
-          />
-        </Field>
-        <Field label={t.material}>
-          <select
-            disabled={!!resource}
-            value={draft.resourceType}
-            onChange={(e) => change({ ...draft, resourceType: e.target.value })}
-          >
-            {Object.entries(t.resourceTypes).map(([value, label]) => (
-              <option value={value} key={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <div className="resource-metadata-grid">
+          <Field label={t.title}>
+            <input
+              required
+              value={draft.title}
+              onChange={(e) => change({ ...draft, title: e.target.value })}
+            />
+          </Field>
+          <Field label={t.material}>
+            <select
+              disabled={!!resource}
+              value={draft.resourceType}
+              onChange={(e) =>
+                change({ ...draft, resourceType: e.target.value })
+              }
+            >
+              {Object.entries(t.resourceTypes).map(([value, label]) => (
+                <option value={value} key={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
         {["DOCUMENT", "VIDEO_MEDIA", "LAB_PRACTICUM"].includes(
           draft.resourceType,
         ) && (
@@ -652,6 +670,30 @@ export function ResourceEditor({
               onChange={(e) => payload({ url: e.target.value })}
             />
           </Field>
+        )}
+        {["RICH_TEXT", "LAB_PRACTICUM"].includes(draft.resourceType) && (
+          <ArticleTools
+            onAddAttachment={() => {
+              const blocks = draft.dynamicPayload.blocks ?? [];
+              if (blocks.length >= 300)
+                throw new Error("Total isi materi maksimal 300 blok.");
+              payload({ blocks: [...blocks, newBlock("file_attachment")] });
+            }}
+            onImport={(text) => {
+              const article = importArticle(text, {
+                title: draft.title,
+                blocks: draft.dynamicPayload.blocks ?? [],
+              });
+              change({
+                ...draft,
+                title: article.title,
+                dynamicPayload: {
+                  ...draft.dynamicPayload,
+                  blocks: article.blocks,
+                },
+              });
+            }}
+          />
         )}
         {["RICH_TEXT", "LAB_PRACTICUM"].includes(draft.resourceType) && (
           <BlockEditor

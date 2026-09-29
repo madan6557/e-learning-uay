@@ -42,6 +42,14 @@ npm audit
 
 Untuk pengujian manual, [panduan pengujian](docs/PANDUAN-PENGUJIAN.md) memuat daftar periksa langkah demi langkah per modul beserta hasil yang diharapkan.
 
+Panduan 11 blok dan tag teks, prompt AI, serta contoh JSON artikel tersedia pada
+**Panduan & artikel AI** di editor Materi teks/Praktikum. Berkas sumber yang bisa
+diunduh: [panduan artikel](apps/web/public/authoring/panduan-artikel.html),
+[prompt AI](apps/web/public/authoring/prompt-artikel-ai.txt), dan
+[contoh JSON](apps/web/public/authoring/template-artikel.json). Impor menambahkan
+blok ke draf tanpa menimpa isi atau pengaturan publikasi; media ditambahkan
+melalui editor sesudah impor.
+
 Pada Windows, hentikan proses API sebelum menjalankan `db:generate`/`build` apabila Prisma melaporkan DLL sedang dipakai. Jika port sibuk, gunakan proses lokal yang sudah berjalan atau hentikan proses proyek yang bersangkutan; jangan menghapus direktori data.
 
 ## Alur mencoba

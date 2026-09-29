@@ -192,8 +192,9 @@ tbody tr:hover {
   }
 }
 .modal {
+  --modal-max-height: calc(100dvh - 48px);
   width: min(620px, calc(100vw - 32px));
-  max-height: calc(100dvh - 48px);
+  max-height: var(--modal-max-height);
   border: 1px solid var(--line);
   padding: 0;
   box-shadow: 0 24px 90px #1a293840;
@@ -213,11 +214,11 @@ tbody tr:hover {
 .modal-heading h2 {
   font-size: 1.2rem;
 }
-.modal > form {
+.modal-scroll > form {
   margin: 0;
   padding: 24px 24px 0;
 }
-.modal > h3 {
+.modal-scroll > h3 {
   margin: 20px 24px 0;
 }
 .modal fieldset {
@@ -747,13 +748,13 @@ input.score-input.changed {
   }
   .modal,
   .modal.wide {
-    max-height: calc(100dvh - 24px);
+    --modal-max-height: calc(100dvh - 24px);
     width: calc(100vw - 20px);
   }
   .modal-heading {
     padding: 16px;
   }
-  .modal > form {
+  .modal-scroll > form {
     padding: 18px 16px 0;
   }
   .batch-save-bar {

@@ -286,6 +286,57 @@ test("File Service tickets, scan verification, ownership and trash lifecycle", a
           },
           201,
         );
+        const attachmentTicket = await request(
+          student,
+          `/files/${file.fileObjectId}/download-ticket`,
+          { resourceId: nested.id },
+        );
+        assert.equal(attachmentTicket.name, "module.pdf");
+        assert(attachmentTicket.url.startsWith(origin));
+        await request(
+          teacher,
+          `/sections/${section.id}/resources`,
+          {
+            title: "Invented attachment",
+            resourceType: "RICH_TEXT",
+            dynamicPayload: {
+              blocks: [
+                {
+                  id: randomUUID(),
+                  type: "file_attachment",
+                  data: {
+                    fileObjectId: randomUUID(),
+                    displayName: "Invented file",
+                  },
+                },
+              ],
+            },
+          },
+          400,
+        );
+        await request(student, `/resources/${nested.id}/confirm-download`, {
+          fileObjectId: file.fileObjectId,
+        });
+        await request(
+          teacher,
+          `/resources/${nested.id}`,
+          { ...nested, isVisible: false },
+          200,
+          "PATCH",
+        );
+        await request(
+          student,
+          `/files/${file.fileObjectId}/download-ticket`,
+          { resourceId: nested.id },
+          403,
+        );
+        await request(
+          teacher,
+          `/resources/${nested.id}`,
+          { ...nested, isVisible: true },
+          200,
+          "PATCH",
+        );
         const copy = await request(teacher, `/course-classes/${cls.id}/clone`, {
           name: "Clone",
           academicYear: "2027",

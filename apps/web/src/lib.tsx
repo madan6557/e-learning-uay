@@ -345,18 +345,20 @@ export function Modal({
         if (e.target === ref.current) close();
       }}
     >
-      <div className="modal-heading">
-        <h2 id={titleId}>{title}</h2>
-        <button
-          type="button"
-          className="icon-button"
-          onClick={close}
-          aria-label={t.close}
-        >
-          <X size={20} />
-        </button>
+      <div className="modal-scroll">
+        <div className="modal-heading">
+          <h2 id={titleId}>{title}</h2>
+          <button
+            type="button"
+            className="icon-button"
+            onClick={close}
+            aria-label={t.close}
+          >
+            <X size={20} />
+          </button>
+        </div>
+        {children}
       </div>
-      {children}
     </dialog>
   );
 }

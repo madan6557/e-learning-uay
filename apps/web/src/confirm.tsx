@@ -42,27 +42,29 @@ export function ConfirmationHost() {
         finish(false);
       }}
     >
-      <div className="modal-heading">
-        <h2 id="confirmation-title">Konfirmasi tindakan</h2>
-      </div>
-      <div className="confirm-content">
-        <p>{request.message}</p>
-        <div className="form-actions">
-          <button
-            type="button"
-            className="secondary"
-            autoFocus
-            onClick={() => finish(false)}
-          >
-            Batal
-          </button>
-          <button
-            type="button"
-            className="primary"
-            onClick={() => finish(true)}
-          >
-            Lanjutkan
-          </button>
+      <div className="modal-scroll">
+        <div className="modal-heading">
+          <h2 id="confirmation-title">Konfirmasi tindakan</h2>
+        </div>
+        <div className="confirm-content">
+          <p>{request.message}</p>
+          <div className="form-actions">
+            <button
+              type="button"
+              className="secondary"
+              autoFocus
+              onClick={() => finish(false)}
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              className="primary"
+              onClick={() => finish(true)}
+            >
+              Lanjutkan
+            </button>
+          </div>
         </div>
       </div>
     </dialog>,

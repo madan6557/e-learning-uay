@@ -1,0 +1,108 @@
+TEMPLATE PROMPT ARTIKEL — E-LEARNING UAY
+
+CARA PAKAI
+Ganti isian dalam tanda [kurung siku], lalu kirim SELURUH prompt ini ke AI.
+Anda boleh melampirkan template-artikel.json sebagai contoh format.
+Salin hasil JSON ke editor materi: Panduan & artikel AI → Tambahkan ke draf.
+Untuk menyematkan berkas: Sisipkan lampiran → Unggah berkas. Lampiran
+dapat diletakkan di antara blok artikel dan diunduh peserta kelas.
+
+PROMPT (SALIN MULAI DI BAWAH INI)
+
+Buat artikel pembelajaran berbahasa Indonesia untuk E-Learning UAY.
+
+Topik: [isi topik]
+Mata kuliah: [isi mata kuliah]
+Sasaran pembaca dan pengetahuan awal: [misalnya mahasiswa semester 2, mengenal HTML]
+Tujuan pembelajaran: [isi kompetensi yang diharapkan]
+Panjang: [misalnya 800–1.200 kata]
+Gaya penulisan: [misalnya jelas, bertahap, contoh praktis]
+Sumber atau bahan yang saya berikan: [isi bahan, atau tulis tidak ada]
+Kebutuhan khusus: [misalnya satu tabel, contoh kode, latihan dan rangkuman]
+
+ATURAN ISI
+1. Susun tujuan pembelajaran, penjelasan bertahap, contoh, latihan/refleksi,
+   serta ringkasan. Pilih hanya blok yang berguna untuk topik.
+2. Utamakan akurasi. Gunakan sumber yang saya berikan. Jangan mengarang
+   kutipan, referensi, DOI, atau URL. Nyatakan keterbatasan informasi
+   dalam teks artikel apabila relevan. Pisahkan fakta dari ilustrasi.
+3. Judul materi sudah muncul di halaman. Pakai heading level 2 untuk
+   subjudul utama dan level 3 untuk subjudul turunannya.
+4. Contoh kode adalah teks untuk dipelajari, dengan asumsi yang dijelaskan.
+   Jangan memasukkan kunci API, password, atau data pribadi.
+
+FORMAT KELUARAN WAJIB
+Keluarkan HANYA objek JSON valid. Jangan gunakan pembatas ```json,
+Markdown, komentar JSON, teks pengantar, atau penjelasan di luar JSON.
+Objek teratas hanya memiliki dua field: "title" dan "blocks".
+
+{
+  "title": "Judul artikel",
+  "blocks": [
+    { "id": "blok-01", "type": "paragraph", "data": { "text": "Isi pembuka." } }
+  ]
+}
+
+BATAS DAN TIPE
+- title: string tidak kosong, maksimal 200 karakter.
+- blocks: 1–300 blok. Hasil JSON maksimal 1 MB; buat ringkas.
+- Setiap blok: {"id":"blok-01","type":"...","data":{...}}.
+- Setiap id blok dan item checklist harus terisi dan unik dalam artikel.
+  Pakai ID pendek berurutan, maksimal 100 karakter.
+- Angka dan boolean harus berupa tipe JSON asli, bukan string.
+- Gunakan tanda kutip ganda. Escape tanda kutip dalam teks menjadi \".
+  Escape baris baru dalam string menjadi \n dan backslash menjadi \\.
+- Jenis blok yang boleh dihasilkan: paragraph, heading, code_snippet,
+  math_latex, callout, checklist, table, divider.
+- Jangan menghasilkan image, file_attachment, embed_media, fileObjectId,
+  pengaturan publikasi, ID kelas, atau atribut API. Media ditambahkan
+  pengguna melalui editor setelah impor.
+
+DATA UNTUK SETIAP BLOK
+paragraph:
+  {"text":"Teks dengan HTML ringan bila diperlukan."}
+heading:
+  {"text":"Subjudul","level":2}
+  level berupa integer 1, 2, atau 3.
+code_snippet:
+  {"code":"const nilai = 1;","language":"javascript","filename":"contoh.js","showLineNumbers":true}
+  language maksimal 40 karakter; filename maksimal 200 karakter.
+  code adalah kode mentah, tanpa pembatas Markdown atau tag HTML.
+math_latex:
+  {"expression":"E = mc^2"}
+  Tulis ekspresi LaTeX untuk KaTeX tanpa $ atau $$.
+  Contoh JSON pecahan: {"expression":"\\frac{a}{b}"}.
+callout:
+  {"title":"Catatan","text":"Isi catatan.","alertType":"NOTE"}
+  alertType harus salah satu NOTE, TIP, IMPORTANT, WARNING, CAUTION.
+checklist:
+  {"items":[{"id":"latihan-01","text":"Instruksi latihan.","checked":false}]}
+  Maksimal 200 item. text adalah teks biasa; selalu checked:false.
+table:
+  {"rows":[["Kolom A","Kolom B"],["Nilai A","Nilai B"]],"header":true}
+  rows berisi array baris; tiap baris berisi array string sel.
+  Baris pertama menjadi header jika header:true.
+  Gunakan jumlah kolom yang konsisten. Maksimal 200 baris, 30 kolom,
+  dan 2.000 karakter per sel. Isi sel berupa teks biasa.
+divider:
+  {}
+
+FORMAT TEKS
+HTML ringan hanya dipakai pada data.text milik paragraph, heading,
+dan callout. Tag yang didukung:
+  p, br, strong, b, em, i, u, s, code, a, mark, span.
+Atribut yang didukung: href dan title. Pilih tautan HTTPS.
+Contoh: <strong>penting</strong>, <em>istilah</em>, <code>variabel</code>,
+  <a href="https://contoh-sumber-resmi/" title="Sumber">Sumber</a>.
+Contoh tersebut adalah pola; jangan mengarang URL sumber artikel.
+Gunakan <br> untuk pergantian baris yang harus terlihat.
+Utamakan strong, em, code, mark dan br. Hindari <p> di dalam teks blok.
+Jangan menulis **tebal**, # heading, atau tabel Markdown di data.text.
+Jangan gunakan h1–h6, ul, ol, li, img, iframe, script, style, class,
+atribut style, event handler, atau CSS. Gunakan jenis blok yang sesuai.
+Field lain, termasuk title, checklist.items[].text dan table.rows,
+ditulis sebagai teks biasa tanpa HTML.
+
+Sebelum menjawab, periksa bahwa JSON dapat diparse, field setiap blok
+sesuai aturan, seluruh ID unik, batas ukuran dipenuhi, dan isi menjawab
+tujuan pembelajaran. Kemudian keluarkan hanya JSON final.

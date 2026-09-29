@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Panduan Artikel Berbasis Blok — E-Learning UAY</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #eff3f7;
+        color: #203047;
+        font:
+          16px/1.65 system-ui,
+          sans-serif;
+      }
+      main {
+        max-width: 1000px;
+        margin: 32px auto;
+        padding: 48px;
+        background: white;
+        border-radius: 14px;
+      }
+      header {
+        border-bottom: 2px solid #d7e4ef;
+        padding-bottom: 24px;
+      }
+      .eyebrow {
+        color: #286399;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      h1 {
+        font-size: 32px;
+        line-height: 1.2;
+        margin: 12px 0;
+      }
+      h2 {
+        font-size: 22px;
+        margin: 36px 0 12px;
+        color: #174b7b;
+      }
+      h3 {
+        font-size: 18px;
+        margin: 24px 0 8px;
+      }
+      p,
+      ul,
+      ol {
+        margin: 10px 0 16px;
+      }
+      li {
+        margin: 8px 0;
+      }
+      code {
+        font:
+          0.88em/1.6 ui-monospace,
+          Consolas,
+          monospace;
+        background: #edf3f8;
+        padding: 2px 4px;
+        border-radius: 3px;
+      }
+      pre {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        background: #edf3f8;
+        border: 1px solid #d9e5ee;
+        padding: 18px;
+        border-radius: 8px;
+      }
+      pre code {
+        padding: 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 16px 0;
+        font-size: 14px;
+      }
+      th,
+      td {
+        padding: 12px;
+        border: 1px solid #d9e3ed;
+        text-align: left;
+        vertical-align: top;
+        overflow-wrap: anywhere;
+      }
+      th {
+        background: #edf3f8;
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      .note {
+        border-left: 4px solid #286399;
+        background: #f0f6fc;
+        padding: 16px 20px;
+        margin: 20px 0;
+        border-radius: 4px;
+      }
+      .muted {
+        color: #54667c;
+        font-size: 14px;
+      }
+      footer {
+        border-top: 1px solid #d9e3ed;
+        margin-top: 36px;
+        padding-top: 16px;
+      }
+      @media (max-width: 680px) {
+        main {
+          margin: 0;
+          padding: 24px 18px;
+          border-radius: 0;
+        }
+        h1 {
+          font-size: 27px;
+        }
+      }
+      @media print {
+        @page {
+          size: A4;
+          margin: 18mm;
+        }
+        body {
+          background: white;
+          font-size: 10pt;
+        }
+        main {
+          margin: 0;
+          padding: 0;
+          max-width: none;
+        }
+        h1 {
+          font-size: 24pt;
+        }
+        h2 {
+          font-size: 15pt;
+          break-after: avoid;
+        }
+        h3 {
+          break-after: avoid;
+        }
+        th,
+        td {
+          padding: 7px;
+          font-size: 9pt;
+        }
+        tr,
+        pre,
+        .note {
+          break-inside: avoid;
+        }
+        .table-wrap {
+          overflow: visible;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="eyebrow">E-Learning UAY · Panduan penulisan</div>
+        <h1>Membuat artikel berbasis blok dengan bantuan AI</h1>
+        <p>
+          Kenali blok, format teks, dan cara membawa hasil AI ke editor materi.
+          Panduan ini mengikuti format editor aplikasi per 29 September 2026.
+        </p>
+        <p class="muted">
+          Berkas ini dapat dibuka tanpa internet. Untuk menyimpan sebagai PDF,
+          tekan Ctrl+P (atau menu Cetak browser), lalu pilih Simpan sebagai PDF.
+        </p>
+      </header>
+
+      <h2>1. Alur penggunaan</h2>
+      <ol>
+        <li>
+          Buka kelas dan Section, lalu tambah <strong>Materi teks</strong> atau
+          edit materi yang sudah ada.
+        </li>
+        <li>
+          Buka <strong>Panduan &amp; artikel AI</strong>. Unduh
+          <code>prompt-artikel-ai.txt</code> dan
+          <code>template-artikel.json</code>.
+        </li>
+        <li>
+          Isi topik, sasaran pembaca, tujuan, panjang artikel, dan sumber pada
+          prompt. Kirim ke AI bersama contoh JSON bila diperlukan.
+        </li>
+        <li>
+          Tempel JSON hasil AI atau pilih berkas <code>.json</code>, lalu klik
+          <strong>Tambahkan ke draf</strong>.
+        </li>
+        <li>
+          Periksa isi, koreksi fakta, tambahkan media, dan simpan. Publikasikan
+          setelah materi siap dan pengaturan akses sesuai.
+        </li>
+      </ol>
+      <div class="note">
+        Impor menambahkan blok ke akhir isi. Judul terisi dan konten sebelumnya
+        dipertahankan. Jika materi baru hanya memiliki satu paragraf kosong,
+        paragraf itu diganti oleh isi artikel. Impor mengubah draf editor;
+        penyimpanan ke server dilakukan melalui tombol simpan materi.
+      </div>
+      <p>
+        Materi baru mengikuti pengaturan draf editor. Impor pada materi yang
+        sudah terbit mempertahankan pengaturan visibilitasnya; perubahan akan
+        berlaku saat materi disimpan. Jika perlu meninjau secara privat, gunakan
+        materi draf terpisah.
+      </p>
+
+      <h2>2. Sebelas jenis blok</h2>
+      <p>
+        Artikel merupakan urutan blok. Setiap blok memiliki <code>id</code>,
+        <code>type</code>, dan objek <code>data</code>. Nama
+        <code>type</code> menggunakan nilai berikut persis, dengan huruf kecil.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Blok</th>
+              <th>Isi <code>data</code></th>
+              <th>Kegunaan</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>paragraph</code></td>
+              <td><code>text</code>: string</td>
+              <td>Paragraf. Mendukung HTML ringan.</td>
+            </tr>
+            <tr>
+              <td><code>heading</code></td>
+              <td>
+                <code>text</code>: string; <code>level</code>: 1, 2, atau 3
+              </td>
+              <td>
+                Judul/subjudul. Gunakan level 2 dan 3 untuk struktur artikel di
+                bawah judul materi.
+              </td>
+            </tr>
+            <tr>
+              <td><code>image</code></td>
+              <td>
+                <code>fileObjectId</code>, <code>altText</code>;
+                <code>caption</code> opsional; <code>alignment</code>:
+                left/center/right/full (default center)
+              </td>
+              <td>
+                Gambar yang diunggah melalui editor, deskripsi alternatif dan
+                keterangan. Alignment disimpan dalam data; penampil saat ini
+                memakai tata letak gambar standar.
+              </td>
+            </tr>
+            <tr>
+              <td><code>code_snippet</code></td>
+              <td>
+                <code>code</code>, <code>language</code>;
+                <code>filename</code> opsional;
+                <code>showLineNumbers</code> opsional (default true)
+              </td>
+              <td>
+                Kode dengan pewarnaan sintaks dan tombol salin. Field nomor
+                baris disimpan; penampil saat ini belum menampilkan nomor baris.
+              </td>
+            </tr>
+            <tr>
+              <td><code>math_latex</code></td>
+              <td><code>expression</code>: string</td>
+              <td>
+                Rumus LaTeX yang didukung KaTeX, ditampilkan sebagai rumus
+                terpisah.
+              </td>
+            </tr>
+            <tr>
+              <td><code>callout</code></td>
+              <td>
+                <code>title</code>, <code>text</code>, <code>alertType</code>
+              </td>
+              <td>
+                Catatan dengan tipe NOTE, TIP, IMPORTANT, WARNING, atau CAUTION.
+                Isi mendukung HTML ringan; judul berupa teks biasa.
+              </td>
+            </tr>
+            <tr>
+              <td><code>checklist</code></td>
+              <td>
+                <code>items</code>: array objek <code>{id, text, checked}</code>
+              </td>
+              <td>
+                Langkah belajar/latihan. Pengguna menandai progresnya sendiri.
+                Teks item berupa teks biasa.
+              </td>
+            </tr>
+            <tr>
+              <td><code>table</code></td>
+              <td>
+                <code>rows</code>: array baris berisi string sel;
+                <code>header</code>: boolean (default true)
+              </td>
+              <td>
+                Tabel. Baris pertama menjadi judul kolom saat header true. Isi
+                sel berupa teks biasa.
+              </td>
+            </tr>
+            <tr>
+              <td><code>file_attachment</code></td>
+              <td><code>fileObjectId</code>, <code>displayName</code></td>
+              <td>
+                Lampiran yang diunggah melalui editor dan diunduh dengan izin
+                kelas.
+              </td>
+            </tr>
+            <tr>
+              <td><code>embed_media</code></td>
+              <td><code>url</code>, <code>title</code></td>
+              <td>
+                Media dari origin yang diizinkan aplikasi. Tambahkan melalui
+                editor; gunakan URL embed yang sesuai penyedia.
+              </td>
+            </tr>
+            <tr>
+              <td><code>divider</code></td>
+              <td><code>{}</code></td>
+              <td>Garis pemisah antarbagian.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Editor menyediakan penambahan blok, pengurutan dengan seret atau panah,
+        duplikasi, dan penghapusan. Menekan <code>/</code> pada kolom teks yang
+        masih kosong membuka pilihan jenis blok. Gambar dapat diunggah,
+        ditempel, atau diseret ke editor.
+      </p>
+
+      <h2>3. Tag HTML yang didukung</h2>
+      <p>
+        HTML ringan berlaku pada <code>data.text</code> milik
+        <strong>paragraph, heading, dan callout</strong>. Tag yang diizinkan:
+      </p>
+      <pre><code>p, br, strong, b, em, i, u, s, code, a, mark, span</code></pre>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tujuan</th>
+              <th>Contoh di kolom teks</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Tebal</td>
+              <td>
+                <code>&lt;strong&gt;Istilah penting&lt;/strong&gt;</code> atau
+                <code>&lt;b&gt;Istilah&lt;/b&gt;</code>
+              </td>
+            </tr>
+            <tr>
+              <td>Miring</td>
+              <td>
+                <code>&lt;em&gt;Istilah asing&lt;/em&gt;</code> atau
+                <code>&lt;i&gt;Istilah&lt;/i&gt;</code>
+              </td>
+            </tr>
+            <tr>
+              <td>Garis bawah</td>
+              <td><code>&lt;u&gt;Teks&lt;/u&gt;</code></td>
+            </tr>
+            <tr>
+              <td>Coret</td>
+              <td><code>&lt;s&gt;Teks lama&lt;/s&gt;</code></td>
+            </tr>
+            <tr>
+              <td>Kode dalam kalimat</td>
+              <td><code>&lt;code&gt;response.ok&lt;/code&gt;</code></td>
+            </tr>
+            <tr>
+              <td>Sorot</td>
+              <td>
+                <code>&lt;mark&gt;Perhatikan bagian ini&lt;/mark&gt;</code>
+              </td>
+            </tr>
+            <tr>
+              <td>Baris baru</td>
+              <td><code>Baris pertama&lt;br&gt;Baris kedua</code></td>
+            </tr>
+            <tr>
+              <td>Tautan</td>
+              <td>
+                <code
+                  >&lt;a href="https://alamat-sumber-asli/"
+                  title="Sumber"&gt;Baca sumber&lt;/a&gt;</code
+                >
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Atribut yang diizinkan hanya <code>href</code> dan <code>title</code>.
+        Utamakan tautan HTTPS yang sudah diverifikasi. <code>span</code> dapat
+        mengelompokkan teks, tetapi tidak memberi gaya khusus.
+        <code>p</code> diizinkan oleh pembersih HTML; untuk isi satu blok,
+        utamakan teks inline dan <code>br</code> karena penampil sudah
+        menyediakan elemen paragraf.
+      </p>
+      <p>
+        Tag judul <code>h1–h6</code>, daftar <code>ul/ol/li</code>, gambar
+        <code>img</code>, dan <code>iframe</code> dibuat melalui jenis blok yang
+        sesuai. <code>script</code>, <code>style</code>, atribut CSS, class, dan
+        event handler tidak didukung di teks artikel.
+      </p>
+      <div class="note">
+        Format Markdown seperti <code>**tebal**</code>, <code># Judul</code>,
+        dan tabel dengan pipa tidak otomatis dikonversi. Gunakan HTML ringan
+        untuk teks dan objek blok untuk judul, tabel, kode, serta rumus. Baris
+        baru biasa dalam string paragraf juga tidak menjamin pergantian baris
+        visual; gunakan <code>&lt;br&gt;</code>.
+      </div>
+
+      <h2>4. Format artikel untuk impor</h2>
+      <p>
+        Objek JSON teratas harus memiliki tepat dua field:
+        <code>title</code> dan <code>blocks</code>. Contoh minimal yang siap
+        diimpor:
+      </p>
+      <pre><code>{
+  "title": "Memahami Request dan Response",
+  "blocks": [
+    {
+      "id": "blok-01",
+      "type": "heading",
+      "data": { "text": "Tujuan pembelajaran", "level": 2 }
+    },
+    {
+      "id": "blok-02",
+      "type": "paragraph",
+      "data": {
+        "text": "Membedakan &lt;strong&gt;request&lt;/strong&gt; dan &lt;strong&gt;response&lt;/strong&gt;."
+      }
+    },
+    {
+      "id": "blok-03",
+      "type": "callout",
+      "data": {
+        "title": "Latihan",
+        "text": "Jelaskan alur permintaan data dengan contoh sendiri.",
+        "alertType": "TIP"
+      }
+    }
+  ]
+}</code></pre>
+      <p>
+        <code>template-artikel.json</code> menyediakan contoh lebih lengkap
+        dengan delapan jenis blok yang dapat diimpor. Ubah konten contoh sesuai
+        topik, sambil mempertahankan nama field dan tipe datanya.
+      </p>
+      <ul>
+        <li>
+          <strong>Judul:</strong> tidak kosong, maksimal 200 karakter. Batas
+          impor adalah 1 MB JSON UTF-8 dan total materi maksimal 300 blok.
+        </li>
+        <li>
+          <strong>ID:</strong> setiap blok dan item checklist memiliki ID tidak
+          kosong dan unik. ID blok maksimal 100 karakter. Aplikasi membuat ID
+          baru saat impor agar tidak bercampur dengan progres sebelumnya.
+        </li>
+        <li>
+          <strong>Teks:</strong> field teks blok maksimal 100.000 karakter.
+          Gunakan blok lebih kecil agar materi nyaman dibaca.
+        </li>
+        <li>
+          <strong>Checklist:</strong> maksimal 200 item. Berikan
+          <code>checked:false</code>; saat impor semua item disiapkan sebagai
+          belum dicentang.
+        </li>
+        <li>
+          <strong>Tabel:</strong> maksimal 200 baris, 30 sel per baris, 2.000
+          karakter per sel. Isi setiap baris dengan jumlah kolom yang konsisten.
+        </li>
+        <li>
+          <strong>Kode:</strong> <code>language</code> maksimal 40 karakter dan
+          <code>filename</code> maksimal 200 karakter. Simpan kode mentah, tanpa
+          tag HTML atau pembatas Markdown.
+        </li>
+        <li>
+          <strong>Rumus:</strong> simpan ekspresi LaTeX tanpa
+          <code>$</code> atau <code>$$</code>. Backslash wajib di-escape dalam
+          JSON: <code>{"expression":"\\frac{a}{b}"}</code>.
+        </li>
+        <li>
+          <strong>JSON:</strong> gunakan kutip ganda. Escape kutip di dalam
+          string sebagai <code>\"</code>, baris baru sebagai <code>\n</code>,
+          dan backslash sebagai <code>\\</code>. Angka dan boolean tidak diberi
+          kutip.
+        </li>
+      </ul>
+
+      <h2>5. Gambar, lampiran, dan media</h2>
+      <p>
+        Impor AI menerima <code>paragraph</code>, <code>heading</code>,
+        <code>code_snippet</code>, <code>math_latex</code>,
+        <code>callout</code>, <code>checklist</code>, <code>table</code>, dan
+        <code>divider</code>.
+      </p>
+      <p>Tambahkan tiga jenis media setelah impor menggunakan editor:</p>
+      <ol>
+        <li>
+          <strong>Gambar:</strong> pilih blok Gambar, unggah PNG/JPEG/WebP, isi
+          deskripsi alternatif dan keterangan.
+        </li>
+        <li>
+          <strong>Lampiran:</strong> klik <strong>Sisipkan lampiran</strong>
+          pada panel Panduan &amp; artikel AI (atau pilih blok Lampiran berkas),
+          klik Unggah berkas, lalu isi nama tampilan. Lampiran menjadi blok
+          dalam artikel dan dapat dipindahkan di antara paragraf lainnya.
+        </li>
+        <li>
+          <strong>Media embed:</strong> pilih blok Media embed, isi judul dan
+          URL embed dari penyedia yang diizinkan.
+        </li>
+      </ol>
+      <p>
+        Lampiran mendukung format seperti PDF, DOCX, PPTX, ZIP, CSV, dan teks,
+        maksimal 50 MB per berkas. Peserta dapat mengunduh lampiran setelah
+        materi dan Section dapat diakses. Untuk menyajikan PDF sebagai modul
+        dengan penampil halaman, gunakan jenis materi Modul PDF.
+      </p>
+      <p>
+        <code>fileObjectId</code> dihasilkan oleh aplikasi sesudah unggah. AI
+        tidak dapat membuat ID berkas yang valid. Aplikasi memeriksa kepemilikan
+        kelas, jenis berkas, dan kesiapan berkas saat materi disimpan. Embed
+        juga harus melewati izin origin yang dikonfigurasi pengelola aplikasi.
+      </p>
+
+      <h2>6. Struktur artikel yang disarankan</h2>
+      <p>
+        Mulai dari tujuan dan pengetahuan awal, lalu gunakan subjudul bertahap,
+        paragraf singkat, contoh yang relevan, latihan/refleksi, dan rangkuman.
+        Tabel membantu perbandingan; callout menandai poin penting. Checklist
+        cocok untuk langkah belajar yang ingin ditandai mahasiswa.
+      </p>
+      <p>
+        Prompt AI sebaiknya menyebutkan topik, mata kuliah, semester atau
+        tingkat kemampuan, kompetensi yang dituju, panjang artikel, gaya
+        penulisan, sumber yang diberikan, dan kebutuhan seperti kode atau rumus.
+        Berikan bahan sumber agar contoh dan penjelasan sesuai materi kelas.
+      </p>
+
+      <h2>7. Jika impor gagal</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Pesan atau kondisi</th>
+              <th>Perbaikan</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>JSON tidak valid</td>
+              <td>
+                Hapus pembatas <code>```json</code>, pengantar AI, komentar, dan
+                koma terakhir. Periksa kutip, escape, serta pasangan kurung.
+              </td>
+            </tr>
+            <tr>
+              <td>Format pada <code>blocks.2.data.level</code></td>
+              <td>
+                Angka setelah blocks adalah indeks, dimulai dari 0. Periksa
+                field level pada blok ketiga; gunakan angka 1–3.
+              </td>
+            </tr>
+            <tr>
+              <td>ID harus terisi dan unik</td>
+              <td>
+                Gunakan ID berbeda untuk setiap blok dan item checklist,
+                misalnya blok-01 dan latihan-01.
+              </td>
+            </tr>
+            <tr>
+              <td>Tambahkan media melalui editor</td>
+              <td>
+                Hapus blok image/file_attachment/embed_media dari JSON impor,
+                lalu tambahkan media melalui menu blok.
+              </td>
+            </tr>
+            <tr>
+              <td>Lebih dari 300 blok atau 1 MB</td>
+              <td>
+                Minta AI meringkas, bagi materi ke beberapa artikel, atau impor
+                ke materi baru.
+              </td>
+            </tr>
+            <tr>
+              <td>HTML tidak tampil seperti harapan</td>
+              <td>
+                Gunakan hanya tag dan atribut pada bagian 3. Teks checklist,
+                tabel dan judul callout tidak menampilkan HTML.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>8. Pemeriksaan sebelum publikasi</h2>
+      <p>
+        Periksa akurasi isi dan sumber, jalankan contoh kode pada lingkungan
+        latihan, cek notasi rumus, pastikan gambar dan lampiran bisa dibuka,
+        serta baca tampilan artikel sebagai mahasiswa. Hindari memasukkan data
+        pribadi ke prompt. Dosen tetap meninjau hasil AI sebelum menjadikannya
+        bahan belajar.
+      </p>
+      <footer class="muted">
+        E-Learning UAY · Panduan editor artikel dan template AI · 29 September
+        2026
+      </footer>
+    </main>
+  </body>
+</html>

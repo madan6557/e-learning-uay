@@ -1,0 +1,111 @@
+{
+  "title": "Pengantar API untuk Pemrograman Web",
+  "blocks": [
+    {
+      "id": "blok-01",
+      "type": "paragraph",
+      "data": {
+        "text": "<strong>Tujuan pembelajaran:</strong> memahami fungsi API, alur request dan response, serta membaca data JSON. Materi ini ditujukan untuk mahasiswa yang sudah mengenal dasar JavaScript."
+      }
+    },
+    {
+      "id": "blok-02",
+      "type": "heading",
+      "data": { "text": "1. Apa itu API?", "level": 2 }
+    },
+    {
+      "id": "blok-03",
+      "type": "paragraph",
+      "data": {
+        "text": "API menyediakan cara bagi aplikasi untuk bertukar data. Pada contoh web, browser mengirim <em>request</em> ke server dan menerima <em>response</em>.<br>Data sering dikirim dalam format <code>JSON</code>."
+      }
+    },
+    {
+      "id": "blok-04",
+      "type": "callout",
+      "data": {
+        "title": "Periksa status response",
+        "text": "<strong>fetch()</strong> tidak otomatis menolak promise untuk semua status HTTP yang menandakan kegagalan. Periksa <code>response.ok</code> sebelum membaca data.",
+        "alertType": "IMPORTANT"
+      }
+    },
+    {
+      "id": "blok-05",
+      "type": "code_snippet",
+      "data": {
+        "code": "async function loadItems() {\n  const response = await fetch('/api/items');\n  if (!response.ok) throw new Error('Gagal memuat data');\n  return response.json();\n}",
+        "language": "javascript",
+        "filename": "contoh-api.js",
+        "showLineNumbers": true
+      }
+    },
+    {
+      "id": "blok-06",
+      "type": "table",
+      "data": {
+        "header": true,
+        "rows": [
+          ["Istilah", "Arti"],
+          ["Request", "Permintaan dari klien ke server"],
+          ["Response", "Jawaban server terhadap permintaan"],
+          ["JSON", "Format untuk bertukar data terstruktur"]
+        ]
+      }
+    },
+    {
+      "id": "blok-07",
+      "type": "heading",
+      "data": { "text": "2. Memahami waktu respons", "level": 2 }
+    },
+    {
+      "id": "blok-08",
+      "type": "paragraph",
+      "data": {
+        "text": "Dalam model sederhana, waktu total merupakan jumlah waktu perjalanan jaringan, proses di server, dan pemrosesan respons di klien. Model ini membantu memahami sumber waktu tunggu."
+      }
+    },
+    {
+      "id": "blok-09",
+      "type": "math_latex",
+      "data": {
+        "expression": "T_{\\text{total}} = T_{\\text{jaringan}} + T_{\\text{server}} + T_{\\text{klien}}"
+      }
+    },
+    { "id": "blok-10", "type": "divider", "data": {} },
+    {
+      "id": "blok-11",
+      "type": "heading",
+      "data": { "text": "Latihan dan refleksi", "level": 2 }
+    },
+    {
+      "id": "blok-12",
+      "type": "checklist",
+      "data": {
+        "items": [
+          {
+            "id": "latihan-01",
+            "text": "Jelaskan perbedaan request dan response dengan kata-kata sendiri.",
+            "checked": false
+          },
+          {
+            "id": "latihan-02",
+            "text": "Ubah contoh kode agar dapat menampilkan pesan kesalahan kepada pengguna.",
+            "checked": false
+          },
+          {
+            "id": "latihan-03",
+            "text": "Identifikasi bagian waktu respons yang dapat berubah ketika jaringan lambat.",
+            "checked": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "blok-13",
+      "type": "paragraph",
+      "data": {
+        "text": "<strong>Ringkasan:</strong> API menghubungkan aplikasi melalui request dan response. Periksa status HTTP, pahami struktur JSON, dan jelaskan kegagalan secara jelas kepada pengguna. Endpoint pada contoh ini perlu disediakan dalam proyek latihan."
+      }
+    }
+  ]
+}
