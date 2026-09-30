@@ -23,16 +23,18 @@ const students = [
   userType: 'STUDENT' as const,
   identifierType: 'NIM' as const,
 }));
+const chaosUsers = [
+  { id: '00000000-0000-4000-8000-000000000098', name: 'Mahasiswa Luar (Outsider)', role: 'STUDENT' as const, userType: 'STUDENT' as const, identifierType: 'NIM' as const, identifierValue: '202602001', status: 'ACTIVE' as const },
+  { id: '00000000-0000-4000-8000-000000000099', name: 'Akun Dinonaktifkan (Disabled)', role: 'STUDENT' as const, userType: 'STUDENT' as const, identifierType: 'NIM' as const, identifierValue: '202609999', status: 'DISABLED' as const },
+];
 const users = [
-  { id: ids.admin, name: 'Admin UAY', role: 'SUPER_ADMIN' as const, userType: 'ADMIN' as const, identifierType: 'NIP' as const, identifierValue: 'ADM001' },
-  { id: ids.department, name: 'Admin Prodi Informatika', role: 'DEPARTMENT_ADMIN' as const, userType: 'STAFF' as const, identifierType: 'NIP' as const, identifierValue: 'ADMIF01' },
-  { id: ids.instructor, name: 'Dosen, M.Kom.', role: 'INSTRUCTOR' as const, userType: 'LECTURER' as const, identifierType: 'NIDN' as const, identifierValue: '1112089001' },
-  ...students,
+  { id: ids.admin, name: 'Admin UAY', role: 'SUPER_ADMIN' as const, userType: 'ADMIN' as const, identifierType: 'NIP' as const, identifierValue: 'ADM001', status: 'ACTIVE' as const },
+  { id: ids.department, name: 'Admin Prodi Informatika', role: 'DEPARTMENT_ADMIN' as const, userType: 'STAFF' as const, identifierType: 'NIP' as const, identifierValue: 'ADMIF01', status: 'ACTIVE' as const },
+  { id: ids.instructor, name: 'Dosen, M.Kom.', role: 'INSTRUCTOR' as const, userType: 'LECTURER' as const, identifierType: 'NIDN' as const, identifierValue: '1112089001', status: 'ACTIVE' as const },
+  ...students.map(s => ({ ...s, status: 'ACTIVE' as const })),
+  ...chaosUsers,
 ] as const;
-for(const user of users)await db.user.upsert({where:{id:user.id},create:{...user,ssoUserId:user.id,username:user.identifierValue.toLowerCase(),email:`${user.identifierValue.toLowerCase()}@example.test`,status:'ACTIVE',departmentScopes:user.role==='DEPARTMENT_ADMIN'?['IF']:[]},update:{name:user.name,role:user.role,userType:user.userType,identifierType:user.identifierType,identifierValue:user.identifierValue,username:user.identifierValue.toLowerCase(),status:'ACTIVE',departmentScopes:user.role==='DEPARTMENT_ADMIN'?['IF']:[]}});
-if(await db.courseClass.findUnique({where:{id:ids.class}})){
-  for(const s of students)await db.enrollment.upsert({where:{classId_userId:{classId:ids.class,userId:s.id}},create:{classId:ids.class,userId:s.id,isActive:true},update:{isActive:true}});
-}
+for(const user of users)await db.user.upsert({where:{id:user.id},create:{...user,ssoUserId:user.id,username:user.identifierValue.toLowerCase(),email:`${user.identifierValue.toLowerCase()}@example.test`,status:user.status,departmentScopes:user.role==='DEPARTMENT_ADMIN'?['IF']:[]},update:{name:user.name,email:`${user.identifierValue.toLowerCase()}@example.test`,role:user.role,userType:user.userType,identifierType:user.identifierType,identifierValue:user.identifierValue,username:user.identifierValue.toLowerCase(),status:user.status,departmentScopes:user.role==='DEPARTMENT_ADMIN'?['IF']:[]}});
 if(!await db.courseClass.findUnique({where:{id:ids.class}})){
   await db.$transaction(async tx=>{
     await tx.course.create({data:{id:ids.course,code:'IF2101',title:'Pemrograman Web',description:'Membangun aplikasi web yang terstruktur, aman, dan mudah digunakan.',departmentCode:'IF',credits:3,status:'PUBLISHED'}});
@@ -58,6 +60,60 @@ if(!await db.courseClass.findUnique({where:{id:ids.class}})){
     await tx.announcement.create({data:{classId:ids.class,title:'Selamat datang di Pemrograman Web',content:'Pertemuan pertama dimulai dengan fondasi HTTP dan HTML semantik. Baca materi pengantar sebelum mengerjakan praktikum. Gunakan ruang ini untuk memantau progres dan hasil belajar Anda.',authorId:ids.instructor,isImportant:true}});
     await tx.notification.create({data:{userId:ids.student,type:'ANNOUNCEMENT',title:'Kelas Pemrograman Web sudah tersedia',message:'Mulai dari pertemuan pertama.',eventKey:'demo-welcome',linkUrl:classPath(await tx.courseClass.findUniqueOrThrow({where:{id:ids.class}}))}});
     await tx.auditLog.create({data:{actorId:ids.admin,actorRole:'SUPER_ADMIN',action:'SEED_DEVELOPMENT',entity:'CLASS',entityId:ids.class,classId:ids.class,afterState:{name:'Kelas A'},metadata:{requestId:'local-seed',reason:'Isolated demonstration data'}}});
+  });
+}
+// Ensure active enrollment for all 10 students in Kelas A
+if(await db.courseClass.findUnique({where:{id:ids.class}})){
+  for(const s of students)await db.enrollment.upsert({where:{classId_userId:{classId:ids.class,userId:s.id}},create:{classId:ids.class,userId:s.id,isActive:true},update:{isActive:true}});
+}
+// Admin Prodi: Pastikan ada mata kuliah kedua, kelas arsip, dan kelas draf
+const coursePboId = '10000000-0000-4000-8000-000000000002';
+await db.course.upsert({where:{id:coursePboId},create:{id:coursePboId,code:'IF202',title:'Pemrograman Berorientasi Objek',description:'Konsep OOP, inheritance, polimorfisme, dan desain pola.',departmentCode:'IF',credits:3,status:'PUBLISHED'},update:{status:'PUBLISHED'}});
+const classArchivedId = '20000000-0000-4000-8000-000000000002';
+await db.courseClass.upsert({where:{id:classArchivedId},create:{id:classArchivedId,courseId:coursePboId,name:'Kelas B - Semester Lalu',academicYear:'2025/2026 Genap',status:'ARCHIVED',instructors:{create:{userId:ids.instructor}}},update:{status:'ARCHIVED'}});
+const classDraftId = '20000000-0000-4000-8000-000000000003';
+await db.courseClass.upsert({where:{id:classDraftId},create:{id:classDraftId,courseId:coursePboId,name:'Kelas Draf - Semester Ini',academicYear:'2026/2027 Ganjil',status:'DRAFT',instructors:{create:{userId:ids.instructor}}},update:{status:'DRAFT'}});
+
+// Dosen: Pastikan ada antrean tugas & kuis siap dinilai (dari Mahasiswa 02)
+if(await db.assignment.findUnique({where:{id:ids.assignment}})){
+  await db.assignmentSubmission.upsert({
+    where:{assignmentId_userId_version:{assignmentId:ids.assignment,userId:students[1].id,version:1}},
+    create:{
+      assignmentId:ids.assignment,
+      userId:students[1].id,
+      version:1,
+      status:'SUBMITTED',
+      textContent:'Yth. Dosen, berikut submisi Praktikum 01 saya mengenai halaman profil HTML semantik. Repositori kode dan demo sudah saya lampirkan.',
+      externalUrl:'https://github.com/mahasiswa02/praktikum-web',
+      submittedAt:new Date(Date.now()-3600000)
+    },
+    update:{status:'SUBMITTED'}
+  });
+}
+const quizRecord = await db.quiz.findUnique({where:{id:ids.quiz},include:{questions:true}});
+if(quizRecord && quizRecord.questions.length > 0){
+  await db.quizAttempt.upsert({
+    where:{id:'70000000-0000-4000-8000-000000000001'},
+    create:{
+      id:'70000000-0000-4000-8000-000000000001',
+      quizId:ids.quiz,
+      userId:students[1].id,
+      attemptNum:1,
+      score:65,
+      objectiveScore:65,
+      isPassed:false,
+      status:'NEEDS_GRADING',
+      questionSnapshot:quizRecord.questions as any,
+      answersJson:{
+        [quizRecord.questions[0]?.id || 'q0']: ['a'],
+        [quizRecord.questions[6]?.id || 'q6']: 'Validasi data di server mutlak diperlukan karena kontrol di browser dapat dimanipulasi dengan cURL atau devtools.'
+      },
+      expiresAt:new Date(Date.now()+3600000),
+      startedAt:new Date(Date.now()-1800000),
+      submittedAt:new Date(Date.now()-600000),
+      isGraded:false
+    },
+    update:{status:'NEEDS_GRADING',isGraded:false}
   });
 }
 console.log('Development seed ready. Existing records were preserved.');await db.$disconnect();
