@@ -1,0 +1,94 @@
+name: CI/CD Deployment Hostinger VPS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: false
+
+jobs:
+  test-and-build:
+    name: Build & Automated Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js (v22)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Generate Database Client & Build
+        run: |
+          npm run db:generate
+          npm run build:web
+          npm run build:api
+
+      - name: Run Test Suite
+        run: npm test
+
+  deploy-vps:
+    name: Deploy to Hostinger VPS
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy via SSH to Hostinger
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.HOSTINGER_HOST }}
+          username: ${{ secrets.HOSTINGER_USERNAME || 'root' }}
+          key: ${{ secrets.HOSTINGER_SSH_KEY }}
+          password: ${{ secrets.HOSTINGER_PASSWORD }}
+          port: ${{ secrets.HOSTINGER_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -e
+            APP_DIR="${{ secrets.HOSTINGER_APP_DIR || '/var/www/e-learning' }}"
+            echo "🚀 Menuju direktori aplikasi: $APP_DIR"
+            if [ ! -d "$APP_DIR" ]; then
+              echo "⚠️ Direktori $APP_DIR belum ada. Membuat direktori baru..."
+              mkdir -p "$APP_DIR"
+              git clone https://github.com/${{ github.repository }}.git "$APP_DIR"
+            fi
+            cd "$APP_DIR"
+
+            echo "📥 Sinkronisasi kode branch main..."
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "📁 Menyiapkan folder upload lokal (tanpa S3)..."
+            mkdir -p uploads
+
+            echo "⚙️ Menyiapkan file .env jika belum tersedia..."
+            if [ ! -f ".env" ] && [ -f ".env.example" ]; then
+              cp .env.example .env
+              echo "ℹ️ .env dibuat dari .env.example (silakan periksa kredensial database di VPS jika diperlukan)"
+            fi
+
+            echo "📦 Menginstal dependensi & build..."
+            npm install
+            npm run db:generate
+            npm run db:migrate || echo "Peringatan: migrasi DB dilewati atau sudah termigrasi."
+            npm run build:web
+            npm run build:api
+
+            echo "🔄 Memuat ulang PM2..."
+            if command -v pm2 > /dev/null 2>&1; then
+              pm2 startOrReload ecosystem.config.cjs --env production --update-env || pm2 start ecosystem.config.cjs --env production
+              pm2 save
+            else
+              echo "❌ PM2 tidak ditemukan di PATH VPS. Silakan install PM2 secara global: npm install -g pm2"
+              exit 1
+            fi
+
+            echo "🎉 Deployment E-Learning UAY di VPS Hostinger berhasil selesai!"

@@ -66,7 +66,8 @@ export const config = {
         .split(",")
         .map((s) => s.trim().replace(/\/$/, ""))
         .filter(Boolean),
-      ...(isDemo ? [apiOrigin, appOrigin] : []),
+      apiOrigin,
+      appOrigin,
     ]),
   ),
   embedOrigins: (

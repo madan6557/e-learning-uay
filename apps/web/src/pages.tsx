@@ -1,4 +1,5 @@
 import { confirmAction } from "./confirm";
+import { UayLogo } from "./UayLogo";
 import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
@@ -360,8 +361,7 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
               })()}
             </div>
             <div className="welcome-emblem">
-              <BookOpen size={80} strokeWidth={1} />
-              <span>{t.university}</span>
+              <UayLogo size={90} color="#ffffff" />
             </div>
           </section>
           <div className="stats-grid">
@@ -609,8 +609,7 @@ function AdminOverview({
           </a>
         </div>
         <div className="welcome-emblem">
-          <Database size={80} strokeWidth={1} />
-          <span>{scope}</span>
+          <UayLogo size={90} color="#ffffff" />
         </div>
       </section>
       {courses.error && <Notice error={courses.error} />}
