@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   CalendarDays,
   UserX,
+  Archive,
 } from "lucide-react";
 import {
   t,
@@ -128,19 +129,25 @@ export function ClassPage({
         : "Publikasi ditarik. Konten tidak ditampilkan kepada mahasiswa.",
     );
   };
-  const tabs = [
-    ["content", t.content],
-    ["gradebook", t.gradebook],
-    ["announcements", t.announcements],
-    ...(cls.canManage
-      ? [
-          ["participants", t.participants],
-          ["banks", t.questionBanks],
-          ["files", t.files],
-          ["audit", t.audit],
-        ]
-      : []),
-  ];
+  const isArchived = cls.status === "ARCHIVED";
+  const tabs = isArchived
+    ? [
+        ["content", "Status Kelas"],
+        ...(cls.canManage ? [["audit", t.audit]] : []),
+      ]
+    : [
+        ["content", t.content],
+        ["gradebook", t.gradebook],
+        ["announcements", t.announcements],
+        ...(cls.canManage
+          ? [
+              ["participants", t.participants],
+              ["banks", t.questionBanks],
+              ["files", t.files],
+              ["audit", t.audit],
+            ]
+          : []),
+      ];
   // A bookmarked or hand-typed tab that this role cannot see would otherwise
   // render an empty page with no explanation.
   const tab = tabs.some(([value]) => value === requestedTab)
@@ -158,7 +165,7 @@ export function ClassPage({
       ({ section, item }: any) =>
         itemSlug(section.resources, item) === resourceSlug,
     )?.item;
-  if (selectedKind && selectedSlug) {
+  if (selectedKind && selectedSlug && !cls.isInactiveParticipant && !isArchived) {
     for (const section of cls.sections) {
       const item = section[selectedKind].find(
         (candidate: any) =>
@@ -183,7 +190,7 @@ export function ClassPage({
     }
     return <Empty>Konten tidak ditemukan.</Empty>;
   }
-  if (resourceSlug && !resource) return <Empty>Materi tidak ditemukan.</Empty>;
+  if (resourceSlug && !resource && !cls.isInactiveParticipant && !isArchived) return <Empty>Materi tidak ditemukan.</Empty>;
   const isResourceDone = (r: any) => {
     if (!cls?.progress) return false;
     if (r.resourceType === "VIDEO_MEDIA") {
@@ -266,11 +273,37 @@ export function ClassPage({
           <h2>{t.participationDisabledTitle}</h2>
           <p>{t.participationDisabledDescription}</p>
         </div>
+      ) : isArchived && tab !== "audit" ? (
+        <div className="card empty-access-card">
+          <div className="empty-access-icon">
+            <Archive size={36} strokeWidth={1.75} />
+          </div>
+          <h2>{t.classArchivedTitle}</h2>
+          <p>{t.classArchivedDescription}</p>
+          {cls.canManage && (
+            <div
+              style={{
+                marginTop: "24px",
+                display: "flex",
+                gap: "12px",
+                justifyContent: "center",
+                flexWrap: "wrap",
+              }}
+            >
+              <button
+                className="secondary"
+                onClick={() => setModal({ kind: "clone" })}
+              >
+                {t.cloneClass}
+              </button>
+              <a className="button light" href={`${classUrl}/audit`}>
+                {t.audit}
+              </a>
+            </div>
+          )}
+        </div>
       ) : (
         <>
-          {!writable && cls.status === "ARCHIVED" && (
-            <div className="callout note">{t.readOnly}</div>
-          )}
           {message && <Notice>{message}</Notice>}
           <nav className="class-tabs" aria-label={t.menu}>
             {tabs.map(([value, label]) => (
@@ -1256,6 +1289,274 @@ function Files({ classId, writable }: { classId: string; writable: boolean }) {
     </>
   );
 }
+const ROLE_LABELS: Record<string, string> = {
+  SUPER_ADMIN: "Admin Utama",
+  DEPARTMENT_ADMIN: "Admin Program Studi",
+  INSTRUCTOR: "Dosen Pengampu",
+  STUDENT: "Mahasiswa",
+};
+
+const ENTITY_LABELS: Record<string, string> = {
+  SECTION: "Pertemuan",
+  ClassSection: "Pertemuan",
+  RESOURCE: "Materi Pembelajaran",
+  ResourceItem: "Materi Pembelajaran",
+  ANNOUNCEMENT: "Pengumuman",
+  Announcement: "Pengumuman",
+  ASSIGNMENT: "Tugas",
+  Assignment: "Tugas",
+  SUBMISSION: "Pengumpulan Tugas",
+  AssignmentSubmission: "Pengumpulan Tugas",
+  QUIZ: "Kuis",
+  Quiz: "Kuis",
+  ATTEMPT: "Pengerjaan Kuis",
+  QuizAttempt: "Pengerjaan Kuis",
+  ANSWER_GRADE: "Penilaian Jawaban Kuis",
+  QUESTION_BANK: "Bank Soal",
+  QuestionBank: "Bank Soal",
+  QUESTION: "Butir Soal",
+  Question: "Butir Soal",
+  ENROLLMENT: "Kepesertaan",
+  Enrollment: "Kepesertaan",
+  FINAL_GRADE: "Nilai Akhir",
+  FinalGrade: "Nilai Akhir",
+  CLASS: "Kelas",
+  CourseClass: "Kelas",
+  COURSE: "Mata Kuliah",
+  Course: "Mata Kuliah",
+  FILE: "Berkas",
+  FileRecord: "Berkas",
+  MANUAL_GRADE: "Nilai Manual",
+};
+
+const ACTION_DESCRIPTIONS: Record<
+  string,
+  { label: string; tone: "primary" | "success" | "warning" | "info" }
+> = {
+  ENROLL: { label: "Pendaftaran Mahasiswa", tone: "info" },
+  UPDATE_ENROLLMENT: { label: "Pembaruan Status Kepesertaan", tone: "warning" },
+  ASSIGN_INSTRUCTORS: { label: "Penetapan Dosen Pengampu", tone: "info" },
+
+  CREATE_SECTION: { label: "Penambahan Pertemuan Baru", tone: "success" },
+  UPDATE_SECTION: { label: "Pembaruan Informasi Pertemuan", tone: "info" },
+  DELETE_SECTION: { label: "Penghapusan Pertemuan", tone: "warning" },
+  REORDER_CLASS: { label: "Penyusunan Ulang Urutan Pertemuan", tone: "info" },
+  REORDER: { label: "Penyusunan Ulang Urutan Pertemuan", tone: "info" },
+
+  CREATE_RESOURCE: { label: "Penambahan Materi Pembelajaran", tone: "success" },
+  UPDATE_RESOURCE: { label: "Pembaruan Materi Pembelajaran", tone: "info" },
+
+  CREATE_ANNOUNCEMENT: { label: "Pembuatan Pengumuman", tone: "info" },
+  UPDATE_ANNOUNCEMENT: { label: "Pembaruan Pengumuman", tone: "info" },
+
+  CREATE_ASSIGNMENT: { label: "Pembuatan Tugas Baru", tone: "success" },
+  UPDATE_ASSIGNMENT: { label: "Pembaruan Pengaturan Tugas", tone: "info" },
+  SUBMIT_ASSIGNMENT: { label: "Pengumpulan Tugas", tone: "info" },
+  RESUBMIT_ASSIGNMENT: { label: "Pengumpulan Ulang Tugas", tone: "info" },
+  GRADE_SUBMISSION: { label: "Penilaian Tugas Mahasiswa", tone: "success" },
+
+  CREATE_QUIZ: { label: "Pembuatan Kuis Baru", tone: "success" },
+  UPDATE_QUIZ: { label: "Pembaruan Pengaturan Kuis", tone: "info" },
+  START_QUIZ: { label: "Pengerjaan Kuis Dimulai", tone: "info" },
+  SUBMIT_QUIZ: { label: "Pengumpulan Jawaban Kuis", tone: "info" },
+  QUIZ_AUTO_EXPIRE: {
+    label: "Pengerjaan Kuis Selesai (Waktu Habis)",
+    tone: "warning",
+  },
+  GRADE_ANSWER: { label: "Penilaian Jawaban Kuis", tone: "info" },
+  CREATE_QUESTION_BANK: { label: "Pembuatan Bank Soal", tone: "info" },
+  CREATE_QUESTION: { label: "Penambahan Butir Soal", tone: "info" },
+
+  PUBLISH_GRADE: { label: "Publikasi Nilai", tone: "success" },
+  PUBLISH_GRADES: { label: "Publikasi Nilai", tone: "success" },
+  PUBLISH_GRADEBOOK: { label: "Publikasi Nilai Akhir Kelas", tone: "success" },
+  SAVE_GRADE_DRAFT: { label: "Penyimpanan Draf Nilai Akhir", tone: "info" },
+  UPDATE_WEIGHTS: { label: "Pembaruan Bobot Nilai", tone: "warning" },
+  CORRECT_FINAL_GRADE: { label: "Koreksi Nilai Akhir", tone: "warning" },
+  MANUAL_GRADE: { label: "Penginputan Nilai Komponen", tone: "info" },
+
+  PUBLISH: { label: "Publikasi Konten", tone: "success" },
+  UNPUBLISH: { label: "Pembatalan Publikasi Konten", tone: "warning" },
+  UPDATE_CLASS: { label: "Pembaruan Informasi Kelas", tone: "info" },
+  CREATE_CLASS: { label: "Pembuatan Kelas", tone: "success" },
+  CLONE_CLASS: { label: "Duplikasi Kelas ke Semester Baru", tone: "info" },
+  CLONE: { label: "Duplikasi Kelas", tone: "info" },
+  ARCHIVE_CLASS: { label: "Pengarsipan Kelas", tone: "warning" },
+
+  REQUEST_UPLOAD: { label: "Permintaan Unggah Berkas", tone: "info" },
+  CONFIRM_UPLOAD: { label: "Konfirmasi Unggah Berkas", tone: "info" },
+  TRASH: { label: "Pemindahan Berkas ke Tempat Sampah", tone: "warning" },
+  RESTORE: { label: "Pemulihan Berkas dari Tempat Sampah", tone: "info" },
+};
+
+const FIELD_LABELS: Record<string, string> = {
+  isActive: "Status Partisipasi",
+  status: "Status",
+  score: "Nilai",
+  finalScore: "Nilai Akhir",
+  gradeLetter: "Nilai Huruf",
+  gradePoint: "Indeks Mutu",
+  feedback: "Catatan / Umpan Balik",
+  title: "Judul",
+  name: "Nama",
+  description: "Deskripsi",
+  deadline: "Tenggat Waktu",
+  availableFrom: "Waktu Mulai Akses",
+  availableUntil: "Batas Waktu Akses",
+  startDate: "Tanggal Mulai",
+  endDate: "Tanggal Selesai",
+  maxScore: "Nilai Maksimum",
+  passingGrade: "Nilai Kelulusan",
+  passingScore: "Nilai Minimum Kelulusan",
+  maxAttempts: "Maksimal Percobaan",
+  attemptLimit: "Batas Percobaan",
+  timeLimit: "Batas Waktu (Menit)",
+  weight: "Bobot Penilaian (%)",
+  weights: "Bobot Penilaian",
+  isVisible: "Ditampilkan ke Mahasiswa",
+  isPublished: "Status Publikasi",
+  isLocked: "Status Kunci Nilai",
+  type: "Jenis",
+  academicYear: "Tahun Akademik",
+  departmentCode: "Program Studi",
+  credits: "SKS",
+  fileName: "Nama Berkas",
+  fileSizeBytes: "Ukuran Berkas",
+  allowLate: "Izinkan Pengumpulan Terlambat",
+  maxSubmissions: "Batas Pengumpulan",
+};
+
+function formatFieldValue(key: string, val: any): string {
+  if (val === null || val === undefined) return "—";
+  if (typeof val === "boolean") {
+    if (key === "isActive") return val ? "Aktif" : "Dinonaktifkan";
+    if (key === "isVisible") return val ? "Ditampilkan" : "Disembunyikan";
+    if (key === "isPublished") return val ? "Terbit" : "Draf";
+    if (key === "isLocked") return val ? "Terkunci" : "Terbuka";
+    return val ? "Ya" : "Tidak";
+  }
+  if (typeof val === "string") {
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(val)) {
+      return date(val);
+    }
+    if ((t.statuses as any)?.[val]) {
+      return (t.statuses as any)[val];
+    }
+    if ((t.sectionTypes as any)?.[val]) {
+      return (t.sectionTypes as any)[val];
+    }
+  }
+  if (typeof val === "object") {
+    return Array.isArray(val) ? `${val.length} item` : "Data tersimpan";
+  }
+  return String(val);
+}
+
+function getAuditChanges(entry: any) {
+  const { beforeState: before, afterState: after } = entry;
+  if (!before && after) {
+    const title = after.title || after.name || "";
+    return [
+      {
+        field: "Keterangan",
+        after: title ? `Dibuat baru: "${title}"` : "Data baru berhasil dibuat",
+      },
+    ];
+  }
+  if (before && !after) {
+    const title = before.title || before.name || "";
+    return [
+      {
+        field: "Keterangan",
+        after: title ? `Dihapus: "${title}"` : "Data dihapus",
+      },
+    ];
+  }
+  if (!before && !after) {
+    return [];
+  }
+
+  const ignored = new Set([
+    "id",
+    "classId",
+    "updatedAt",
+    "createdAt",
+    "userId",
+    "actorId",
+    "sectionId",
+    "assignmentId",
+    "quizId",
+    "resourceItemId",
+    "enrollmentKeyHash",
+    "passwordHash",
+    "hash",
+  ]);
+
+  const changes: { field: string; before?: string; after: string }[] = [];
+  const keys = new Set([
+    ...Object.keys(before || {}),
+    ...Object.keys(after || {}),
+  ]);
+
+  for (const k of keys) {
+    if (ignored.has(k)) continue;
+    const bVal = before?.[k];
+    const aVal = after?.[k];
+    if (JSON.stringify(bVal) !== JSON.stringify(aVal)) {
+      const fieldLabel =
+        FIELD_LABELS[k] ||
+        k.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase());
+      changes.push({
+        field: fieldLabel,
+        before: formatFieldValue(k, bVal),
+        after: formatFieldValue(k, aVal),
+      });
+    }
+  }
+
+  return changes;
+}
+
+function getAuditAction(entry: any) {
+  const combined = `${entry.action}_${entry.entity}`;
+  if (ACTION_DESCRIPTIONS[combined]) return ACTION_DESCRIPTIONS[combined];
+  if (ACTION_DESCRIPTIONS[entry.action]) return ACTION_DESCRIPTIONS[entry.action];
+  const entityLabel = ENTITY_LABELS[entry.entity] ?? entry.entity;
+  if (entry.action === "CREATE")
+    return { label: `Pembuatan ${entityLabel}`, tone: "success" as const };
+  if (entry.action === "UPDATE")
+    return { label: `Pembaruan ${entityLabel}`, tone: "info" as const };
+  if (entry.action === "DELETE")
+    return { label: `Penghapusan ${entityLabel}`, tone: "warning" as const };
+  return { label: entry.action.replace(/_/g, " "), tone: "info" as const };
+}
+
+function getAuditActor(entry: any) {
+  const roleName =
+    ROLE_LABELS[entry.actorRole] ??
+    (t.roles as Record<string, string>)[entry.actorRole] ??
+    entry.actorRole;
+  if (entry.user?.name) {
+    return `${entry.user.name} (${roleName})`;
+  }
+  return roleName;
+}
+
+function getAuditTargetTitle(entry: any) {
+  if (entry.afterState?.title || entry.beforeState?.title) {
+    return entry.afterState?.title || entry.beforeState?.title;
+  }
+  if (entry.afterState?.name || entry.beforeState?.name) {
+    return entry.afterState?.name || entry.beforeState?.name;
+  }
+  if (entry.entity === "ENROLLMENT") {
+    if (entry.afterState?.user?.name || entry.beforeState?.user?.name) {
+      return `Mahasiswa: ${entry.afterState?.user?.name || entry.beforeState?.user?.name}`;
+    }
+  }
+  return ENTITY_LABELS[entry.entity] ?? entry.entity;
+}
+
 function Audit({ classId }: { classId: string }) {
   const entries = useApi<any[]>(`/course-classes/${classId}/audit`);
   const [hasMore, setHasMore] = useState(true);
@@ -1270,33 +1571,115 @@ function Audit({ classId }: { classId: string }) {
         <Loading />
       ) : (
         <div className="audit-list">
-          {entries.data?.map((entry) => (
-            <details key={entry.id} className="card audit-entry">
-              <summary>
-                <span>
-                  <strong>{entry.action}</strong>
-                  <small className="block">
-                    {entry.user?.name ?? entry.actorRole} · {entry.entity}
-                  </small>
-                </span>
-                <time>{date(entry.createdAt)}</time>
-              </summary>
-              <div className="audit-diff">
-                <div>
-                  <h3>{t.before}</h3>
-                  <pre>{JSON.stringify(entry.beforeState, null, 2)}</pre>
+          {entries.data?.map((entry) => {
+            const actionInfo = getAuditAction(entry);
+            const actor = getAuditActor(entry);
+            const targetTitle = getAuditTargetTitle(entry);
+            const diffs = getAuditChanges(entry);
+            const reason =
+              entry.reason ||
+              entry.metadata?.reason ||
+              entry.afterState?.reason;
+            const requestId =
+              entry.requestId || entry.metadata?.requestId;
+
+            return (
+              <article key={entry.id} className="card audit-entry">
+                <div className="audit-header">
+                  <div className="audit-header-main">
+                    <span className={`badge ${actionInfo.tone}`}>
+                      {actionInfo.label}
+                    </span>
+                    <h3 className="audit-target-title">{targetTitle}</h3>
+                    <div className="audit-meta">
+                      <span className="audit-actor">{actor}</span>
+                      <span className="audit-dot">·</span>
+                      <time className="audit-time">{date(entry.createdAt)}</time>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h3>{t.after}</h3>
-                  <pre>{JSON.stringify(entry.afterState, null, 2)}</pre>
-                </div>
-              </div>
-              <p>{entry.metadata.reason}</p>
-              <small>
-                {t.requestId}: {entry.metadata.requestId}
-              </small>
-            </details>
-          ))}
+
+                {reason && (
+                  <div className="audit-reason-box">
+                    <strong>{t.reason || "Alasan"}:</strong> {reason}
+                  </div>
+                )}
+
+                {diffs.length > 0 && (
+                  <div className="audit-changes-box">
+                    <div className="audit-changes-heading">
+                      {t.auditChangedFields || "Rincian perubahan data:"}
+                    </div>
+                    <div className="audit-changes-list">
+                      {diffs.map((diff, i) => (
+                        <div key={i} className="audit-change-row">
+                          <span className="audit-field-name">
+                            {diff.field}:
+                          </span>
+                          {diff.before !== undefined && (
+                            <>
+                              <span className="audit-value-before">
+                                {diff.before}
+                              </span>
+                              <span className="audit-arrow">➔</span>
+                            </>
+                          )}
+                          <span className="audit-value-after">
+                            {diff.after}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <details className="audit-tech-details">
+                  <summary className="audit-tech-summary">
+                    <Settings2 size={13} />
+                    <span>
+                      {t.auditTechnicalDetails ||
+                        "Detail teknis (JSON & Request ID)"}
+                    </span>
+                  </summary>
+                  <div className="audit-tech-content">
+                    <div className="audit-tech-meta">
+                      {requestId && (
+                        <div>
+                          <strong>{t.requestId}:</strong>{" "}
+                          <code>{requestId}</code>
+                        </div>
+                      )}
+                      {entry.entityId && (
+                        <div>
+                          <strong>Target ID:</strong>{" "}
+                          <code>{entry.entityId}</code>
+                        </div>
+                      )}
+                      {entry.ipAddress && (
+                        <div>
+                          <strong>IP:</strong> <code>{entry.ipAddress}</code>
+                        </div>
+                      )}
+                    </div>
+                    <div className="audit-diff">
+                      <div>
+                        <h4>{t.before} (JSON)</h4>
+                        <pre>
+                          {JSON.stringify(entry.beforeState, null, 2) || "null"}
+                        </pre>
+                      </div>
+                      <div>
+                        <h4>{t.after} (JSON)</h4>
+                        <pre>
+                          {JSON.stringify(entry.afterState, null, 2) || "null"}
+                        </pre>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+              </article>
+            );
+          })}
           {hasMore && (entries.data?.length ?? 0) >= 50 && (
             <Action
               run={async () => {

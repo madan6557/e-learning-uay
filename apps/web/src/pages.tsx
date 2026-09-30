@@ -49,9 +49,10 @@ export function ClassCard({ item, index = 0 }: { item: any; index?: number }) {
   const isInactive =
     Boolean(item.isInactiveParticipant) ||
     (item.enrollments?.length > 0 && !item.enrollments[0].isActive);
+  const isArchived = item.status === "ARCHIVED";
   return (
     <a
-      className={`course-card course-tone-${index % 3} ${isInactive ? "inactive-participant" : ""}`}
+      className={`course-card course-tone-${index % 3} ${isInactive ? "inactive-participant" : ""} ${isArchived ? "archived-class" : ""}`}
       href={classPath(item)}
     >
       <div className="course-top">
@@ -68,6 +69,8 @@ export function ClassCard({ item, index = 0 }: { item: any; index?: number }) {
           </span>
           {isInactive ? (
             <span className="badge danger">{t.participationDisabled}</span>
+          ) : isArchived ? (
+            <span className="badge muted">{t.archived}</span>
           ) : (
             <Badge value={item.status} />
           )}
@@ -339,14 +342,22 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
             <div>
               <span className="pill">{t.semester}</span>
               <h2>{teacher ? t.manageLearning : t.continueLearning}</h2>
-              {items[0] && (
-                <a className="button light" href={classPath(items[0])}>
-                  <span>
-                    {t.openClass} · {items[0].course.code}
-                  </span>
-                  <ArrowUpRight size={18} />
-                </a>
-              )}
+              {(() => {
+                const activeOpenClass = items.find(
+                  (c) =>
+                    c.status === "PUBLISHED" &&
+                    !c.isInactiveParticipant &&
+                    !(c.enrollments?.length > 0 && !c.enrollments[0].isActive),
+                );
+                return activeOpenClass ? (
+                  <a className="button light" href={classPath(activeOpenClass)}>
+                    <span>
+                      {t.openClass} · {activeOpenClass.course.code}
+                    </span>
+                    <ArrowUpRight size={18} />
+                  </a>
+                ) : null;
+              })()}
             </div>
             <div className="welcome-emblem">
               <BookOpen size={80} strokeWidth={1} />
