@@ -560,8 +560,9 @@ export function registerLearning(app: Express) {
           tx,
           req.context.user,
           String(req.params.id),
-          true,
         );
+        ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
+        ensure(cls.course.status !== "ARCHIVED", 423, "CLASS_ARCHIVED");
         const data = z
           .object({
             name: title,
@@ -588,7 +589,11 @@ export function registerLearning(app: Express) {
         await audit(
           tx,
           req.context,
-          "UPDATE",
+          cls.status === "ARCHIVED" && data.status !== "ARCHIVED"
+            ? "UNARCHIVE_CLASS"
+            : cls.status !== "ARCHIVED" && data.status === "ARCHIVED"
+              ? "ARCHIVE_CLASS"
+              : "UPDATE",
           "CLASS",
           cls.id,
           cls.id,

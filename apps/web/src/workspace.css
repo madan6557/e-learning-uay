@@ -182,26 +182,91 @@
   background: none;
   border: 0;
 }
-.secondary {
-  background: #fff;
-  border: 1px solid #dbe2ea;
-  color: #35495d;
-  border-radius: 7px;
-  padding: 10px 14px;
-  font-size: 0.85rem;
-  font-weight: 500;
+button.primary,
+.button.primary,
+.primary {
+  background: var(--green, #1e3a5f);
+  border: 1px solid var(--green, #1e3a5f);
+  color: #fff;
+  border-radius: 8px;
+  min-height: 40px;
+  height: 40px;
+  padding: 0 16px;
+  font-size: 0.86rem;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   white-space: nowrap;
+  box-sizing: border-box;
+  text-decoration: none;
+  line-height: 1;
+  vertical-align: middle;
+}
+button.secondary,
+.button.secondary,
+.secondary {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  border-radius: 8px;
+  min-height: 40px;
+  height: 40px;
+  padding: 0 16px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  box-sizing: border-box;
+  text-decoration: none;
+  line-height: 1;
+  vertical-align: middle;
 }
 .secondary:hover {
-  background: #eff5fb;
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
 }
 .primary:hover,
 .button:hover {
-  filter: brightness(1.1);
+  filter: brightness(1.08);
+}
+button.compact,
+.button.compact,
+.compact {
+  min-height: 32px !important;
+  height: 32px !important;
+  padding: 0 12px !important;
+  font-size: 0.8rem !important;
+}
+.archived-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 16px 0 24px;
+  padding: 12px 18px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+}
+.archived-banner-text {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #334155;
+  font-size: 0.88rem;
+  flex: 1;
+}
+.archived-banner-text svg {
+  color: #d97706;
+  flex-shrink: 0;
 }
 .icon-button {
   display: inline-flex;

@@ -342,6 +342,8 @@ button.primary {
   background: var(--accent);
   color: var(--green);
   border: 0;
+}
+.welcome-panel .button.light {
   margin-top: 12px;
 }
 .section-heading {

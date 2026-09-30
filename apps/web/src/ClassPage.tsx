@@ -17,6 +17,8 @@ import {
   CalendarDays,
   UserX,
   Archive,
+  ArchiveRestore,
+  Copy,
 } from "lucide-react";
 import {
   t,
@@ -130,24 +132,19 @@ export function ClassPage({
     );
   };
   const isArchived = cls.status === "ARCHIVED";
-  const tabs = isArchived
-    ? [
-        ["content", "Status Kelas"],
-        ...(cls.canManage ? [["audit", t.audit]] : []),
-      ]
-    : [
-        ["content", t.content],
-        ["gradebook", t.gradebook],
-        ["announcements", t.announcements],
-        ...(cls.canManage
-          ? [
-              ["participants", t.participants],
-              ["banks", t.questionBanks],
-              ["files", t.files],
-              ["audit", t.audit],
-            ]
-          : []),
-      ];
+  const tabs = [
+    ["content", t.content],
+    ["gradebook", t.gradebook],
+    ["announcements", t.announcements],
+    ...(cls.canManage
+      ? [
+          ["participants", t.participants],
+          ["banks", t.questionBanks],
+          ["files", t.files],
+          ["audit", t.audit],
+        ]
+      : []),
+  ];
   // A bookmarked or hand-typed tab that this role cannot see would otherwise
   // render an empty page with no explanation.
   const tab = tabs.some(([value]) => value === requestedTab)
@@ -158,6 +155,23 @@ export function ClassPage({
     setMessage(t.saved);
     info.reload();
   };
+  const handleReopen = async () => {
+    if (
+      !(await confirmAction(
+        t.confirmReopenClass ||
+          "Buka kembali kelas ini? Status kelas akan diubah menjadi Terbit (aktif) sehingga perkuliahan dan aktivitas dapat dilanjutkan kembali.",
+      ))
+    ) {
+      return;
+    }
+    await api(`/course-classes/${cls.id}`, "PATCH", {
+      name: cls.name,
+      academicYear: cls.academicYear,
+      status: "PUBLISHED",
+    });
+    setMessage("Kelas berhasil dibuka kembali dan sekarang berstatus aktif.");
+    info.reload();
+  };
   const classUrl = classPath(cls);
   const resource = cls.sections
     .flatMap((s: any) => s.resources.map((r: any) => ({ section: s, item: r })))
@@ -165,7 +179,7 @@ export function ClassPage({
       ({ section, item }: any) =>
         itemSlug(section.resources, item) === resourceSlug,
     )?.item;
-  if (selectedKind && selectedSlug && !cls.isInactiveParticipant && !isArchived) {
+  if (selectedKind && selectedSlug && !cls.isInactiveParticipant) {
     for (const section of cls.sections) {
       const item = section[selectedKind].find(
         (candidate: any) =>
@@ -190,7 +204,7 @@ export function ClassPage({
     }
     return <Empty>Konten tidak ditemukan.</Empty>;
   }
-  if (resourceSlug && !resource && !cls.isInactiveParticipant && !isArchived) return <Empty>Materi tidak ditemukan.</Empty>;
+  if (resourceSlug && !resource && !cls.isInactiveParticipant) return <Empty>Materi tidak ditemukan.</Empty>;
   const isResourceDone = (r: any) => {
     if (!cls?.progress) return false;
     if (r.resourceType === "VIDEO_MEDIA") {
@@ -246,7 +260,16 @@ export function ClassPage({
           ) : (
             <Badge value={cls.status} />
           )}
-          {writable && (
+          {cls.canManage && isArchived && (
+            <button
+              className="primary"
+              onClick={handleReopen}
+            >
+              <ArchiveRestore size={16} />
+              {t.reopenClass || "Buka kembali kelas"}
+            </button>
+          )}
+          {cls.canManage && (
             <button
               className="secondary"
               onClick={() => setModal({ kind: "settings" })}
@@ -260,6 +283,7 @@ export function ClassPage({
               className="secondary"
               onClick={() => setModal({ kind: "clone" })}
             >
+              <Copy size={16} />
               {t.cloneClass}
             </button>
           )}
@@ -273,37 +297,29 @@ export function ClassPage({
           <h2>{t.participationDisabledTitle}</h2>
           <p>{t.participationDisabledDescription}</p>
         </div>
-      ) : isArchived && tab !== "audit" ? (
-        <div className="card empty-access-card">
-          <div className="empty-access-icon">
-            <Archive size={36} strokeWidth={1.75} />
-          </div>
-          <h2>{t.classArchivedTitle}</h2>
-          <p>{t.classArchivedDescription}</p>
-          {cls.canManage && (
-            <div
-              style={{
-                marginTop: "24px",
-                display: "flex",
-                gap: "12px",
-                justifyContent: "center",
-                flexWrap: "wrap",
-              }}
-            >
-              <button
-                className="secondary"
-                onClick={() => setModal({ kind: "clone" })}
-              >
-                {t.cloneClass}
-              </button>
-              <a className="button light" href={`${classUrl}/audit`}>
-                {t.audit}
-              </a>
-            </div>
-          )}
-        </div>
       ) : (
         <>
+          {isArchived && (
+            <div className="callout note archived-banner">
+              <div className="archived-banner-text">
+                <Archive size={20} strokeWidth={1.75} />
+                <span>
+                  <strong>{t.classArchived || "Kelas diarsipkan"}:</strong>{" "}
+                  {t.classArchivedNotice ||
+                    "Kelas ini diarsipkan oleh dosen pengampu. Konten pembelajaran ditampilkan dalam mode hanya-baca."}
+                </span>
+              </div>
+              {cls.canManage && (
+                <button
+                  className="primary compact"
+                  onClick={handleReopen}
+                >
+                  <ArchiveRestore size={15} />
+                  {t.reopenClass || "Buka kembali kelas"}
+                </button>
+              )}
+            </div>
+          )}
           {message && <Notice>{message}</Notice>}
           <nav className="class-tabs" aria-label={t.menu}>
             {tabs.map(([value, label]) => (
