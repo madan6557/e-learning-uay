@@ -1,52 +1,172 @@
-# Produksi VPS Hostinger dengan PM2 (tanpa Docker)
+# Panduan Deployment VPS Hostinger dengan PM2 (Tanpa Docker)
 
-Target: Ubuntu 24.04 LTS, Node.js 22 LTS (minimal 22.12), npm, PostgreSQL 16,
-Redis 7, Nginx, PM2, dan Certbot. Pasang lewat sumber resmi dan jalankan aplikasi
-sebagai user khusus `uay`. PostgreSQL/Redis/API hanya bind loopback;
-firewall membuka SSH, 80 dan 443. Sesuaikan kapasitas setelah pengujian pilot.
+Panduan ini ditujukan untuk **Tim VPS / Infrastruktur** yang akan melakukan deployment E-Learning UAY di VPS Hostinger.
 
-## Konfigurasi awal
+## Ringkasan Lingkungan Deployment
+- **Target OS**: Ubuntu 22.04 LTS / 24.04 LTS
+- **Runtime**: Node.js **>= 22.12** & npm
+- **Process Manager**: PM2 (`npm install -g pm2`)
+- **Database**: PostgreSQL 15 atau 16
+- **Reverse Proxy**: Nginx (direkomendasikan) atau direct port 3000
+- **Mode Sistem**: **Mode Uji / Pilot** (`DEMO_MODE=true`, `AUTH_MODE=development`)
+- **Penyimpanan Berkas**: **Lokal Disk VPS** (`FILE_STORAGE_DRIVER=local`, direktori `./uploads`), tanpa AWS S3 / tanpa layanan file eksternal.
 
-1. Clone proyek ke `/opt/uay-elearning`, dimiliki user `uay`.
-2. Siapkan database `elearning_prod` beserta user/password terpisah. Aktifkan
-   password Redis, persistence AOF, dan `maxmemory-policy noeviction` untuk sesi.
-3. Salin `deployment/.env.native.example` menjadi `.env` di root proyek,
-   isi secret asli, dan `chmod 600 .env`. Aplikasi membaca file ini saat mulai.
-   Jangan memasukkan secret ke ecosystem PM2. Daftarkan callback OIDC
-   `https://DOMAIN/api/v1/auth/callback` dan logout `https://DOMAIN` di SSO.
-4. `FILE_SERVICE_URL` menunjuk layanan berkas resmi; `FILE_ALLOWED_ORIGINS`
-   mencakup origin signed download/upload URL dari layanan itu. Railway S3
-   pada mode demo belum menyediakan antivirus untuk produksi kampus.
-5. Install PM2 dari npm sebagai tooling server (`npm install -g pm2`).
+---
 
+## Langkah Deployment Cepat (Manual)
+
+### 1. Prasyarat di VPS
+Pastikan Node.js 22, PostgreSQL, dan PM2 telah terpasang:
 ```bash
-cd /opt/uay-elearning
-npm ci
-npm run build
+# Cek versi Node.js (harus >= 22.12)
+node -v
+
+# Install PM2 secara global jika belum ada
+npm install -g pm2
+```
+
+### 2. Siapkan Database PostgreSQL
+Buat user dan database di PostgreSQL:
+```bash
+sudo -u postgres psql
+```
+```sql
+CREATE USER uay WITH ENCRYPTED PASSWORD 'password_database_anda';
+CREATE DATABASE elearning OWNER uay;
+GRANT ALL PRIVILEGES ON DATABASE elearning TO uay;
+\q
+```
+
+### 3. Clone Repositori
+```bash
+# Clone ke direktori aplikasi (misal: /var/www/e-learning)
+git clone https://github.com/UAY-System/e-learning.git /var/www/e-learning
+cd /var/www/e-learning
+```
+
+### 4. Konfigurasi Lingkungan (`.env`)
+Salin file `.env.example` menjadi `.env`:
+```bash
+cp .env.example .env
+chmod 600 .env
+```
+Buka dan sesuaikan `.env`:
+```env
+NODE_ENV=production
+PORT=3000
+API_HOST=0.0.0.0
+TRUST_PROXY=1
+
+# PENTING: APP_ORIGIN harus sama persis dengan URL yang diakses browser
+# Contoh jika memakai IP VPS: http://194.233.xx.xx:3000
+# Contoh jika memakai Domain: https://elearning.uay.ac.id
+APP_ORIGIN=http://194.233.xx.xx:3000
+API_ORIGIN=http://194.233.xx.xx:3000
+
+# Kredensial Database
+DATABASE_URL=postgresql://uay:password_database_anda@127.0.0.1:5432/elearning?schema=public
+
+# Mode Uji Coba (Tester & Akun Demo Aktif Langsung)
+DEMO_MODE=true
+AUTH_MODE=development
+
+# Penyimpanan Berkas Lokal di VPS (Tanpa S3)
+FILE_STORAGE_DRIVER=local
+UPLOAD_DIR=./uploads
+```
+
+> ⚠️ **Catatan Penting CSRF & Origin**: Nilai `APP_ORIGIN` harus cocok dengan URL yang dibuka pengguna di peramban. Jika berbeda, sistem pengamanan API akan memblokir request POST/PUT dengan status `403 INVALID_ORIGIN`.
+
+### 5. Install Dependensi, Migrasi DB & Seed Data
+```bash
+# Install paket
+npm install
+
+# Buat direktori berkas upload
+mkdir -p uploads
+
+# Generate Prisma Client & Migrasi Database
+npm run db:generate
 npm run db:migrate
-npm run start:prod
+
+# Seed data akun uji & kelas contoh
+npm run db:seed
+```
+*Catatan:* `npm run db:seed` aman dijalankan berulang (idempoten) dan otomatis menyiapkan akun tester:
+- **Super Admin**: NIP `ADM001`
+- **Admin Prodi Informatika**: NIP `ADMIF01`
+- **Dosen**: NIDN `1112089001`
+- **Mahasiswa**: NIM `202601001` s/d `202601010` (10 mahasiswa terdaftar aktif)
+
+### 6. Build Aplikasi Web & API
+```bash
+npm run build:web
+npm run build:api
+```
+*(Atau cukup jalankan `npm run build`)*
+
+### 7. Jalankan dengan PM2
+```bash
+# Menjalankan aplikasi dengan konfigurasi ekosistem produksi
+pm2 start ecosystem.config.cjs --env production
+
+# Simpan state PM2 agar otomatis berjalan saat VPS reboot
 pm2 save
 pm2 startup
 ```
+Jalankan baris perintah `sudo env PATH=...` yang ditampilkan oleh output `pm2 startup`.
 
-Jalankan perintah sudo yang dicetak `pm2 startup` untuk user `uay`, lalu `pm2 save`.
-Jangan menjalankan `db:seed` atau runtime Railway di produksi. PM2 memakai satu
-instance agar scheduler kuis/notifikasi tidak digandakan. API mengirim sinyal
-ready kepada PM2 setelah port siap; SIGINT/SIGTERM menutup server dan koneksi.
-Atur rotasi log PM2/logrotate dan monitoring disk, memory, database, serta Redis.
-
-## Nginx dan HTTPS
-
-Salin `deployment/nginx/hostinger.conf` ke sites-available, sesuaikan domain/path,
-lalu aktifkan symlink pada sites-enabled. Pastikan user Nginx dapat membaca
-`apps/web/dist`. Arahkan DNS A/AAAA ke VPS sebelum memperoleh sertifikat.
-
+Periksa status aplikasi:
 ```bash
+pm2 status
+pm2 logs elearning-uay
+curl -i http://127.0.0.1:3000/api/health
+```
+Output `curl` harus menghasilkan `{"status":"ok","service":"elearning-uay","version":"0.1.0"}`.
+
+---
+
+## Opsi Nginx & HTTPS (Reverse Proxy)
+
+Jika menggunakan domain dan sertifikat SSL/HTTPS, gunakan konfigurasi Nginx yang telah disiapkan di `deployment/nginx/hostinger.conf`:
+```bash
+sudo cp deployment/nginx/hostinger.conf /etc/nginx/sites-available/elearning
+# Sesuaikan server_name dan path direktori di file tersebut jika berbeda
+sudo nano /etc/nginx/sites-available/elearning
+
+sudo ln -s /etc/nginx/sites-available/elearning /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
-sudo certbot --nginx -d elearning.example.ac.id --redirect
-sudo certbot renew --dry-run
-curl --fail https://elearning.example.ac.id/api/health
+
+# Pasang SSL gratis dengan Certbot
+sudo certbot --nginx -d elearning.uay.ac.id
+```
+
+---
+
+## Opsi CI/CD Otomatis (GitHub Actions)
+
+Workflow GitHub Actions sudah tersedia di `.github/workflows/deploy.yml`. Jika tim VPS ingin deployment berjalan otomatis setiap kali ada `git push` ke branch `main`:
+Tambahkan **Repository Secrets** di menu GitHub repo (`Settings` > `Secrets and variables` > `Actions`):
+- `HOSTINGER_HOST`: IP publik VPS
+- `HOSTINGER_SSH_KEY`: Private SSH Key (atau `HOSTINGER_PASSWORD`)
+- `HOSTINGER_USERNAME`: `root` atau user VPS (misal `uay`)
+- `HOSTINGER_APP_DIR`: `/var/www/e-learning`
+- `HOSTINGER_PORT`: `22` (opsional)
+
+---
+
+## Pemeliharaan & Update Rutin
+Jika ada pembaruan kode di kemudian hari:
+```bash
+cd /var/www/e-learning
+git pull origin main
+npm install
+npm run db:generate
+npm run db:migrate
+npm run build:web
+npm run build:api
+pm2 reload elearning-uay
 ```
 
 Certbot memasang HTTPS/redirect; aplikasi memakai origin HTTPS. Jangan membuka
