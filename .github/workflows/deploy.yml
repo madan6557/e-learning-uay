@@ -144,7 +144,7 @@ jobs:
             uay-deploy@${{ secrets.UAY_VPS_HOST }} \
             'sudo /usr/bin/systemctl restart uay-elearning-api.service'
 
-      - name: Verify API service
+      - name: Verify API health
         run: |
           ssh \
             -o BatchMode=yes \
@@ -152,16 +152,22 @@ jobs:
             uay-deploy@${{ secrets.UAY_VPS_HOST }} \
             '
             for i in $(seq 1 30); do
-              if systemctl is-active --quiet uay-elearning-api.service; then
-                echo "E-Learning API is active."
+              if curl \
+                --fail \
+                --silent \
+                --show-error \
+                http://127.0.0.1:3001/api/health; then
+
+                echo
+                echo "E-Learning API health check passed."
                 exit 0
               fi
 
-              echo "Waiting for E-Learning API... ($i/30)"
+              echo "Waiting for E-Learning API health... ($i/30)"
               sleep 1
             done
 
-            echo "E-Learning API failed to become active."
+            echo "E-Learning API health check failed."
             exit 1
             '
 
