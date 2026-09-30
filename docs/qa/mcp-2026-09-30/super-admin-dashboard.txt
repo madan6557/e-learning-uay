@@ -1,0 +1,161 @@
+Window: "E-Learning UAY - Google Chrome", App: chrome.exe.
+	0 window E-Learning UAY - Google Chrome Secondary Actions: Raise
+		1 pane (disabled)
+		2 region E-Learning UAY - Google Chrome (Incognito)
+			3 region
+				4 region
+					5 region
+						6 button Minimize ID: view_1
+						190 button Maximize ID: view_2
+						8 button Close ID: view_4
+					9 region
+						10 region
+							11 tool bar ID: view_1000
+								12 button Back ID: view_1001
+								13 button (disabled) Forward ID: view_1002
+								14 button Reload ID: view_1003
+								15 group
+									16 button View site information ID: view_1011
+									17 edit (settable, string) Address and search bar Description: Ask Google or type a URL Value: e-learning-uay.vercel.app/dashboard ID: view_1012
+									18 region
+										95 button Bookmark this tab
+								20 button Incognito ID: view_1018
+								21 button Chrome ID: view_1007
+						40 region
+							41 region
+								42 region
+								1484 document E-Learning UAY Value: https://e-learning-uay.vercel.app/dashboard ID: RootWebArea
+									1485 group ID: root
+										1498 link Lewati ke konten Value: https://e-learning-uay.vercel.app/dashboard#main-content
+										1499 complementary ID: academic-navigation
+											1500 link UAY E-Learning beranda Value: https://e-learning-uay.vercel.app/dashboard
+											1501 toggle button Perkecil navigasi
+											1502 button Tutup menu Description: Tutup menu ID: close-mobile-menu
+											1503 text MENU
+											1504 navigation Navigasi utama
+												1505 link Beranda Value: https://e-learning-uay.vercel.app/dashboard
+												1506 link Katalog mata kuliah Value: https://e-learning-uay.vercel.app/catalog
+												1507 link Kelola kelas Value: https://e-learning-uay.vercel.app/classes
+												1508 link Agenda akademik Value: https://e-learning-uay.vercel.app/agenda
+												1509 link Rekap nilai Value: https://e-learning-uay.vercel.app/grades
+												1510 link Notifikasi Value: https://e-learning-uay.vercel.app/notifications
+												1511 link Profil Value: https://e-learning-uay.vercel.app/profile
+												1512 link Bantuan Value: https://e-learning-uay.vercel.app/help
+											1513 text Akun SSO UAY
+											1514 text Identitas dikelola oleh SSO
+										1515 header
+											1516 button Buka menu Description: Buka menu ID: open-mobile-menu
+											1517 navigation Jejak navigasi
+												1518 list
+													1519 list item Beranda
+														1520 group
+															1521 text Beranda
+											1522 text MODE UJI
+											1523 link Profil akun Admin UAY Value: https://e-learning-uay.vercel.app/profile
+											1524 button Keluar dari sesi
+										1525 main ID: main-content
+											1532 text Akademik
+											1533 text Super admin
+											1534 heading Dashboard administrasi
+											1535 text Admin UAY
+											1536 text ·
+											1537 text Cakupan
+											1538 text :
+											1539 text Seluruh program studi
+											1540 button Tambah kelas
+											1541 text 2026 / 2027 · Ganjil
+											1542 heading Pengelolaan akademik universitas
+											1543 text Kelola mata kuliah, kelas, pengajar, dan kepesertaan dalam cakupan Anda.
+											1544 link Katalog mata kuliah Value: https://e-learning-uay.vercel.app/catalog
+											1545 text Seluruh program studi
+											1546 text Mata kuliah
+											1547 text 02
+											1548 text Kelas aktif
+											1549 text 01
+											1550 text Kelas draf
+											1551 text 00
+											1552 text Pendaftaran aktif
+											1553 text 02
+											1554 heading Administrasi akademik
+											1555 link Katalog mata kuliah Kelola mata kuliah dan status penerbitannya. Buka Value: https://e-learning-uay.vercel.app/catalog
+												1556 heading Katalog mata kuliah
+											1557 link Kelola kelas Atur kelas, pengajar, peserta, dan status kelas. Buka Value: https://e-learning-uay.vercel.app/classes
+												1558 heading Kelola kelas
+											1559 link Rekap nilai Tinjau rekap nilai pada kelas dalam cakupan Anda. Buka Value: https://e-learning-uay.vercel.app/grades
+												1560 heading Rekap nilai
+											1561 heading Kelas draf 0
+											1562 link Kelola kelas Value: https://e-learning-uay.vercel.app/classes
+											1563 text Tidak ada kelas draf dalam cakupan Anda.
+										1528 footer
+											1529 text © 2026
+											1530 text Universitas Achmad Yani
+											1531 link Bantuan Value: https://e-learning-uay.vercel.app/help
+							43 region
+						44 region
+							45 region
+								46 button Tab search
+							47 region ID: view_21
+								48 tab
+									49 tab item (selectable) E-Learning UAY ID: view_20
+										50 button Close
+								51 region
+							52 button New Tab
+							53 region
+						54 region
+
+Document text: ```
+Lewati ke konten
+E-Learning UAY
+Perkecil navigasi
+Tutup menu
+MENU
+Beranda
+Katalog mata kuliah
+Kelola kelas
+Agenda akademik
+Rekap nilai
+Notifikasi
+Profil
+Bantuan
+Akun SSO UAY
+Identitas dikelola oleh SSO
+Buka menu
+Beranda
+MODE UJI
+Admin UAY
+Super admin
+Keluar
+Akademik
+Super admin
+Dashboard administrasi
+Admin UAY · Cakupan: Seluruh program studi
+Tambah kelas
+2026 / 2027 · Ganjil
+Pengelolaan akademik universitas
+Kelola mata kuliah, kelas, pengajar, dan kepesertaan dalam cakupan Anda.
+Katalog mata kuliah
+Seluruh program studi
+Mata kuliah
+02
+Kelas aktif
+01
+Kelas draf
+00
+Pendaftaran aktif
+02
+Administrasi akademik
+Katalog mata kuliah
+Kelola mata kuliah dan status penerbitannya.
+Buka
+Kelola kelas
+Atur kelas, pengajar, peserta, dan status kelas.
+Buka
+Rekap nilai
+Tinjau rekap nilai pada kelas dalam cakupan Anda.
+Buka
+Kelas draf0
+Kelola kelas
+Tidak ada kelas draf dalam cakupan Anda.
+© 2026 Universitas Achmad Yani
+Bantuan
+```

@@ -1,0 +1,109 @@
+{
+  "target": "https://e-learning-uay.vercel.app/",
+  "createdAt": "2026-09-30T11:43:41.344Z",
+  "build": "Build deployment belum terverifikasi",
+  "autoRunId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+  "autoCompletedAt": "2026-09-29T03:46:39.708Z",
+  "autoEnvironment": {
+    "label": "Lokal · PostgreSQL _test · fixture SSO & File Service",
+    "database": "elearning_test",
+    "runtime": "v22.12.0",
+    "platform": "win32",
+    "limitations": "Hasil otomatis lokal dengan fixture tidak membuktikan penerimaan SSO/File Service kampus, antivirus nyata, Redis produksi, VPS atau performa pilot."
+  },
+  "summary": {
+    "uiPass": 5,
+    "partial": 3,
+    "unexecuted": 309
+  },
+  "rows": [
+    {
+      "id": "TC-ACC-001",
+      "priority": "P0",
+      "role": "Mahasiswa",
+      "mcp": "pass",
+      "auto": "not_run",
+      "human": "not_run",
+      "actual": "Aditya Pratama / 202601001; dashboard Mahasiswa dan profil sesuai; profil tetap Aktif setelah reload.",
+      "note": "PASS terbatas jalur akun demonstrasi dan UI. Login provider SSO kampus, cookie, dan jaringan belum diuji.",
+      "evidence": "docs/qa/mcp-2026-09-30/student-profile.txt"
+    },
+    {
+      "id": "TC-ACC-002",
+      "priority": "P0",
+      "role": "Dosen",
+      "mcp": "pass",
+      "auto": "not_run",
+      "human": "not_run",
+      "actual": "Dr. Rina Puspitasari / 1112089001; profil Dosen; dashboard pengampu; sesi dan panel kuis tetap tersedia setelah reload.",
+      "note": "PASS terbatas jalur demonstrasi dan UI. Data demo existing digunakan. SSO kampus dan respons jaringan belum diuji.",
+      "evidence": "docs/qa/mcp-2026-09-30/teacher-reload.txt"
+    },
+    {
+      "id": "TC-ACC-003",
+      "priority": "P0",
+      "role": "Admin Prodi",
+      "mcp": "pass",
+      "auto": "not_run",
+      "human": "not_run",
+      "actual": "Admin Prodi Informatika / ADMIF01; profil Admin prodi aktif setelah reload; navigasi Katalog, Kelola kelas, Agenda akademik, Rekap nilai.",
+      "note": "PASS terbatas jalur demonstrasi dan UI. SSO kampus dan respons jaringan belum diuji.",
+      "evidence": "docs/qa/mcp-2026-09-30/admin-prodi-reload.txt"
+    },
+    {
+      "id": "TC-ACC-004",
+      "priority": "P0",
+      "role": "Super Admin",
+      "mcp": "pass",
+      "auto": "not_run",
+      "human": "not_run",
+      "actual": "Admin UAY / ADM001; profil Super admin Aktif setelah reload; dashboard Seluruh program studi.",
+      "note": "PASS terbatas jalur demonstrasi dan UI. SSO kampus dan respons jaringan belum diuji.",
+      "evidence": "docs/qa/mcp-2026-09-30/super-admin-reload.txt"
+    },
+    {
+      "id": "TC-TDH-002",
+      "priority": "P0",
+      "role": "Dosen",
+      "mcp": "pass",
+      "auto": "not_run",
+      "human": "not_run",
+      "actual": "Antrean Kuis 01 · Fondasi web = 1. Tautan menuju kuis IF2101. Tabel mempunyai tepat 1 Perlu dinilai (Nadia attempt 3), 3 Selesai dinilai. Hasil bertahan setelah reload.",
+      "note": "PASS UI pada data demo existing; tidak membuat submission atau mengubah nilai. Kelas QA-V5 terpisah dan pemeriksaan jaringan tidak dijalankan.",
+      "evidence": "docs/qa/mcp-2026-09-30/teacher-queue.txt"
+    },
+    {
+      "id": "TC-ACC-009",
+      "priority": "P0",
+      "role": "Mahasiswa",
+      "mcp": "blocked",
+      "auto": "pass",
+      "human": "not_run",
+      "actual": "Keluar mengembalikan landing. Back ke /profile tetap menampilkan landing tanpa profil Aditya. Pergantian akun tidak memperlihatkan identitas lama.",
+      "note": "SEBAGIAN: alur UI logout lulus. Pencabutan cookie, logout provider, dan /me 401 belum diperiksa; kasus lengkap belum lulus.",
+      "evidence": "docs/qa/mcp-2026-09-30/logout-landing.txt"
+    },
+    {
+      "id": "TC-ENR-005",
+      "priority": "P0",
+      "role": "Dosen",
+      "mcp": "blocked",
+      "auto": "not_run",
+      "human": "not_run",
+      "actual": "Aditya pada IF2101 sudah nonaktif. Membuka kelas menunjukkan Hak Partisipasi Kelas Dinonaktifkan, tanpa materi atau aksi submit.",
+      "note": "SEBAGIAN: hanya kondisi nonaktif existing. Transisi aktif → nonaktif dan submit langsung belum diuji.",
+      "evidence": "docs/qa/mcp-2026-09-30/student-access.txt"
+    },
+    {
+      "id": "TC-TDH-005",
+      "priority": "P0",
+      "role": "Admin Prodi",
+      "mcp": "blocked",
+      "auto": "pass",
+      "human": "not_run",
+      "actual": "Dashboard Admin Prodi: Cakupan IF; menu pengelolaan akademik tanpa antrean dosen; Kelola kelas berisi IF202 dan IF2101.",
+      "note": "SEBAGIAN: dashboard dan navigasi lulus. Reload dashboard serta pembuktian isolasi terhadap kelas prodi lain belum dijalankan.",
+      "evidence": "docs/qa/mcp-2026-09-30/admin-prodi-dashboard.txt"
+    }
+  ]
+}

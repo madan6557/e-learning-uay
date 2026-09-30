@@ -1,0 +1,171 @@
+Window: "E-Learning UAY - Google Chrome", App: chrome.exe.
+	0 window E-Learning UAY - Google Chrome Secondary Actions: Raise
+		1 pane (disabled)
+		2 region E-Learning UAY - Google Chrome (Incognito)
+			3 region
+				4 region
+					5 region
+						6 button Minimize ID: view_1
+						190 button Maximize ID: view_2
+						8 button Close ID: view_4
+					9 region
+						10 region
+							11 tool bar ID: view_1000
+								12 button Back ID: view_1001
+								13 button (disabled) Forward ID: view_1002
+								14 button Reload ID: view_1003
+								15 group
+									16 button View site information ID: view_1011
+									17 edit (settable, string) Address and search bar Description: Ask Google or type a URL Value: e-learning-uay.vercel.app/profile ID: view_1012
+									18 region
+										95 button Bookmark this tab
+								20 button Incognito ID: view_1018
+								21 button Chrome ID: view_1007
+						40 region
+							41 region
+								42 region
+								336 document E-Learning UAY Value: https://e-learning-uay.vercel.app/profile ID: RootWebArea
+									337 group ID: root
+										350 link Lewati ke konten Value: https://e-learning-uay.vercel.app/profile#main-content
+										351 complementary ID: academic-navigation
+											352 link UAY E-Learning beranda Value: https://e-learning-uay.vercel.app/dashboard
+											353 toggle button Perkecil navigasi
+											354 button Tutup menu Description: Tutup menu ID: close-mobile-menu
+											355 text MENU
+											356 navigation Navigasi utama
+												357 link Beranda Value: https://e-learning-uay.vercel.app/dashboard
+												358 link Kelas saya Value: https://e-learning-uay.vercel.app/classes
+												359 link Agenda Value: https://e-learning-uay.vercel.app/agenda
+												360 link Nilai Value: https://e-learning-uay.vercel.app/grades
+												361 link Notifikasi 11 notifikasi belum dibaca Value: https://e-learning-uay.vercel.app/notifications
+												362 link Profil Value: https://e-learning-uay.vercel.app/profile
+												363 link Bantuan Value: https://e-learning-uay.vercel.app/help
+											364 text Akun SSO UAY
+											365 text Identitas dikelola oleh SSO
+										366 header
+											367 button Buka menu Description: Buka menu ID: open-mobile-menu
+											368 navigation Jejak navigasi
+												369 list
+													370 list item Beranda
+														371 link Beranda Value: https://e-learning-uay.vercel.app/dashboard
+													372 list item Profil
+														373 group
+															374 text Profil
+											375 text MODE UJI
+											376 link Profil akun Aditya Pratama Value: https://e-learning-uay.vercel.app/profile
+											377 button Keluar dari sesi
+										378 main ID: main-content
+											379 heading Profil akun
+											380 text Identitas akademik dan pengaturan data pada perangkat ini.
+											381 region Identitas akun
+												382 heading Aditya Pratama
+												383 text 202601001@example.test
+												384 text Mahasiswa
+												385 list
+													386 term Nama lengkap
+														387 text Nama lengkap
+													388 text Aditya Pratama
+													389 term Alamat email
+														390 text Alamat email
+													391 text 202601001@example.test
+													392 term Nama pengguna SSO
+														393 text Nama pengguna SSO
+													394 text 202601001
+													395 term NIM
+														396 text NIM
+													397 text 202601001
+													398 term Jenis pengguna
+														399 text Jenis pengguna
+													400 text Mahasiswa
+													401 term Status akun
+														402 text Status akun
+													403 text Aktif
+													404 term Peran akademik
+														405 text Peran akademik
+													406 text Mahasiswa
+													407 term Sumber identitas
+														408 text Sumber identitas
+													409 text SSO UAY
+													410 text 00000000-0000-4000-8000-000000000003
+											411 heading Kelola identitas
+											412 text Informasi profil mengikuti akun SSO UAY. Jika ada data yang keliru, hubungi pengelola akun akademik.
+											413 text Tautan pengelolaan akun SSO belum tersedia.
+											414 heading Draft pada perangkat
+											415 text 0 draft tersimpan pada perangkat ini.
+											416 text 
+											417 text Draft membantu memulihkan perubahan yang belum dikirim ke server.
+											418 button (disabled) Hapus draft lokal
+										419 footer
+											420 text © 2026
+											421 text Universitas Achmad Yani
+											422 link Bantuan Value: https://e-learning-uay.vercel.app/help
+							43 region
+						44 region
+							45 region
+								46 button Tab search
+							47 region ID: view_21
+								48 tab
+									49 tab item (selectable) E-Learning UAY ID: view_20
+										50 button Close
+								51 region
+							52 button New Tab
+							53 region
+						54 region
+
+Document text: ```
+Lewati ke konten
+E-Learning UAY
+Perkecil navigasi
+Tutup menu
+MENU
+Beranda
+Kelas saya
+Agenda
+Nilai
+Notifikasi
+11
+notifikasi belum dibaca
+Profil
+Bantuan
+Akun SSO UAY
+Identitas dikelola oleh SSO
+Buka menu
+Beranda
+Profil
+MODE UJI
+Aditya Pratama
+Mahasiswa
+Keluar
+Profil akun
+Identitas akademik dan pengaturan data pada perangkat ini.
+Aditya Pratama
+202601001@example.test
+￼
+Mahasiswa
+Nama lengkap
+Aditya Pratama
+Alamat email
+202601001@example.test
+Nama pengguna SSO
+202601001
+NIM
+202601001
+Jenis pengguna
+Mahasiswa
+Status akun
+￼
+Aktif
+Peran akademik
+Mahasiswa
+Sumber identitas
+SSO UAY
+00000000-0000-4000-8000-000000000003
+Kelola identitas
+Informasi profil mengikuti akun SSO UAY. Jika ada data yang keliru, hubungi pengelola akun akademik.
+Tautan pengelolaan akun SSO belum tersedia.
+Draft pada perangkat
+0 draft tersimpan pada perangkat ini. Draft membantu memulihkan perubahan yang belum dikirim ke server.
+Hapus draft lokal
+© 2026 Universitas Achmad Yani
+Bantuan
+```

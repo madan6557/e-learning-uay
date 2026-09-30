@@ -1,0 +1,169 @@
+Window: "E-Learning UAY - Google Chrome", App: chrome.exe.
+	0 window E-Learning UAY - Google Chrome Secondary Actions: Raise
+		1 pane (disabled)
+		2 region E-Learning UAY - Google Chrome (Incognito)
+			3 region
+				4 region
+					5 region
+						6 button Minimize ID: view_1
+						190 button Maximize ID: view_2
+						8 button Close ID: view_4
+					9 region
+						10 region
+							11 tool bar ID: view_1000
+								12 button Back ID: view_1001
+								13 button (disabled) Forward ID: view_1002
+								14 button Reload ID: view_1003
+								15 group
+									16 button View site information ID: view_1011
+									17 edit (settable, string) Address and search bar Description: Ask Google or type a URL Value: e-learning-uay.vercel.app/profile ID: view_1012
+									18 region
+										95 button Bookmark this tab
+								20 button Incognito ID: view_1018
+								21 button Chrome ID: view_1007
+						40 region
+							41 region
+								42 region
+								641 document E-Learning UAY Value: https://e-learning-uay.vercel.app/profile ID: RootWebArea
+									642 group ID: root
+										655 link Lewati ke konten Value: https://e-learning-uay.vercel.app/profile#main-content
+										656 complementary ID: academic-navigation
+											657 link UAY E-Learning beranda Value: https://e-learning-uay.vercel.app/dashboard
+											658 toggle button Perkecil navigasi
+											659 button Tutup menu Description: Tutup menu ID: close-mobile-menu
+											660 text MENU
+											661 navigation Navigasi utama
+												662 link Beranda Value: https://e-learning-uay.vercel.app/dashboard
+												663 link Kelas saya Value: https://e-learning-uay.vercel.app/classes
+												664 link Agenda Value: https://e-learning-uay.vercel.app/agenda
+												665 link Nilai Value: https://e-learning-uay.vercel.app/grades
+												666 link Notifikasi Value: https://e-learning-uay.vercel.app/notifications
+												667 link Profil Value: https://e-learning-uay.vercel.app/profile
+												668 link Bantuan Value: https://e-learning-uay.vercel.app/help
+											669 text Akun SSO UAY
+											670 text Identitas dikelola oleh SSO
+										671 header
+											672 button Buka menu Description: Buka menu ID: open-mobile-menu
+											673 navigation Jejak navigasi
+												674 list
+													675 list item Beranda
+														676 link Beranda Value: https://e-learning-uay.vercel.app/dashboard
+													677 list item Profil
+														678 group
+															679 text Profil
+											680 text MODE UJI
+											681 link Profil akun Dr. Rina Puspitasari, M.Kom. Value: https://e-learning-uay.vercel.app/profile
+											682 button Keluar dari sesi
+										683 main ID: main-content
+											684 heading Profil akun
+											685 text Identitas akademik dan pengaturan data pada perangkat ini.
+											686 region Identitas akun
+												687 heading Dr. Rina Puspitasari, M.Kom.
+												688 text 1112089001@example.test
+												689 text Dosen
+												690 list
+													691 term Nama lengkap
+														692 text Nama lengkap
+													693 text Dr. Rina Puspitasari, M.Kom.
+													694 term Alamat email
+														695 text Alamat email
+													696 text 1112089001@example.test
+													697 term Nama pengguna SSO
+														698 text Nama pengguna SSO
+													699 text 1112089001
+													700 term NIDN
+														701 text NIDN
+													702 text 1112089001
+													703 term Jenis pengguna
+														704 text Jenis pengguna
+													705 text Dosen
+													706 term Status akun
+														707 text Status akun
+													708 text Aktif
+													709 term Peran akademik
+														710 text Peran akademik
+													711 text Dosen
+													712 term Sumber identitas
+														713 text Sumber identitas
+													714 text SSO UAY
+													715 text 00000000-0000-4000-8000-000000000002
+											716 heading Kelola identitas
+											717 text Informasi profil mengikuti akun SSO UAY. Jika ada data yang keliru, hubungi pengelola akun akademik.
+											718 text Tautan pengelolaan akun SSO belum tersedia.
+											719 heading Draft pada perangkat
+											720 text 0 draft tersimpan pada perangkat ini.
+											721 text 
+											722 text Draft membantu memulihkan perubahan yang belum dikirim ke server.
+											723 button (disabled) Hapus draft lokal
+										724 footer
+											725 text © 2026
+											726 text Universitas Achmad Yani
+											727 link Bantuan Value: https://e-learning-uay.vercel.app/help
+							43 region
+						44 region
+							45 region
+								46 button Tab search
+							47 region ID: view_21
+								48 tab
+									49 tab item (selectable) E-Learning UAY ID: view_20
+										50 button Close
+								51 region
+							52 button New Tab
+							53 region
+						54 region
+
+Document text: ```
+Lewati ke konten
+E-Learning UAY
+Perkecil navigasi
+Tutup menu
+MENU
+Beranda
+Kelas saya
+Agenda
+Nilai
+Notifikasi
+Profil
+Bantuan
+Akun SSO UAY
+Identitas dikelola oleh SSO
+Buka menu
+Beranda
+Profil
+MODE UJI
+Dr. Rina Puspitasari, M.Kom.Dr. Rina Puspitasari, M.K…
+Dosen
+Keluar
+Profil akun
+Identitas akademik dan pengaturan data pada perangkat ini.
+Dr. Rina Puspitasari, M.Kom.
+1112089001@example.test
+￼
+Dosen
+Nama lengkap
+Dr. Rina Puspitasari, M.Kom.
+Alamat email
+1112089001@example.test
+Nama pengguna SSO
+1112089001
+NIDN
+1112089001
+Jenis pengguna
+Dosen
+Status akun
+￼
+Aktif
+Peran akademik
+Dosen
+Sumber identitas
+SSO UAY
+00000000-0000-4000-8000-000000000002
+Kelola identitas
+Informasi profil mengikuti akun SSO UAY. Jika ada data yang keliru, hubungi pengelola akun akademik.
+Tautan pengelolaan akun SSO belum tersedia.
+Draft pada perangkat
+0 draft tersimpan pada perangkat ini. Draft membantu memulihkan perubahan yang belum dikirim ke server.
+Hapus draft lokal
+© 2026 Universitas Achmad Yani
+Bantuan
+```

@@ -1,0 +1,140 @@
+{
+  "version": 1,
+  "active": "96c9ed6b-611b-406c-a571-e9e4dc671728",
+  "sessions": [
+    {
+      "id": "b37481c8-22d1-4d0e-aef2-65ab3b019262",
+      "name": "Sesi pengujian 1",
+      "tester": "Ma&",
+      "environment": "Lokal · fixture SSO & File Service",
+      "build": "feat: add article authoring tools and polish modal layout · madan6557/e-learning-uay@f5c08b0",
+      "createdAt": "2026-09-29T03:07:52.215Z",
+      "records": {
+        "TC-ACC-005": {
+          "status": "pass",
+          "actual": "as expected",
+          "note": "",
+          "evidence": "",
+          "checks": [],
+          "updatedAt": "2026-09-29T04:29:00.796Z",
+          "tester": "Ma&",
+          "environment": "Lokal · fixture SSO & File Service"
+        }
+      }
+    },
+    {
+      "id": "96c9ed6b-611b-406c-a571-e9e4dc671728",
+      "name": "MCP Chrome · Development Vercel · 30 Sep 2026",
+      "tester": "Codex · MCP Chrome",
+      "environment": "Development · https://e-learning-uay.vercel.app/ · Chrome Incognito · akun demonstrasi",
+      "build": "Build deployment belum terverifikasi",
+      "createdAt": "2026-09-30T11:43:41.344Z",
+      "records": {
+        "TC-ACC-001": {
+          "status": "pass",
+          "actual": "Aditya Pratama / 202601001; dashboard Mahasiswa dan profil sesuai; profil tetap Aktif setelah reload.",
+          "note": "PASS terbatas jalur akun demonstrasi dan UI. Login provider SSO kampus, cookie, dan jaringan belum diuji.",
+          "evidence": "docs/qa/mcp-2026-09-30/student-profile.txt",
+          "checks": [
+            0,
+            2
+          ],
+          "updatedAt": "2026-09-30T11:43:41.344Z",
+          "tester": "Codex · MCP Chrome",
+          "environment": "Development · https://e-learning-uay.vercel.app/ · Chrome Incognito · akun demonstrasi"
+        },
+        "TC-ACC-002": {
+          "status": "pass",
+          "actual": "Dr. Rina Puspitasari / 1112089001; profil Dosen; dashboard pengampu; sesi dan panel kuis tetap tersedia setelah reload.",
+          "note": "PASS terbatas jalur demonstrasi dan UI. Data demo existing digunakan. SSO kampus dan respons jaringan belum diuji.",
+          "evidence": "docs/qa/mcp-2026-09-30/teacher-reload.txt",
+          "checks": [
+            0,
+            2
+          ],
+          "updatedAt": "2026-09-30T11:43:41.344Z",
+          "tester": "Codex · MCP Chrome",
+          "environment": "Development · https://e-learning-uay.vercel.app/ · Chrome Incognito · akun demonstrasi"
+        },
+        "TC-ACC-003": {
+          "status": "pass",
+          "actual": "Admin Prodi Informatika / ADMIF01; profil Admin prodi aktif setelah reload; navigasi Katalog, Kelola kelas, Agenda akademik, Rekap nilai.",
+          "note": "PASS terbatas jalur demonstrasi dan UI. SSO kampus dan respons jaringan belum diuji.",
+          "evidence": "docs/qa/mcp-2026-09-30/admin-prodi-reload.txt",
+          "checks": [
+            0,
+            2
+          ],
+          "updatedAt": "2026-09-30T11:43:41.344Z",
+          "tester": "Codex · MCP Chrome",
+          "environment": "Development · https://e-learning-uay.vercel.app/ · Chrome Incognito · akun demonstrasi"
+        },
+        "TC-ACC-004": {
+          "status": "pass",
+          "actual": "Admin UAY / ADM001; profil Super admin Aktif setelah reload; dashboard Seluruh program studi.",
+          "note": "PASS terbatas jalur demonstrasi dan UI. SSO kampus dan respons jaringan belum diuji.",
+          "evidence": "docs/qa/mcp-2026-09-30/super-admin-reload.txt",
+          "checks": [
+            0,
+            2
+          ],
+          "updatedAt": "2026-09-30T11:43:41.344Z",
+          "tester": "Codex · MCP Chrome",
+          "environment": "Development · https://e-learning-uay.vercel.app/ · Chrome Incognito · akun demonstrasi"
+        },
+        "TC-TDH-002": {
+          "status": "pass",
+          "actual": "Antrean Kuis 01 · Fondasi web = 1. Tautan menuju kuis IF2101. Tabel mempunyai tepat 1 Perlu dinilai (Nadia attempt 3), 3 Selesai dinilai. Hasil bertahan setelah reload.",
+          "note": "PASS UI pada data demo existing; tidak membuat submission atau mengubah nilai. Kelas QA-V5 terpisah dan pemeriksaan jaringan tidak dijalankan.",
+          "evidence": "docs/qa/mcp-2026-09-30/teacher-queue.txt",
+          "checks": [
+            0,
+            2
+          ],
+          "updatedAt": "2026-09-30T11:43:41.344Z",
+          "tester": "Codex · MCP Chrome",
+          "environment": "Development · https://e-learning-uay.vercel.app/ · Chrome Incognito · akun demonstrasi"
+        },
+        "TC-ACC-009": {
+          "status": "blocked",
+          "actual": "Keluar mengembalikan landing. Back ke /profile tetap menampilkan landing tanpa profil Aditya. Pergantian akun tidak memperlihatkan identitas lama.",
+          "note": "SEBAGIAN: alur UI logout lulus. Pencabutan cookie, logout provider, dan /me 401 belum diperiksa; kasus lengkap belum lulus.",
+          "evidence": "docs/qa/mcp-2026-09-30/logout-landing.txt",
+          "checks": [
+            0,
+            1
+          ],
+          "updatedAt": "2026-09-30T11:43:41.344Z",
+          "tester": "Codex · MCP Chrome",
+          "environment": "Development · https://e-learning-uay.vercel.app/ · Chrome Incognito · akun demonstrasi"
+        },
+        "TC-ENR-005": {
+          "status": "blocked",
+          "actual": "Aditya pada IF2101 sudah nonaktif. Membuka kelas menunjukkan Hak Partisipasi Kelas Dinonaktifkan, tanpa materi atau aksi submit.",
+          "note": "SEBAGIAN: hanya kondisi nonaktif existing. Transisi aktif → nonaktif dan submit langsung belum diuji.",
+          "evidence": "docs/qa/mcp-2026-09-30/student-access.txt",
+          "checks": [],
+          "updatedAt": "2026-09-30T11:43:41.344Z",
+          "tester": "Codex · MCP Chrome",
+          "environment": "Development · https://e-learning-uay.vercel.app/ · Chrome Incognito · akun demonstrasi"
+        },
+        "TC-TDH-005": {
+          "status": "blocked",
+          "actual": "Dashboard Admin Prodi: Cakupan IF; menu pengelolaan akademik tanpa antrean dosen; Kelola kelas berisi IF202 dan IF2101.",
+          "note": "SEBAGIAN: dashboard dan navigasi lulus. Reload dashboard serta pembuktian isolasi terhadap kelas prodi lain belum dijalankan.",
+          "evidence": "docs/qa/mcp-2026-09-30/admin-prodi-dashboard.txt",
+          "checks": [
+            0,
+            2
+          ],
+          "updatedAt": "2026-09-30T11:43:41.344Z",
+          "tester": "Codex · MCP Chrome",
+          "environment": "Development · https://e-learning-uay.vercel.app/ · Chrome Incognito · akun demonstrasi"
+        }
+      }
+    }
+  ],
+  "targetUrl": "https://e-learning-uay.vercel.app/",
+  "exportedAt": "2026-09-30T11:43:41.344Z",
+  "documentSha256": "1dfda756cde43dd82f300f9e0a47b6f9cca01f9bf1014b034409006189f6d537"
+}

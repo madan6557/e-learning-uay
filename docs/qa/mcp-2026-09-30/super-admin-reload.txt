@@ -1,0 +1,171 @@
+Window: "E-Learning UAY - Google Chrome", App: chrome.exe.
+	0 window E-Learning UAY - Google Chrome Secondary Actions: Raise
+		1 pane (disabled)
+		2 region E-Learning UAY - Google Chrome (Incognito)
+			3 region
+				4 region
+					5 region
+						6 button Minimize ID: view_1
+						190 button Maximize ID: view_2
+						8 button Close ID: view_4
+					9 region
+						10 region
+							11 tool bar ID: view_1000
+								12 button Back ID: view_1001
+								13 button (disabled) Forward ID: view_1002
+								14 button Reload ID: view_1003
+								15 group
+									16 button View site information ID: view_1011
+									17 edit (settable, string) Address and search bar Description: Ask Google or type a URL Value: e-learning-uay.vercel.app/profile ID: view_1012
+									18 region
+										95 button Bookmark this tab
+								20 button Incognito ID: view_1018
+								21 button Chrome ID: view_1007
+						40 region
+							41 region
+								42 region
+								1613 document E-Learning UAY Value: https://e-learning-uay.vercel.app/profile ID: RootWebArea
+									1614 group ID: root
+										1627 link Lewati ke konten Value: https://e-learning-uay.vercel.app/profile#main-content
+										1628 complementary ID: academic-navigation
+											1629 link UAY E-Learning beranda Value: https://e-learning-uay.vercel.app/dashboard
+											1630 toggle button Perkecil navigasi
+											1631 button Tutup menu Description: Tutup menu ID: close-mobile-menu
+											1632 text MENU
+											1633 navigation Navigasi utama
+												1634 link Beranda Value: https://e-learning-uay.vercel.app/dashboard
+												1635 link Katalog mata kuliah Value: https://e-learning-uay.vercel.app/catalog
+												1636 link Kelola kelas Value: https://e-learning-uay.vercel.app/classes
+												1637 link Agenda akademik Value: https://e-learning-uay.vercel.app/agenda
+												1638 link Rekap nilai Value: https://e-learning-uay.vercel.app/grades
+												1639 link Notifikasi Value: https://e-learning-uay.vercel.app/notifications
+												1640 link Profil Value: https://e-learning-uay.vercel.app/profile
+												1641 link Bantuan Value: https://e-learning-uay.vercel.app/help
+											1642 text Akun SSO UAY
+											1643 text Identitas dikelola oleh SSO
+										1644 header
+											1645 button Buka menu Description: Buka menu ID: open-mobile-menu
+											1646 navigation Jejak navigasi
+												1647 list
+													1648 list item Beranda
+														1649 link Beranda Value: https://e-learning-uay.vercel.app/dashboard
+													1650 list item Profil
+														1651 group
+															1652 text Profil
+											1700 text MODE UJI
+											1653 link Profil akun Admin UAY Value: https://e-learning-uay.vercel.app/profile
+											1654 button Keluar dari sesi
+										1655 main ID: main-content
+											1656 heading Profil akun
+											1657 text Identitas akademik dan pengaturan data pada perangkat ini.
+											1658 region Identitas akun
+												1659 heading Admin UAY
+												1660 text adm001@example.test
+												1661 text Super admin
+												1662 list
+													1663 term Nama lengkap
+														1664 text Nama lengkap
+													1665 text Admin UAY
+													1666 term Alamat email
+														1667 text Alamat email
+													1668 text adm001@example.test
+													1669 term Nama pengguna SSO
+														1670 text Nama pengguna SSO
+													1671 text adm001
+													1672 term NIP
+														1673 text NIP
+													1674 text ADM001
+													1675 term Jenis pengguna
+														1676 text Jenis pengguna
+													1677 text Administrator
+													1678 term Status akun
+														1679 text Status akun
+													1680 text Aktif
+													1681 term Peran akademik
+														1682 text Peran akademik
+													1683 text Super admin
+													1684 term Sumber identitas
+														1685 text Sumber identitas
+													1686 text SSO UAY
+													1687 text 00000000-0000-4000-8000-000000000001
+											1688 heading Kelola identitas
+											1689 text Informasi profil mengikuti akun SSO UAY. Jika ada data yang keliru, hubungi pengelola akun akademik.
+											1690 text Tautan pengelolaan akun SSO belum tersedia.
+											1691 heading Draft pada perangkat
+											1692 text 0 draft tersimpan pada perangkat ini.
+											1693 text 
+											1694 text Draft membantu memulihkan perubahan yang belum dikirim ke server.
+											1695 button (disabled) Hapus draft lokal
+										1696 footer
+											1697 text © 2026
+											1698 text Universitas Achmad Yani
+											1699 link Bantuan Value: https://e-learning-uay.vercel.app/help
+							43 region
+						44 region
+							45 region
+								46 button Tab search
+							47 region ID: view_21
+								48 tab
+									49 tab item (selectable) E-Learning UAY ID: view_20
+										50 button Close
+								51 region
+							52 button New Tab
+							53 region
+						54 region
+
+Document text: ```
+Lewati ke konten
+E-Learning UAY
+Perkecil navigasi
+Tutup menu
+MENU
+Beranda
+Katalog mata kuliah
+Kelola kelas
+Agenda akademik
+Rekap nilai
+Notifikasi
+Profil
+Bantuan
+Akun SSO UAY
+Identitas dikelola oleh SSO
+Buka menu
+Beranda
+Profil
+MODE UJI
+Admin UAY
+Super admin
+Keluar
+Profil akun
+Identitas akademik dan pengaturan data pada perangkat ini.
+Admin UAY
+adm001@example.test
+￼
+Super admin
+Nama lengkap
+Admin UAY
+Alamat email
+adm001@example.test
+Nama pengguna SSO
+adm001
+NIP
+ADM001
+Jenis pengguna
+Administrator
+Status akun
+￼
+Aktif
+Peran akademik
+Super admin
+Sumber identitas
+SSO UAY
+00000000-0000-4000-8000-000000000001
+Kelola identitas
+Informasi profil mengikuti akun SSO UAY. Jika ada data yang keliru, hubungi pengelola akun akademik.
+Tautan pengelolaan akun SSO belum tersedia.
+Draft pada perangkat
+0 draft tersimpan pada perangkat ini. Draft membantu memulihkan perubahan yang belum dikirim ke server.
+Hapus draft lokal
+© 2026 Universitas Achmad Yani
+Bantuan
+```

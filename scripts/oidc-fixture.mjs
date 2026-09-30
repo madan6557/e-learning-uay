@@ -94,7 +94,7 @@ export async function startMockSso({
           return send(400, { error: "invalid_request" });
         const users = await db.user.findMany({
           where: { status: "ACTIVE" },
-          orderBy: { role: "asc" },
+          orderBy: [{ role: "asc" }, { identifierValue: "asc" }],
         });
         const user = users.find(
           (u) => u.ssoUserId === p.get("login_hint"),

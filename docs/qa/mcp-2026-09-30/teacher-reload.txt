@@ -1,0 +1,206 @@
+Window: "E-Learning UAY - Google Chrome", App: chrome.exe.
+	0 window E-Learning UAY - Google Chrome Secondary Actions: Raise
+		1 pane (disabled)
+		2 region E-Learning UAY - Google Chrome (Incognito)
+			3 region
+				4 region
+					5 region
+						6 button Minimize ID: view_1
+						190 button Maximize ID: view_2
+						8 button Close ID: view_4
+					9 region
+						10 region
+							11 tool bar ID: view_1000
+								12 button Back ID: view_1001
+								13 button (disabled) Forward ID: view_1002
+								14 button Reload ID: view_1003
+								15 group
+									16 button View site information ID: view_1011
+									17 edit (settable, string) Address and search bar Description: Ask Google or type a URL Value: e-learning-uay.vercel.app/classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/quizzes/kuis-01-fondasi-web ID: view_1012
+									18 region
+										95 button Bookmark this tab
+								20 button Incognito ID: view_1018
+								21 button Chrome ID: view_1007
+						40 region
+							41 region
+								42 region
+								834 document E-Learning UAY Value: https://e-learning-uay.vercel.app/classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/quizzes/kuis-01-fondasi-web ID: RootWebArea
+									835 group ID: root
+										848 link Lewati ke konten Value: https://e-learning-uay.vercel.app/classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/quizzes/kuis-01-fondasi-web#main-content
+										849 complementary ID: academic-navigation
+											850 link UAY E-Learning beranda Value: https://e-learning-uay.vercel.app/dashboard
+											851 toggle button Perkecil navigasi
+											852 button Tutup menu Description: Tutup menu ID: close-mobile-menu
+											853 text MENU
+											854 navigation Navigasi utama
+												855 link Beranda Value: https://e-learning-uay.vercel.app/dashboard
+												856 link Kelas saya Value: https://e-learning-uay.vercel.app/classes
+												857 link Agenda Value: https://e-learning-uay.vercel.app/agenda
+												858 link Nilai Value: https://e-learning-uay.vercel.app/grades
+												859 link Notifikasi Value: https://e-learning-uay.vercel.app/notifications
+												860 link Profil Value: https://e-learning-uay.vercel.app/profile
+												861 link Bantuan Value: https://e-learning-uay.vercel.app/help
+											862 text Akun SSO UAY
+											863 text Identitas dikelola oleh SSO
+										864 header
+											865 button Buka menu Description: Buka menu ID: open-mobile-menu
+											866 navigation Jejak navigasi
+												867 list
+													868 list item Beranda
+														869 link Beranda Value: https://e-learning-uay.vercel.app/dashboard
+													870 list item Kelas saya
+														871 group
+															872 text Kelas saya
+											873 text MODE UJI
+											874 link Profil akun Dr. Rina Puspitasari, M.Kom. Value: https://e-learning-uay.vercel.app/profile
+											875 button Keluar dari sesi
+										876 main ID: main-content
+											887 link Kembali Value: https://e-learning-uay.vercel.app/classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil
+											888 text Kuis
+											889 heading Kuis 01 · Fondasi web
+											890 text Evaluasi delapan bentuk soal untuk menguji pemahaman konsep web.
+											891 text Terbit
+											892 button Edit
+											893 text 30 min
+											894 text Kesempatan pengerjaan
+											895 text :
+											896 text 3
+											897 heading Nilai jawaban
+											898 text Mode koreksi:
+											899 combo box (settable, string) Per soal Value: Semua soal (per mahasiswa)
+											900 button (disabled) Publikasikan semua nilai
+											901 table
+												902 row
+													903 column header Nama
+													904 column header Pengerjaan
+													905 column header Status
+													906 column header Dikumpulkan
+													907 column header Nilai
+												908 row
+													909 item Nadia Putri 202601002
+													910 item 3
+													911 item Perlu dinilai
+													912 item 30 Sep 2026, 10.25
+													913 item 10 Belum dipublikasikan
+													914 item Nilai jawaban
+														915 button Nilai jawaban
+												916 row
+													917 item Nadia Putri 202601002
+													918 item 2
+													919 item Selesai dinilai
+													920 item 30 Sep 2026, 10.15
+													921 item 10 ✓ Terpublikasi
+													922 item Nilai jawaban
+														923 button Nilai jawaban
+												924 row
+													925 item Nadia Putri 202601002
+													926 item 1
+													927 item Selesai dinilai
+													928 item 30 Sep 2026, 10.13
+													929 item 85 ✓ Terpublikasi
+													930 item Nilai jawaban
+														931 button Nilai jawaban
+												932 row
+													933 item Aditya Pratama 202601001
+													934 item 1
+													935 item Selesai dinilai
+													936 item 12 Sep 2026, 13.37
+													937 item 90 ✓ Terpublikasi
+													938 item Nilai jawaban
+														939 button Nilai jawaban
+										879 footer
+											880 text © 2026
+											881 text Universitas Achmad Yani
+											882 link Bantuan Value: https://e-learning-uay.vercel.app/help
+							43 region
+						44 region
+							45 region
+								46 button Tab search
+							47 region ID: view_21
+								48 tab
+									49 tab item (selectable) E-Learning UAY ID: view_20
+										50 button Close
+								51 region
+							52 button New Tab
+							53 region
+						54 region
+
+Document text: ```
+Lewati ke konten
+E-Learning UAY
+Perkecil navigasi
+Tutup menu
+MENU
+Beranda
+Kelas saya
+Agenda
+Nilai
+Notifikasi
+Profil
+Bantuan
+Akun SSO UAY
+Identitas dikelola oleh SSO
+Buka menu
+Beranda
+Kelas saya
+MODE UJI
+Dr. Rina Puspitasari, M.Kom.Dr. Rina Puspitasari, M.K…
+Dosen
+Keluar
+Kembali
+Kuis
+Kuis 01 · Fondasi web
+Evaluasi delapan bentuk soal untuk menguji pemahaman konsep web.
+Terbit
+Edit
+30 min
+Kesempatan pengerjaan: 3
+Nilai jawaban
+Mode koreksi:
+Per soal
+Publikasikan semua nilai
+Nama
+Pengerjaan
+Status
+Dikumpulkan
+Nilai
+￼
+Nadia Putri
+202601002
+3
+￼
+Perlu dinilai
+30 Sep 2026, 10.25
+10
+Belum dipublikasikan
+Nilai jawaban
+Nadia Putri
+202601002
+2
+￼
+Selesai dinilai
+30 Sep 2026, 10.15
+10
+✓ Terpublikasi
+Nilai jawaban
+Nadia Putri
+202601002
+1
+￼
+Selesai dinilai
+30 Sep 2026, 10.13
+85
+✓ Terpublikasi
+Nilai jawaban
+Aditya Pratama
+202601001
+1
+￼
+Selesai dinilai
+12 Sep 2026, 13.37
+90
+✓ Terpublikasi
+Nilai jawaban
+© 2026 Universitas Achmad Yani
+Bantuan
+```

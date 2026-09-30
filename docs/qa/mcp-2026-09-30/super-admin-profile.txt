@@ -1,0 +1,123 @@
+Window: "E-Learning UAY - Google Chrome", App: chrome.exe.
+	0 window E-Learning UAY - Google Chrome Secondary Actions: Raise
+		1 pane (disabled)
+		2 region E-Learning UAY - Google Chrome (Incognito)
+			3 region
+				4 region
+					5 region
+						6 button Minimize ID: view_1
+						190 button Maximize ID: view_2
+						8 button Close ID: view_4
+					9 region
+						10 region
+							11 tool bar ID: view_1000
+								12 button Back ID: view_1001
+								13 button (disabled) Forward ID: view_1002
+								14 button Reload ID: view_1003
+								15 group
+									16 button View site information ID: view_1011
+									17 edit (settable, string) Address and search bar Description: Ask Google or type a URL Value: e-learning-uay.vercel.app/profile ID: view_1012
+									18 region
+										95 button Bookmark this tab
+								20 button Incognito ID: view_1018
+								21 button Chrome ID: view_1007
+						40 region
+							41 region
+								42 region
+								1484 document E-Learning UAY Value: https://e-learning-uay.vercel.app/profile ID: RootWebArea
+									1485 group ID: root
+										1498 link Lewati ke konten Value: https://e-learning-uay.vercel.app/dashboard#main-content
+										1499 complementary ID: academic-navigation
+											1500 link UAY E-Learning beranda Value: https://e-learning-uay.vercel.app/dashboard
+											1501 toggle button Perkecil navigasi
+											1502 button Tutup menu Description: Tutup menu ID: close-mobile-menu
+											1503 text MENU
+											1504 navigation Navigasi utama
+												1505 link Beranda Value: https://e-learning-uay.vercel.app/dashboard
+												1506 link Katalog mata kuliah Value: https://e-learning-uay.vercel.app/catalog
+												1507 link Kelola kelas Value: https://e-learning-uay.vercel.app/classes
+												1508 link Agenda akademik Value: https://e-learning-uay.vercel.app/agenda
+												1509 link Rekap nilai Value: https://e-learning-uay.vercel.app/grades
+												1510 link Notifikasi Value: https://e-learning-uay.vercel.app/notifications
+												1511 link Profil Value: https://e-learning-uay.vercel.app/profile
+												1512 link Bantuan Value: https://e-learning-uay.vercel.app/help
+											1513 text Akun SSO UAY
+											1514 text Identitas dikelola oleh SSO
+										1515 header
+											1516 button Buka menu Description: Buka menu ID: open-mobile-menu
+											1517 navigation Jejak navigasi
+												1518 list
+													1519 list item Beranda
+														1569 link Beranda Value: https://e-learning-uay.vercel.app/dashboard
+													1570 list item Profil
+														1571 group
+															1572 text Profil
+											1522 text MODE UJI
+											1523 link Profil akun Admin UAY Value: https://e-learning-uay.vercel.app/profile
+											1524 button Keluar dari sesi
+										1525 main ID: main-content
+											1573 heading Profil akun
+											1574 text Identitas akademik dan pengaturan data pada perangkat ini.
+											1575 region Identitas akun
+												1576 heading Admin UAY
+												1577 text adm001@example.test
+												1578 text Super admin
+												1579 list
+													1580 term Nama lengkap
+														1581 text Nama lengkap
+													1582 text Admin UAY
+													1583 term Alamat email
+														1584 text Alamat email
+													1585 text adm001@example.test
+													1586 term Nama pengguna SSO
+														1587 text Nama pengguna SSO
+													1588 text adm001
+													1589 term NIP
+														1590 text NIP
+													1591 text ADM001
+													1592 term Jenis pengguna
+														1593 text Jenis pengguna
+													1594 text Administrator
+													1595 term Status akun
+														1596 text Status akun
+													1597 text Aktif
+													1598 term Peran akademik
+														1599 text Peran akademik
+													1600 text Super admin
+													1601 term Sumber identitas
+														1602 text Sumber identitas
+													1603 text SSO UAY
+													1604 text 00000000-0000-4000-8000-000000000001
+											1605 heading Kelola identitas
+											1606 text Informasi profil mengikuti akun SSO UAY. Jika ada data yang keliru, hubungi pengelola akun akademik.
+											1607 text Tautan pengelolaan akun SSO belum tersedia.
+											1608 heading Draft pada perangkat
+											1609 text 0 draft tersimpan pada perangkat ini.
+											1610 text 
+											1611 text Draft membantu memulihkan perubahan yang belum dikirim ke server.
+											1612 button (disabled) Hapus draft lokal
+										1528 footer
+											1529 text © 2026
+											1530 text Universitas Achmad Yani
+											1531 link Bantuan Value: https://e-learning-uay.vercel.app/help
+							43 region
+						44 region
+							45 region
+								46 button Tab search
+							47 region ID: view_21
+								48 tab
+									49 tab item (selectable) E-Learning UAY ID: view_20
+										50 button Close
+								51 region
+							52 button New Tab
+							53 region
+						54 region
+			1564 pane
+				1565 pane (disabled)
+				1566 region
+					1567 region
+						1568 text https://e-learning-uay.vercel.app/profile
+
+Document text: ```
+e-learning-uay.vercel.app/profile
+```

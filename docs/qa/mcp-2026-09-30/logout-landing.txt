@@ -1,0 +1,167 @@
+Window: "E-Learning UAY - Google Chrome", App: chrome.exe.
+	0 window E-Learning UAY - Google Chrome Secondary Actions: Raise
+		1 pane (disabled)
+		2 region E-Learning UAY - Google Chrome (Incognito)
+			3 region
+				4 region
+					5 region
+						6 button Minimize ID: view_1
+						190 button Maximize ID: view_2
+						8 button Close ID: view_4
+					9 region
+						10 region
+							11 tool bar ID: view_1000
+								12 button Back ID: view_1001
+								13 button (disabled) Forward ID: view_1002
+								14 button Reload ID: view_1003
+								15 group
+									16 button View site information ID: view_1011
+									17 edit (settable, string) Address and search bar Description: Ask Google or type a URL Value: e-learning-uay.vercel.app ID: view_1012
+									18 region
+										95 button Bookmark this tab
+								20 button Incognito ID: view_1018
+								21 button Chrome ID: view_1007
+						40 region
+							41 region
+								42 region
+								1745 document E-Learning UAY Value: https://e-learning-uay.vercel.app/ ID: RootWebArea
+									1746 group ID: root
+										1759 link Lewati ke konten Value: https://e-learning-uay.vercel.app/#main-content
+										1760 header
+											1761 link UAY E-Learning beranda Value: https://e-learning-uay.vercel.app/
+											1762 navigation Menu publik
+												1763 button Masuk dengan SSO UAY
+										1764 main ID: main-content
+											1765 text UNIVERSITAS ACHMAD YANI BANJARMASIN
+											1766 heading E-Learning UAY
+											1767 text Materi kuliah, tugas, kuis, dan rekap nilai untuk mahasiswa dan dosen Universitas Achmad Yani.
+											1768 button Masuk dengan SSO UAY
+											1769 text Gunakan akun akademik UAY Anda.
+											1770 complementary Sebelum masuk
+												1771 text SEMESTER GANJIL 2026/2027
+												1772 heading Sebelum masuk
+												1773 text Akses diatur oleh program studi dan dosen pengampu, bukan oleh aplikasi ini.
+												1774 list
+													1775 term Daftar kelas kosong
+														1776 text Daftar kelas kosong
+													1777 text Program studi belum mendaftarkan Anda pada kelas semester ini.
+													1778 term Kelas terbuka tetapi belum ada isinya
+														1779 text Kelas terbuka tetapi belum ada isinya
+													1780 text Dosen belum menerbitkan materi atau aktivitas.
+													1781 term Tidak dapat masuk
+														1782 text Tidak dapat masuk
+													1783 text Hubungi bagian akademik program studi Anda.
+											1784 region Fitur pembelajaran
+												1785 article
+													1786 heading Kelas
+													1787 text Section, materi, dan pengumuman dari dosen pengampu.
+												1788 article
+													1789 heading Tugas dan kuis
+													1790 text Kerjakan sebelum tenggat. Setiap versi pengumpulan tersimpan.
+												1791 article
+													1792 heading Nilai
+													1793 text Rekap per kategori beserta bobotnya, setelah dosen menerbitkan.
+											1794 text LINGKUNGAN UJI
+											1795 heading Akun demonstrasi
+											1796 text Masuk sebagai salah satu peran. Semua data di sini contoh.
+											1803 article
+												1804 text Admin UAY
+												1805 text Super admin
+												1806 text ·
+												1807 text ADM001
+												1808 button Masuk sebagai Admin UAY
+											1809 article
+												1810 text Admin Prodi Informatika
+												1811 text Admin prodi
+												1812 text ·
+												1813 text ADMIF01
+												1814 button Masuk sebagai Admin Prodi Informatika
+											1815 article
+												1816 text Dr. Rina Puspitasari, M.Kom.
+												1817 text Dosen
+												1818 text ·
+												1819 text 1112089001
+												1820 button Masuk sebagai Dr. Rina Puspitasari, M.Kom.
+											1821 article
+												1822 text Aditya Pratama
+												1823 text Mahasiswa
+												1824 text ·
+												1825 text 202601001
+												1826 button Masuk sebagai Aditya Pratama
+											1827 article
+												1828 text Nadia Putri
+												1829 text Mahasiswa
+												1830 text ·
+												1831 text 202601002
+												1832 button Masuk sebagai Nadia Putri
+											1833 article
+												1834 text Bima Saputra
+												1835 text Mahasiswa
+												1836 text ·
+												1837 text 202602001
+												1838 button Masuk sebagai Bima Saputra
+										1799 footer
+											1800 text © 2026
+											1801 text Universitas Achmad Yani
+											1802 text Semua waktu mengikuti waktu lokal perangkat Anda.
+							43 region
+						44 region
+							45 region
+								46 button Tab search
+							47 region ID: view_21
+								48 tab
+									49 tab item (selectable) E-Learning UAY ID: view_20
+										50 button Close
+								51 region
+							52 button New Tab
+							53 region
+						54 region
+
+Document text: ```
+Lewati ke konten
+E-Learning UAY
+Masuk SSO
+UNIVERSITAS ACHMAD YANI BANJARMASIN
+E-Learning UAY
+Materi kuliah, tugas, kuis, dan rekap nilai untuk mahasiswa dan dosen Universitas Achmad Yani.
+Masuk dengan SSO UAY
+Gunakan akun akademik UAY Anda.
+SEMESTER GANJIL 2026/2027
+Sebelum masuk
+Akses diatur oleh program studi dan dosen pengampu, bukan oleh aplikasi ini.
+Daftar kelas kosong
+Program studi belum mendaftarkan Anda pada kelas semester ini.
+Kelas terbuka tetapi belum ada isinya
+Dosen belum menerbitkan materi atau aktivitas.
+Tidak dapat masuk
+Hubungi bagian akademik program studi Anda.
+Kelas
+Section, materi, dan pengumuman dari dosen pengampu.
+Tugas dan kuis
+Kerjakan sebelum tenggat. Setiap versi pengumpulan tersimpan.
+Nilai
+Rekap per kategori beserta bobotnya, setelah dosen menerbitkan.
+LINGKUNGAN UJI
+Akun demonstrasi
+Masuk sebagai salah satu peran. Semua data di sini contoh.
+Admin UAY
+Super admin · ADM001
+Gunakan
+Admin Prodi Informatika
+Admin prodi · ADMIF01
+Gunakan
+Dr. Rina Puspitasari, M.Kom.
+Dosen · 1112089001
+Gunakan
+Aditya Pratama
+Mahasiswa · 202601001
+Gunakan
+Nadia Putri
+Mahasiswa · 202601002
+Gunakan
+Bima Saputra
+Mahasiswa · 202602001
+Gunakan
+© 2026 Universitas Achmad Yani
+Semua waktu mengikuti waktu lokal perangkat Anda.
+```

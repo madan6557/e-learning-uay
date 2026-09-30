@@ -1,0 +1,116 @@
+Window: "E-Learning UAY - Google Chrome", App: chrome.exe.
+	0 window E-Learning UAY - Google Chrome Secondary Actions: Raise
+		1 pane (disabled)
+		2 region E-Learning UAY - Google Chrome (Incognito)
+			3 region
+				4 region
+					5 region
+						6 button Minimize ID: view_1
+						190 button Maximize ID: view_2
+						8 button Close ID: view_4
+					9 region
+						10 region
+							11 tool bar ID: view_1000
+								12 button Back ID: view_1001
+								13 button (disabled) Forward ID: view_1002
+								14 button Reload ID: view_1003
+								15 group
+									16 button View site information ID: view_1011
+									17 edit (settable, string) Address and search bar Description: Ask Google or type a URL Value: e-learning-uay.vercel.app/dashboard ID: view_1012
+									18 region
+										95 button Bookmark this tab
+								20 button Incognito ID: view_1018
+								21 button Chrome ID: view_1007
+						40 region
+							41 region
+								42 region
+								641 document E-Learning UAY Value: https://e-learning-uay.vercel.app/dashboard ID: RootWebArea
+									642 group ID: root
+										655 link Lewati ke konten Value: https://e-learning-uay.vercel.app/profile#main-content
+										656 complementary ID: academic-navigation
+											657 link UAY E-Learning beranda Value: https://e-learning-uay.vercel.app/dashboard
+											658 toggle button Perkecil navigasi
+											659 button Tutup menu Description: Tutup menu ID: close-mobile-menu
+											660 text MENU
+											661 navigation Navigasi utama
+												662 link Beranda Value: https://e-learning-uay.vercel.app/dashboard
+												663 link Kelas saya Value: https://e-learning-uay.vercel.app/classes
+												664 link Agenda Value: https://e-learning-uay.vercel.app/agenda
+												665 link Nilai Value: https://e-learning-uay.vercel.app/grades
+												666 link Notifikasi Value: https://e-learning-uay.vercel.app/notifications
+												667 link Profil Value: https://e-learning-uay.vercel.app/profile
+												668 link Bantuan Value: https://e-learning-uay.vercel.app/help
+											669 text Akun SSO UAY
+											670 text Identitas dikelola oleh SSO
+										671 header
+											672 button Buka menu Description: Buka menu ID: open-mobile-menu
+											673 navigation Jejak navigasi
+												674 list
+													675 list item Beranda
+														733 group
+															734 text Beranda
+											680 text MODE UJI
+											681 link Profil akun Dr. Rina Puspitasari, M.Kom. Value: https://e-learning-uay.vercel.app/profile
+											682 button Keluar dari sesi
+										683 main ID: main-content
+											735 text UNIVERSITAS ACHMAD YANI
+											736 text Dosen
+											737 heading Selamat Malam, Rina.
+											738 text 2026 / 2027 · Ganjil
+											739 heading Kelas yang Anda ampu
+											740 link Buka kelas · IF2101 Value: https://e-learning-uay.vercel.app/classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil
+											741 text Universitas Achmad Yani
+											742 text Kelas aktif
+											743 text 01
+											744 text Peserta
+											745 text 02
+											746 text Section
+											747 text 04
+											748 text Perlu dinilai
+											749 text 01
+											750 heading Perlu dinilai
+											751 link Kuis 01 · Fondasi web Pemrograman Web 1 perlu dinilai Value: https://e-learning-uay.vercel.app/classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/quizzes/kuis-01-fondasi-web
+												752 heading Kuis 01 · Fondasi web
+											753 heading Kelas saya 2
+											754 link Lihat semua Value: https://e-learning-uay.vercel.app/classes
+											755 link IF202 3 SKS Diarsipkan Pemrograman Berbasis Objek Kelas A · 2026/2027 Ganjil D Dr. Rina Puspitasari 1 peserta 0 section Value: https://e-learning-uay.vercel.app/classes/if202-pemrograman-berbasis-objek-kelas-a-2026-2027-ganjil
+												756 heading Pemrograman Berbasis Objek
+											757 link IF2101 3 SKS Terbit Pemrograman Web Kelas A · 2026/2027 Ganjil D Dr. Rina Puspitasari 1 peserta 4 section Value: https://e-learning-uay.vercel.app/classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil
+												758 heading Pemrograman Web
+											759 heading Agenda terdekat
+											760 link Lihat semua Value: https://e-learning-uay.vercel.app/agenda
+											761 link Pemrograman Web · Tugas Praktikum 01 · Halaman profil 19 Sep 2026, 13.18 Value: https://e-learning-uay.vercel.app/classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/assignments/praktikum-01-halaman-profil
+												762 heading Praktikum 01 · Halaman profil
+											763 link Pemrograman Web · Tugas Pengumpulan Tugas 28 Sep 2026, 13.15 Value: https://e-learning-uay.vercel.app/classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/assignments/pengumpulan-tugas
+												764 heading Pengumpulan Tugas
+											765 link Pemrograman Web · Tugas uiiai 30 Sep 2026, 11.40 Value: https://e-learning-uay.vercel.app/classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/assignments/uiiai
+												766 heading uiiai
+											767 link Pemrograman Web · Kuis Kuis 01 · Fondasi web Tanpa tenggat Value: https://e-learning-uay.vercel.app/classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/quizzes/kuis-01-fondasi-web
+												768 heading Kuis 01 · Fondasi web
+											769 link Pemrograman Web · Tugas Pengumpulan Tanpa tenggat Value: https://e-learning-uay.vercel.app/classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/assignments/pengumpulan
+												770 heading Pengumpulan
+										724 footer
+											725 text © 2026
+											726 text Universitas Achmad Yani
+											727 link Bantuan Value: https://e-learning-uay.vercel.app/help
+							43 region
+						44 region
+							45 region
+								46 button Tab search
+							47 region ID: view_21
+								48 tab
+									49 tab item (selectable) E-Learning UAY ID: view_20
+										50 button Close
+								51 region
+							52 button New Tab
+							53 region
+						54 region
+			728 pane
+				729 pane (disabled)
+				730 region
+					731 region
+						732 text https://e-learning-uay.vercel.app/dashboard
+
+Document text: ```
+e-learning-uay.vercel.app/dashboard
+```

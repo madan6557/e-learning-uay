@@ -1,0 +1,171 @@
+Window: "E-Learning UAY - Google Chrome", App: chrome.exe.
+	0 window E-Learning UAY - Google Chrome Secondary Actions: Raise
+		1 pane (disabled)
+		2 region E-Learning UAY - Google Chrome (Incognito)
+			3 region
+				4 region
+					5 region
+						6 button Minimize ID: view_1
+						190 button Maximize ID: view_2
+						8 button Close ID: view_4
+					9 region
+						10 region
+							11 tool bar ID: view_1000
+								12 button Back ID: view_1001
+								13 button (disabled) Forward ID: view_1002
+								14 button Reload ID: view_1003
+								15 group
+									16 button View site information ID: view_1011
+									17 edit (settable, string) Address and search bar Description: Ask Google or type a URL Value: e-learning-uay.vercel.app/profile ID: view_1012
+									18 region
+										95 button Bookmark this tab
+								20 button Incognito ID: view_1018
+								21 button Chrome ID: view_1007
+						40 region
+							41 region
+								42 region
+								1222 document E-Learning UAY Value: https://e-learning-uay.vercel.app/profile ID: RootWebArea
+									1223 group ID: root
+										1236 link Lewati ke konten Value: https://e-learning-uay.vercel.app/profile#main-content
+										1237 complementary ID: academic-navigation
+											1238 link UAY E-Learning beranda Value: https://e-learning-uay.vercel.app/dashboard
+											1239 toggle button Perkecil navigasi
+											1240 button Tutup menu Description: Tutup menu ID: close-mobile-menu
+											1241 text MENU
+											1242 navigation Navigasi utama
+												1243 link Beranda Value: https://e-learning-uay.vercel.app/dashboard
+												1244 link Katalog mata kuliah Value: https://e-learning-uay.vercel.app/catalog
+												1245 link Kelola kelas Value: https://e-learning-uay.vercel.app/classes
+												1246 link Agenda akademik Value: https://e-learning-uay.vercel.app/agenda
+												1247 link Rekap nilai Value: https://e-learning-uay.vercel.app/grades
+												1248 link Notifikasi Value: https://e-learning-uay.vercel.app/notifications
+												1249 link Profil Value: https://e-learning-uay.vercel.app/profile
+												1250 link Bantuan Value: https://e-learning-uay.vercel.app/help
+											1251 text Akun SSO UAY
+											1252 text Identitas dikelola oleh SSO
+										1253 header
+											1254 button Buka menu Description: Buka menu ID: open-mobile-menu
+											1255 navigation Jejak navigasi
+												1256 list
+													1257 list item Beranda
+														1258 link Beranda Value: https://e-learning-uay.vercel.app/dashboard
+													1259 list item Profil
+														1260 group
+															1261 text Profil
+											1262 text MODE UJI
+											1263 link Profil akun Admin Prodi Informatika Value: https://e-learning-uay.vercel.app/profile
+											1264 button Keluar dari sesi
+										1265 main ID: main-content
+											1266 heading Profil akun
+											1267 text Identitas akademik dan pengaturan data pada perangkat ini.
+											1268 region Identitas akun
+												1269 heading Admin Prodi Informatika
+												1270 text admif01@example.test
+												1271 text Admin prodi
+												1272 list
+													1273 term Nama lengkap
+														1274 text Nama lengkap
+													1275 text Admin Prodi Informatika
+													1276 term Alamat email
+														1277 text Alamat email
+													1278 text admif01@example.test
+													1279 term Nama pengguna SSO
+														1280 text Nama pengguna SSO
+													1281 text admif01
+													1282 term NIP
+														1283 text NIP
+													1284 text ADMIF01
+													1285 term Jenis pengguna
+														1286 text Jenis pengguna
+													1287 text Tenaga kependidikan
+													1288 term Status akun
+														1289 text Status akun
+													1290 text Aktif
+													1291 term Peran akademik
+														1292 text Peran akademik
+													1293 text Admin prodi
+													1294 term Sumber identitas
+														1295 text Sumber identitas
+													1296 text SSO UAY
+													1297 text 00000000-0000-4000-8000-000000000006
+											1298 heading Kelola identitas
+											1299 text Informasi profil mengikuti akun SSO UAY. Jika ada data yang keliru, hubungi pengelola akun akademik.
+											1300 text Tautan pengelolaan akun SSO belum tersedia.
+											1301 heading Draft pada perangkat
+											1302 text 0 draft tersimpan pada perangkat ini.
+											1303 text 
+											1304 text Draft membantu memulihkan perubahan yang belum dikirim ke server.
+											1305 button (disabled) Hapus draft lokal
+										1306 footer
+											1307 text © 2026
+											1308 text Universitas Achmad Yani
+											1309 link Bantuan Value: https://e-learning-uay.vercel.app/help
+							43 region
+						44 region
+							45 region
+								46 button Tab search
+							47 region ID: view_21
+								48 tab
+									49 tab item (selectable) E-Learning UAY ID: view_20
+										50 button Close
+								51 region
+							52 button New Tab
+							53 region
+						54 region
+
+Document text: ```
+Lewati ke konten
+E-Learning UAY
+Perkecil navigasi
+Tutup menu
+MENU
+Beranda
+Katalog mata kuliah
+Kelola kelas
+Agenda akademik
+Rekap nilai
+Notifikasi
+Profil
+Bantuan
+Akun SSO UAY
+Identitas dikelola oleh SSO
+Buka menu
+Beranda
+Profil
+MODE UJI
+Admin Prodi Informatika
+Admin prodi
+Keluar
+Profil akun
+Identitas akademik dan pengaturan data pada perangkat ini.
+Admin Prodi Informatika
+admif01@example.test
+￼
+Admin prodi
+Nama lengkap
+Admin Prodi Informatika
+Alamat email
+admif01@example.test
+Nama pengguna SSO
+admif01
+NIP
+ADMIF01
+Jenis pengguna
+Tenaga kependidikan
+Status akun
+￼
+Aktif
+Peran akademik
+Admin prodi
+Sumber identitas
+SSO UAY
+00000000-0000-4000-8000-000000000006
+Kelola identitas
+Informasi profil mengikuti akun SSO UAY. Jika ada data yang keliru, hubungi pengelola akun akademik.
+Tautan pengelolaan akun SSO belum tersedia.
+Draft pada perangkat
+0 draft tersimpan pada perangkat ini. Draft membantu memulihkan perubahan yang belum dikirim ke server.
+Hapus draft lokal
+© 2026 Universitas Achmad Yani
+Bantuan
+```

@@ -1,0 +1,128 @@
+Window: "E-Learning UAY - Google Chrome", App: chrome.exe.
+	0 window E-Learning UAY - Google Chrome Secondary Actions: Raise
+		1 pane (disabled)
+		2 region E-Learning UAY - Google Chrome (Incognito)
+			3 region
+				4 region
+					5 region
+						6 button Minimize ID: view_1
+						190 button Maximize ID: view_2
+						8 button Close ID: view_4
+					9 region
+						10 region
+							11 tool bar ID: view_1000
+								12 button Back ID: view_1001
+								13 button (disabled) Forward ID: view_1002
+								14 button Reload ID: view_1003
+								15 group
+									16 button View site information ID: view_1011
+									17 edit (settable, string) Address and search bar Description: Ask Google or type a URL Value: e-learning-uay.vercel.app/classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil ID: view_1012
+									18 region
+										95 button Bookmark this tab
+								20 button Incognito ID: view_1018
+								21 button Chrome ID: view_1007
+						40 region
+							41 region
+								42 region
+								191 document E-Learning UAY Value: https://e-learning-uay.vercel.app/classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil ID: RootWebArea
+									192 group ID: root
+										205 link Lewati ke konten Value: https://e-learning-uay.vercel.app/classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil#main-content
+										206 complementary ID: academic-navigation
+											207 link UAY E-Learning beranda Value: https://e-learning-uay.vercel.app/dashboard
+											208 toggle button Perkecil navigasi
+											209 button Tutup menu Description: Tutup menu ID: close-mobile-menu
+											210 text MENU
+											211 navigation Navigasi utama
+												212 link Beranda Value: https://e-learning-uay.vercel.app/dashboard
+												213 link Kelas saya Value: https://e-learning-uay.vercel.app/classes
+												214 link Agenda Value: https://e-learning-uay.vercel.app/agenda
+												215 link Nilai Value: https://e-learning-uay.vercel.app/grades
+												216 link Notifikasi 11 notifikasi belum dibaca Value: https://e-learning-uay.vercel.app/notifications
+												217 link Profil Value: https://e-learning-uay.vercel.app/profile
+												218 link Bantuan Value: https://e-learning-uay.vercel.app/help
+											219 text Akun SSO UAY
+											220 text Identitas dikelola oleh SSO
+										221 header
+											222 button Buka menu Description: Buka menu ID: open-mobile-menu
+											223 navigation Jejak navigasi
+												224 list
+													225 list item Beranda
+														266 link Beranda Value: https://e-learning-uay.vercel.app/dashboard
+													267 list item Kelas saya
+														268 group
+															269 text Kelas saya
+											228 text MODE UJI
+											229 link Profil akun Aditya Pratama Value: https://e-learning-uay.vercel.app/profile
+											230 button Keluar dari sesi
+										231 main ID: main-content
+											274 link Kelas saya Value: https://e-learning-uay.vercel.app/classes
+											275 text IF2101
+											276 text ·
+											277 text 3
+											278 text 
+											279 text SKS
+											280 heading Pemrograman Web
+											281 text Kelas A
+											282 text 
+											283 text ·
+											284 text 
+											285 text 2026/2027 Ganjil
+											286 text D
+											287 text Dr. Rina Puspitasari
+											288 text Partisipasi dinonaktifkan
+											289 heading Hak Partisipasi Kelas Dinonaktifkan
+											290 text Status keikutsertaan Anda dalam kelas ini telah dinonaktifkan oleh dosen pengampu atau administrator. Anda tidak memiliki akses untuk melihat materi perkuliahan, mengumpulkan tugas, atau mengikuti kuis pada kelas ini. Silakan hubungi dosen pengampu atau bagian akademik jika Anda memerlukan bantuan.
+										234 footer
+											235 text © 2026
+											236 text Universitas Achmad Yani
+											237 link Bantuan Value: https://e-learning-uay.vercel.app/help
+							43 region
+						44 region
+							45 region
+								46 button Tab search
+							47 region ID: view_21
+								48 tab
+									49 tab item (selectable) E-Learning UAY ID: view_20
+										50 button Close
+								51 region
+							52 button New Tab
+							53 region
+						54 region
+
+Document text: ```
+Lewati ke konten
+E-Learning UAY
+Perkecil navigasi
+Tutup menu
+MENU
+Beranda
+Kelas saya
+Agenda
+Nilai
+Notifikasi
+11
+notifikasi belum dibaca
+Profil
+Bantuan
+Akun SSO UAY
+Identitas dikelola oleh SSO
+Buka menu
+Beranda
+Kelas saya
+MODE UJI
+Aditya Pratama
+Mahasiswa
+Keluar
+Kelas saya
+IF2101 · 3 SKS
+Pemrograman Web
+Kelas A · 2026/2027 Ganjil
+D
+Dr. Rina Puspitasari
+Partisipasi dinonaktifkan
+￼
+Hak Partisipasi Kelas Dinonaktifkan
+Status keikutsertaan Anda dalam kelas ini telah dinonaktifkan oleh dosen pengampu atau administrator. Anda tidak memiliki akses untuk melihat materi perkuliahan, mengumpulkan tugas, atau mengikuti kuis pada kelas ini. Silakan hubungi dosen pengampu atau bagian akademik jika Anda memerlukan bantuan.
+© 2026 Universitas Achmad Yani
+Bantuan
+```

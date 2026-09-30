@@ -245,7 +245,7 @@ export function registerAuth(app: Express) {
           role: true,
           identifierValue: true,
         },
-        orderBy: { role: "asc" },
+        orderBy: [{ role: "asc" }, { identifierValue: "asc" }],
       }),
     );
   });

@@ -6,12 +6,37 @@ try{loadEnvFile();}catch{}
 if(process.env.NODE_ENV==='production' && process.env.AUTH_MODE!=='development' && process.env.DEMO_MODE!=='true')throw new Error('Demo seed is disabled in production.');
 const db=new PrismaClient();
 export const ids={admin:'00000000-0000-4000-8000-000000000001',instructor:'00000000-0000-4000-8000-000000000002',student:'00000000-0000-4000-8000-000000000003',student2:'00000000-0000-4000-8000-000000000004',outsider:'00000000-0000-4000-8000-000000000005',department:'00000000-0000-4000-8000-000000000006',course:'10000000-0000-4000-8000-000000000001',class:'20000000-0000-4000-8000-000000000001',section:'30000000-0000-4000-8000-000000000001',resource:'40000000-0000-4000-8000-000000000001',quiz:'50000000-0000-4000-8000-000000000001',assignment:'60000000-0000-4000-8000-000000000001'};
-const users=[{id:ids.admin,name:'Admin UAY',role:'SUPER_ADMIN',userType:'ADMIN',identifierType:'NIP',identifierValue:'ADM001'},{id:ids.instructor,name:'Dr. Rina Puspitasari, M.Kom.',role:'INSTRUCTOR',userType:'LECTURER',identifierType:'NIDN',identifierValue:'1112089001'},{id:ids.student,name:'Aditya Pratama',role:'STUDENT',userType:'STUDENT',identifierType:'NIM',identifierValue:'202601001'},{id:ids.student2,name:'Nadia Putri',role:'STUDENT',userType:'STUDENT',identifierType:'NIM',identifierValue:'202601002'},{id:ids.outsider,name:'Bima Saputra',role:'STUDENT',userType:'STUDENT',identifierType:'NIM',identifierValue:'202602001'},{id:ids.department,name:'Admin Prodi Informatika',role:'DEPARTMENT_ADMIN',userType:'STAFF',identifierType:'NIP',identifierValue:'ADMIF01'}] as const;
-for(const user of users)await db.user.upsert({where:{id:user.id},create:{...user,ssoUserId:user.id,username:user.identifierValue.toLowerCase(),email:`${user.identifierValue.toLowerCase()}@example.test`,status:'ACTIVE',departmentScopes:user.role==='DEPARTMENT_ADMIN'?['IF']:[]},update:{username:user.identifierValue.toLowerCase()}});
+const students = [
+  { id: ids.student, name: 'Mahasiswa 01', identifierValue: '202601001' },
+  { id: ids.student2, name: 'Mahasiswa 02', identifierValue: '202601002' },
+  { id: ids.outsider, name: 'Mahasiswa 03', identifierValue: '202601003' },
+  { id: '00000000-0000-4000-8000-000000000014', name: 'Mahasiswa 04', identifierValue: '202601004' },
+  { id: '00000000-0000-4000-8000-000000000015', name: 'Mahasiswa 05', identifierValue: '202601005' },
+  { id: '00000000-0000-4000-8000-000000000016', name: 'Mahasiswa 06', identifierValue: '202601006' },
+  { id: '00000000-0000-4000-8000-000000000017', name: 'Mahasiswa 07', identifierValue: '202601007' },
+  { id: '00000000-0000-4000-8000-000000000018', name: 'Mahasiswa 08', identifierValue: '202601008' },
+  { id: '00000000-0000-4000-8000-000000000019', name: 'Mahasiswa 09', identifierValue: '202601009' },
+  { id: '00000000-0000-4000-8000-000000000020', name: 'Mahasiswa 10', identifierValue: '202601010' },
+].map((s) => ({
+  ...s,
+  role: 'STUDENT' as const,
+  userType: 'STUDENT' as const,
+  identifierType: 'NIM' as const,
+}));
+const users = [
+  { id: ids.admin, name: 'Admin UAY', role: 'SUPER_ADMIN' as const, userType: 'ADMIN' as const, identifierType: 'NIP' as const, identifierValue: 'ADM001' },
+  { id: ids.department, name: 'Admin Prodi Informatika', role: 'DEPARTMENT_ADMIN' as const, userType: 'STAFF' as const, identifierType: 'NIP' as const, identifierValue: 'ADMIF01' },
+  { id: ids.instructor, name: 'Dosen, M.Kom.', role: 'INSTRUCTOR' as const, userType: 'LECTURER' as const, identifierType: 'NIDN' as const, identifierValue: '1112089001' },
+  ...students,
+] as const;
+for(const user of users)await db.user.upsert({where:{id:user.id},create:{...user,ssoUserId:user.id,username:user.identifierValue.toLowerCase(),email:`${user.identifierValue.toLowerCase()}@example.test`,status:'ACTIVE',departmentScopes:user.role==='DEPARTMENT_ADMIN'?['IF']:[]},update:{name:user.name,role:user.role,userType:user.userType,identifierType:user.identifierType,identifierValue:user.identifierValue,username:user.identifierValue.toLowerCase(),status:'ACTIVE',departmentScopes:user.role==='DEPARTMENT_ADMIN'?['IF']:[]}});
+if(await db.courseClass.findUnique({where:{id:ids.class}})){
+  for(const s of students)await db.enrollment.upsert({where:{classId_userId:{classId:ids.class,userId:s.id}},create:{classId:ids.class,userId:s.id,isActive:true},update:{isActive:true}});
+}
 if(!await db.courseClass.findUnique({where:{id:ids.class}})){
   await db.$transaction(async tx=>{
     await tx.course.create({data:{id:ids.course,code:'IF2101',title:'Pemrograman Web',description:'Membangun aplikasi web yang terstruktur, aman, dan mudah digunakan.',departmentCode:'IF',credits:3,status:'PUBLISHED'}});
-    await tx.courseClass.create({data:{id:ids.class,courseId:ids.course,name:'Kelas A',academicYear:'2026/2027 Ganjil',status:'PUBLISHED',instructors:{create:{userId:ids.instructor}},enrollments:{create:[{userId:ids.student},{userId:ids.student2}]}}});
+    await tx.courseClass.create({data:{id:ids.class,courseId:ids.course,name:'Kelas A',academicYear:'2026/2027 Ganjil',status:'PUBLISHED',instructors:{create:{userId:ids.instructor}},enrollments:{create:students.map(s=>({userId:s.id}))}}});
     const categories=[];for(const [i,[name,weight]]of [['Tugas & praktikum',25],['Kuis',15],['UTS',25],['UAS',25],['Progres belajar',10]].entries())categories.push(await tx.gradeCategory.create({data:{classId:ids.class,name:String(name),weightPercent:Number(weight),order:i,kind:i===4?'PROGRESS':'ASSESSMENT'}}));
     await tx.section.create({data:{id:ids.section,classId:ids.class,title:'Fondasi aplikasi web',description:'Kenali alur request–response dan susun halaman web pertama Anda.',order:0,type:'LECTURE'}});
     await tx.resourceItem.create({data:{id:ids.resource,sectionId:ids.section,title:'Memahami cara kerja web',resourceType:'RICH_TEXT',dynamicPayload:{blocks:[{id:'intro',type:'heading',data:{level:2,text:'Dari browser menuju server'}},{id:'paragraph',type:'paragraph',data:{text:'Setiap halaman web dimulai dari sebuah permintaan. Browser meminta sumber daya melalui HTTP, lalu server mengembalikan respons yang dapat berupa HTML, JSON, gambar, atau berkas lainnya.'}},{id:'note',type:'callout',data:{alertType:'TIP',title:'Coba langsung',text:'Buka Developer Tools pada browser, pilih tab Network, lalu muat ulang halaman untuk mengamati permintaan HTTP.'}},{id:'code',type:'code_snippet',data:{language:'javascript',filename:'request.js',showLineNumbers:true,code:'const response = await fetch("/api/v1/course-classes");\nconst classes = await response.json();\nconsole.log(classes);'}},{id:'check',type:'checklist',data:{items:[{id:'step-1',text:'Identifikasi metode HTTP pada satu permintaan.',checked:false},{id:'step-2',text:'Periksa status respons dan tipe kontennya.',checked:false}]}},{id:'table',type:'table',data:{header:true,rows:[['Metode','Kegunaan'],['GET','Membaca data'],['POST','Membuat data'],['PATCH','Memperbarui data']]}}]}}});
