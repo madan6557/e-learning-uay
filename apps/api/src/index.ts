@@ -86,6 +86,11 @@ export function createApp() {
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: "cross-origin" },
+      contentSecurityPolicy: {
+        directives: {
+          upgradeInsecureRequests: isDemo ? null : [],
+        },
+      },
     }),
   );
   app.use((req, res, next) => {
@@ -402,7 +407,9 @@ if (
     process.env.API_HOST ??
     (process.env.PORT || production || isDemo ? "0.0.0.0" : "127.0.0.1");
   const server = createApp().listen(config.port, host, () => {
-    console.log(`E-Learning UAY API listening on http://${host}:${config.port}`);
+    console.log(
+      `E-Learning UAY API listening on http://${host}:${config.port}`,
+    );
     if (process.send) process.send("ready");
   });
   let busy = false;
