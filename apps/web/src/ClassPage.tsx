@@ -15,6 +15,7 @@ import {
   Pin,
   CheckCircle2,
   CalendarDays,
+  UserX,
 } from "lucide-react";
 import {
   t,
@@ -233,7 +234,11 @@ export function ClassPage({
           </div>
         </div>
         <div className="toolbar">
-          <Badge value={cls.status} />
+          {cls.isInactiveParticipant ? (
+            <span className="badge danger">{t.participationDisabled}</span>
+          ) : (
+            <Badge value={cls.status} />
+          )}
           {writable && (
             <button
               className="secondary"
@@ -253,22 +258,32 @@ export function ClassPage({
           )}
         </div>
       </div>
-      {!writable && cls.status === "ARCHIVED" && (
-        <div className="callout note">{t.readOnly}</div>
-      )}
-      {message && <Notice>{message}</Notice>}
-      <nav className="class-tabs" aria-label={t.menu}>
-        {tabs.map(([value, label]) => (
-          <a
-            key={value}
-            className={tab === value ? "selected" : ""}
-            aria-current={tab === value ? "page" : undefined}
-            href={value === "content" ? classUrl : `${classUrl}/${value}`}
-          >
-            {label}
-          </a>
-        ))}
-      </nav>
+      {cls.isInactiveParticipant ? (
+        <div className="card empty-access-card">
+          <div className="empty-access-icon">
+            <UserX size={36} strokeWidth={1.75} />
+          </div>
+          <h2>{t.participationDisabledTitle}</h2>
+          <p>{t.participationDisabledDescription}</p>
+        </div>
+      ) : (
+        <>
+          {!writable && cls.status === "ARCHIVED" && (
+            <div className="callout note">{t.readOnly}</div>
+          )}
+          {message && <Notice>{message}</Notice>}
+          <nav className="class-tabs" aria-label={t.menu}>
+            {tabs.map(([value, label]) => (
+              <a
+                key={value}
+                className={tab === value ? "selected" : ""}
+                aria-current={tab === value ? "page" : undefined}
+                href={value === "content" ? classUrl : `${classUrl}/${value}`}
+              >
+                {label}
+              </a>
+            ))}
+          </nav>
       {tab === "content" && (
         <>
           <div className="section-heading">
@@ -612,6 +627,8 @@ export function ClassPage({
           reload={info.reload}
           onClose={() => navigate(classUrl)}
         />
+      )}
+        </>
       )}
       {modal?.kind === "resource" && (
         <ResourceEditor

@@ -141,6 +141,7 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
   margin-top: 22px;
+  margin-bottom: 28px;
 }
 .stat {
   padding: 23px 20px;
@@ -864,6 +865,44 @@ progress::-webkit-progress-value {
 }
 .announcement-card p {
   font-size: 0.94rem;
+}
+.empty-access-card {
+  text-align: center;
+  padding: 56px 28px;
+  margin: 28px 0;
+  border: 1px dashed #cbd5e1;
+  background: #f8fafc;
+}
+.empty-access-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #fee2e2;
+  color: #dc2626;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.empty-access-card h2 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 10px;
+}
+.empty-access-card p {
+  max-width: 560px;
+  margin: 0 auto;
+  color: #64748b;
+  line-height: 1.65;
+  font-size: 0.95rem;
+}
+.course-card.inactive-participant {
+  opacity: 0.88;
+  border-color: #fca5a5;
+}
+.course-card.inactive-participant:hover {
+  border-color: #f87171;
 }
 .notification-list {
   padding: 0 24px;

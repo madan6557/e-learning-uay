@@ -964,6 +964,7 @@ main {
 .stats-grid {
   gap: 18px;
   margin-top: 24px;
+  margin-bottom: 28px;
 }
 
 .stat {

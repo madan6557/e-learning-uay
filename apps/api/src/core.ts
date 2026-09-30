@@ -371,14 +371,22 @@ export async function classAccess(
       instructors: {
         include: { user: { select: { id: true, name: true } } },
       },
-      enrollments: { where: { userId: user.id, isActive: true } },
+      enrollments: { where: { userId: user.id } },
     },
   });
   ensure(item, 404, "NOT_FOUND");
   const manage =
     canManageDepartment(user, item.course.departmentCode) ||
     item.instructors.some((i) => i.userId === user.id);
-  const enrolled = item.enrollments.length > 0;
+  const activeEnrollment = item.enrollments.find((e) => e.isActive);
+  const inactiveEnrollment = item.enrollments.find((e) => !e.isActive);
+  const enrolled = Boolean(activeEnrollment);
+  const isInactiveParticipant = !manage && !enrolled && Boolean(inactiveEnrollment);
+
+  if (isInactiveParticipant) {
+    ensure(!write, 403, "PARTICIPATION_DISABLED");
+    return { ...item, canManage: false, isInactiveParticipant: true };
+  }
   ensure(
     manage ||
       (enrolled && item.status !== "DRAFT" && item.course.status !== "DRAFT"),
@@ -393,7 +401,7 @@ export async function classAccess(
       "CLASS_ARCHIVED",
     );
   }
-  return { ...item, canManage: manage };
+  return { ...item, canManage: manage, isInactiveParticipant: false };
 }
 export function available(
   item: {
@@ -421,6 +429,7 @@ export async function itemAccess(
   const section = await tx.section.findUnique({ where: { id: sectionId } });
   ensure(section, 404, "NOT_FOUND");
   const cls = await classAccess(tx, user, section.classId, write, studentWrite);
+  ensure(!cls.isInactiveParticipant, 403, "PARTICIPATION_DISABLED");
   if (!cls.canManage) available(section);
   return cls;
 }

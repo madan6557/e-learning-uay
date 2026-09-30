@@ -142,30 +142,39 @@ export async function dashboardClasses<T extends DashboardClass>(
   const quizCounts = new Map(quizzes.map((q) => [q.quizId, q._count]));
   return classes.map((cls) => {
     const canManage = managed.has(cls.id);
-    const sections = (byClass.get(cls.id) ?? [])
-      .filter((s) => canManage || visible(s))
-      .map((s) => ({
-        id: s.id,
-        resources: s.resources
-          .filter((r) => canManage || visible(r))
-          .map(({ id, resourceType }) => ({ id, resourceType })),
-        assignments: s.assignments.filter((a) => canManage || a.isVisible),
-        quizzes: s.quizzes.filter(
-          (q) => canManage || (q.isVisible && q.status === "PUBLISHED"),
-        ),
-      }));
+    const isInactiveParticipant =
+      !canManage &&
+      (Boolean((cls as any).isInactiveParticipant) ||
+        (cls as any).enrollments?.some((e: any) => !e.isActive));
+    const sections = isInactiveParticipant
+      ? []
+      : (byClass.get(cls.id) ?? [])
+          .filter((s) => canManage || visible(s))
+          .map((s) => ({
+            id: s.id,
+            resources: s.resources
+              .filter((r) => canManage || visible(r))
+              .map(({ id, resourceType }) => ({ id, resourceType })),
+            assignments: s.assignments.filter((a) => canManage || a.isVisible),
+            quizzes: s.quizzes.filter(
+              (q) => canManage || (q.isVisible && q.status === "PUBLISHED"),
+            ),
+          }));
     const ids = sections.flatMap((s) => s.resources.map((r) => r.id));
     const collect = <P>(map: Map<string, P>) =>
       ids.flatMap((id) => (map.has(id) ? [map.get(id)!] : []));
     return {
       ...cls,
+      isInactiveParticipant: Boolean(isInactiveParticipant),
       sections,
-      progress: {
-        video: collect(videoById),
-        slides: collect(slidesById),
-        downloads: collect(downloadsById),
-        text: collect(textById),
-      },
+      progress: isInactiveParticipant
+        ? { video: [], slides: [], downloads: [], text: [] }
+        : {
+            video: collect(videoById),
+            slides: collect(slidesById),
+            downloads: collect(downloadsById),
+            text: collect(textById),
+          },
       gradingQueue: canManage
         ? sections.flatMap((s) => [
             ...s.assignments.flatMap((a) =>

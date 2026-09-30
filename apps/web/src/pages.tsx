@@ -46,9 +46,12 @@ import { classPath, contentPath } from "./router";
 export function ClassCard({ item, index = 0 }: { item: any; index?: number }) {
   const icons = [Code2, Database, Terminal];
   const Icon = icons[index % 3];
+  const isInactive =
+    Boolean(item.isInactiveParticipant) ||
+    (item.enrollments?.length > 0 && !item.enrollments[0].isActive);
   return (
     <a
-      className={`course-card course-tone-${index % 3}`}
+      className={`course-card course-tone-${index % 3} ${isInactive ? "inactive-participant" : ""}`}
       href={classPath(item)}
     >
       <div className="course-top">
@@ -63,7 +66,11 @@ export function ClassCard({ item, index = 0 }: { item: any; index?: number }) {
           <span>
             {item.course.credits} {t.credits}
           </span>
-          <Badge value={item.status} />
+          {isInactive ? (
+            <span className="badge danger">{t.participationDisabled}</span>
+          ) : (
+            <Badge value={item.status} />
+          )}
         </div>
         <h3>{item.course.title}</h3>
         <p>
@@ -385,11 +392,11 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
             ))}
           </div>
           {teacher && gradingQueue.length > 0 && (
-            <section className="card">
+            <>
               <div className="section-heading">
                 <h2>{t.pendingGrading}</h2>
               </div>
-              <div className="activity-list">
+              <div className="card activity-list">
                 {gradingQueue.map((item) => (
                   <a
                     className="activity-row"
@@ -414,7 +421,7 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
                   </a>
                 ))}
               </div>
-            </section>
+            </>
           )}
         </>
       )}

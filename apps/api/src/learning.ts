@@ -268,7 +268,7 @@ export function registerLearning(app: Express) {
               OR: [
                 { instructors: { some: { userId: u.id } } },
                 {
-                  enrollments: { some: { userId: u.id, isActive: true } },
+                  enrollments: { some: { userId: u.id } },
                   status: { not: "DRAFT" as const },
                   course: { status: { not: "DRAFT" as const } },
                 },
@@ -286,6 +286,10 @@ export function registerLearning(app: Express) {
         instructors: {
           include: { user: { select: { name: true, id: true } } },
         },
+        enrollments: {
+          where: { userId: u.id },
+          select: { isActive: true },
+        },
         _count: {
           select: {
             sections: true,
@@ -295,10 +299,21 @@ export function registerLearning(app: Express) {
       },
       orderBy: { createdAt: "desc" },
     });
+    const mapped = classes.map((cls) => {
+      const canManage =
+        canManageDepartment(u, cls.course.departmentCode) ||
+        cls.instructors.some((i) => i.user.id === u.id);
+      const isInactiveParticipant =
+        !canManage && cls.enrollments?.some((e) => !e.isActive);
+      return {
+        ...cls,
+        isInactiveParticipant: Boolean(isInactiveParticipant),
+      };
+    });
     res.json(
       req.query.summary === "true"
-        ? await dashboardClasses(classes, u)
-        : classes,
+        ? await dashboardClasses(mapped, u)
+        : mapped,
     );
   });
   app.post("/api/v1/course-classes", async (req, res) =>
@@ -407,6 +422,18 @@ export function registerLearning(app: Express) {
   });
   app.get("/api/v1/course-classes/:id", async (req, res) => {
     const cls = await classAccess(db, req.context.user, String(req.params.id));
+    if (cls.isInactiveParticipant) {
+      return res.json({
+        ...cls,
+        enrollmentKeyHash: undefined,
+        enrollments: undefined,
+        sections: [],
+        announcements: [],
+        progress: { video: [], slides: [], downloads: [], text: [] },
+        gradingQueue: [],
+        isInactiveParticipant: true,
+      });
+    }
     const sections = await db.section.findMany({
       where: { classId: cls.id },
       orderBy: { order: "asc" },
@@ -677,6 +704,29 @@ export function registerLearning(app: Express) {
           create: { classId: cls.id, userId, isActive },
           update: { isActive },
         });
+        if (!isActive && before?.isActive !== false) {
+          await notify(
+            tx,
+            cls.id,
+            "ENROLLMENT",
+            `Partisipasi kelas dinonaktifkan: ${cls.course.code} - ${cls.name}`,
+            `enrollment-disabled:${cls.id}:${userId}:${Date.now()}`,
+            userId,
+            classPath(cls),
+            `Hak partisipasi Anda pada kelas ${cls.course.code} - ${cls.name} telah dinonaktifkan oleh pengajar atau administrator.`,
+          );
+        } else if (isActive && before?.isActive === false) {
+          await notify(
+            tx,
+            cls.id,
+            "ENROLLMENT",
+            `Partisipasi kelas diaktifkan kembali: ${cls.course.code} - ${cls.name}`,
+            `enrollment-enabled:${cls.id}:${userId}:${Date.now()}`,
+            userId,
+            classPath(cls),
+            `Hak partisipasi Anda pada kelas ${cls.course.code} - ${cls.name} telah diaktifkan kembali.`,
+          );
+        }
         await audit(
           tx,
           req.context,
