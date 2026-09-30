@@ -20,30 +20,27 @@ export const date = (value: string | Date | null | undefined) =>
     ? new Intl.DateTimeFormat("id-ID", {
         dateStyle: "medium",
         timeStyle: "short",
-        timeZone: "Asia/Jakarta",
       }).format(new Date(value))
     : "—";
 export const day = (value: string) =>
   new Intl.DateTimeFormat("id-ID", {
     day: "2-digit",
     month: "short",
-    timeZone: "Asia/Jakarta",
   }).format(new Date(value));
 export function localInput(value: string | null | undefined) {
   if (!value) return "";
-  const parts = new Intl.DateTimeFormat("sv-SE", {
-    timeZone: "Asia/Jakarta",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(new Date(value));
-  return parts.replace(" ", "T");
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
-export const isoInput = (value: FormDataEntryValue | null) =>
-  value ? new Date(`${value}:00+07:00`).toISOString() : null;
+export const isoInput = (value: FormDataEntryValue | null) => {
+  if (!value) return null;
+  const str = String(value).trim();
+  if (!str) return null;
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+};
 export const textValue = (form: FormData, key: string) =>
   String(form.get(key) ?? "").trim();
 export const numberValue = (form: FormData, key: string) =>

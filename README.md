@@ -42,6 +42,8 @@ npm audit
 
 Untuk pengujian manual, [panduan pengujian](docs/PANDUAN-PENGUJIAN.md) memuat daftar periksa langkah demi langkah per modul beserta hasil yang diharapkan.
 
+**Portal pengujian interaktif v5:** jalankan `npm run qa`, lalu buka **http://127.0.0.1:5174/**. Katalog 317 kasus disusun **P0/P1/P2 → Role**, dengan langkah, hasil manual, bukti otomatis, ringkasan progres, serta perbandingan hasil. Jalankan `npm run qa:run` atau tombol **Jalankan otomatis** untuk memperbarui bukti. Lihat [panduan portal QA](docs/qa/README.md).
+
 Panduan 11 blok dan tag teks, prompt AI, serta contoh JSON artikel tersedia pada
 **Panduan & artikel AI** di editor Materi teks/Praktikum. Berkas sumber yang bisa
 diunduh: [panduan artikel](apps/web/public/authoring/panduan-artikel.html),

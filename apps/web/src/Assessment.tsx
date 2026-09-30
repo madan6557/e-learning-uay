@@ -100,8 +100,8 @@ export function QuestionEditor({
         <Field label={t.points}>
           <input
             type="number"
-            step="0.01"
-            min="0.01"
+            step="1"
+            min="1"
             max={1000}
             required
             value={q.points}
@@ -510,7 +510,7 @@ export function QuizEditor({
               type="number"
               min={0}
               max={100}
-              step="0.01"
+              step="1"
               required
               defaultValue={quiz?.passingScore ?? 60}
             />
@@ -758,32 +758,43 @@ export function QuizPage({
             </Action>
           </div>
         ))}
-      <div className="section-heading">
+      <div className="section-heading" style={{ flexWrap: "wrap", gap: 12 }}>
         <h2>{quiz.canManage ? t.gradeAnswer : t.attemptHistory}</h2>
         {quiz.canManage && (
-          <div className="toolbar">
-            <select
-              aria-label={t.gradeByQuestion}
-              value={byQuestion}
-              onChange={(e) => setByQuestion(e.target.value)}
-            >
-              <option value="">{t.gradeByStudent}</option>
-              {quiz.questions
-                .filter((q: any) => ["ESSAY", "FILE_UPLOAD"].includes(q.type))
-                .map((q: any) => (
-                  <option value={q.id} key={q.id}>
-                    {q.text}
-                  </option>
-                ))}
-            </select>
+          <div className="toolbar" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
+            {quiz.questions.some((q: any) => ["ESSAY", "FILE_UPLOAD"].includes(q.type)) && (
+              <label style={{ display: "inline-flex", alignItems: "center", gap: 8, margin: 0, fontWeight: "normal", fontSize: 13, color: "var(--muted)" }}>
+                <span style={{ whiteSpace: "nowrap" }}>{t.gradingMode}</span>
+                <select
+                  aria-label={t.gradeByQuestion}
+                  value={byQuestion}
+                  onChange={(e) => setByQuestion(e.target.value)}
+                  style={{ width: "auto", minWidth: 180, maxWidth: 280 }}
+                >
+                  <option value="">{t.allQuestions}</option>
+                  {quiz.questions
+                    .filter((q: any) => ["ESSAY", "FILE_UPLOAD"].includes(q.type))
+                    .map((q: any) => {
+                      const idx = quiz.questions.findIndex((item: any) => item.id === q.id) + 1;
+                      const preview = q.text ? (q.text.length > 25 ? q.text.slice(0, 25) + "..." : q.text) : "";
+                      return (
+                        <option value={q.id} key={q.id}>
+                          Soal {idx}: {preview}
+                        </option>
+                      );
+                    })}
+                </select>
+              </label>
+            )}
             <Action
               className="primary"
+              disabled={!quiz.attempts.some((a: any) => a.status === "GRADED_COMPLETE" && !a.publishedAt)}
               run={async () => {
                 await api(`/quizzes/${id}/publish-grades`, "POST", {});
                 info.reload();
               }}
             >
-              {t.publishGrades}
+              {t.publishAllGrades}
             </Action>
           </div>
         )}
@@ -819,15 +830,43 @@ export function QuizPage({
                   {a.score === undefined ? (
                     <small>{t.unpublishedScore}</small>
                   ) : (
-                    a.score.toFixed(2)
+                    <div>
+                      <strong>
+                        {Number.isInteger(a.score) ? a.score : a.score.toFixed(1)}
+                      </strong>
+                      {quiz.canManage && (
+                        <small
+                          className="block"
+                          style={{
+                            color: a.publishedAt ? "var(--success, #16a34a)" : "var(--muted)",
+                            fontWeight: 500,
+                          }}
+                        >
+                          {a.publishedAt ? `✓ ${t.published}` : t.unpublished}
+                        </small>
+                      )}
+                    </div>
                   )}
                 </td>
                 <td>
-                  {quiz.canManage && a.status !== "IN_PROGRESS" && (
-                    <button className="secondary" onClick={() => setGrading(a)}>
-                      {t.gradeAnswer}
-                    </button>
-                  )}
+                  <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", flexWrap: "wrap", alignItems: "center" }}>
+                    {quiz.canManage && a.status !== "IN_PROGRESS" && (
+                      <button className="secondary" onClick={() => setGrading(a)}>
+                        {t.gradeAnswer}
+                      </button>
+                    )}
+                    {quiz.canManage && a.status === "GRADED_COMPLETE" && !a.publishedAt && (
+                      <Action
+                        className="primary"
+                        run={async () => {
+                          await api(`/quizzes/${id}/publish-grades`, "POST", { attemptId: a.id });
+                          info.reload();
+                        }}
+                      >
+                        {t.publishGrades}
+                      </Action>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -1069,8 +1108,22 @@ function AttemptRunner({
         {attempt.questionSnapshot.map((q: any, index: number) => (
           <article className="card answer-card" key={q.id} id={`q-${q.id}`}>
             <div className="question-label">
-              <span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                 {t.questions} {index + 1}
+                {isAnswered(q) && (
+                  <span
+                    style={{
+                      fontSize: "0.75rem",
+                      padding: "2px 8px",
+                      borderRadius: 12,
+                      background: "#dcfce7",
+                      color: "#15803d",
+                      fontWeight: 500,
+                    }}
+                  >
+                    ✓ Terjawab
+                  </span>
+                )}
               </span>
               <span>
                 {q.points} {t.points}
@@ -1103,6 +1156,127 @@ function AttemptRunner({
     </section>
   );
 }
+function OrderingAnswer({
+  question: q,
+  value,
+  onChange,
+}: {
+  question: any;
+  value: any;
+  onChange: (value: any) => void;
+}) {
+  const initialOrder = q.options.map((o: any) => o.id);
+  const [currentOrder, setCurrentOrder] = useState<string[]>(
+    Array.isArray(value) && value.length > 0 ? value : initialOrder,
+  );
+  const [confirmed, setConfirmed] = useState(
+    Array.isArray(value) && value.length > 0,
+  );
+
+  const handleReorder = (from: number, to: number) => {
+    if (from === to) return;
+    const next = [...currentOrder];
+    next.splice(to, 0, next.splice(from, 1)[0]);
+    setCurrentOrder(next);
+    setConfirmed(false);
+  };
+
+  const handleConfirm = () => {
+    onChange(currentOrder);
+    setConfirmed(true);
+  };
+
+  const isSaved = Array.isArray(value) && value.length > 0 && confirmed;
+
+  return (
+    <div className="order-answers">
+      {currentOrder.map((id: string, index: number) => (
+        <div
+          key={id}
+          draggable
+          onDragStart={(e) =>
+            e.dataTransfer.setData("text/plain", String(index))
+          }
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            const from = Number(e.dataTransfer.getData("text/plain"));
+            if (!Number.isInteger(from) || from < 0 || from >= currentOrder.length)
+              return;
+            handleReorder(from, index);
+          }}
+        >
+          <span>
+            {index + 1}. {q.options.find((o: any) => o.id === id)?.text}
+          </span>
+          <select
+            aria-label={`${t.questions} ${index + 1}`}
+            value={index}
+            onChange={(e) => {
+              handleReorder(index, Number(e.target.value));
+            }}
+          >
+            {currentOrder.map((_: any, i: number) => (
+              <option value={i} key={i}>
+                {i + 1}
+              </option>
+            ))}
+          </select>
+        </div>
+      ))}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          marginTop: 10,
+          flexWrap: "wrap",
+        }}
+      >
+        <button
+          type="button"
+          className={isSaved ? "secondary" : "primary"}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            ...(isSaved ? { borderColor: "#16a34a", color: "#16a34a" } : {}),
+          }}
+          onClick={handleConfirm}
+        >
+          {isSaved ? (
+            <>
+              <CheckCircle2 size={16} />
+              Konfirmasi ulang urutan
+            </>
+          ) : (
+            t.confirm
+          )}
+        </button>
+        {isSaved ? (
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              color: "#16a34a",
+              fontWeight: 500,
+              fontSize: "0.88rem",
+            }}
+          >
+            <CheckCircle2 size={16} />
+            Urutan sudah dikonfirmasi & tersimpan
+          </span>
+        ) : (
+          <span style={{ color: "#d97706", fontSize: "0.85rem" }}>
+            ⚠ Tekan tombol "Konfirmasi" untuk menyimpan urutan jawaban Anda.
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function AnswerInput({
   question: q,
   value,
@@ -1179,60 +1353,8 @@ function AnswerInput({
         ))}
       </div>
     );
-  if (type === "ORDERING") {
-    const order = Array.isArray(value)
-      ? value
-      : q.options.map((o: any) => o.id);
-    return (
-      <div className="order-answers">
-        {order.map((id: string, index: number) => (
-          <div
-            key={id}
-            draggable
-            onDragStart={(e) =>
-              e.dataTransfer.setData("text/plain", String(index))
-            }
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault();
-              const from = Number(e.dataTransfer.getData("text/plain"));
-              if (!Number.isInteger(from) || from < 0 || from >= order.length)
-                return;
-              const next = [...order];
-              next.splice(index, 0, next.splice(from, 1)[0]);
-              onChange(next);
-            }}
-          >
-            <span>
-              {index + 1}. {q.options.find((o: any) => o.id === id)?.text}
-            </span>
-            <select
-              aria-label={`${t.questions} ${index + 1}`}
-              value={index}
-              onChange={(e) => {
-                const next = [...order];
-                next.splice(
-                  Number(e.target.value),
-                  0,
-                  next.splice(index, 1)[0],
-                );
-                onChange(next);
-              }}
-            >
-              {order.map((_: any, i: number) => (
-                <option value={i} key={i}>
-                  {i + 1}
-                </option>
-              ))}
-            </select>
-          </div>
-        ))}
-        <button className="secondary" onClick={() => onChange(order)}>
-          {t.confirm}
-        </button>
-      </div>
-    );
-  }
+  if (type === "ORDERING")
+    return <OrderingAnswer question={q} value={value} onChange={onChange} />;
   if (type === "FILE_UPLOAD")
     return (
       <>
@@ -1357,7 +1479,7 @@ function ManualQuizGrading({
                   required
                   min={0}
                   max={q.points}
-                  step="0.01"
+                  step="1"
                   value={values[q.id]?.score ?? ""}
                   onChange={(e) =>
                     setValues((v) => ({
@@ -1694,17 +1816,18 @@ export function AssignmentPage({
           </Form>
         </section>
       )}
-      <div className="section-heading">
+      <div className="section-heading" style={{ flexWrap: "wrap", gap: 12 }}>
         <h2>{t.submissionHistory}</h2>
         {a.canManage && (
           <Action
             className="primary"
+            disabled={!a.submissions.some((s: any) => s.status !== "SUPERSEDED" && s.score !== null && !s.isPublished)}
             run={async () => {
               await api(`/assignments/${id}/publish-grades`, "POST", {});
               info.reload();
             }}
           >
-            {t.publishGrades}
+            {t.publishAllGrades}
           </Action>
         )}
       </div>
@@ -1745,17 +1868,41 @@ export function AssignmentPage({
                 <strong>
                   {s.score === undefined || s.score === null
                     ? "—"
-                    : `${s.score} / ${a.maxScore}`}
+                    : `${Number.isInteger(s.score) ? s.score : s.score.toFixed(1)} / ${a.maxScore}`}
                 </strong>
                 {!a.canManage && s.score === undefined && (
                   <small className="block">{t.unpublishedScore}</small>
                 )}
+                {a.canManage && s.score !== null && s.score !== undefined && (
+                  <small
+                    className="block"
+                    style={{
+                      color: s.isPublished ? "var(--success, #16a34a)" : "var(--muted)",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {s.isPublished ? `✓ ${t.published}` : t.unpublished}
+                  </small>
+                )}
               </span>
-              {a.canManage && s.status !== "SUPERSEDED" && (
-                <button className="secondary" onClick={() => setGrading(s)}>
-                  {t.gradeSubmission}
-                </button>
-              )}
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                {a.canManage && s.status !== "SUPERSEDED" && (
+                  <button className="secondary" onClick={() => setGrading(s)}>
+                    {t.gradeSubmission}
+                  </button>
+                )}
+                {a.canManage && s.status !== "SUPERSEDED" && s.score !== null && !s.isPublished && (
+                  <Action
+                    className="primary"
+                    run={async () => {
+                      await api(`/assignments/${id}/publish-grades`, "POST", { submissionId: s.id });
+                      info.reload();
+                    }}
+                  >
+                    {t.publishGrades}
+                  </Action>
+                )}
+              </div>
             </div>
             {s.feedback && (
               <div className="callout note">
@@ -1802,7 +1949,7 @@ export function AssignmentPage({
                 type="number"
                 min={0}
                 max={a.maxScore}
-                step="0.01"
+                step="1"
                 name="score"
                 required
                 defaultValue={grading.score ?? ""}

@@ -34,9 +34,17 @@ if (!demo) {
     SSO_AUDIENCE: "elearning-uay-demo",
     SSO_REDIRECT_URI: callbackUri,
     FILE_SERVICE_URL: `http://127.0.0.1:${filePort}`,
-    FILE_SERVICE_KEY: fileKey,
-    FILE_ALLOWED_ORIGINS: appOrigin,
-    DEMO_INTERNAL_SSO_URL: `http://127.0.0.1:${ssoPort}`,
+    FILE_ALLOWED_ORIGINS: Array.from(
+      new Set(
+        [
+          appOrigin,
+          apiOrigin,
+          ...(process.env.FILE_ALLOWED_ORIGINS ?? "").split(","),
+        ]
+          .map((s) => s.trim().replace(/\/$/, ""))
+          .filter(Boolean),
+      ),
+    ).join(","),
     DEMO_INTERNAL_FILE_URL: `http://127.0.0.1:${filePort}`,
   });
 

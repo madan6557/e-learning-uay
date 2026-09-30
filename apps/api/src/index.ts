@@ -2,6 +2,7 @@ import express from "express";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import { ZodError } from "zod";
+import { classPath, contentPath } from "../../../packages/shared/src/urls.js";
 import {
   config,
   production,
@@ -256,7 +257,14 @@ export async function runScheduledWork(scanNotifications = true) {
         resultReleaseAt: { lte: new Date() },
       },
     },
-    include: { quiz: { include: { section: true } }, user: true },
+    include: {
+      quiz: {
+        include: {
+          section: { include: { class: { include: { course: true } } } },
+        },
+      },
+      user: true,
+    },
     take: 100,
   });
   for (const attempt of scheduled)
@@ -266,13 +274,16 @@ export async function runScheduledWork(scanNotifications = true) {
         data: { publishedAt: new Date() },
       });
       if (updated.count) {
+        const cls = attempt.quiz.section?.class;
         await notify(
           tx,
           attempt.quiz.section.classId,
           "GRADE_PUBLISHED",
-          attempt.quiz.title,
-          `quiz-grade:${attempt.id}`,
+          `Nilai telah diterbitkan: ${attempt.quiz.title}`,
+          `quiz-grade:${attempt.quiz.id}:${attempt.userId}:${attempt.quiz.resultReleaseAt?.toISOString() ?? "scheduled"}`,
           attempt.userId,
+          cls ? contentPath(cls, "quizzes", attempt.quiz, []) : undefined,
+          `Nilai untuk kuis "${attempt.quiz.title}" telah diterbitkan.`,
         );
         await audit(
           tx,
@@ -295,6 +306,7 @@ export async function runScheduledWork(scanNotifications = true) {
       publishedAt: { lte: new Date() },
       class: { status: "PUBLISHED", course: { status: "PUBLISHED" } },
     },
+    include: { class: { include: { course: true } } },
     orderBy: { publishedAt: "desc" },
     take: 100,
   });
@@ -304,8 +316,15 @@ export async function runScheduledWork(scanNotifications = true) {
         tx,
         item.classId,
         "ANNOUNCEMENT",
-        item.title,
+        `Pengumuman: ${item.title}`,
         `announcement:${item.id}`,
+        undefined,
+        item.class
+          ? `${classPath(item.class)}/announcements#announcement-${item.id}`
+          : undefined,
+        item.content.length > 100
+          ? `${item.content.slice(0, 100)}...`
+          : item.content,
       ),
     );
   const now = new Date();
@@ -326,7 +345,9 @@ export async function runScheduledWork(scanNotifications = true) {
       section: visibleSection,
       OR: [{ availableFrom: null }, { availableFrom: { lte: now } }],
     },
-    include: { section: true },
+    include: {
+      section: { include: { class: { include: { course: true } } } },
+    },
     take: 500,
   });
   for (const item of publishedAssignments)
@@ -335,8 +356,13 @@ export async function runScheduledWork(scanNotifications = true) {
         tx,
         item.section.classId,
         "NEW_ASSIGNMENT",
-        item.title,
+        `Tugas baru: ${item.title}`,
         `assignment:${item.id}`,
+        undefined,
+        item.section?.class
+          ? contentPath(item.section.class, "assignments", item, [])
+          : undefined,
+        `Tugas baru "${item.title}" telah dipublikasikan.`,
       ),
     );
   const deadline = new Date(Date.now() + 86400000);
@@ -347,7 +373,9 @@ export async function runScheduledWork(scanNotifications = true) {
       OR: [{ availableFrom: null }, { availableFrom: { lte: now } }],
       section: visibleSection,
     },
-    include: { section: true },
+    include: {
+      section: { include: { class: { include: { course: true } } } },
+    },
     take: 100,
   });
   for (const item of assignments)
@@ -356,8 +384,13 @@ export async function runScheduledWork(scanNotifications = true) {
         tx,
         item.section.classId,
         "DEADLINE_REMINDER",
-        item.title,
+        `Pengingat batas waktu: ${item.title}`,
         `deadline:${item.id}:${item.deadline!.toISOString()}`,
+        undefined,
+        item.section?.class
+          ? contentPath(item.section.class, "assignments", item, [])
+          : undefined,
+        `Batas waktu pengumpulan tugas "${item.title}" akan segera berakhir.`,
       ),
     );
 }

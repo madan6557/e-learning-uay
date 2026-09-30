@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "active": "b37481c8-22d1-4d0e-aef2-65ab3b019262",
+  "sessions": [
+    {
+      "id": "b37481c8-22d1-4d0e-aef2-65ab3b019262",
+      "name": "Sesi pengujian 1",
+      "tester": "Ma&",
+      "environment": "Lokal · fixture SSO & File Service",
+      "build": "feat: add article authoring tools and polish modal layout · madan6557/e-learning-uay@f5c08b0",
+      "createdAt": "2026-09-29T03:07:52.215Z",
+      "records": {
+        "TC-ACC-005": {
+          "status": "pass",
+          "actual": "as expected",
+          "note": "",
+          "evidence": "",
+          "checks": [],
+          "updatedAt": "2026-09-29T04:29:00.796Z",
+          "tester": "Ma&",
+          "environment": "Lokal · fixture SSO & File Service"
+        }
+      }
+    }
+  ],
+  "targetUrl": "http://127.0.0.1:5173/",
+  "exportedAt": "2026-09-29T04:33:24.881Z",
+  "documentSha256": "1dfda756cde43dd82f300f9e0a47b6f9cca01f9bf1014b034409006189f6d537"
+}

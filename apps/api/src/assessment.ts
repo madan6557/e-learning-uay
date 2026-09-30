@@ -257,15 +257,22 @@ export async function finalizeAttempt(
     { status: attempt.status },
     { status: after.status, score: after.score, forced },
   );
-  if (after.publishedAt)
+  if (after.publishedAt) {
+    const cls = await tx.courseClass.findUnique({
+      where: { id: quiz.section.classId },
+      include: { course: true },
+    });
     await notify(
       tx,
       quiz.section.classId,
       "GRADE_PUBLISHED",
-      quiz.title,
+      `Nilai telah diterbitkan: ${quiz.title}`,
       `quiz-grade:${after.id}`,
       attempt.userId,
+      cls ? contentPath(cls, "quizzes", quiz, []) : undefined,
+      `Nilai untuk kuis "${quiz.title}" telah diterbitkan.`,
     );
+  }
   return after;
 }
 export function registerAssessment(app: Express) {
@@ -797,9 +804,11 @@ export function registerAssessment(app: Express) {
               tx,
               cls.id,
               "GRADE_CORRECTED",
-              attempt.quiz.title,
+              `Koreksi nilai: ${attempt.quiz.title}`,
               "quiz-correction:" + attempt.id + ":" + req.context.requestId,
               attempt.userId,
+              contentPath(cls, "quizzes", attempt.quiz, []),
+              `Nilai untuk kuis "${attempt.quiz.title}" telah diperbarui oleh pengajar.`,
             );
           await refreshPublishedFinal(
             tx,
@@ -825,29 +834,41 @@ export function registerAssessment(app: Express) {
           quiz.sectionId,
           true,
         );
+        const data = z
+          .object({
+            attemptId: z.string().uuid().optional(),
+          })
+          .optional()
+          .parse(req.body || {});
         const attempts = await tx.quizAttempt.findMany({
-          where: { quizId: quiz.id },
+          where: {
+            quizId: quiz.id,
+            ...(data?.attemptId ? { id: data.attemptId } : {}),
+          },
         });
-        ensure(
-          attempts.length &&
-            attempts.every((a) => a.status === "GRADED_COMPLETE"),
-          409,
-          "GRADING_INCOMPLETE",
-        );
+        if (data?.attemptId) {
+          ensure(attempts.length, 404, "NOT_FOUND");
+          ensure(
+            attempts[0].status === "GRADED_COMPLETE",
+            409,
+            "GRADING_INCOMPLETE",
+          );
+        } else {
+          ensure(
+            attempts.length &&
+              attempts.some((a) => a.status === "GRADED_COMPLETE"),
+            409,
+            "GRADING_INCOMPLETE",
+          );
+        }
+        let publishedCount = 0;
+        const newlyPublished: typeof attempts = [];
         for (const before of attempts) {
-          if (before.publishedAt) continue;
+          if (before.status !== "GRADED_COMPLETE" || before.publishedAt) continue;
           const after = await tx.quizAttempt.update({
             where: { id: before.id },
             data: { publishedAt: new Date() },
           });
-          await notify(
-            tx,
-            cls.id,
-            "GRADE_PUBLISHED",
-            quiz.title,
-            `quiz-grade:${before.id}`,
-            before.userId,
-          );
           await audit(
             tx,
             req.context,
@@ -858,8 +879,41 @@ export function registerAssessment(app: Express) {
             { publishedAt: before.publishedAt },
             { publishedAt: after.publishedAt },
           );
+          newlyPublished.push(before);
+          publishedCount++;
         }
-        return { published: attempts.length };
+        const targetQuizPath = contentPath(cls, "quizzes", quiz, []);
+        if (data?.attemptId) {
+          for (const item of newlyPublished) {
+            await notify(
+              tx,
+              cls.id,
+              "GRADE_PUBLISHED",
+              `Nilai telah diterbitkan: ${quiz.title}`,
+              `quiz-grade:${item.id}`,
+              item.userId,
+              targetQuizPath,
+              `Nilai untuk kuis "${quiz.title}" telah diterbitkan oleh pengajar.`,
+            );
+          }
+        } else {
+          const userIds = Array.from(
+            new Set(newlyPublished.map((a) => a.userId)),
+          );
+          for (const uId of userIds) {
+            await notify(
+              tx,
+              cls.id,
+              "GRADE_PUBLISHED",
+              `Nilai telah diterbitkan: ${quiz.title}`,
+              `quiz-grade:${quiz.id}:${req.context.requestId}`,
+              uId,
+              targetQuizPath,
+              `Nilai untuk kuis "${quiz.title}" telah diterbitkan oleh pengajar.`,
+            );
+          }
+        }
+        return { published: publishedCount };
       }),
     ),
   );
@@ -899,8 +953,11 @@ export function registerAssessment(app: Express) {
             tx,
             cls.id,
             "NEW_ASSIGNMENT",
-            after.title,
+            `Tugas baru: ${after.title}`,
             `assignment:${after.id}`,
+            undefined,
+            contentPath(cls, "assignments", after, []),
+            `Tugas baru "${after.title}" telah dipublikasikan.`,
           );
         await audit(
           tx,
@@ -1138,9 +1195,11 @@ export function registerAssessment(app: Express) {
             tx,
             cls.id,
             "GRADE_CORRECTED",
-            before.assignment.title,
+            `Koreksi nilai: ${before.assignment.title}`,
             `submission-correction:${after.id}:${after.gradedAt!.toISOString()}`,
             after.userId,
+            contentPath(cls, "assignments", before.assignment, []),
+            `Nilai untuk tugas "${before.assignment.title}" telah diperbarui oleh pengajar.`,
           );
         await refreshPublishedFinal(
           tx,
@@ -1166,28 +1225,37 @@ export function registerAssessment(app: Express) {
           assignment.sectionId,
           true,
         );
+        const data = z
+          .object({
+            submissionId: z.string().uuid().optional(),
+          })
+          .optional()
+          .parse(req.body || {});
         const submissions = await tx.assignmentSubmission.findMany({
-          where: { assignmentId: assignment.id, status: { not: "SUPERSEDED" } },
+          where: {
+            assignmentId: assignment.id,
+            status: { not: "SUPERSEDED" },
+            ...(data?.submissionId ? { id: data.submissionId } : {}),
+          },
         });
-        ensure(
-          submissions.length && submissions.every((s) => s.score !== null),
-          409,
-          "GRADING_INCOMPLETE",
-        );
+        if (data?.submissionId) {
+          ensure(submissions.length, 404, "NOT_FOUND");
+          ensure(submissions[0].score !== null, 409, "GRADING_INCOMPLETE");
+        } else {
+          ensure(
+            submissions.length && submissions.some((s) => s.score !== null),
+            409,
+            "GRADING_INCOMPLETE",
+          );
+        }
+        let publishedCount = 0;
+        const newlyPublished: typeof submissions = [];
         for (const before of submissions) {
-          if (before.isPublished) continue;
+          if (before.score === null || before.isPublished) continue;
           await tx.assignmentSubmission.update({
             where: { id: before.id },
             data: { isPublished: true },
           });
-          await notify(
-            tx,
-            cls.id,
-            "GRADE_PUBLISHED",
-            assignment.title,
-            `submission-grade:${before.id}`,
-            before.userId,
-          );
           await audit(
             tx,
             req.context,
@@ -1198,8 +1266,46 @@ export function registerAssessment(app: Express) {
             { isPublished: false },
             { isPublished: true },
           );
+          newlyPublished.push(before);
+          publishedCount++;
         }
-        return { published: submissions.length };
+        const targetAssignmentPath = contentPath(
+          cls,
+          "assignments",
+          assignment,
+          [],
+        );
+        if (data?.submissionId) {
+          for (const item of newlyPublished) {
+            await notify(
+              tx,
+              cls.id,
+              "GRADE_PUBLISHED",
+              `Nilai telah diterbitkan: ${assignment.title}`,
+              `submission-grade:${item.id}`,
+              item.userId,
+              targetAssignmentPath,
+              `Nilai untuk tugas "${assignment.title}" telah diterbitkan oleh pengajar.`,
+            );
+          }
+        } else {
+          const userIds = Array.from(
+            new Set(newlyPublished.map((s) => s.userId)),
+          );
+          for (const uId of userIds) {
+            await notify(
+              tx,
+              cls.id,
+              "GRADE_PUBLISHED",
+              `Nilai telah diterbitkan: ${assignment.title}`,
+              `submission-grade:${assignment.id}:${req.context.requestId}`,
+              uId,
+              targetAssignmentPath,
+              `Nilai untuk tugas "${assignment.title}" telah diterbitkan oleh pengajar.`,
+            );
+          }
+        }
+        return { published: publishedCount };
       }),
     ),
   );

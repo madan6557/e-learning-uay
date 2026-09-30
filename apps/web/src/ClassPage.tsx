@@ -574,7 +574,7 @@ export function ClassPage({
           </div>
           {cls.announcements.length ? (
             cls.announcements.map((a: any) => (
-              <article className="card announcement-card" key={a.id}>
+              <article className="card announcement-card" id={`announcement-${a.id}`} key={a.id}>
                 <div className="toolbar">
                   {a.isImportant && (
                     <span className="badge">
@@ -844,6 +844,21 @@ function Participants({
     [query, setQuery] = useState(""),
     [users, setUsers] = useState<any[]>([]),
     [selected, setSelected] = useState<any[]>([]);
+
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) {
+      setUsers([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const results = await api(`/users?q=${encodeURIComponent(trimmed)}`);
+        setUsers(results);
+      } catch {}
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query]);
   return (
     <>
       <div className="section-heading">

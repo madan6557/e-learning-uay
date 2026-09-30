@@ -23,7 +23,7 @@ import {
   advanceVideo,
   webUrl,
 } from "../../../packages/shared/src/domain.js";
-import { classPath } from "../../../packages/shared/src/urls.js";
+import { classPath, contentPath } from "../../../packages/shared/src/urls.js";
 import { resourceFileIds, resourcesUsingFile } from "./files.js";
 const purifier = createDOMPurify(new JSDOM("").window);
 const clean = (text: string) =>
@@ -244,8 +244,23 @@ export function registerLearning(app: Express) {
   );
   app.get("/api/v1/course-classes", async (req, res) => {
     const u = req.context.user;
-    const where =
-      u.role === "SUPER_ADMIN"
+    const openOnly = req.query.open === "true";
+    const where = openOnly
+      ? {
+          status: "PUBLISHED" as const,
+          course: { status: "PUBLISHED" as const },
+          enrollmentKeyHash: { not: null },
+          ...(req.query.q
+            ? {
+                OR: [
+                  { name: { contains: String(req.query.q), mode: "insensitive" as const } },
+                  { course: { code: { contains: String(req.query.q), mode: "insensitive" as const } } },
+                  { course: { title: { contains: String(req.query.q), mode: "insensitive" as const } } },
+                ],
+              }
+            : {}),
+        }
+      : u.role === "SUPER_ADMIN"
         ? {}
         : u.role === "DEPARTMENT_ADMIN"
           ? { course: { departmentCode: { in: u.departmentScopes } } }
@@ -560,10 +575,25 @@ export function registerLearning(app: Express) {
   app.post("/api/v1/course-classes/:id/enroll", async (req, res) =>
     res.json(
       await mutate(req, async (tx) => {
-        const cls = await tx.courseClass.findUnique({
-          where: { id: String(req.params.id) },
-          include: { course: true },
-        });
+        const idParam = String(req.params.id);
+        const cls =
+          (await tx.courseClass.findFirst({
+            where: {
+              OR: [{ id: idParam }, { slug: idParam }],
+            },
+            include: { course: true },
+          })) ??
+          (await tx.courseClass.findFirst({
+            where: {
+              course: {
+                code: { equals: idParam, mode: "insensitive" },
+                status: "PUBLISHED",
+              },
+              status: "PUBLISHED",
+              enrollmentKeyHash: { not: null },
+            },
+            include: { course: true },
+          }));
         const { enrollmentKey } = z
           .object({ enrollmentKey: z.string().min(1) })
           .parse(req.body);
@@ -1023,8 +1053,13 @@ export function registerLearning(app: Express) {
             tx,
             cls.id,
             "ANNOUNCEMENT",
-            after.title,
+            `Pengumuman: ${after.title}`,
             `announcement:${after.id}`,
+            undefined,
+            `${classPath(cls)}/announcements#announcement-${after.id}`,
+            after.content.length > 100
+              ? `${after.content.slice(0, 100)}...`
+              : after.content,
           );
         await audit(
           tx,
@@ -1054,15 +1089,201 @@ export function registerLearning(app: Express) {
     const classes = ids.length
       ? await db.courseClass.findMany({
           where: { id: { in: ids } },
-          select: { id: true, slug: true },
+          include: { course: true },
         })
       : [];
     const urls = new Map(classes.map((cls) => [cls.id, classPath(cls)]));
+
+    const targetUrls = new Map<string, string>();
+    const attemptIds: string[] = [];
+    const quizIds: string[] = [];
+    const submissionIds: string[] = [];
+    const assignmentIds: string[] = [];
+    const announcementIds: string[] = [];
+
+    for (const n of notifications) {
+      if (
+        n.linkUrl &&
+        (n.linkUrl.includes("/quizzes/") ||
+          n.linkUrl.includes("/assignments/") ||
+          n.linkUrl.includes("/announcements"))
+      )
+        continue;
+      const parts = n.eventKey.split(":");
+      const id = parts[1];
+      if (!id) continue;
+      if (
+        n.eventKey.startsWith("quiz-grade:") ||
+        n.eventKey.startsWith("quiz-correction:")
+      ) {
+        attemptIds.push(id);
+        quizIds.push(id);
+      } else if (
+        n.eventKey.startsWith("submission-grade:") ||
+        n.eventKey.startsWith("submission-correction:")
+      ) {
+        submissionIds.push(id);
+        assignmentIds.push(id);
+      } else if (
+        n.eventKey.startsWith("assignment:") ||
+        n.eventKey.startsWith("deadline:")
+      ) {
+        assignmentIds.push(id);
+      } else if (n.eventKey.startsWith("announcement:")) {
+        announcementIds.push(id);
+      }
+    }
+
+    if (attemptIds.length) {
+      const attempts = await db.quizAttempt.findMany({
+        where: { id: { in: attemptIds } },
+        include: {
+          quiz: {
+            include: {
+              section: { include: { class: { include: { course: true } } } },
+            },
+          },
+        },
+      });
+      for (const a of attempts) {
+        if (a.quiz?.section?.class)
+          targetUrls.set(
+            a.id,
+            contentPath(a.quiz.section.class, "quizzes", a.quiz, []),
+          );
+      }
+    }
+    if (quizIds.length) {
+      const quizzes = await db.quiz.findMany({
+        where: { id: { in: quizIds } },
+        include: {
+          section: { include: { class: { include: { course: true } } } },
+        },
+      });
+      for (const q of quizzes) {
+        if (q.section?.class)
+          targetUrls.set(
+            q.id,
+            contentPath(q.section.class, "quizzes", q, []),
+          );
+      }
+    }
+    if (submissionIds.length) {
+      const submissions = await db.assignmentSubmission.findMany({
+        where: { id: { in: submissionIds } },
+        include: {
+          assignment: {
+            include: {
+              section: { include: { class: { include: { course: true } } } },
+            },
+          },
+        },
+      });
+      for (const s of submissions) {
+        if (s.assignment?.section?.class)
+          targetUrls.set(
+            s.id,
+            contentPath(
+              s.assignment.section.class,
+              "assignments",
+              s.assignment,
+              [],
+            ),
+          );
+      }
+    }
+    if (assignmentIds.length) {
+      const assignments = await db.assignment.findMany({
+        where: { id: { in: assignmentIds } },
+        include: {
+          section: { include: { class: { include: { course: true } } } },
+        },
+      });
+      for (const asg of assignments) {
+        if (asg.section?.class)
+          targetUrls.set(
+            asg.id,
+            contentPath(asg.section.class, "assignments", asg, []),
+          );
+      }
+    }
+    if (announcementIds.length) {
+      const announcements = await db.announcement.findMany({
+        where: { id: { in: announcementIds } },
+        include: {
+          class: { include: { course: true } },
+        },
+      });
+      for (const a of announcements) {
+        if (a.class)
+          targetUrls.set(
+            a.id,
+            `${classPath(a.class)}/announcements#announcement-${a.id}`,
+          );
+      }
+    }
+
     res.json(
-      notifications.map((n) => ({
-        ...n,
-        linkUrl: urls.get(legacy(n.linkUrl) ?? "") ?? n.linkUrl,
-      })),
+      notifications.map((n) => {
+        let linkUrl = n.linkUrl;
+        if (
+          !linkUrl ||
+          (!linkUrl.includes("/quizzes/") &&
+            !linkUrl.includes("/assignments/") &&
+            !linkUrl.includes("/announcements"))
+        ) {
+          const parts = n.eventKey.split(":");
+          const id = parts[1];
+          if (id && targetUrls.has(id)) {
+            linkUrl = targetUrls.get(id)!;
+          } else if (legacy(linkUrl)) {
+            linkUrl = urls.get(legacy(linkUrl)!) ?? linkUrl;
+          }
+        }
+
+        let title = n.title;
+        let message = n.message;
+        if (n.type === "GRADE_PUBLISHED") {
+          if (!title.toLowerCase().startsWith("nilai")) {
+            title = `Nilai telah diterbitkan: ${title}`;
+          }
+          if (!message || message === n.title) {
+            message = `Nilai untuk "${n.title}" telah diterbitkan oleh pengajar.`;
+          }
+        } else if (n.type === "GRADE_CORRECTED") {
+          if (!title.toLowerCase().startsWith("koreksi")) {
+            title = `Koreksi nilai: ${title}`;
+          }
+          if (!message || message === n.title) {
+            message = `Nilai untuk "${n.title}" telah dikoreksi oleh pengajar.`;
+          }
+        } else if (n.type === "NEW_ASSIGNMENT") {
+          if (!title.toLowerCase().startsWith("tugas baru")) {
+            title = `Tugas baru: ${title}`;
+          }
+          if (!message || message === n.title) {
+            message = `Tugas baru "${n.title}" telah dipublikasikan.`;
+          }
+        } else if (n.type === "DEADLINE_REMINDER") {
+          if (!title.toLowerCase().startsWith("pengingat")) {
+            title = `Pengingat batas waktu: ${title}`;
+          }
+          if (!message || message === n.title) {
+            message = `Batas waktu pengumpulan tugas "${n.title}" akan segera berakhir.`;
+          }
+        } else if (n.type === "ANNOUNCEMENT") {
+          if (!title.toLowerCase().startsWith("pengumuman")) {
+            title = `Pengumuman: ${title}`;
+          }
+        }
+
+        return {
+          ...n,
+          title,
+          message,
+          linkUrl,
+        };
+      }),
     );
   });
   // Cheap enough for the navigation badge to poll without pulling the list.

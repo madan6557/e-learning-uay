@@ -1,0 +1,5107 @@
+{
+  "version": 1,
+  "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+  "startedAt": "2026-09-29T03:45:31.086Z",
+  "completedAt": "2026-09-29T03:46:39.708Z",
+  "revision": "ba3fdd1c4f84f131dfc43142f7d7b94d8db5c2ac",
+  "workingTree": "working copy (includes current uncommitted QA work)",
+  "catalogSha256": "277bab6c3fc2fee0e4e76258c5f7601f76e3a39b32211615538901c4f98c86c6",
+  "document": {
+    "title": "Technical Design E-Learning UAY · v5.0",
+    "path": "docs/Technical Design - E-Learning UAY - v5.0.md",
+    "sha256": "1dfda756cde43dd82f300f9e0a47b6f9cca01f9bf1014b034409006189f6d537",
+    "notes": [
+      "RTM §3.1.1 menyebut 151 butir, tetapi 15 rentang kode yang ditampilkan berjumlah 117. Detail per butir pada PDF requirement tidak ada di workspace; keterlacakan memakai keluarga kode dan paragraf v5 yang tersedia.",
+      "RTM menyebut 4 tipe kuis, sedangkan §3.1 dan §3.3.2 menguraikan 8 tipe. Katalog mengikuti uraian lengkap 8 tipe.",
+      "Prioritas dan role tiap kasus diturunkan dari cakupan §3.1. CRS-007/008 disebut eksplisit. Pembagian prioritas per kode lain tidak dirinci oleh dokumen.",
+      "Istilah status/event cause-effect diverifikasi persis terhadap dokumen; ekuivalensi implementasi memerlukan keputusan PO, bukan diasumsikan otomatis.",
+      "Hasil otomatis lokal dengan fixture tidak membuktikan penerimaan SSO/File Service kampus, antivirus nyata, Redis produksi, VPS atau performa pilot."
+    ]
+  },
+  "environment": {
+    "label": "Lokal · PostgreSQL _test · fixture SSO & File Service",
+    "database": "elearning_test",
+    "runtime": "v22.12.0",
+    "platform": "win32",
+    "limitations": "Hasil otomatis lokal dengan fixture tidak membuktikan penerimaan SSO/File Service kampus, antivirus nyata, Redis produksi, VPS atau performa pilot."
+  },
+  "summary": {
+    "cases": 317,
+    "pass": 133,
+    "fail": 2,
+    "blocked": 0,
+    "not_run": 182
+  },
+  "results": {
+    "TC-ACC-001": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ACC-002": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ACC-003": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ACC-004": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ACC-005": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.668Z",
+      "kind": "api",
+      "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual.",
+      "test": "PKCE + nonce creates a password-free session",
+      "file": "tests/integration/oidc.test.ts",
+      "line": 1,
+      "durationMs": 1181.2833,
+      "error": null
+    },
+    "TC-ACC-006": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.668Z",
+      "kind": "api",
+      "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual.",
+      "test": "bad state, nonce, audience and account status are rejected",
+      "file": "tests/integration/oidc.test.ts",
+      "line": 1,
+      "durationMs": 3369.5558,
+      "error": null
+    },
+    "TC-ACC-007": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.668Z",
+      "kind": "api",
+      "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual.",
+      "test": "refresh rotates server-side tokens and revalidates identity",
+      "file": "tests/integration/oidc.test.ts",
+      "line": 1,
+      "durationMs": 17.9896,
+      "error": null
+    },
+    "TC-ACC-008": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.668Z",
+      "kind": "api",
+      "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual.",
+      "test": "signed webhook invalidates active sessions immediately",
+      "file": "tests/integration/oidc.test.ts",
+      "line": 1,
+      "durationMs": 1128.9954,
+      "error": null
+    },
+    "TC-ACC-009": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.668Z",
+      "kind": "api",
+      "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual.",
+      "test": "logout clears session and provides the provider logout URL",
+      "file": "tests/integration/oidc.test.ts",
+      "line": 1,
+      "durationMs": 4.7383,
+      "error": null
+    },
+    "TC-ACC-010": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.668Z",
+      "kind": "unit",
+      "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual.",
+      "test": "SSO roles take precedence over the legacy role claim",
+      "file": "tests/sso.test.ts",
+      "line": 1,
+      "durationMs": 1.9934,
+      "error": null
+    },
+    "TC-ACC-ANON": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.668Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-ACC-ANON] unauthenticated API denied",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 52.7674,
+      "error": null
+    },
+    "TC-ACC-OUTSIDER": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.668Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-ACC-OUTSIDER] outsider cannot read class",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 67.8896,
+      "error": null
+    },
+    "TC-ACC-STUDENT-ROSTER": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.668Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-ACC-STUDENT-ROSTER] student cannot read roster",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 59.1393,
+      "error": null
+    },
+    "TC-ACC-TEACHER-SCOPE": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.668Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-ACC-TEACHER-SCOPE] unrelated instructor cannot mutate",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 66.1535,
+      "error": null
+    },
+    "TC-ACC-DEPT-SCOPE": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.668Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-ACC-DEPT-SCOPE] unrelated department denied",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 58.1544,
+      "error": null
+    },
+    "TC-ACC-011": {
+      "status": "not_run",
+      "reason": "Membutuhkan lingkungan dan pemilik SSO kampus."
+    },
+    "TC-SDH-001": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-SDH-002": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-SDH-003": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-SDH-004": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-SDH-005": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-TDH-001": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-TDH-002": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-TDH-003": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-TDH-004": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-TDH-005": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.668Z",
+      "kind": "unit",
+      "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual.",
+      "test": "administrators see academic management with their actual scope and no instructor dashboard",
+      "file": "tests/dashboard-roles.test.ts",
+      "line": 1,
+      "durationMs": 19.8307,
+      "error": null
+    },
+    "TC-CRS-CREATE": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.669Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-CRS-CREATE] course and class creation",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 138.7895,
+      "error": null
+    },
+    "TC-CRS-DRAFT": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.669Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-CRS-DRAFT] enrolled student cannot read draft class",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 65.1601,
+      "error": null
+    },
+    "TC-CRS-ARCHIVE-WRITE": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.669Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-CRS-ARCHIVE-WRITE] archived class rejects writes",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 52.8407,
+      "error": null
+    },
+    "TC-CRS-ARCHIVE-READ": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.669Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-CRS-ARCHIVE-READ] archived class remains readable",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 202.8043,
+      "error": null
+    },
+    "TC-CRS-COURSE-ARCHIVE": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.669Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-CRS-COURSE-ARCHIVE] parent course archive locks child and audits",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 126.9519,
+      "error": null
+    },
+    "TC-CRS-001": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-CRS-002": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-CRS-003": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-CRS-004": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-CRS-005": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ENR-001": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ENR-002": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ENR-003": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ENR-004": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ENR-005": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ENR-006": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ENR-007": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-SEC-LECTURE": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.669Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-SEC-LECTURE] section type round trip",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 70.829,
+      "error": null
+    },
+    "TC-SEC-LAB_PRACTICUM": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.669Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-SEC-LAB_PRACTICUM] section type round trip",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 74.9111,
+      "error": null
+    },
+    "TC-SEC-SEMINAR": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.669Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-SEC-SEMINAR] section type round trip",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 69.7259,
+      "error": null
+    },
+    "TC-SEC-WORKSHOP": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.670Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-SEC-WORKSHOP] section type round trip",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 74.4761,
+      "error": null
+    },
+    "TC-SEC-EXAM": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.670Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-SEC-EXAM] section type round trip",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 68.9528,
+      "error": null
+    },
+    "TC-SEC-001": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-SEC-002": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-SEC-003": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-SEC-004": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-SEC-005": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-RES-001": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-RES-002": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-RES-003": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-RES-004": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-RES-005": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-RES-006": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-RES-007": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-RES-008": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-RES-009": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-RES-010": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-RES-011": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-BLOCK-PARAGRAPH": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.670Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-BLOCK-PARAGRAPH] valid block payload",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.7449,
+      "error": null
+    },
+    "TC-BLOCK-HEADING": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.670Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-BLOCK-HEADING] valid block payload",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.072,
+      "error": null
+    },
+    "TC-BLOCK-IMAGE": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.670Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-BLOCK-IMAGE] valid block payload",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.061,
+      "error": null
+    },
+    "TC-BLOCK-CODE_SNIPPET": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.670Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-BLOCK-CODE_SNIPPET] valid block payload",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0488,
+      "error": null
+    },
+    "TC-BLOCK-MATH_LATEX": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.670Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-BLOCK-MATH_LATEX] valid block payload",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.037,
+      "error": null
+    },
+    "TC-BLOCK-CALLOUT": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-BLOCK-CALLOUT] valid block payload",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0357,
+      "error": null
+    },
+    "TC-BLOCK-CHECKLIST": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-BLOCK-CHECKLIST] valid block payload",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0388,
+      "error": null
+    },
+    "TC-BLOCK-TABLE": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-BLOCK-TABLE] valid block payload",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0456,
+      "error": null
+    },
+    "TC-BLOCK-FILE_ATTACHMENT": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-BLOCK-FILE_ATTACHMENT] valid block payload",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0904,
+      "error": null
+    },
+    "TC-BLOCK-EMBED_MEDIA": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-BLOCK-EMBED_MEDIA] valid block payload",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.133,
+      "error": null
+    },
+    "TC-BLOCK-DIVIDER": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-BLOCK-DIVIDER] valid block payload",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0344,
+      "error": null
+    },
+    "TC-RES-012": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-RES-013": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-RES-014": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-RES-015": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-RES-016": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-RES-017": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-RES-018": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-RES-019": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-QZ-SINGLE-OK": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-QZ-SINGLE-OK] Pilihan tunggal benar",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 2.6513,
+      "error": null
+    },
+    "TC-QZ-SINGLE-WRONG": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-QZ-SINGLE-WRONG] Pilihan tunggal salah",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.3014,
+      "error": null
+    },
+    "TC-QZ-MULTI-ALL": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-QZ-MULTI-ALL] Pilihan jamak seluruhnya benar",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.2629,
+      "error": null
+    },
+    "TC-QZ-MULTI-PARTIAL": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-QZ-MULTI-PARTIAL] Pilihan jamak partial credit",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.2319,
+      "error": null
+    },
+    "TC-QZ-MULTI-WRONG": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-QZ-MULTI-WRONG] Pilihan jamak mengandung opsi salah",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.2017,
+      "error": null
+    },
+    "TC-QZ-MULTI-STRICT": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-QZ-MULTI-STRICT] Pilihan jamak all-or-nothing",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.1292,
+      "error": null
+    },
+    "TC-QZ-TRUE": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-QZ-TRUE] Benar/salah benar",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.1085,
+      "error": null
+    },
+    "TC-QZ-FALSE": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-QZ-FALSE] Benar/salah salah",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.1087,
+      "error": null
+    },
+    "TC-QZ-SHORT-FOLD": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-QZ-SHORT-FOLD] Isian mengabaikan kapital",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.297,
+      "error": null
+    },
+    "TC-QZ-SHORT-CASE": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-QZ-SHORT-CASE] Isian sensitif kapital",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.2815,
+      "error": null
+    },
+    "TC-QZ-SHORT-NUMERIC": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-QZ-SHORT-NUMERIC] Numerik pada batas toleransi",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.1349,
+      "error": null
+    },
+    "TC-QZ-SHORT-OUTSIDE": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-QZ-SHORT-OUTSIDE] Numerik di luar toleransi",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0883,
+      "error": null
+    },
+    "TC-QZ-MATCH-ALL": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-QZ-MATCH-ALL] Menjodohkan semua pasangan benar",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.221,
+      "error": null
+    },
+    "TC-QZ-MATCH-PARTIAL": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-QZ-MATCH-PARTIAL] Menjodohkan sebagian benar",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.155,
+      "error": null
+    },
+    "TC-QZ-ORDER-OK": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-QZ-ORDER-OK] Urutan prosedur benar",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.1222,
+      "error": null
+    },
+    "TC-QZ-ORDER-WRONG": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-QZ-ORDER-WRONG] Urutan prosedur salah",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.1201,
+      "error": null
+    },
+    "TC-QZ-ESSAY-PENDING": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-QZ-ESSAY-PENDING] Essay menunggu penilaian dosen",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0703,
+      "error": null
+    },
+    "TC-QZ-FILE-PENDING": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-QZ-FILE-PENDING] Jawaban berkas menunggu dosen",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0593,
+      "error": null
+    },
+    "TC-QZ-BAD-KEY": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-QZ-BAD-KEY] answer key outside options rejected",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.3918,
+      "error": null
+    },
+    "TC-QZ-DUP-OPTIONS": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-QZ-DUP-OPTIONS] duplicate option IDs rejected",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.1227,
+      "error": null
+    },
+    "TC-QZ-RUBRIC": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-QZ-RUBRIC] rubric must equal item points",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.145,
+      "error": null
+    },
+    "TC-QZ-POINTS-NAN": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-QZ-POINTS-NAN] non-finite item points rejected",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.4333,
+      "error": null
+    },
+    "TC-QZ-DISTRIBUTE": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-QZ-DISTRIBUTE] fourteen items sum to 100 cents-exact",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.1336,
+      "error": null
+    },
+    "TC-QZ-001": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-QZ-002": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-QZ-003": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-QZ-004": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-QZ-005": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-QZ-006": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-QZ-007": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-QZ-008": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-QZ-009": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-QZ-010": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-QZ-011": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-QZ-012": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-QZ-013": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-QZ-014": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-QZ-015": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ASG-001": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ASG-002": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ASG-003": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ASG-004": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ASG-005": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ASG-006": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ASG-007": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ASG-008": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ASG-009": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ASG-010": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-BVA-WEIGHT-99_99": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-BVA-WEIGHT-99_99] category total 99.99",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.085,
+      "error": null
+    },
+    "TC-BVA-WEIGHT-100": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-BVA-WEIGHT-100] category total 100",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0284,
+      "error": null
+    },
+    "TC-BVA-WEIGHT-100_01": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-BVA-WEIGHT-100_01] category total 100.01",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0224,
+      "error": null
+    },
+    "TC-GRD-BAND-0": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-GRD-BAND-0] UAY letter and GPA",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.4776,
+      "error": null
+    },
+    "TC-GRD-BAND-44_99": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-GRD-BAND-44_99] UAY letter and GPA",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0503,
+      "error": null
+    },
+    "TC-GRD-BAND-45": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-GRD-BAND-45] UAY letter and GPA",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0311,
+      "error": null
+    },
+    "TC-GRD-BAND-54_99": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.671Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-GRD-BAND-54_99] UAY letter and GPA",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0269,
+      "error": null
+    },
+    "TC-GRD-BAND-55": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.672Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-GRD-BAND-55] UAY letter and GPA",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0253,
+      "error": null
+    },
+    "TC-GRD-BAND-59_99": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.672Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-GRD-BAND-59_99] UAY letter and GPA",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0361,
+      "error": null
+    },
+    "TC-GRD-BAND-60": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.672Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-GRD-BAND-60] UAY letter and GPA",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0422,
+      "error": null
+    },
+    "TC-GRD-BAND-64_99": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.672Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-GRD-BAND-64_99] UAY letter and GPA",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0293,
+      "error": null
+    },
+    "TC-GRD-BAND-65": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.672Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-GRD-BAND-65] UAY letter and GPA",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.1432,
+      "error": null
+    },
+    "TC-GRD-BAND-69_99": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.672Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-GRD-BAND-69_99] UAY letter and GPA",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.1228,
+      "error": null
+    },
+    "TC-GRD-BAND-70": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.672Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-GRD-BAND-70] UAY letter and GPA",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0469,
+      "error": null
+    },
+    "TC-GRD-BAND-74_99": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.672Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-GRD-BAND-74_99] UAY letter and GPA",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0284,
+      "error": null
+    },
+    "TC-GRD-BAND-75": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.672Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-GRD-BAND-75] UAY letter and GPA",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0251,
+      "error": null
+    },
+    "TC-GRD-BAND-79_99": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.672Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-GRD-BAND-79_99] UAY letter and GPA",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0237,
+      "error": null
+    },
+    "TC-GRD-BAND-80": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.672Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-GRD-BAND-80] UAY letter and GPA",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0491,
+      "error": null
+    },
+    "TC-GRD-BAND-84_99": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.672Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-GRD-BAND-84_99] UAY letter and GPA",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0237,
+      "error": null
+    },
+    "TC-GRD-BAND-85": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.672Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-GRD-BAND-85] UAY letter and GPA",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.023,
+      "error": null
+    },
+    "TC-GRD-BAND-100": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.672Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-GRD-BAND-100] UAY letter and GPA",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.023,
+      "error": null
+    },
+    "TC-GRD-001": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-GRD-002": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-GRD-003": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-GRD-004": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-GRD-005": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-GRD-006": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-GRD-007": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-BVA-TIMER-0": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.672Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-TIMER-0] timer boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 60.3109,
+      "error": null
+    },
+    "TC-BVA-TIMER-1": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.672Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-TIMER-1] timer boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 74.1934,
+      "error": null
+    },
+    "TC-BVA-TIMER-15": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.672Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-TIMER-15] timer boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 72.5406,
+      "error": null
+    },
+    "TC-BVA-TIMER-120": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.672Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-TIMER-120] timer boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 67.8968,
+      "error": null
+    },
+    "TC-BVA-TIMER-300": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.672Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-TIMER-300] timer boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 74.6152,
+      "error": null
+    },
+    "TC-BVA-TIMER-301": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.673Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-TIMER-301] timer boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 56.0809,
+      "error": null
+    },
+    "TC-BVA-TIMER-1_5": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.673Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-TIMER-1_5] timer boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 68.3952,
+      "error": null
+    },
+    "TC-BVA-ATTEMPT-0": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.673Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-ATTEMPT-0] attempt limit as specified by v5",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 56.1118,
+      "error": null
+    },
+    "TC-BVA-ATTEMPT-1": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.673Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-ATTEMPT-1] attempt limit as specified by v5",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 70.9509,
+      "error": null
+    },
+    "TC-BVA-ATTEMPT-3": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.673Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-ATTEMPT-3] attempt limit as specified by v5",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 59.2843,
+      "error": null
+    },
+    "TC-BVA-ATTEMPT-NULL": {
+      "status": "fail",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.673Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-ATTEMPT-NULL] attempt limit as specified by v5",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 61.2478,
+      "error": {
+        "message": "POST /sections/c8315f00-d3f2-4bee-8f3e-6d697a41bb28/quizzes: actual 400, expected 201; {\"error\":{\"code\":\"VALIDATION_ERROR\",\"details\":[{\"path\":\"attemptLimit\",\"message\":\"Expected number, received null\"}],\"requestId\":\"f12fc80fa32bde92d03692404f910bc7\"}}\n\n400 !== 201\n",
+        "code": "ERR_TEST_FAILURE",
+        "failureType": "testCodeFailure",
+        "stack": "Error [ERR_TEST_FAILURE]: POST /sections/c8315f00-d3f2-4bee-8f3e-6d697a41bb28/quizzes: actual 400, expected 201; {\"error\":{\"code\":\"VALIDATION_ERROR\",\"details\":[{\"path\":\"attemptLimit\",\"message\":\"Expected number, received null\"}],\"requestId\":\"f12fc80fa32bde92d03692404f910bc7\"}}\n\n400 !== 201\n\n    at async TestContext.<anonymous> (file:///E:/UVAYA/Project/E%20-%20Learning%20UAY/tests/qa/api-v5.test.ts:1:7148)",
+        "cause": {
+          "message": "POST /sections/c8315f00-d3f2-4bee-8f3e-6d697a41bb28/quizzes: actual 400, expected 201; {\"error\":{\"code\":\"VALIDATION_ERROR\",\"details\":[{\"path\":\"attemptLimit\",\"message\":\"Expected number, received null\"}],\"requestId\":\"f12fc80fa32bde92d03692404f910bc7\"}}\n\n400 !== 201\n",
+          "code": "ERR_ASSERTION",
+          "actual": 400,
+          "expected": 201,
+          "operator": "strictEqual",
+          "stack": "AssertionError [ERR_ASSERTION]: POST /sections/c8315f00-d3f2-4bee-8f3e-6d697a41bb28/quizzes: actual 400, expected 201; {\"error\":{\"code\":\"VALIDATION_ERROR\",\"details\":[{\"path\":\"attemptLimit\",\"message\":\"Expected number, received null\"}],\"requestId\":\"f12fc80fa32bde92d03692404f910bc7\"}}\n\n400 !== 201\n\n    at request (E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts:112:14)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async Test.run (node:internal/test_runner/test:935:9)\n    at async TestContext.<anonymous> (E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts:336:9)\n    at async Test.run (node:internal/test_runner/test:935:9)\n    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)",
+          "cause": null
+        }
+      }
+    },
+    "TC-BVA-SCORE--0_01": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.673Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-SCORE--0_01] assignment grading boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 155.2376,
+      "error": null
+    },
+    "TC-BVA-SCORE-0": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.673Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-SCORE-0] assignment grading boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 135.1911,
+      "error": null
+    },
+    "TC-BVA-SCORE-99_99": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.673Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-SCORE-99_99] assignment grading boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 149.3277,
+      "error": null
+    },
+    "TC-BVA-SCORE-100": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.673Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-SCORE-100] assignment grading boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 140.7651,
+      "error": null
+    },
+    "TC-BVA-SCORE-100_01": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.674Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-SCORE-100_01] assignment grading boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 126.6729,
+      "error": null
+    },
+    "TC-BVA-PAGE-0": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.674Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-PAGE-0] PDF page boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 62.4896,
+      "error": null
+    },
+    "TC-BVA-PAGE-1": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.674Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-PAGE-1] PDF page boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 73.7184,
+      "error": null
+    },
+    "TC-BVA-PAGE-10": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.674Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-PAGE-10] PDF page boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 73.0442,
+      "error": null
+    },
+    "TC-BVA-PAGE-11": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.674Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-PAGE-11] PDF page boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 56.9719,
+      "error": null
+    },
+    "TC-BVA-PAGE-1_5": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.674Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-PAGE-1_5] PDF page boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 62.8416,
+      "error": null
+    },
+    "TC-BVA-IMPORT-0": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.674Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-IMPORT-0] import batch boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 59.1366,
+      "error": null
+    },
+    "TC-BVA-IMPORT-1": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.674Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-IMPORT-1] import batch boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 64.024,
+      "error": null
+    },
+    "TC-BVA-IMPORT-500": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.674Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-IMPORT-500] import batch boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 357.9487,
+      "error": null
+    },
+    "TC-BVA-IMPORT-501": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.674Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-IMPORT-501] import batch boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 70.9436,
+      "error": null
+    },
+    "TC-BVA-FILE-0BYTE": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.675Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-FILE-0BYTE] upload ticket metadata boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 59.2021,
+      "error": null
+    },
+    "TC-BVA-FILE-1BYTE": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.675Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-FILE-1BYTE] upload ticket metadata boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 70.5862,
+      "error": null
+    },
+    "TC-BVA-FILE-20MB": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.675Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-FILE-20MB] upload ticket metadata boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 61.3669,
+      "error": null
+    },
+    "TC-BVA-FILE-50MB": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.675Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-FILE-50MB] upload ticket metadata boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 64.8376,
+      "error": null
+    },
+    "TC-BVA-FILE-50MB_PLUS": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.675Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-FILE-50MB_PLUS] upload ticket metadata boundary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 56.3903,
+      "error": null
+    },
+    "TC-FIL-001": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-FIL-002": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-BVA-ASG-BEFORE": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.675Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-ASG-BEFORE] assignment time window",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 66.371,
+      "error": null
+    },
+    "TC-BVA-ASG-ONTIME": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.675Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-ASG-ONTIME] assignment time window",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 74.0494,
+      "error": null
+    },
+    "TC-BVA-ASG-LATE": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.675Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-ASG-LATE] assignment time window",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 76.7712,
+      "error": null
+    },
+    "TC-BVA-ASG-CUTOFF": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.675Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-ASG-CUTOFF] assignment time window",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 71.4076,
+      "error": null
+    },
+    "TC-BVA-ASG-LATE-DENIED": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.675Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-ASG-LATE-DENIED] assignment time window",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 62.3776,
+      "error": null
+    },
+    "TC-BVA-QZ-CUTOFF": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.676Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-QZ-CUTOFF] server deadline caps expiresAt",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 85.3087,
+      "error": null
+    },
+    "TC-BVA-QZ-NPLUS1": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.676Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-QZ-NPLUS1] active attempt reused",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 68.1392,
+      "error": null
+    },
+    "TC-BVA-QZ-LIMIT": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.676Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-QZ-LIMIT] submitted limit rejects next attempt",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 148.3201,
+      "error": null
+    },
+    "TC-BVA-REASON": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.676Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-BVA-REASON] existing score correction requires reason",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 191.9535,
+      "error": null
+    },
+    "TC-PRG-CONTINUOUS": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.676Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-PRG-CONTINUOUS] five seconds actual playback",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0858,
+      "error": null
+    },
+    "TC-PRG-SEEK": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.676Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-PRG-SEEK] seeking gets no credit",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0408,
+      "error": null
+    },
+    "TC-PRG-REPLAY": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.676Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-PRG-REPLAY] replay cannot duplicate credit",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0389,
+      "error": null
+    },
+    "TC-PRG-FAST": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.676Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-PRG-FAST] accelerated playback gets no false credit",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.0304,
+      "error": null
+    },
+    "TC-PRG-REORDER": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.676Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-PRG-REORDER] stale heartbeat is monotonic",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.031,
+      "error": null
+    },
+    "TC-PRG-CONCURRENT": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.676Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-PRG-CONCURRENT] concurrent page updates preserve union",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 140.3978,
+      "error": null
+    },
+    "TC-PRG-PDF-UNIQUE": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.676Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-PRG-PDF-UNIQUE] repeated page only counted once",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 141.3599,
+      "error": null
+    },
+    "TC-PRG-HIDDEN": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.676Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-PRG-HIDDEN] hidden resource rejects forged progress",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 75.3288,
+      "error": null
+    },
+    "TC-PRG-001": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.677Z",
+      "kind": "api",
+      "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual.",
+      "test": "private access needs published resource context; downloads are idempotent",
+      "file": "tests/integration/files.test.ts",
+      "line": 1,
+      "durationMs": 263.996,
+      "error": null
+    },
+    "TC-RES-XSS": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.677Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-RES-XSS] stored resource strips scripts and events",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 85.7404,
+      "error": null
+    },
+    "TC-RES-URL": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.677Z",
+      "kind": "unit",
+      "scope": "Aturan domain, tanpa browser atau layanan kampus.",
+      "test": "[TC-RES-URL] javascript embed protocol rejected",
+      "file": "tests/qa/domain-v5.test.ts",
+      "line": 1,
+      "durationMs": 0.1076,
+      "error": null
+    },
+    "TC-RES-VIDEO-EMBED": {
+      "status": "fail",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.677Z",
+      "kind": "api",
+      "scope": "HTTP nyata + PostgreSQL _test; identitas dan layanan eksternal menggunakan fixture.",
+      "test": "[TC-RES-VIDEO-EMBED] v5 accepts external video URL without binary",
+      "file": "tests/qa/api-v5.test.ts",
+      "line": 1,
+      "durationMs": 54.5596,
+      "error": {
+        "message": "POST /sections/c8315f00-d3f2-4bee-8f3e-6d697a41bb28/resources: actual 400, expected 201; {\"error\":{\"code\":\"VIDEO_REQUIRED\",\"requestId\":\"1263b5bf99ab89c2f0ed3cd10dc49233\"}}\n\n400 !== 201\n",
+        "code": "ERR_TEST_FAILURE",
+        "failureType": "testCodeFailure",
+        "stack": "Error [ERR_TEST_FAILURE]: POST /sections/c8315f00-d3f2-4bee-8f3e-6d697a41bb28/resources: actual 400, expected 201; {\"error\":{\"code\":\"VIDEO_REQUIRED\",\"requestId\":\"1263b5bf99ab89c2f0ed3cd10dc49233\"}}\n\n400 !== 201\n\n    at async TestContext.<anonymous> (file:///E:/UVAYA/Project/E%20-%20Learning%20UAY/tests/qa/api-v5.test.ts:1:12069)",
+        "cause": {
+          "message": "POST /sections/c8315f00-d3f2-4bee-8f3e-6d697a41bb28/resources: actual 400, expected 201; {\"error\":{\"code\":\"VIDEO_REQUIRED\",\"requestId\":\"1263b5bf99ab89c2f0ed3cd10dc49233\"}}\n\n400 !== 201\n",
+          "code": "ERR_ASSERTION",
+          "actual": 400,
+          "expected": 201,
+          "operator": "strictEqual",
+          "stack": "AssertionError [ERR_ASSERTION]: POST /sections/c8315f00-d3f2-4bee-8f3e-6d697a41bb28/resources: actual 400, expected 201; {\"error\":{\"code\":\"VIDEO_REQUIRED\",\"requestId\":\"1263b5bf99ab89c2f0ed3cd10dc49233\"}}\n\n400 !== 201\n\n    at request (E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts:112:14)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async Test.run (node:internal/test_runner/test:935:9)\n    at async TestContext.<anonymous> (E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts:619:7)\n    at async Test.run (node:internal/test_runner/test:935:9)\n    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)",
+          "cause": null
+        }
+      }
+    },
+    "TC-ENR-008": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ENR-009": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ENR-010": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ENR-011": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ENR-012": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ENR-013": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-QZ-016": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-QZ-017": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-QZ-018": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-QZ-019": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-QZ-020": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-QZ-021": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-GRD-008": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-GRD-009": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-GRD-010": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-GRD-011": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-GRD-012": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-GRD-013": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ANN-001": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ANN-002": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-ANN-003": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-NOT-001": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-NOT-002": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-NOT-003": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-NOT-004": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-NOT-005": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-FIL-003": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.677Z",
+      "kind": "api",
+      "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual.",
+      "test": "uploads reject invalid sizes and verify checksum plus malware state",
+      "file": "tests/integration/files.test.ts",
+      "line": 1,
+      "durationMs": 544.5521,
+      "error": null
+    },
+    "TC-FIL-004": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.677Z",
+      "kind": "api",
+      "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual.",
+      "test": "submission files cannot be read by another enrolled student",
+      "file": "tests/integration/files.test.ts",
+      "line": 1,
+      "durationMs": 418.9685,
+      "error": null
+    },
+    "TC-FIL-005": {
+      "status": "not_run",
+      "reason": "Retensi, TTL atau tampilan memerlukan verifikasi tambahan."
+    },
+    "TC-FIL-006": {
+      "status": "not_run",
+      "reason": "Retensi, TTL atau tampilan memerlukan verifikasi tambahan."
+    },
+    "TC-FIL-007": {
+      "status": "not_run",
+      "reason": "Retensi, TTL atau tampilan memerlukan verifikasi tambahan."
+    },
+    "TC-FIL-008": {
+      "status": "not_run",
+      "reason": "Retensi, TTL atau tampilan memerlukan verifikasi tambahan."
+    },
+    "TC-FIL-009": {
+      "status": "not_run",
+      "reason": "Retensi, TTL atau tampilan memerlukan verifikasi tambahan."
+    },
+    "TC-FIL-010": {
+      "status": "not_run",
+      "reason": "Membutuhkan File Service kampus dan antivirus nyata."
+    },
+    "TC-AUD-001": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-AUD-002": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-AUD-003": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-AUD-004": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-AUD-005": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-AUD-006": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-FDB-001": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-FDB-002": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-FDB-003": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-FDB-004": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-FDB-005": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-FDB-006": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-FDB-007": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.677Z",
+      "kind": "unit",
+      "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual.",
+      "test": "different users and entities never share data",
+      "file": "tests/drafts.test.ts",
+      "line": 1,
+      "durationMs": 11.721,
+      "error": null
+    },
+    "TC-FDB-008": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.677Z",
+      "kind": "unit",
+      "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual.",
+      "test": "debounce persists complex edits and remount offers recovery",
+      "file": "tests/drafts.test.ts",
+      "line": 1,
+      "durationMs": 1324.3633,
+      "error": null
+    },
+    "TC-FDB-009": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.677Z",
+      "kind": "unit",
+      "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual.",
+      "test": "unmount before debounce flushes the draft; discard removes recovery",
+      "file": "tests/drafts.test.ts",
+      "line": 1,
+      "durationMs": 128.0513,
+      "error": null
+    },
+    "TC-FDB-010": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.677Z",
+      "kind": "unit",
+      "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual.",
+      "test": "returning to the server value clears the local draft",
+      "file": "tests/drafts.test.ts",
+      "line": 1,
+      "durationMs": 1238.0429,
+      "error": null
+    },
+    "TC-FDB-011": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-FDB-012": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-FDB-013": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-FDB-014": {
+      "status": "pass",
+      "runId": "0c471db0-148d-4a8d-b589-95188f6b0bd5",
+      "completedAt": "2026-09-29T03:46:39.677Z",
+      "kind": "unit",
+      "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual.",
+      "test": "clean paths retain history and unsaved drafts can cancel both links and Back",
+      "file": "tests/navigation.test.ts",
+      "line": 1,
+      "durationMs": 591.9281,
+      "error": null
+    },
+    "TC-FDB-015": {
+      "status": "not_run",
+      "reason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual."
+    },
+    "TC-CE-01": {
+      "status": "not_run",
+      "reason": "Seluruh efek UI, notifikasi, status dan audit harus diperiksa bersama. Tes komponen tidak menyatakan CE lengkap lulus."
+    },
+    "TC-CE-02": {
+      "status": "not_run",
+      "reason": "Seluruh efek UI, notifikasi, status dan audit harus diperiksa bersama. Tes komponen tidak menyatakan CE lengkap lulus."
+    },
+    "TC-CE-03": {
+      "status": "not_run",
+      "reason": "Seluruh efek UI, notifikasi, status dan audit harus diperiksa bersama. Tes komponen tidak menyatakan CE lengkap lulus."
+    },
+    "TC-CE-04": {
+      "status": "not_run",
+      "reason": "Seluruh efek UI, notifikasi, status dan audit harus diperiksa bersama. Tes komponen tidak menyatakan CE lengkap lulus."
+    },
+    "TC-CE-05": {
+      "status": "not_run",
+      "reason": "Seluruh efek UI, notifikasi, status dan audit harus diperiksa bersama. Tes komponen tidak menyatakan CE lengkap lulus."
+    },
+    "TC-CE-06": {
+      "status": "not_run",
+      "reason": "Seluruh efek UI, notifikasi, status dan audit harus diperiksa bersama. Tes komponen tidak menyatakan CE lengkap lulus."
+    },
+    "TC-CE-07": {
+      "status": "not_run",
+      "reason": "Seluruh efek UI, notifikasi, status dan audit harus diperiksa bersama. Tes komponen tidak menyatakan CE lengkap lulus."
+    },
+    "TC-CE-08": {
+      "status": "not_run",
+      "reason": "Seluruh efek UI, notifikasi, status dan audit harus diperiksa bersama. Tes komponen tidak menyatakan CE lengkap lulus."
+    },
+    "TC-CE-09": {
+      "status": "not_run",
+      "reason": "Seluruh efek UI, notifikasi, status dan audit harus diperiksa bersama. Tes komponen tidak menyatakan CE lengkap lulus."
+    },
+    "TC-OPS-001": {
+      "status": "not_run",
+      "reason": "Memerlukan VPS / Redis / layanan kampus atau simulasi khusus yang tidak dibuktikan oleh tes lokal."
+    },
+    "TC-OPS-002": {
+      "status": "not_run",
+      "reason": "Memerlukan VPS / Redis / layanan kampus atau simulasi khusus yang tidak dibuktikan oleh tes lokal."
+    },
+    "TC-OPS-003": {
+      "status": "not_run",
+      "reason": "Memerlukan VPS / Redis / layanan kampus atau simulasi khusus yang tidak dibuktikan oleh tes lokal."
+    },
+    "TC-OPS-004": {
+      "status": "not_run",
+      "reason": "Memerlukan VPS / Redis / layanan kampus atau simulasi khusus yang tidak dibuktikan oleh tes lokal."
+    },
+    "TC-OPS-005": {
+      "status": "not_run",
+      "reason": "Memerlukan VPS / Redis / layanan kampus atau simulasi khusus yang tidak dibuktikan oleh tes lokal."
+    },
+    "TC-OPS-006": {
+      "status": "not_run",
+      "reason": "Memerlukan VPS / Redis / layanan kampus atau simulasi khusus yang tidak dibuktikan oleh tes lokal."
+    },
+    "TC-OPS-007": {
+      "status": "not_run",
+      "reason": "Memerlukan VPS / Redis / layanan kampus atau simulasi khusus yang tidak dibuktikan oleh tes lokal."
+    },
+    "TC-OPS-008": {
+      "status": "not_run",
+      "reason": "Memerlukan VPS / Redis / layanan kampus atau simulasi khusus yang tidak dibuktikan oleh tes lokal."
+    },
+    "TC-OPS-009": {
+      "status": "not_run",
+      "reason": "Memerlukan VPS / Redis / layanan kampus atau simulasi khusus yang tidak dibuktikan oleh tes lokal."
+    },
+    "TC-OPS-010": {
+      "status": "not_run",
+      "reason": "Memerlukan VPS / Redis / layanan kampus atau simulasi khusus yang tidak dibuktikan oleh tes lokal."
+    },
+    "TC-OPS-011": {
+      "status": "not_run",
+      "reason": "Memerlukan VPS / Redis / layanan kampus atau simulasi khusus yang tidak dibuktikan oleh tes lokal."
+    },
+    "TC-OPS-012": {
+      "status": "not_run",
+      "reason": "Memerlukan VPS / Redis / layanan kampus atau simulasi khusus yang tidak dibuktikan oleh tes lokal."
+    },
+    "TC-OPS-013": {
+      "status": "not_run",
+      "reason": "Memerlukan VPS / Redis / layanan kampus atau simulasi khusus yang tidak dibuktikan oleh tes lokal."
+    },
+    "TC-OPS-014": {
+      "status": "not_run",
+      "reason": "Memerlukan VPS / Redis / layanan kampus atau simulasi khusus yang tidak dibuktikan oleh tes lokal."
+    },
+    "TC-OPS-015": {
+      "status": "not_run",
+      "reason": "Memerlukan VPS / Redis / layanan kampus atau simulasi khusus yang tidak dibuktikan oleh tes lokal."
+    },
+    "TC-OPS-016": {
+      "status": "not_run",
+      "reason": "Memerlukan VPS / Redis / layanan kampus atau simulasi khusus yang tidak dibuktikan oleh tes lokal."
+    },
+    "TC-FUT-001": {
+      "status": "not_run",
+      "reason": "Cakupan pasca-pilot; periksa ketersediaan implementasi sebelum eksekusi."
+    },
+    "TC-FUT-002": {
+      "status": "not_run",
+      "reason": "Cakupan pasca-pilot; periksa ketersediaan implementasi sebelum eksekusi."
+    },
+    "TC-FUT-003": {
+      "status": "not_run",
+      "reason": "Cakupan pasca-pilot; periksa ketersediaan implementasi sebelum eksekusi."
+    },
+    "TC-FUT-004": {
+      "status": "not_run",
+      "reason": "Cakupan pasca-pilot; periksa ketersediaan implementasi sebelum eksekusi."
+    },
+    "TC-FUT-005": {
+      "status": "not_run",
+      "reason": "Cakupan pasca-pilot; periksa ketersediaan implementasi sebelum eksekusi."
+    },
+    "TC-FUT-006": {
+      "status": "not_run",
+      "reason": "Cakupan pasca-pilot; periksa ketersediaan implementasi sebelum eksekusi."
+    },
+    "TC-FUT-007": {
+      "status": "not_run",
+      "reason": "Fitur rilis lanjutan; belum dinyatakan tersedia pada pilot."
+    },
+    "TC-FUT-008": {
+      "status": "not_run",
+      "reason": "Fitur rilis lanjutan; belum dinyatakan tersedia pada pilot."
+    },
+    "TC-FUT-009": {
+      "status": "not_run",
+      "reason": "Fitur rilis lanjutan; belum dinyatakan tersedia pada pilot."
+    },
+    "TC-FUT-010": {
+      "status": "not_run",
+      "reason": "Fitur rilis lanjutan; belum dinyatakan tersedia pada pilot."
+    },
+    "TC-FUT-011": {
+      "status": "not_run",
+      "reason": "Fitur rilis lanjutan; belum dinyatakan tersedia pada pilot."
+    },
+    "TC-FUT-012": {
+      "status": "not_run",
+      "reason": "Fitur rilis lanjutan; belum dinyatakan tersedia pada pilot."
+    },
+    "TC-FUT-013": {
+      "status": "not_run",
+      "reason": "Fitur rilis lanjutan; belum dinyatakan tersedia pada pilot."
+    },
+    "TC-PILOT-001": {
+      "status": "not_run",
+      "reason": "Penerimaan pilot memerlukan bukti lintas layanan dan persetujuan pihak terkait."
+    },
+    "TC-PILOT-002": {
+      "status": "not_run",
+      "reason": "Penerimaan pilot memerlukan bukti lintas layanan dan persetujuan pihak terkait."
+    },
+    "TC-PILOT-003": {
+      "status": "not_run",
+      "reason": "Penerimaan pilot memerlukan bukti lintas layanan dan persetujuan pihak terkait."
+    },
+    "TC-PILOT-004": {
+      "status": "not_run",
+      "reason": "Penerimaan pilot memerlukan bukti lintas layanan dan persetujuan pihak terkait."
+    },
+    "TC-PILOT-005": {
+      "status": "not_run",
+      "reason": "Penerimaan pilot memerlukan bukti lintas layanan dan persetujuan pihak terkait."
+    },
+    "TC-PILOT-006": {
+      "status": "not_run",
+      "reason": "Penerimaan pilot memerlukan bukti lintas layanan dan persetujuan pihak terkait."
+    },
+    "TC-PILOT-007": {
+      "status": "not_run",
+      "reason": "Penerimaan pilot memerlukan bukti lintas layanan dan persetujuan pihak terkait."
+    },
+    "TC-PILOT-008": {
+      "status": "not_run",
+      "reason": "Penerimaan pilot memerlukan bukti lintas layanan dan persetujuan pihak terkait."
+    },
+    "TC-PILOT-009": {
+      "status": "not_run",
+      "reason": "Penerimaan pilot memerlukan bukti lintas layanan dan persetujuan pihak terkait."
+    },
+    "TC-PILOT-010": {
+      "status": "not_run",
+      "reason": "Penerimaan pilot memerlukan bukti lintas layanan dan persetujuan pihak terkait."
+    },
+    "TC-PILOT-011": {
+      "status": "not_run",
+      "reason": "Penerimaan pilot memerlukan bukti lintas layanan dan persetujuan pihak terkait."
+    },
+    "TC-PILOT-012": {
+      "status": "not_run",
+      "reason": "Penerimaan pilot memerlukan bukti lintas layanan dan persetujuan pihak terkait."
+    }
+  },
+  "regressionFindings": [],
+  "suites": [
+    {
+      "name": "domain",
+      "exitCode": 0,
+      "blocked": false,
+      "diagnostic": "",
+      "tests": 88
+    },
+    {
+      "name": "integration",
+      "exitCode": 1,
+      "blocked": false,
+      "diagnostic": "",
+      "tests": 95
+    }
+  ],
+  "records": [
+    {
+      "event": "test:pass",
+      "name": "API navigation reuses dashboard cards and writes invalidate every cached view",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\api-cache.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 13.1925,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "downloadable example imports into a new draft using all supported AI blocks",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\article-import.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 6.0212,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "import preserves an existing title and content and resets imported checklist progress",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\article-import.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.2709,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "invalid AI output is rejected without changing the draft",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\article-import.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 1.4589,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "import enforces the UTF-8 size limit and combined block limit",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\article-import.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 4.0814,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "administrators see academic management with their actual scope and no instructor dashboard",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\dashboard-roles.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 19.8307,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "instructors and students retain their own learning dashboards",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\dashboard-roles.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 7.8926,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "all eight question types and score boundaries",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\domain.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 3.9159,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "invalid answer keys, non-finite points, rubric totals and unsafe URLs are rejected",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\domain.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 1.0221,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "point distribution is exact and preserves two-decimal 100-scale scoring",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\domain.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.1903,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "UAY letter grade boundaries",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\domain.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.2104,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "video seeks, replay, fast playback and competing heartbeats cannot inflate progress",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\domain.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.2299,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "different users and entities never share data",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\drafts.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 11.721,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "debounce persists complex edits and remount offers recovery",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\drafts.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 1324.3633,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "unmount before debounce flushes the draft; discard removes recovery",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\drafts.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 128.0513,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "returning to the server value clears the local draft",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\drafts.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 1238.0429,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "local drafts are isolated, recoverable and cleared after successful save",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\drafts.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 2769.9106,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "a form returns to clean after its initial value is restored",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\form.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 73.0779,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "profile only links to a configured account-management page",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\form.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 22.7282,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "publication form submits the selected intent and keeps native validation",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\form.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 76.8058,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "withdrawing bypasses content submission and locks actions until completion",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\form.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 8.6757,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "clean paths retain history and unsaved drafts can cancel both links and Back",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\navigation.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 591.9281,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-QZ-SINGLE-OK] Pilihan tunggal benar",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 2.6513,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-QZ-SINGLE-WRONG] Pilihan tunggal salah",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.3014,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-QZ-MULTI-ALL] Pilihan jamak seluruhnya benar",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.2629,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-QZ-MULTI-PARTIAL] Pilihan jamak partial credit",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.2319,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-QZ-MULTI-WRONG] Pilihan jamak mengandung opsi salah",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.2017,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-QZ-MULTI-STRICT] Pilihan jamak all-or-nothing",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.1292,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-QZ-TRUE] Benar/salah benar",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.1085,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-QZ-FALSE] Benar/salah salah",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.1087,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-QZ-SHORT-FOLD] Isian mengabaikan kapital",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.297,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-QZ-SHORT-CASE] Isian sensitif kapital",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.2815,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-QZ-SHORT-NUMERIC] Numerik pada batas toleransi",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.1349,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-QZ-SHORT-OUTSIDE] Numerik di luar toleransi",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0883,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-QZ-MATCH-ALL] Menjodohkan semua pasangan benar",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.221,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-QZ-MATCH-PARTIAL] Menjodohkan sebagian benar",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.155,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-QZ-ORDER-OK] Urutan prosedur benar",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.1222,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-QZ-ORDER-WRONG] Urutan prosedur salah",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.1201,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-QZ-ESSAY-PENDING] Essay menunggu penilaian dosen",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0703,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-QZ-FILE-PENDING] Jawaban berkas menunggu dosen",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0593,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BLOCK-PARAGRAPH] valid block payload",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.7449,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BLOCK-HEADING] valid block payload",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.072,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BLOCK-IMAGE] valid block payload",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.061,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BLOCK-CODE_SNIPPET] valid block payload",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0488,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BLOCK-MATH_LATEX] valid block payload",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.037,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BLOCK-CALLOUT] valid block payload",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0357,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BLOCK-CHECKLIST] valid block payload",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0388,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BLOCK-TABLE] valid block payload",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0456,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BLOCK-FILE_ATTACHMENT] valid block payload",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0904,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BLOCK-EMBED_MEDIA] valid block payload",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.133,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BLOCK-DIVIDER] valid block payload",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0344,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-GRD-BAND-0] UAY letter and GPA",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.4776,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-GRD-BAND-44_99] UAY letter and GPA",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0503,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-GRD-BAND-45] UAY letter and GPA",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0311,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-GRD-BAND-54_99] UAY letter and GPA",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0269,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-GRD-BAND-55] UAY letter and GPA",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0253,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-GRD-BAND-59_99] UAY letter and GPA",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0361,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-GRD-BAND-60] UAY letter and GPA",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0422,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-GRD-BAND-64_99] UAY letter and GPA",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0293,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-GRD-BAND-65] UAY letter and GPA",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.1432,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-GRD-BAND-69_99] UAY letter and GPA",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.1228,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-GRD-BAND-70] UAY letter and GPA",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0469,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-GRD-BAND-74_99] UAY letter and GPA",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0284,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-GRD-BAND-75] UAY letter and GPA",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0251,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-GRD-BAND-79_99] UAY letter and GPA",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0237,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-GRD-BAND-80] UAY letter and GPA",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0491,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-GRD-BAND-84_99] UAY letter and GPA",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0237,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-GRD-BAND-85] UAY letter and GPA",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.023,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-GRD-BAND-100] UAY letter and GPA",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.023,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-WEIGHT-99_99] category total 99.99",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.085,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-WEIGHT-100] category total 100",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0284,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-WEIGHT-100_01] category total 100.01",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0224,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-QZ-BAD-KEY] answer key outside options rejected",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.3918,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-QZ-DUP-OPTIONS] duplicate option IDs rejected",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.1227,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-QZ-RUBRIC] rubric must equal item points",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.145,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-QZ-POINTS-NAN] non-finite item points rejected",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.4333,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-QZ-DISTRIBUTE] fourteen items sum to 100 cents-exact",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.1336,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-RES-URL] javascript embed protocol rejected",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.1076,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-PRG-CONTINUOUS] five seconds actual playback",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0858,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-PRG-SEEK] seeking gets no credit",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0408,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-PRG-REPLAY] replay cannot duplicate credit",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0389,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-PRG-FAST] accelerated playback gets no false credit",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.0304,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-PRG-REORDER] stale heartbeat is monotonic",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\domain-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.031,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "simultaneous reads share one request and navigation reuses fresh data",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\read-cache.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.9875,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "logout or mutation invalidation prevents an old response restoring the cache",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\read-cache.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.1582,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "failed and expired reads can be retried",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\read-cache.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 12.7299,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "assessment state, identity and signed file endpoints are never reused",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\read-cache.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0.3864,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "SSO roles take precedence over the legacy role claim",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\sso.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 1.9934,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:diagnostic",
+      "name": "",
+      "file": "",
+      "line": null,
+      "nesting": 0,
+      "durationMs": 0,
+      "skipped": false,
+      "todo": false,
+      "message": "tests 88",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:diagnostic",
+      "name": "",
+      "file": "",
+      "line": null,
+      "nesting": 0,
+      "durationMs": 0,
+      "skipped": false,
+      "todo": false,
+      "message": "suites 0",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:diagnostic",
+      "name": "",
+      "file": "",
+      "line": null,
+      "nesting": 0,
+      "durationMs": 0,
+      "skipped": false,
+      "todo": false,
+      "message": "pass 88",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:diagnostic",
+      "name": "",
+      "file": "",
+      "line": null,
+      "nesting": 0,
+      "durationMs": 0,
+      "skipped": false,
+      "todo": false,
+      "message": "fail 0",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:diagnostic",
+      "name": "",
+      "file": "",
+      "line": null,
+      "nesting": 0,
+      "durationMs": 0,
+      "skipped": false,
+      "todo": false,
+      "message": "cancelled 0",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:diagnostic",
+      "name": "",
+      "file": "",
+      "line": null,
+      "nesting": 0,
+      "durationMs": 0,
+      "skipped": false,
+      "todo": false,
+      "message": "skipped 0",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:diagnostic",
+      "name": "",
+      "file": "",
+      "line": null,
+      "nesting": 0,
+      "durationMs": 0,
+      "skipped": false,
+      "todo": false,
+      "message": "todo 0",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:diagnostic",
+      "name": "",
+      "file": "",
+      "line": null,
+      "nesting": 0,
+      "durationMs": 0,
+      "skipped": false,
+      "todo": false,
+      "message": "duration_ms 17353.0422",
+      "error": null,
+      "suite": "domain"
+    },
+    {
+      "event": "test:pass",
+      "name": "invalid second row leaves both rows and audit unchanged",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\batch-grades.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 202.9036,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "valid batch is idempotent and subsequent correction needs a reason",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\batch-grades.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 298.7262,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "multi-answer batch rejects invalid points then completes once",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\batch-grades.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 295.583,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "locked unpublished record and archived class reject writes",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\batch-grades.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 115.3134,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "batch grading validates, commits and audits one atomic operation",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\batch-grades.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 1282.3127,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "timer accepts 1 to 300 minutes and rejects outside",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\boundaries.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 251.7277,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "quiz before its opening time reports when it opens",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\boundaries.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 124.2645,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "quiz scheduling boundaries follow the technical design",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\boundaries.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 737.5971,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "quick demo selection uses the real OIDC callback and rejects bypass",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\demo-oidc.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 2207.5143,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "uploads reject invalid sizes and verify checksum plus malware state",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\files.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 544.5521,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "private access needs published resource context; downloads are idempotent",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\files.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 263.996,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "submission files cannot be read by another enrolled student",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\files.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 418.9685,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "cloned resources retain editable references; shared nested files cannot be trashed",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\files.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 724.4227,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "trash denies access, restore preserves ID, retention cutoff is enforced",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\files.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 428.2532,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "File Service tickets, scan verification, ownership and trash lifecycle",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\files.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 3060.6976,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "hosted demo keeps the browser callback on the frontend origin without provider credentials",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\hosted-demo.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 921.0309,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "hosted demo account picker keeps links on the provider mount path",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\hosted-demo.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 92.1818,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "admin creates course and class; department and outsider scopes are enforced",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\learning.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 862.7281,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "content sanitization, draft isolation and page boundaries",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\learning.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 706.3697,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "idempotent versioned assignment submissions and draft grade secrecy",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\learning.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 713.0037,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "eight-type hybrid quiz, immutable snapshots and stale-answer protection",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\learning.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 868.7671,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "gradebook totals, publication, correction audit and append-only constraints",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\learning.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 871.5145,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "bulk import previews, excludes and commits approved rows atomically",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\learning.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 195.0366,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "clean clone clears student history and archive blocks all mutations",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\learning.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 660.8014,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "server expiry publishes scheduled results once and hidden assignments do not notify",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\learning.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 972.316,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "dashboard summaries preserve visibility, progress and grading counts",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\learning.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 678.4557,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "disabled account and CSRF protection fail closed",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\learning.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 61.3269,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "complete academic flow on PostgreSQL with isolation and integrity checks",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\learning.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 6683.4507,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:diagnostic",
+      "name": "",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\learning.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0,
+      "skipped": false,
+      "todo": false,
+      "message": "STUDENT class payload: 3126 -> 1410 bytes",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:diagnostic",
+      "name": "",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\learning.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0,
+      "skipped": false,
+      "todo": false,
+      "message": "INSTRUCTOR class payload: 3371 -> 1414 bytes",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:diagnostic",
+      "name": "",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\learning.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0,
+      "skipped": false,
+      "todo": false,
+      "message": "SUPER_ADMIN class payload: 3371 -> 1414 bytes",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:diagnostic",
+      "name": "",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\learning.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 0,
+      "skipped": false,
+      "todo": false,
+      "message": "STUDENT class payload: 2932 -> 1341 bytes",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "PKCE + nonce creates a password-free session",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\oidc.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 1181.2833,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "bad state, nonce, audience and account status are rejected",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\oidc.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 3369.5558,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "refresh rotates server-side tokens and revalidates identity",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\oidc.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 17.9896,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "signed webhook invalidates active sessions immediately",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\oidc.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 1128.9954,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "logout clears session and provides the provider logout URL",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\oidc.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 4.7383,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "OIDC authorization code with PKCE, JWT validation, refresh, logout and revocation",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\oidc.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 6418.1903,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "publication and withdrawal enforce permissions and preserve content and grades",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\integration\\publication.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 3529.6483,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-ACC-ANON] unauthenticated API denied",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 52.7674,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-ACC-OUTSIDER] outsider cannot read class",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 67.8896,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-ACC-STUDENT-ROSTER] student cannot read roster",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 59.1393,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-ACC-TEACHER-SCOPE] unrelated instructor cannot mutate",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 66.1535,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-ACC-DEPT-SCOPE] unrelated department denied",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 58.1544,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-CRS-CREATE] course and class creation",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 138.7895,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-CRS-DRAFT] enrolled student cannot read draft class",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 65.1601,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-CRS-ARCHIVE-WRITE] archived class rejects writes",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 52.8407,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-CRS-ARCHIVE-READ] archived class remains readable",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 202.8043,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-SEC-LECTURE] section type round trip",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 70.829,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-SEC-LAB_PRACTICUM] section type round trip",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 74.9111,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-SEC-SEMINAR] section type round trip",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 69.7259,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-SEC-WORKSHOP] section type round trip",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 74.4761,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-SEC-EXAM] section type round trip",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 68.9528,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-TIMER-0] timer boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 60.3109,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-TIMER-1] timer boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 74.1934,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-TIMER-15] timer boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 72.5406,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-TIMER-120] timer boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 67.8968,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-TIMER-300] timer boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 74.6152,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-TIMER-301] timer boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 56.0809,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-TIMER-1_5] timer boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 68.3952,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-ATTEMPT-0] attempt limit as specified by v5",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 56.1118,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-ATTEMPT-1] attempt limit as specified by v5",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 70.9509,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-ATTEMPT-3] attempt limit as specified by v5",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 59.2843,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:fail",
+      "name": "[TC-BVA-ATTEMPT-NULL] attempt limit as specified by v5",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 61.2478,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": {
+        "message": "POST /sections/c8315f00-d3f2-4bee-8f3e-6d697a41bb28/quizzes: actual 400, expected 201; {\"error\":{\"code\":\"VALIDATION_ERROR\",\"details\":[{\"path\":\"attemptLimit\",\"message\":\"Expected number, received null\"}],\"requestId\":\"f12fc80fa32bde92d03692404f910bc7\"}}\n\n400 !== 201\n",
+        "code": "ERR_TEST_FAILURE",
+        "failureType": "testCodeFailure",
+        "stack": "Error [ERR_TEST_FAILURE]: POST /sections/c8315f00-d3f2-4bee-8f3e-6d697a41bb28/quizzes: actual 400, expected 201; {\"error\":{\"code\":\"VALIDATION_ERROR\",\"details\":[{\"path\":\"attemptLimit\",\"message\":\"Expected number, received null\"}],\"requestId\":\"f12fc80fa32bde92d03692404f910bc7\"}}\n\n400 !== 201\n\n    at async TestContext.<anonymous> (file:///E:/UVAYA/Project/E%20-%20Learning%20UAY/tests/qa/api-v5.test.ts:1:7148)",
+        "cause": {
+          "message": "POST /sections/c8315f00-d3f2-4bee-8f3e-6d697a41bb28/quizzes: actual 400, expected 201; {\"error\":{\"code\":\"VALIDATION_ERROR\",\"details\":[{\"path\":\"attemptLimit\",\"message\":\"Expected number, received null\"}],\"requestId\":\"f12fc80fa32bde92d03692404f910bc7\"}}\n\n400 !== 201\n",
+          "code": "ERR_ASSERTION",
+          "actual": 400,
+          "expected": 201,
+          "operator": "strictEqual",
+          "stack": "AssertionError [ERR_ASSERTION]: POST /sections/c8315f00-d3f2-4bee-8f3e-6d697a41bb28/quizzes: actual 400, expected 201; {\"error\":{\"code\":\"VALIDATION_ERROR\",\"details\":[{\"path\":\"attemptLimit\",\"message\":\"Expected number, received null\"}],\"requestId\":\"f12fc80fa32bde92d03692404f910bc7\"}}\n\n400 !== 201\n\n    at request (E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts:112:14)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async Test.run (node:internal/test_runner/test:935:9)\n    at async TestContext.<anonymous> (E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts:336:9)\n    at async Test.run (node:internal/test_runner/test:935:9)\n    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)",
+          "cause": null
+        }
+      },
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-SCORE--0_01] assignment grading boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 155.2376,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-SCORE-0] assignment grading boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 135.1911,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-SCORE-99_99] assignment grading boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 149.3277,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-SCORE-100] assignment grading boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 140.7651,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-SCORE-100_01] assignment grading boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 126.6729,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-PAGE-0] PDF page boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 62.4896,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-PAGE-1] PDF page boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 73.7184,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-PAGE-10] PDF page boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 73.0442,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-PAGE-11] PDF page boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 56.9719,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-PAGE-1_5] PDF page boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 62.8416,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-IMPORT-0] import batch boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 59.1366,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-IMPORT-1] import batch boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 64.024,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-IMPORT-500] import batch boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 357.9487,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-IMPORT-501] import batch boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 70.9436,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-FILE-0BYTE] upload ticket metadata boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 59.2021,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-FILE-1BYTE] upload ticket metadata boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 70.5862,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-FILE-20MB] upload ticket metadata boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 61.3669,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-FILE-50MB] upload ticket metadata boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 64.8376,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-FILE-50MB_PLUS] upload ticket metadata boundary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 56.3903,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-ASG-BEFORE] assignment time window",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 66.371,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-ASG-ONTIME] assignment time window",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 74.0494,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-ASG-LATE] assignment time window",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 76.7712,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-ASG-CUTOFF] assignment time window",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 71.4076,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-ASG-LATE-DENIED] assignment time window",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 62.3776,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-REASON] existing score correction requires reason",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 191.9535,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-PRG-PDF-UNIQUE] repeated page only counted once",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 141.3599,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-PRG-CONCURRENT] concurrent page updates preserve union",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 140.3978,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-PRG-HIDDEN] hidden resource rejects forged progress",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 75.3288,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-RES-XSS] stored resource strips scripts and events",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 85.7404,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:fail",
+      "name": "[TC-RES-VIDEO-EMBED] v5 accepts external video URL without binary",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 54.5596,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": {
+        "message": "POST /sections/c8315f00-d3f2-4bee-8f3e-6d697a41bb28/resources: actual 400, expected 201; {\"error\":{\"code\":\"VIDEO_REQUIRED\",\"requestId\":\"1263b5bf99ab89c2f0ed3cd10dc49233\"}}\n\n400 !== 201\n",
+        "code": "ERR_TEST_FAILURE",
+        "failureType": "testCodeFailure",
+        "stack": "Error [ERR_TEST_FAILURE]: POST /sections/c8315f00-d3f2-4bee-8f3e-6d697a41bb28/resources: actual 400, expected 201; {\"error\":{\"code\":\"VIDEO_REQUIRED\",\"requestId\":\"1263b5bf99ab89c2f0ed3cd10dc49233\"}}\n\n400 !== 201\n\n    at async TestContext.<anonymous> (file:///E:/UVAYA/Project/E%20-%20Learning%20UAY/tests/qa/api-v5.test.ts:1:12069)",
+        "cause": {
+          "message": "POST /sections/c8315f00-d3f2-4bee-8f3e-6d697a41bb28/resources: actual 400, expected 201; {\"error\":{\"code\":\"VIDEO_REQUIRED\",\"requestId\":\"1263b5bf99ab89c2f0ed3cd10dc49233\"}}\n\n400 !== 201\n",
+          "code": "ERR_ASSERTION",
+          "actual": 400,
+          "expected": 201,
+          "operator": "strictEqual",
+          "stack": "AssertionError [ERR_ASSERTION]: POST /sections/c8315f00-d3f2-4bee-8f3e-6d697a41bb28/resources: actual 400, expected 201; {\"error\":{\"code\":\"VIDEO_REQUIRED\",\"requestId\":\"1263b5bf99ab89c2f0ed3cd10dc49233\"}}\n\n400 !== 201\n\n    at request (E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts:112:14)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async Test.run (node:internal/test_runner/test:935:9)\n    at async TestContext.<anonymous> (E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts:619:7)\n    at async Test.run (node:internal/test_runner/test:935:9)\n    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)",
+          "cause": null
+        }
+      },
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-QZ-CUTOFF] server deadline caps expiresAt",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 85.3087,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-QZ-NPLUS1] active attempt reused",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 68.1392,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-BVA-QZ-LIMIT] submitted limit rejects next attempt",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 148.3201,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:pass",
+      "name": "[TC-CRS-COURSE-ARCHIVE] parent course archive locks child and audits",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 1,
+      "durationMs": 126.9519,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:fail",
+      "name": "QA v5 HTTP assertions on isolated PostgreSQL",
+      "file": "E:\\UVAYA\\Project\\E - Learning UAY\\tests\\qa\\api-v5.test.ts",
+      "line": 1,
+      "nesting": 0,
+      "durationMs": 7563.6289,
+      "skipped": false,
+      "todo": false,
+      "message": "",
+      "error": {
+        "message": "2 subtests failed",
+        "code": "ERR_TEST_FAILURE",
+        "failureType": "subtestsFailed",
+        "stack": "Error [ERR_TEST_FAILURE]: 2 subtests failed",
+        "cause": {
+          "cause": null
+        }
+      },
+      "suite": "integration"
+    },
+    {
+      "event": "test:diagnostic",
+      "name": "",
+      "file": "",
+      "line": null,
+      "nesting": 0,
+      "durationMs": 0,
+      "skipped": false,
+      "todo": false,
+      "message": "tests 95",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:diagnostic",
+      "name": "",
+      "file": "",
+      "line": null,
+      "nesting": 0,
+      "durationMs": 0,
+      "skipped": false,
+      "todo": false,
+      "message": "suites 0",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:diagnostic",
+      "name": "",
+      "file": "",
+      "line": null,
+      "nesting": 0,
+      "durationMs": 0,
+      "skipped": false,
+      "todo": false,
+      "message": "pass 92",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:diagnostic",
+      "name": "",
+      "file": "",
+      "line": null,
+      "nesting": 0,
+      "durationMs": 0,
+      "skipped": false,
+      "todo": false,
+      "message": "fail 3",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:diagnostic",
+      "name": "",
+      "file": "",
+      "line": null,
+      "nesting": 0,
+      "durationMs": 0,
+      "skipped": false,
+      "todo": false,
+      "message": "cancelled 0",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:diagnostic",
+      "name": "",
+      "file": "",
+      "line": null,
+      "nesting": 0,
+      "durationMs": 0,
+      "skipped": false,
+      "todo": false,
+      "message": "skipped 0",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:diagnostic",
+      "name": "",
+      "file": "",
+      "line": null,
+      "nesting": 0,
+      "durationMs": 0,
+      "skipped": false,
+      "todo": false,
+      "message": "todo 0",
+      "error": null,
+      "suite": "integration"
+    },
+    {
+      "event": "test:diagnostic",
+      "name": "",
+      "file": "",
+      "line": null,
+      "nesting": 0,
+      "durationMs": 0,
+      "skipped": false,
+      "todo": false,
+      "message": "duration_ms 36368.0453",
+      "error": null,
+      "suite": "integration"
+    }
+  ]
+}

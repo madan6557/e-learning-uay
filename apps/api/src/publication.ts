@@ -11,6 +11,7 @@ import {
 import { validateResource, validateWindow } from "./learning.js";
 import { quizSchema, assignmentSchema, checkCategory } from "./assessment.js";
 import { validateTotal } from "../../../packages/shared/src/domain.js";
+import { classPath, contentPath } from "../../../packages/shared/src/urls.js";
 
 // Dedicated publication changes visibility only, preserving content, dates,
 // question IDs and existing submissions. All writes remain audited/idempotent.
@@ -132,8 +133,11 @@ export function registerPublication(app: Express) {
                 tx,
                 cls.id,
                 "NEW_ASSIGNMENT",
-                after.title,
+                `Tugas baru: ${after.title}`,
                 `assignment:${id}`,
+                undefined,
+                contentPath(cls, "assignments", after, []),
+                `Tugas baru "${after.title}" telah dipublikasikan.`,
               );
           } else {
             after = await tx.announcement.update({
@@ -150,8 +154,13 @@ export function registerPublication(app: Express) {
                 tx,
                 cls.id,
                 "ANNOUNCEMENT",
-                after.title,
+                `Pengumuman: ${after.title}`,
                 `announcement:${id}`,
+                undefined,
+                `${classPath(cls)}/announcements#announcement-${id}`,
+                after.content.length > 100
+                  ? `${after.content.slice(0, 100)}...`
+                  : after.content,
               );
           }
           await audit(

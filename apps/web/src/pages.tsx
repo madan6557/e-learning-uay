@@ -232,13 +232,28 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
                 <span className="activity-icon">
                   <Bell size={18} />
                 </span>
-                <div>
-                  <a href={n.linkUrl ?? "/"}>
-                    <h3>{n.title}</h3>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <a
+                    href={n.linkUrl ?? "/"}
+                    style={{ textDecoration: "none", color: "inherit", display: "block" }}
+                    onClick={() => {
+                      if (!n.isRead) {
+                        api(`/notifications/${n.id}/read`, "POST", {})
+                          .then(() => {
+                            window.dispatchEvent(new Event("notifications-changed"));
+                          })
+                          .catch(() => {});
+                      }
+                    }}
+                  >
+                    <h3 style={{ margin: 0 }}>{n.title}</h3>
+                    {n.message && n.message !== n.title && (
+                      <p style={{ margin: "4px 0 6px", color: "var(--muted)" }}>
+                        {n.message}
+                      </p>
+                    )}
+                    <small>{date(n.createdAt)}</small>
                   </a>
-                  {/* Several events carry the same text in both fields. */}
-                  {n.message && n.message !== n.title && <p>{n.message}</p>}
-                  <small>{date(n.createdAt)}</small>
                 </div>
                 {!n.isRead && (
                   <Action
@@ -515,27 +530,13 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
             }}
           />
         ) : (
-          <Modal title={t.joinClass} onClose={() => setModal(false)}>
-            <Form
-              draftKey="join-class"
-              onSubmit={async (f) => {
-                await api(
-                  `/course-classes/${textValue(f, "classId")}/enroll`,
-                  "POST",
-                  { enrollmentKey: textValue(f, "key") },
-                );
-                setModal(false);
-                classes.reload();
-              }}
-            >
-              <Field label={t.classId}>
-                <input name="classId" required />
-              </Field>
-              <Field label={t.enrollmentKey}>
-                <input name="key" required minLength={6} />
-              </Field>
-            </Form>
-          </Modal>
+          <JoinClassModal
+            onClose={() => setModal(false)}
+            onJoined={() => {
+              setModal(false);
+              classes.reload();
+            }}
+          />
         ))}
     </>
   );
@@ -694,6 +695,140 @@ function AdminOverview({
     </>
   );
 }
+function JoinClassModal({
+  onClose,
+  onJoined,
+}: {
+  onClose: () => void;
+  onJoined: () => void;
+}) {
+  const openClasses = useApi<any[]>("/course-classes?open=true");
+  const [selectedClassId, setSelectedClassId] = useState("");
+  const [searchFilter, setSearchFilter] = useState("");
+  const [manualMode, setManualMode] = useState(false);
+
+  const filtered = (openClasses.data ?? []).filter((c) => {
+    if (!searchFilter.trim()) return true;
+    const term = searchFilter.toLowerCase();
+    return (
+      c.course?.code?.toLowerCase().includes(term) ||
+      c.course?.title?.toLowerCase().includes(term) ||
+      c.name?.toLowerCase().includes(term) ||
+      c.instructors?.some((i: any) =>
+        i.user?.name?.toLowerCase().includes(term),
+      )
+    );
+  });
+
+  return (
+    <Modal title={t.joinClass} onClose={onClose}>
+      <Form
+        draftKey="join-class"
+        submitLabel={t.joinClass}
+        onSubmit={async (f) => {
+          const classTarget = manualMode
+            ? textValue(f, "manualClassId")
+            : (selectedClassId || textValue(f, "classId"));
+          if (!classTarget)
+            throw new Error("Pilih kelas yang ingin diikuti terlebih dahulu.");
+          await api(
+            `/course-classes/${encodeURIComponent(classTarget)}/enroll`,
+            "POST",
+            { enrollmentKey: textValue(f, "key") },
+          );
+          onJoined();
+        }}
+      >
+        {!manualMode ? (
+          <>
+            <Field label={t.chooseClass}>
+              {openClasses.loading ? (
+                <Loading />
+              ) : openClasses.data && openClasses.data.length > 0 ? (
+                <>
+                  <input
+                    type="text"
+                    placeholder={t.searchClass}
+                    value={searchFilter}
+                    onChange={(e) => setSearchFilter(e.target.value)}
+                    style={{ marginBottom: 8 }}
+                  />
+                  <select
+                    name="classId"
+                    required
+                    value={selectedClassId}
+                    onChange={(e) => setSelectedClassId(e.target.value)}
+                  >
+                    <option value="">-- {t.chooseClass} --</option>
+                    {filtered.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.course?.code} · {c.course?.title} ({c.name} -{" "}
+                        {c.academicYear})
+                      </option>
+                    ))}
+                  </select>
+                </>
+              ) : (
+                <p className="empty-inline" style={{ marginBottom: 8 }}>
+                  Tidak ada kelas yang membuka pendaftaran mandiri saat ini.
+                </p>
+              )}
+            </Field>
+            <div style={{ textAlign: "right", marginTop: -6, marginBottom: 12 }}>
+              <button
+                type="button"
+                className="text-button"
+                style={{ fontSize: "0.82rem" }}
+                onClick={() => setManualMode(true)}
+              >
+                Gunakan ID / Kode Kelas manual
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <Field label="Kode / ID Kelas">
+              <input
+                name="manualClassId"
+                required
+                placeholder="Masukkan kode MK (mis. IF202) atau slug kelas"
+              />
+            </Field>
+            <div style={{ textAlign: "right", marginTop: -6, marginBottom: 12 }}>
+              <button
+                type="button"
+                className="text-button"
+                style={{ fontSize: "0.82rem" }}
+                onClick={() => setManualMode(false)}
+              >
+                Pilih dari daftar kelas terbuka
+              </button>
+            </div>
+          </>
+        )}
+        <Field label={t.enrollmentKey}>
+          <input
+            name="key"
+            required
+            minLength={6}
+            placeholder="Masukkan kunci pendaftaran dari dosen"
+            onInvalid={(e) =>
+              (e.target as HTMLInputElement).setCustomValidity(
+                (e.target as HTMLInputElement).validity.valueMissing
+                  ? "Kunci pendaftaran mandiri wajib diisi."
+                  : "Kunci pendaftaran mandiri minimal 6 karakter.",
+              )
+            }
+            onInput={(e) =>
+              (e.target as HTMLInputElement).setCustomValidity("")
+            }
+          />
+        </Field>
+      </Form>
+    </Modal>
+  );
+}
+
 export function ClassForm({
   onClose,
   onSaved,
@@ -705,14 +840,35 @@ export function ClassForm({
   const [search, setSearch] = useState(""),
     [users, setUsers] = useState<any[]>([]),
     [selected, setSelected] = useState<string[]>([]),
+    [selectedUsers, setSelectedUsers] = useState<any[]>([]),
     [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    const trimmed = search.trim();
+    if (trimmed.length < 2) {
+      setUsers([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const results = await api(`/users?q=${encodeURIComponent(trimmed)}`);
+        setUsers(results);
+        setError(null);
+      } catch (e) {
+        setError(e as Error);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   return (
     <Modal title={t.newClass} onClose={onClose}>
       <Form
         draftKey="new-class"
-        draftValue={{ selected, users, search }}
+        draftValue={{ selected, selectedUsers, users, search }}
         onRestoreDraft={(v) => {
           setSelected(v?.selected ?? []);
+          setSelectedUsers(v?.selectedUsers ?? []);
           setUsers(v?.users ?? []);
           setSearch(v?.search ?? "");
         }}
@@ -762,45 +918,188 @@ export function ClassForm({
           </select>
         </Field>
         <Field label={t.enrollmentKey}>
-          <input name="key" minLength={6} />
+          <input
+            name="key"
+            minLength={6}
+            placeholder="Minimal 6 karakter (opsional)"
+            onInvalid={(e) =>
+              (e.target as HTMLInputElement).setCustomValidity(
+                "Kunci pendaftaran mandiri minimal 6 karakter.",
+              )
+            }
+            onInput={(e) =>
+              (e.target as HTMLInputElement).setCustomValidity("")
+            }
+          />
         </Field>
         <Field label={t.instructors}>
-          <div className="inline-form">
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={t.searchUsers}
-            />
-            <button
-              type="button"
-              className="secondary"
-              onClick={async () => {
-                try {
-                  setUsers(await api(`/users?q=${encodeURIComponent(search)}`));
-                  setError(null);
-                } catch (e) {
-                  setError(e as Error);
-                }
-              }}
-            >
-              {t.searchLabel}
-            </button>
+          <div style={{ position: "relative" }}>
+            <div className="inline-form">
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Ketik nama atau NIDN dosen..."
+              />
+              <button
+                type="button"
+                className="secondary"
+                disabled={search.trim().length < 2}
+                onClick={async () => {
+                  if (search.trim().length < 2) return;
+                  try {
+                    setUsers(await api(`/users?q=${encodeURIComponent(search.trim())}`));
+                    setError(null);
+                  } catch (e) {
+                    setError(e as Error);
+                  }
+                }}
+              >
+                {t.searchLabel}
+              </button>
+            </div>
+            {search.trim().length > 0 && search.trim().length < 2 && (
+              <small style={{ display: "block", marginTop: 4, color: "#64748b" }}>
+                Ketik minimal 2 karakter untuk mencari dosen...
+              </small>
+            )}
+            {search.trim().length >= 2 && users.filter((u) => u.role !== "STUDENT").length > 0 && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  left: 0,
+                  right: 0,
+                  zIndex: 20,
+                  background: "#fff",
+                  border: "1px solid #cbd5e1",
+                  borderRadius: 6,
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                  maxHeight: 200,
+                  overflowY: "auto",
+                  marginTop: 4,
+                }}
+              >
+                {users
+                  .filter((u) => u.role !== "STUDENT")
+                  .map((u) => {
+                    const isPicked = selected.includes(u.id);
+                    return (
+                      <div
+                        key={u.id}
+                        onClick={() => {
+                          if (!isPicked) {
+                            setSelected((prev) => [...prev, u.id]);
+                            setSelectedUsers((prev) => [
+                              ...prev.filter((x) => x.id !== u.id),
+                              u,
+                            ]);
+                          } else {
+                            setSelected((prev) => prev.filter((id) => id !== u.id));
+                            setSelectedUsers((prev) =>
+                              prev.filter((x) => x.id !== u.id),
+                            );
+                          }
+                          setSearch("");
+                        }}
+                        style={{
+                          padding: "8px 12px",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          cursor: "pointer",
+                          borderBottom: "1px solid #f1f5f9",
+                          backgroundColor: isPicked ? "#f0fdf4" : "transparent",
+                        }}
+                      >
+                        <div>
+                          <strong style={{ display: "block", fontSize: "0.88rem" }}>
+                            {u.name}
+                          </strong>
+                          <small style={{ color: "#64748b" }}>
+                            {u.identifierValue ?? "Dosen"}
+                          </small>
+                        </div>
+                        <span
+                          style={{
+                            fontSize: "0.8rem",
+                            color: isPicked ? "#15803d" : "#0284c7",
+                          }}
+                        >
+                          {isPicked ? "Terpilih ✓" : "+ Tambah"}
+                        </span>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
           </div>
         </Field>
+        {selectedUsers.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, margin: "6px 0 12px" }}>
+            {selectedUsers.map((u) => (
+              <span
+                key={u.id}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "4px 10px",
+                  borderRadius: 16,
+                  background: "#e0f2fe",
+                  color: "#0369a1",
+                  fontSize: "0.85rem",
+                  fontWeight: 500,
+                }}
+              >
+                <span>{u.name}</span>
+                <button
+                  type="button"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: 0,
+                    fontSize: "1rem",
+                    lineHeight: 1,
+                    color: "#0284c7",
+                  }}
+                  onClick={() => {
+                    setSelected((prev) => prev.filter((id) => id !== u.id));
+                    setSelectedUsers((prev) => prev.filter((x) => x.id !== u.id));
+                  }}
+                  aria-label={`Hapus ${u.name}`}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
         {users
-          .filter((u) => u.role !== "STUDENT")
+          .filter(
+            (u) =>
+              u.role !== "STUDENT" &&
+              !selectedUsers.some((su) => su.id === u.id),
+          )
           .map((u) => (
             <label className="check-row" key={u.id}>
               <input
                 type="checkbox"
                 checked={selected.includes(u.id)}
-                onChange={(e) =>
-                  setSelected(
-                    e.target.checked
-                      ? [...selected, u.id]
-                      : selected.filter((id) => id !== u.id),
-                  )
-                }
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setSelected((prev) => [...prev, u.id]);
+                    setSelectedUsers((prev) => [
+                      ...prev.filter((x) => x.id !== u.id),
+                      u,
+                    ]);
+                  } else {
+                    setSelected((prev) => prev.filter((id) => id !== u.id));
+                    setSelectedUsers((prev) =>
+                      prev.filter((x) => x.id !== u.id),
+                    );
+                  }
+                }}
               />
               {u.name}
             </label>

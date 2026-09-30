@@ -1,0 +1,281 @@
+{
+  "questionScenarios": [
+    [
+      "SINGLE-OK",
+      "Pilihan tunggal benar",
+      "SINGLE_CHOICE",
+      "Kunci a; bobot 20; jawaban a.",
+      20
+    ],
+    [
+      "SINGLE-WRONG",
+      "Pilihan tunggal salah",
+      "SINGLE_CHOICE",
+      "Kunci a; jawaban b.",
+      0
+    ],
+    [
+      "MULTI-ALL",
+      "Pilihan jamak seluruhnya benar",
+      "MULTIPLE_SELECT",
+      "Kunci a,b; jawaban a,b; bobot 20.",
+      20
+    ],
+    [
+      "MULTI-PARTIAL",
+      "Pilihan jamak partial credit",
+      "MULTIPLE_SELECT",
+      "Kunci a,b,c,d; pilih a,b; bobot 20; partialCredit=true.",
+      10
+    ],
+    [
+      "MULTI-WRONG",
+      "Pilihan jamak mengandung opsi salah",
+      "MULTIPLE_SELECT",
+      "Kunci a,b; pilih a,e; partialCredit=true.",
+      0
+    ],
+    [
+      "MULTI-STRICT",
+      "Pilihan jamak all-or-nothing",
+      "MULTIPLE_SELECT",
+      "Kunci a,b; pilih a; partialCredit=false.",
+      0
+    ],
+    [
+      "TRUE",
+      "Benar/salah benar",
+      "TRUE_FALSE",
+      "Kunci a; pilih a; bobot 20.",
+      20
+    ],
+    [
+      "FALSE",
+      "Benar/salah salah",
+      "TRUE_FALSE",
+      "Kunci a; pilih b.",
+      0
+    ],
+    [
+      "SHORT-FOLD",
+      "Isian mengabaikan kapital",
+      "SHORT_ANSWER",
+      "Kunci HTTP; jawaban http; caseSensitive=false.",
+      20
+    ],
+    [
+      "SHORT-CASE",
+      "Isian sensitif kapital",
+      "SHORT_ANSWER",
+      "Kunci HTTP; jawaban http; caseSensitive=true.",
+      0
+    ],
+    [
+      "SHORT-NUMERIC",
+      "Numerik pada batas toleransi",
+      "SHORT_ANSWER",
+      "9.8 ± 0.1; jawaban 9.9.",
+      20
+    ],
+    [
+      "SHORT-OUTSIDE",
+      "Numerik di luar toleransi",
+      "SHORT_ANSWER",
+      "9.8 ± 0.1; jawaban 9.901.",
+      0
+    ],
+    [
+      "MATCH-ALL",
+      "Menjodohkan semua pasangan benar",
+      "MATCHING",
+      "a→b, b→a, c→c; bobot 20.",
+      20
+    ],
+    [
+      "MATCH-PARTIAL",
+      "Menjodohkan sebagian benar",
+      "MATCHING",
+      "2 dari 3 pasangan benar; bobot 20.",
+      13.33
+    ],
+    [
+      "ORDER-OK",
+      "Urutan prosedur benar",
+      "ORDERING",
+      "Kunci b,a,c; jawaban b,a,c.",
+      20
+    ],
+    [
+      "ORDER-WRONG",
+      "Urutan prosedur salah",
+      "ORDERING",
+      "Kunci b,a,c; jawaban a,b,c.",
+      0
+    ],
+    [
+      "ESSAY-PENDING",
+      "Essay menunggu penilaian dosen",
+      "ESSAY",
+      "Jawaban uraian; bobot 20.",
+      "manual"
+    ],
+    [
+      "FILE-PENDING",
+      "Jawaban berkas menunggu dosen",
+      "FILE_UPLOAD",
+      "fileObjectId sah; bobot 20.",
+      "manual"
+    ]
+  ],
+  "blockSamples": {
+    "paragraph": {
+      "text": "<strong>Teori</strong> <em>praktikum</em>"
+    },
+    "heading": {
+      "text": "Judul Bab",
+      "level": 2
+    },
+    "image": {
+      "fileObjectId": "qa-image",
+      "altText": "Rangkaian logika",
+      "caption": "Gambar 1",
+      "alignment": "center"
+    },
+    "code_snippet": {
+      "code": "print(1)",
+      "language": "python",
+      "showLineNumbers": true
+    },
+    "math_latex": {
+      "expression": "E=mc^2"
+    },
+    "callout": {
+      "title": "Catatan",
+      "text": "Perhatikan instruksi",
+      "alertType": "WARNING"
+    },
+    "checklist": {
+      "items": [
+        {
+          "id": "step-1",
+          "text": "Siapkan alat",
+          "checked": false
+        }
+      ]
+    },
+    "table": {
+      "rows": [
+        [
+          "Nama",
+          "Nilai"
+        ],
+        [
+          "A",
+          "85"
+        ]
+      ],
+      "header": true
+    },
+    "file_attachment": {
+      "fileObjectId": "qa-file",
+      "displayName": "modul.pdf"
+    },
+    "embed_media": {
+      "url": "https://www.youtube.com/embed/example",
+      "title": "Video"
+    },
+    "divider": {}
+  },
+  "gradeBands": [
+    [
+      0,
+      "E",
+      0
+    ],
+    [
+      44.99,
+      "E",
+      0
+    ],
+    [
+      45,
+      "D",
+      1
+    ],
+    [
+      54.99,
+      "D",
+      1
+    ],
+    [
+      55,
+      "C",
+      2
+    ],
+    [
+      59.99,
+      "C",
+      2
+    ],
+    [
+      60,
+      "C+",
+      2.5
+    ],
+    [
+      64.99,
+      "C+",
+      2.5
+    ],
+    [
+      65,
+      "B-",
+      2.75
+    ],
+    [
+      69.99,
+      "B-",
+      2.75
+    ],
+    [
+      70,
+      "B",
+      3
+    ],
+    [
+      74.99,
+      "B",
+      3
+    ],
+    [
+      75,
+      "B+",
+      3.5
+    ],
+    [
+      79.99,
+      "B+",
+      3.5
+    ],
+    [
+      80,
+      "A-",
+      3.75
+    ],
+    [
+      84.99,
+      "A-",
+      3.75
+    ],
+    [
+      85,
+      "A",
+      4
+    ],
+    [
+      100,
+      "A",
+      4
+    ]
+  ]
+}

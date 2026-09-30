@@ -16,6 +16,7 @@ import {
   round,
   validateTotal,
 } from "../../../packages/shared/src/domain.js";
+import { classPath } from "../../../packages/shared/src/urls.js";
 
 export async function calculateGradebook(
   tx: Prisma.TransactionClient,
@@ -266,6 +267,10 @@ export async function refreshPublishedFinal(
     after,
     reason,
   );
+  const cls = await tx.courseClass.findUnique({
+    where: { id: classId },
+    include: { course: true },
+  });
   await notify(
     tx,
     classId,
@@ -273,6 +278,8 @@ export async function refreshPublishedFinal(
     "Hasil belajar diperbarui",
     `final-correction:${after.id}:${after.updatedAt.toISOString()}`,
     userId,
+    cls ? `${classPath(cls)}/gradebook` : undefined,
+    "Nilai akhir hasil belajar Anda telah diperbarui oleh pengajar.",
   );
 }
 export function registerGrades(app: Express) {
@@ -472,6 +479,8 @@ export function registerGrades(app: Express) {
                   "Hasil belajar telah diterbitkan",
                   `final-grade:${after.id}`,
                   row.user.id,
+                  `${classPath(cls)}/gradebook`,
+                  "Nilai akhir hasil belajar kelas Anda telah diterbitkan.",
                 );
               count++;
             }

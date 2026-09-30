@@ -13,3 +13,6 @@ Thumbs.db
 __pycache__/
 *.pyc
 deployment/backups/
+apps/qa/public/reports/*
+!apps/qa/public/reports/latest.json
+apps/qa/public/source/

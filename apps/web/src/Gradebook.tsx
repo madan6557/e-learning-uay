@@ -277,7 +277,7 @@ export function Gradebook({
                           type="number"
                           min={0}
                           max={100}
-                          step="0.01"
+                          step="1"
                           required
                           value={
                             changes[r.user.id + ":" + c.categoryId]?.score ??
@@ -448,7 +448,7 @@ export function Gradebook({
                       required
                       min={0}
                       max={100}
-                      step="0.01"
+                      step="0.1"
                       value={c.weightPercent}
                       onChange={(e) =>
                         setWeights(

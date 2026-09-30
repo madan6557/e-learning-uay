@@ -17,6 +17,7 @@ const appOrigin = originFrom(
   process.env.APP_ORIGIN,
   "http://127.0.0.1:5173",
 );
+const apiOrigin = originFrom(process.env.API_ORIGIN, appOrigin);
 const accountUrlFromEnv = process.env.SSO_ACCOUNT_URL?.trim() ?? "";
 function accountManagementUrl() {
   if (!accountUrlFromEnv) return "";
@@ -59,10 +60,15 @@ export const config = {
     `${appOrigin}/api/v1/auth/callback`,
   fileUrl: process.env.FILE_SERVICE_URL ?? "",
   fileKey: process.env.FILE_SERVICE_KEY ?? "",
-  fileOrigins: (process.env.FILE_ALLOWED_ORIGINS ?? "")
-    .split(",")
-    .map((s) => s.trim().replace(/\/$/, ""))
-    .filter(Boolean),
+  fileOrigins: Array.from(
+    new Set([
+      ...(process.env.FILE_ALLOWED_ORIGINS ?? "")
+        .split(",")
+        .map((s) => s.trim().replace(/\/$/, ""))
+        .filter(Boolean),
+      ...(isDemo ? [apiOrigin, appOrigin] : []),
+    ]),
+  ),
   embedOrigins: (
     process.env.EMBED_ALLOWED_ORIGINS ??
     "https://www.youtube.com,https://www.youtube-nocookie.com,https://drive.google.com"
@@ -425,6 +431,8 @@ export async function notify(
   title: string,
   eventKey: string,
   userId?: string,
+  linkUrl?: string,
+  message?: string,
 ) {
   const members = userId
     ? [{ userId }]
@@ -432,15 +440,18 @@ export async function notify(
         where: { classId, isActive: true },
         select: { userId: true },
       });
-  const cls = await tx.courseClass.findUniqueOrThrow({ where: { id: classId } });
+  const cls = await tx.courseClass.findUniqueOrThrow({
+    where: { id: classId },
+    include: { course: true },
+  });
   await tx.notification.createMany({
     data: members.map((m) => ({
       userId: m.userId,
       type,
       title,
-      message: title,
+      message: message ?? title,
       eventKey,
-      linkUrl: classPath(cls),
+      linkUrl: linkUrl ?? classPath(cls),
     })),
     skipDuplicates: true,
   });
