@@ -141,12 +141,22 @@
 .compact .welcome-emblem {
   width: 30%;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 14px;
 }
 .welcome-emblem svg {
   flex-shrink: 0;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.16));
+}
+.welcome-emblem span {
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: #fff;
+  opacity: 0.95;
+  text-align: center;
 }
 .stats-grid {
   display: grid;

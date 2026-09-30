@@ -1,5 +1,4 @@
 import { confirmAction } from "./confirm";
-import { UayLogo } from "./UayLogo";
 import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
@@ -361,7 +360,8 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
               })()}
             </div>
             <div className="welcome-emblem">
-              <UayLogo size={90} color="#ffffff" />
+              <BookOpen size={80} strokeWidth={1} />
+              <span>{t.appName || "E-Learning UAY"}</span>
             </div>
           </section>
           <div className="stats-grid">
@@ -559,6 +559,33 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
     </>
   );
 }
+const DEPARTMENT_NAMES: Record<string, string> = {
+  IF: "Program Studi Informatika",
+  TI: "Program Studi Teknik Industri",
+  TS: "Program Studi Teknik Sipil",
+  TE: "Program Studi Teknik Elektro",
+  SI: "Program Studi Sistem Informasi",
+  HK: "Program Studi Ilmu Hukum",
+  IH: "Program Studi Ilmu Hukum",
+  MIH: "Program Studi Magister Ilmu Hukum",
+  MH: "Program Studi Magister Ilmu Hukum",
+  MAN: "Program Studi Manajemen",
+  MN: "Program Studi Manajemen",
+  AK: "Program Studi Akuntansi",
+  AP: "Program Studi Administrasi Publik",
+  AB: "Program Studi Administrasi Bisnis",
+  FAR: "Program Studi Farmasi",
+  FARM: "Program Studi Farmasi",
+};
+
+export function formatDepartmentScope(code: string): string {
+  if (!code) return "";
+  const upper = code.trim().toUpperCase();
+  const name = DEPARTMENT_NAMES[upper];
+  if (name) return `${upper} (${name})`;
+  return code;
+}
+
 function AdminOverview({
   user,
   classes,
@@ -574,7 +601,11 @@ function AdminOverview({
   const departmentAdmin = user.role === "DEPARTMENT_ADMIN";
   const drafts = classes.filter((c) => c.status === "DRAFT");
   const scope = departmentAdmin
-    ? user.departmentScopes?.join(", ") || t.noDepartmentScope
+    ? user.departmentScopes && user.departmentScopes.length > 0
+      ? user.departmentScopes
+          .map((c: string) => formatDepartmentScope(c))
+          .join(", ")
+      : t.noDepartmentScope
     : t.allDepartments;
   return (
     <>
@@ -609,7 +640,8 @@ function AdminOverview({
           </a>
         </div>
         <div className="welcome-emblem">
-          <UayLogo size={90} color="#ffffff" />
+          <BookOpen size={80} strokeWidth={1} />
+          <span>{t.appName || "E-Learning UAY"}</span>
         </div>
       </section>
       {courses.error && <Notice error={courses.error} />}
