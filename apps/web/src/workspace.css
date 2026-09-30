@@ -129,10 +129,15 @@
 }
 .welcome-panel.compact {
   padding: 30px 36px;
+  min-height: 140px;
+  height: auto;
+  box-sizing: border-box;
 }
+.welcome-panel.compact h2,
 .compact h2 {
   font-size: 1.7rem;
 }
+.welcome-panel.compact .welcome-emblem,
 .compact .welcome-emblem {
   width: 30%;
 }
@@ -237,11 +242,17 @@ button.secondary,
 }
 button.compact,
 .button.compact,
-.compact {
-  min-height: 32px !important;
-  height: 32px !important;
-  padding: 0 12px !important;
-  font-size: 0.8rem !important;
+a.button.compact,
+button.primary.compact,
+a.primary.compact,
+button.secondary.compact,
+a.secondary.compact,
+.primary.compact,
+.secondary.compact {
+  min-height: 32px;
+  height: 32px;
+  padding: 0 12px;
+  font-size: 0.8rem;
 }
 .archived-banner {
   display: flex;
