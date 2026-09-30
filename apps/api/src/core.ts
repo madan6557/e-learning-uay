@@ -13,10 +13,7 @@ export const production = process.env.NODE_ENV === "production";
 export const isDemo = process.env.DEMO_MODE === "true";
 const originFrom = (value: string | undefined, fallback: string) =>
   (value ?? fallback).split(",")[0].trim().replace(/\/$/, "");
-const appOrigin = originFrom(
-  process.env.APP_ORIGIN,
-  "http://127.0.0.1:5173",
-);
+const appOrigin = originFrom(process.env.APP_ORIGIN, "http://127.0.0.1:5173");
 const apiOrigin = originFrom(process.env.API_ORIGIN, appOrigin);
 const accountUrlFromEnv = process.env.SSO_ACCOUNT_URL?.trim() ?? "";
 function accountManagementUrl() {
@@ -56,8 +53,7 @@ export const config = {
   audience: process.env.SSO_AUDIENCE ?? "elearning-uay",
   clientSecret: process.env.SSO_CLIENT_SECRET ?? "",
   redirectUri:
-    process.env.SSO_REDIRECT_URI ??
-    `${appOrigin}/api/v1/auth/callback`,
+    process.env.SSO_REDIRECT_URI ?? `${appOrigin}/api/v1/auth/callback`,
   fileUrl: process.env.FILE_SERVICE_URL ?? "",
   fileKey: process.env.FILE_SERVICE_KEY ?? "",
   fileOrigins: Array.from(
@@ -80,17 +76,24 @@ export const config = {
 };
 function productionConfigurationErrors() {
   const invalid: string[] = [];
+
   const required = (name: string, value?: string) => {
     if (!value?.trim()) invalid.push(name);
   };
-  if (config.authMode !== "oidc") invalid.push("AUTH_MODE=oidc");
+
   required("APP_ORIGIN", process.env.APP_ORIGIN);
   required("DATABASE_URL", process.env.DATABASE_URL);
+
+  // Demo mode boleh berjalan tanpa OIDC, Redis, SSO,
+  // File Service, dan HTTPS.
   if (isDemo) {
-    if (!config.origin.startsWith("https://")) invalid.push("HTTPS APP_ORIGIN");
-    if (!config.apiOrigin.startsWith("https://")) invalid.push("HTTPS API_ORIGIN");
     return [...new Set(invalid)];
   }
+
+  if (config.authMode !== "oidc") {
+    invalid.push("AUTH_MODE=oidc");
+  }
+
   required("REDIS_URL", process.env.REDIS_URL);
   required("SSO_ISSUER", process.env.SSO_ISSUER);
   required("SSO_CLIENT_ID", process.env.SSO_CLIENT_ID);
@@ -101,8 +104,11 @@ function productionConfigurationErrors() {
   required("FILE_SERVICE_URL", process.env.FILE_SERVICE_URL);
   required("FILE_SERVICE_KEY", process.env.FILE_SERVICE_KEY);
   required("FILE_ALLOWED_ORIGINS", process.env.FILE_ALLOWED_ORIGINS);
-  if (accountUrlFromEnv && !config.accountUrl)
+
+  if (accountUrlFromEnv && !config.accountUrl) {
     invalid.push("HTTPS SSO_ACCOUNT_URL");
+  }
+
   if (
     [
       config.origin,
@@ -111,15 +117,19 @@ function productionConfigurationErrors() {
       config.redirectUri,
       config.fileUrl,
     ].some((value) => !value.startsWith("https://"))
-  )
+  ) {
     invalid.push(
       "HTTPS APP_ORIGIN, API_ORIGIN, SSO_ISSUER, SSO_REDIRECT_URI, FILE_SERVICE_URL",
     );
+  }
+
   if (
     !config.fileOrigins.length ||
     config.fileOrigins.some((value) => !value.startsWith("https://"))
-  )
+  ) {
     invalid.push("HTTPS FILE_ALLOWED_ORIGINS");
+  }
+
   return [...new Set(invalid)];
 }
 if (production) {
@@ -382,7 +392,8 @@ export async function classAccess(
   const activeEnrollment = item.enrollments.find((e) => e.isActive);
   const inactiveEnrollment = item.enrollments.find((e) => !e.isActive);
   const enrolled = Boolean(activeEnrollment);
-  const isInactiveParticipant = !manage && !enrolled && Boolean(inactiveEnrollment);
+  const isInactiveParticipant =
+    !manage && !enrolled && Boolean(inactiveEnrollment);
 
   if (isInactiveParticipant) {
     ensure(!write, 403, "PARTICIPATION_DISABLED");
