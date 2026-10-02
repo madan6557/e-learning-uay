@@ -52,13 +52,19 @@ import "./workspace.css";
 import "./experience.css";
 // The square mark and product-name lockup is shared with the UAY SSO console
 // so the two applications read as one environment.
-function Brand({ home = "/" }: { home?: string }) {
+function Brand({
+  home = "/",
+  collapsed = false,
+}: {
+  home?: string;
+  collapsed?: boolean;
+}) {
   return (
     <a className="brand" href={home} aria-label="UAY E-Learning beranda">
       <span className="brand-mark" aria-hidden="true">
         UAY
       </span>
-      <span className="brand-name">E-Learning UAY</span>
+      {!collapsed && <span className="brand-name">E-Learning UAY</span>}
     </a>
   );
 }
@@ -389,9 +395,9 @@ function AuthShell({
         inert={mobile && !menuOpen}
       >
         <div className="sidebar-brand">
-          <Brand home="/dashboard" />
+          <Brand home="/dashboard" collapsed={collapsed} />
         </div>
-        <p className="nav-caption">MENU</p>
+        {!collapsed && <p className="nav-caption">MENU</p>}
         <nav aria-label="Navigasi utama">
           {links.map(([href, Icon, label]: any) => {
             const active = pathname === href || pathname.startsWith(`${href}/`);
@@ -404,8 +410,8 @@ function AuthShell({
                 aria-current={active ? "page" : undefined}
                 title={collapsed ? label : undefined}
               >
-                <Icon size={19} />
-                <span className="nav-label">{label}</span>
+                <Icon size={18} />
+                {!collapsed && <span className="nav-label">{label}</span>}
                 {badge > 0 && (
                   <span className="nav-badge">
                     {badge > 99 ? "99+" : badge}
@@ -416,13 +422,6 @@ function AuthShell({
             );
           })}
         </nav>
-        <div className="sidebar-bottom">
-          <ShieldCheck size={18} />
-          <span>
-            Akun SSO UAY
-            <small className="block">Identitas dikelola oleh SSO</small>
-          </span>
-        </div>
         <div className="sidebar-collapse-section">
           <button
             type="button"
@@ -435,9 +434,11 @@ function AuthShell({
             {collapsed ? (
               <PanelLeftOpen size={16} />
             ) : (
-              <PanelLeftClose size={16} />
+              <>
+                <PanelLeftClose size={16} />
+                <span className="collapse-label">Ciutkan sidebar</span>
+              </>
             )}
-            <span className="collapse-label">Ciutkan sidebar</span>
           </button>
         </div>
       </aside>
