@@ -54,14 +54,58 @@ export const config = {
   clientSecret: process.env.SSO_CLIENT_SECRET ?? "",
   redirectUri:
     process.env.SSO_REDIRECT_URI ?? `${appOrigin}/api/v1/auth/callback`,
-  fileUrl: process.env.FILE_SERVICE_URL ?? "",
-  fileKey: process.env.FILE_SERVICE_KEY ?? "",
+  fileUrl:
+    process.env.UAY_FILE_SERVICE_URL?.trim() ||
+    process.env.FILE_SERVICE_URL?.trim() ||
+    process.env.FILE_SERVICE_API_URL?.trim() ||
+    "",
+  fileKey:
+    process.env.UAY_FILE_SERVICE_API_KEY?.trim() ||
+    process.env.FILE_SERVICE_API_KEY?.trim() ||
+    process.env.FILE_SERVICE_KEY?.trim() ||
+    "",
+  fileRepoId:
+    process.env.UAY_FILE_SERVICE_REPOSITORY_ID?.trim() ||
+    process.env.FILE_SERVICE_REPOSITORY_ID?.trim() ||
+    process.env.FILE_SERVICE_REPO_ID?.trim() ||
+    "00000000-0000-0000-0000-000000000001",
+  fileClientId:
+    process.env.UAY_FILE_SERVICE_CLIENT_ID?.trim() ||
+    process.env.FILE_SERVICE_CLIENT_ID?.trim() ||
+    process.env.SSO_CLIENT_ID?.trim() ||
+    "elearning-uay",
+  get fileMode(): "uay" | "legacy" | "local" {
+    const url = this.fileUrl;
+    const key = this.fileKey;
+    if (!url || !key) return "local";
+    const isUay = Boolean(
+      process.env.UAY_FILE_SERVICE_URL ||
+        process.env.UAY_FILE_SERVICE_API_KEY ||
+        process.env.FILE_SERVICE_TYPE === "uay" ||
+        url.includes("/api/v1") ||
+        url.includes("file-service.uay.ac.id") ||
+        process.env.UAY_FILE_SERVICE_REPOSITORY_ID,
+    );
+    return isUay ? "uay" : "legacy";
+  },
   fileOrigins: Array.from(
     new Set([
       ...(process.env.FILE_ALLOWED_ORIGINS ?? "")
         .split(",")
         .map((s) => s.trim().replace(/\/$/, ""))
         .filter(Boolean),
+      ...(() => {
+        const u =
+          process.env.UAY_FILE_SERVICE_URL?.trim() ||
+          process.env.FILE_SERVICE_URL?.trim() ||
+          process.env.FILE_SERVICE_API_URL?.trim();
+        if (!u) return [];
+        try {
+          return [new URL(u).origin];
+        } catch {
+          return [];
+        }
+      })(),
       apiOrigin,
       appOrigin,
     ]),
@@ -121,13 +165,32 @@ function productionConfigurationErrors() {
   required("SSO_AUDIENCE", process.env.SSO_AUDIENCE);
   required("SSO_REDIRECT_URI", process.env.SSO_REDIRECT_URI);
   required("SSO_WEBHOOK_SECRET", process.env.SSO_WEBHOOK_SECRET);
-  required("FILE_SERVICE_URL", process.env.FILE_SERVICE_URL);
-  required("FILE_SERVICE_KEY", process.env.FILE_SERVICE_KEY);
+
+  const activeFileUrl =
+    process.env.UAY_FILE_SERVICE_URL?.trim() ||
+    process.env.FILE_SERVICE_URL?.trim() ||
+    process.env.FILE_SERVICE_API_URL?.trim();
+  const activeFileKey =
+    process.env.UAY_FILE_SERVICE_API_KEY?.trim() ||
+    process.env.FILE_SERVICE_API_KEY?.trim() ||
+    process.env.FILE_SERVICE_KEY?.trim();
+
+  if (!activeFileUrl) {
+    invalid.push("FILE_SERVICE_URL or UAY_FILE_SERVICE_URL");
+  }
+  if (!activeFileKey) {
+    invalid.push("FILE_SERVICE_KEY or UAY_FILE_SERVICE_API_KEY");
+  }
   required("FILE_ALLOWED_ORIGINS", process.env.FILE_ALLOWED_ORIGINS);
 
   if (accountUrlFromEnv && !config.accountUrl) {
     invalid.push("HTTPS SSO_ACCOUNT_URL");
   }
+
+  const isIntranetOrLocal = (val: string) =>
+    val.startsWith("http://file-service.uay.ac.id") ||
+    val.startsWith("http://127.0.0.1") ||
+    val.startsWith("http://localhost");
 
   if (
     [
@@ -135,8 +198,10 @@ function productionConfigurationErrors() {
       config.apiOrigin,
       config.issuer,
       config.redirectUri,
-      config.fileUrl,
-    ].some((value) => !value.startsWith("https://"))
+    ].some((value) => !value.startsWith("https://")) ||
+    (config.fileUrl &&
+      !config.fileUrl.startsWith("https://") &&
+      !isIntranetOrLocal(config.fileUrl))
   ) {
     invalid.push(
       "HTTPS APP_ORIGIN, API_ORIGIN, SSO_ISSUER, SSO_REDIRECT_URI, FILE_SERVICE_URL",
