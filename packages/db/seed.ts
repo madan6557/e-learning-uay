@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { loadEnvFile } from 'node:process';
 import { questionSchema } from '../shared/src/domain.js';
 try{loadEnvFile();}catch{}
-if(process.env.NODE_ENV==='production' && process.env.AUTH_MODE!=='development' && process.env.DEMO_MODE!=='true')throw new Error('Demo seed is disabled in production.');
+if(process.env.NODE_ENV==='production' && process.env.AUTH_MODE!=='development' && process.env.DEMO_MODE!=='true' && process.env.RESET_DB_ON_DEPLOY!=='true' && process.env.SEED_ON_DEPLOY!=='true')throw new Error('Demo seed is disabled in production.');
 const db=new PrismaClient();
 export const ids={admin:'00000000-0000-4000-8000-000000000001',instructor:'00000000-0000-4000-8000-000000000002',student:'00000000-0000-4000-8000-000000000003',student2:'00000000-0000-4000-8000-000000000004',outsider:'00000000-0000-4000-8000-000000000005',department:'00000000-0000-4000-8000-000000000006',course:'10000000-0000-4000-8000-000000000001',class:'20000000-0000-4000-8000-000000000001',section:'30000000-0000-4000-8000-000000000001',resource:'40000000-0000-4000-8000-000000000001',quiz:'50000000-0000-4000-8000-000000000001',assignment:'60000000-0000-4000-8000-000000000001'};
 

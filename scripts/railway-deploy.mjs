@@ -21,11 +21,27 @@ function runCommand(cmd, args) {
 
 async function main() {
   try {
-    console.log("Applying Prisma database migrations...");
-    await runCommand("npx", ["prisma", "migrate", "deploy", "--schema", "packages/db/prisma/schema.prisma"]);
-    console.log("Prisma migrations applied successfully.");
+    const shouldReset = process.env.RESET_DB_ON_DEPLOY === "true";
+    if (shouldReset) {
+      console.log("⚠️ RESET_DB_ON_DEPLOY is true. Resetting database schema and running migrations...");
+      await runCommand("npx", [
+        "prisma",
+        "migrate",
+        "reset",
+        "--schema",
+        "packages/db/prisma/schema.prisma",
+        "--force",
+        "--skip-generate",
+        "--skip-seed",
+      ]);
+      console.log("Prisma migrations reset successfully.");
+    } else {
+      console.log("Applying Prisma database migrations...");
+      await runCommand("npx", ["prisma", "migrate", "deploy", "--schema", "packages/db/prisma/schema.prisma"]);
+      console.log("Prisma migrations applied successfully.");
+    }
 
-    const isDemo = process.env.DEMO_MODE === "true" || process.env.AUTH_MODE === "development";
+    const isDemo = process.env.DEMO_MODE === "true" || process.env.AUTH_MODE === "development" || shouldReset;
     if (isDemo || process.env.SEED_ON_DEPLOY === "true") {
       console.log("Seeding demonstration / pilot accounts and data...");
       await runCommand("npx", ["tsx", "packages/db/seed.ts"]);
