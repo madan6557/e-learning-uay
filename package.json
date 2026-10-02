@@ -19,6 +19,7 @@
     "db:migrate": "prisma migrate deploy --schema packages/db/prisma/schema.prisma",
     "db:seed": "tsx packages/db/seed.ts",
     "db:seed:lab": "tsx packages/db/seed-lab.ts",
+    "db:reset": "node scripts/reset-db.mjs",
     "db:local": "node scripts/database.mjs",
     "build": "npm run db:generate && tsc -p apps/api/tsconfig.json && tsc -p apps/web/tsconfig.json && vite build --config apps/web/vite.config.ts",
     "build:web": "vite build --config apps/web/vite.config.ts",
