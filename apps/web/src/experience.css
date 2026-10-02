@@ -2778,6 +2778,7 @@ textarea:focus {
 .badge-graded,
 .badge-graded_complete,
 .badge-active,
+.badge-completed,
 .badge-submitted {
   background: var(--success-soft);
   border-color: color-mix(in oklab, var(--success) 25%, transparent);
@@ -2795,10 +2796,17 @@ textarea:focus {
 }
 .badge-archived,
 .badge-superseded,
-.badge-trash {
+.badge-trash,
+.badge-closed,
+.badge-locked {
   background: var(--neutral-soft);
   border-color: var(--border);
   color: var(--neutral-on-soft);
+}
+.badge-open {
+  background: var(--brand-soft, #eef4ff);
+  border-color: color-mix(in oklab, var(--brand, #2563eb) 25%, transparent);
+  color: var(--brand, #2563eb);
 }
 .badge-failed,
 .badge-expired,
@@ -2806,6 +2814,60 @@ textarea:focus {
   background: var(--danger-soft);
   border-color: color-mix(in oklab, var(--destructive) 25%, transparent);
   color: var(--destructive);
+}
+
+.quiz-closed-card,
+.assignment-closed-card {
+  text-align: center;
+  padding: 36px 24px;
+  border-radius: var(--radius-lg, 12px);
+  border: 1px solid var(--border);
+  background: var(--neutral-subtle, #f8fafc);
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.closed-icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--neutral-soft, #f1f5f9);
+  color: var(--muted, #64748b);
+  margin-bottom: 16px;
+}
+.closed-icon-wrap.is-completed {
+  background: var(--success-soft, #ecfdf5);
+  color: var(--success, #059669);
+}
+.closed-icon-wrap.is-locked {
+  background: #fef2f2;
+  color: #dc2626;
+}
+.quiz-closed-card h2,
+.assignment-closed-card h2 {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--fg, #0f172a);
+}
+.closed-description {
+  max-width: 520px;
+  margin: 0 auto 20px;
+  font-size: 0.9rem;
+  color: var(--muted, #64748b);
+  line-height: 1.5;
+}
+.closed-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 /* --- table density: SSO's data-cell --- */

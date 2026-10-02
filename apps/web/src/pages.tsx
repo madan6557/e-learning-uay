@@ -537,6 +537,11 @@ export function Dashboard({
                       <CalendarDays size={15} />
                       {item.date ? date(item.date) : t.noDeadline}
                     </div>
+                    {!teacher &&
+                      item.userStatus &&
+                      item.userStatus !== "OPEN" && (
+                        <Badge value={item.userStatus} />
+                      )}
                     <ChevronRight size={18} />
                   </a>
                 ))

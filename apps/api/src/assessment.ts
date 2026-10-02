@@ -512,6 +512,26 @@ export function registerAssessment(app: Express) {
       },
       orderBy: { startedAt: "desc" },
     });
+    const finalGrade = !cls.canManage
+      ? await db.finalGradeRecord.findUnique({
+          where: {
+            classId_userId: { classId: cls.id, userId: req.context.user.id },
+          },
+          select: { isLocked: true },
+        })
+      : null;
+    const now = new Date();
+    const isGradeLocked = Boolean(finalGrade?.isLocked);
+    const isTimeClosed = Boolean(
+      quiz.availableUntil && now > quiz.availableUntil,
+    );
+    const isClassArchived = cls.status === "ARCHIVED";
+    const isAttemptLimitReached = attempts.length >= quiz.attemptLimit;
+    const isCompleted =
+      attempts.some((a) => a.status === "GRADED_COMPLETE") ||
+      isAttemptLimitReached;
+    const isClosed = isGradeLocked || isTimeClosed || isClassArchived;
+
     res.json({
       ...quiz,
       questions: cls.canManage ? quiz.questions : undefined,
@@ -520,6 +540,12 @@ export function registerAssessment(app: Express) {
       classId: cls.id,
       classPath: classPath(cls),
       path: contentPath(cls, "quizzes", quiz, []),
+      isGradeLocked,
+      isTimeClosed,
+      isClassArchived,
+      isAttemptLimitReached,
+      isCompleted,
+      isClosed,
     });
   });
   app.post("/api/v1/quizzes/:id/attempts", async (req, res) =>
@@ -1039,6 +1065,28 @@ export function registerAssessment(app: Express) {
       },
       orderBy: [{ submittedAt: "desc" }],
     });
+    const finalGrade = !cls.canManage
+      ? await db.finalGradeRecord.findUnique({
+          where: {
+            classId_userId: { classId: cls.id, userId: req.context.user.id },
+          },
+          select: { isLocked: true },
+        })
+      : null;
+    const now = new Date();
+    const isGradeLocked = Boolean(finalGrade?.isLocked);
+    const isDeadlinePassed = Boolean(
+      assignment.deadline && now > assignment.deadline,
+    );
+    const isCutoffPassed = Boolean(
+      assignment.cutoffDate && now > assignment.cutoffDate,
+    );
+    const isLateForbidden = isDeadlinePassed && !assignment.allowLate;
+    const isClassArchived = cls.status === "ARCHIVED";
+    const hasSubmitted = submissions.some((s) => s.status !== "SUPERSEDED");
+    const isClosed =
+      isGradeLocked || isCutoffPassed || isLateForbidden || isClassArchived;
+
     res.json({
       ...assignment,
       submissions: submissions.map((s) => presentSubmission(s, cls.canManage)),
@@ -1046,6 +1094,13 @@ export function registerAssessment(app: Express) {
       classId: cls.id,
       classPath: classPath(cls),
       path: contentPath(cls, "assignments", assignment, []),
+      isGradeLocked,
+      isDeadlinePassed,
+      isCutoffPassed,
+      isLateForbidden,
+      isClassArchived,
+      hasSubmitted,
+      isClosed,
     });
   });
   app.post("/api/v1/assignments/:id/submissions", async (req, res) =>

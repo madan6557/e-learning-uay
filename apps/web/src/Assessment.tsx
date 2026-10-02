@@ -8,6 +8,7 @@ import {
   Trash2,
   Clock3,
   CheckCircle2,
+  Lock,
   Save,
   Send,
 } from "lucide-react";
@@ -688,6 +689,14 @@ export function QuizPage({
     quiz.attempts.find(
       (a: any) => a.status === "IN_PROGRESS" && !quiz.canManage,
     );
+  const isStudent = !quiz.canManage;
+  const isClosed = Boolean(
+    quiz.isClosed ||
+      quiz.isGradeLocked ||
+      quiz.isTimeClosed ||
+      quiz.isClassArchived ||
+      quiz.isAttemptLimitReached,
+  );
   return (
     <DraftRouteContext.Provider value={`#/quizzes/${id}`}>
       <a className="back-link" href={quiz.classPath ?? backHref}>
@@ -701,7 +710,21 @@ export function QuizPage({
           <p>{quiz.description}</p>
         </div>
         <div className="toolbar">
-          <Badge value={quiz.isVisible ? quiz.status : "DRAFT"} />
+          {isStudent ? (
+            <Badge
+              value={
+                quiz.isCompleted
+                  ? "COMPLETED"
+                  : isClosed
+                    ? "CLOSED"
+                    : quiz.isVisible
+                      ? quiz.status
+                      : "DRAFT"
+              }
+            />
+          ) : (
+            <Badge value={quiz.isVisible ? quiz.status : "DRAFT"} />
+          )}
           {quiz.canManage && (
             <button className="secondary" onClick={() => setEditing(true)}>
               {t.edit}
@@ -737,6 +760,60 @@ export function QuizPage({
               info.reload();
             }}
           />
+        ) : isClosed ? (
+          <div className="card quiz-closed-card">
+            <span
+              className={`closed-icon-wrap ${
+                quiz.isCompleted
+                  ? "is-completed"
+                  : quiz.isGradeLocked
+                    ? "is-locked"
+                    : ""
+              }`}
+            >
+              {quiz.isCompleted ? (
+                <CheckCircle2 size={28} />
+              ) : quiz.isGradeLocked ? (
+                <Lock size={28} />
+              ) : quiz.isTimeClosed ? (
+                <Clock3 size={28} />
+              ) : (
+                <Lock size={28} />
+              )}
+            </span>
+            <h2>
+              {quiz.isCompleted
+                ? t.quizCompleted
+                : quiz.isGradeLocked
+                  ? t.quizClosed
+                  : quiz.isTimeClosed
+                    ? t.quizClosed
+                    : quiz.isAttemptLimitReached
+                      ? t.quizAttemptLimitReached
+                      : t.quizClosed}
+            </h2>
+            <p className="closed-description">
+              {quiz.isGradeLocked
+                ? t.quizClosedGradeLocked
+                : quiz.isTimeClosed
+                  ? `${t.quizClosedTime} (${date(quiz.availableUntil)})`
+                  : quiz.isAttemptLimitReached
+                    ? t.quizAttemptLimitReached
+                    : quiz.isClassArchived
+                      ? t.quizArchived
+                      : t.quizClosed}
+            </p>
+            <div className="closed-actions">
+              <button className="secondary" disabled>
+                {t.quizClosedAction}
+              </button>
+              {quiz.classPath && (
+                <a className="secondary" href={quiz.classPath}>
+                  {t.back}
+                </a>
+              )}
+            </div>
+          </div>
         ) : (
           <div className="card quiz-start">
             <ClipboardCheckIcon />
@@ -1726,11 +1803,26 @@ export function AssignmentPage({
           <div className="eyebrow">{t.assignment}</div>
           <h1>{a.title}</h1>
         </div>
-        {a.canManage && (
-          <button className="secondary" onClick={() => setEditing(true)}>
-            {t.edit}
-          </button>
-        )}
+        <div className="toolbar">
+          {!a.canManage ? (
+            <Badge
+              value={
+                a.hasSubmitted
+                  ? "SUBMITTED"
+                  : a.isClosed
+                    ? "CLOSED"
+                    : "OPEN"
+              }
+            />
+          ) : (
+            <Badge value={a.isVisible ? "PUBLISHED" : "DRAFT"} />
+          )}
+          {a.canManage && (
+            <button className="secondary" onClick={() => setEditing(true)}>
+              {t.edit}
+            </button>
+          )}
+        </div>
       </div>
       <div className="assessment-layout">
         <article className="card">
@@ -1755,8 +1847,53 @@ export function AssignmentPage({
           </Field>
         </aside>
       </div>
-      {!a.canManage && (
-        <section className="card submission-form">
+      {!a.canManage &&
+        (a.isClosed ? (
+          <div className="card assignment-closed-card">
+            <span
+              className={`closed-icon-wrap ${
+                a.hasSubmitted
+                  ? "is-completed"
+                  : a.isGradeLocked
+                    ? "is-locked"
+                    : ""
+              }`}
+            >
+              {a.hasSubmitted ? (
+                <CheckCircle2 size={28} />
+              ) : a.isGradeLocked ? (
+                <Lock size={28} />
+              ) : a.isCutoffPassed || a.isLateForbidden ? (
+                <Clock3 size={28} />
+              ) : (
+                <Lock size={28} />
+              )}
+            </span>
+            <h2>{t.assignmentClosed}</h2>
+            <p className="closed-description">
+              {a.isGradeLocked
+                ? t.assignmentClosedGradeLocked
+                : a.isCutoffPassed
+                  ? `${t.assignmentClosedCutoff} (${date(a.cutoffDate)})`
+                  : a.isLateForbidden
+                    ? `${t.assignmentClosedDeadline} (${date(a.deadline)})`
+                    : a.isClassArchived
+                      ? t.assignmentClosedArchived
+                      : t.assignmentClosed}
+            </p>
+            <div className="closed-actions">
+              <button className="secondary" disabled>
+                {t.quizClosedAction}
+              </button>
+              {a.classPath && (
+                <a className="secondary" href={a.classPath}>
+                  {t.back}
+                </a>
+              )}
+            </div>
+          </div>
+        ) : (
+          <section className="card submission-form">
           <h2>{t.submitAssignment}</h2>
           {receipt && (
             <Notice>
@@ -1828,7 +1965,7 @@ export function AssignmentPage({
             )}
           </Form>
         </section>
-      )}
+      ))}
       <div className="section-heading" style={{ flexWrap: "wrap", gap: 12 }}>
         <h2>{t.submissionHistory}</h2>
         {a.canManage && (

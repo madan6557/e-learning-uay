@@ -438,16 +438,24 @@ a.secondary.compact,
 }
 .badge-archived,
 .badge-superseded,
-.badge-trash {
+.badge-trash,
+.badge-closed,
+.badge-locked {
   background: #eef0f2;
   color: #657879;
 }
 .badge-published,
 .badge-ready,
 .badge-graded_complete,
+.badge-completed,
+.badge-submitted,
 .badge-graded {
   background: #e9f2fb;
   color: #3d6d9e;
+}
+.badge-open {
+  background: #eef4ff;
+  color: #2563eb;
 }
 .agenda-list {
   padding: 5px 22px;

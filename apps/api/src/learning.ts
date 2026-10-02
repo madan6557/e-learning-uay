@@ -448,6 +448,7 @@ export function registerLearning(app: Express) {
             title: true,
             status: true,
             timeLimitMinutes: true,
+            attemptLimit: true,
             availableFrom: true,
             availableUntil: true,
             isVisible: true,
@@ -465,85 +466,180 @@ export function registerLearning(app: Express) {
         return false;
       }
     };
+    const [
+      announcements,
+      video,
+      slides,
+      downloads,
+      text,
+      gradingQueue,
+      myAttempts,
+      mySubmissions,
+      myFinalGrade,
+    ] = await Promise.all([
+      db.announcement.findMany({
+        where: {
+          classId: cls.id,
+          ...(!cls.canManage
+            ? { isPublished: true, publishedAt: { lte: new Date() } }
+            : {}),
+        },
+        orderBy: [{ isImportant: "desc" }, { publishedAt: "desc" }],
+      }),
+      db.videoProgress.findMany({
+        where: {
+          userId: req.context.user.id,
+          resourceItem: { section: { classId: cls.id } },
+        },
+      }),
+      db.slideProgress.findMany({
+        where: {
+          userId: req.context.user.id,
+          resourceItem: { section: { classId: cls.id } },
+        },
+      }),
+      db.materialDownload.findMany({
+        where: {
+          userId: req.context.user.id,
+          resourceItem: { section: { classId: cls.id } },
+        },
+      }),
+      db.resourceProgress.findMany({
+        where: {
+          userId: req.context.user.id,
+          resourceItemId: {
+            in: sections.flatMap((s) => s.resources.map((r) => r.id)),
+          },
+        },
+      }),
+      cls.canManage
+        ? Promise.all([
+            db.assignmentSubmission.groupBy({
+              by: ["assignmentId"],
+              where: {
+                assignment: { section: { classId: cls.id } },
+                status: { in: ["SUBMITTED", "LATE"] },
+              },
+              _count: true,
+            }),
+            db.quizAttempt.groupBy({
+              by: ["quizId"],
+              where: {
+                quiz: { section: { classId: cls.id } },
+                status: "NEEDS_GRADING",
+              },
+              _count: true,
+            }),
+          ]).then(([assignments, quizzes]) => [
+            ...assignments.map((a) => ({
+              id: a.assignmentId,
+              kind: "assignment",
+              count: a._count,
+            })),
+            ...quizzes.map((q) => ({
+              id: q.quizId,
+              kind: "quiz",
+              count: q._count,
+            })),
+          ])
+        : [],
+      !cls.canManage
+        ? db.quizAttempt.findMany({
+            where: {
+              userId: req.context.user.id,
+              quiz: { section: { classId: cls.id } },
+            },
+            select: { quizId: true, status: true, score: true },
+          })
+        : [],
+      !cls.canManage
+        ? db.assignmentSubmission.findMany({
+            where: {
+              userId: req.context.user.id,
+              assignment: { section: { classId: cls.id } },
+            },
+            select: { assignmentId: true, status: true, score: true },
+          })
+        : [],
+      !cls.canManage
+        ? db.finalGradeRecord.findUnique({
+            where: {
+              classId_userId: { classId: cls.id, userId: req.context.user.id },
+            },
+            select: { isLocked: true },
+          })
+        : null,
+    ]);
+
+    const now = new Date();
+    const isGradeLocked = Boolean(myFinalGrade?.isLocked);
+    const isClassArchived = cls.status === "ARCHIVED";
+
     const result = sections
       .filter((s) => cls.canManage || visible(s))
       .map((s) => ({
         ...s,
         resources: s.resources.filter((r) => cls.canManage || visible(r)),
-        quizzes: s.quizzes.filter(
-          (q) => cls.canManage || (q.status === "PUBLISHED" && q.isVisible),
-        ),
-        assignments: s.assignments.filter((a) => cls.canManage || a.isVisible),
+        quizzes: s.quizzes
+          .filter((q) => cls.canManage || (q.status === "PUBLISHED" && q.isVisible))
+          .map((q) => {
+            if (cls.canManage) return q;
+            const attempts = myAttempts.filter((a: any) => a.quizId === q.id);
+            const isCompleted =
+              attempts.some((a: any) => a.status === "GRADED_COMPLETE") ||
+              (q.attemptLimit ? attempts.length >= q.attemptLimit : false);
+            const isTimeClosed = Boolean(
+              q.availableUntil && now > q.availableUntil,
+            );
+            const isClosed = isGradeLocked || isTimeClosed || isClassArchived;
+            const inProgress = attempts.some(
+              (a: any) => a.status === "IN_PROGRESS",
+            );
+            return {
+              ...q,
+              userStatus: isCompleted
+                ? "COMPLETED"
+                : isClosed
+                  ? "CLOSED"
+                  : inProgress
+                    ? "IN_PROGRESS"
+                    : "OPEN",
+              attemptsCount: attempts.length,
+            };
+          }),
+        assignments: s.assignments
+          .filter((a) => cls.canManage || a.isVisible)
+          .map((a) => {
+            if (cls.canManage) return a;
+            const subs = mySubmissions.filter(
+              (sub: any) => sub.assignmentId === a.id,
+            );
+            const isSubmitted = subs.some(
+              (sub: any) => sub.status !== "SUPERSEDED",
+            );
+            const isCutoffPassed = Boolean(
+              a.cutoffDate && now > a.cutoffDate,
+            );
+            const isDeadlinePassed = Boolean(
+              a.deadline && now > a.deadline && !a.allowLate,
+            );
+            const isClosed =
+              isGradeLocked ||
+              isCutoffPassed ||
+              isDeadlinePassed ||
+              isClassArchived;
+            return {
+              ...a,
+              userStatus: isSubmitted
+                ? "SUBMITTED"
+                : isClosed
+                  ? "CLOSED"
+                  : "OPEN",
+              submissionsCount: subs.length,
+            };
+          }),
       }));
-    const [announcements, video, slides, downloads, text, gradingQueue] =
-      await Promise.all([
-        db.announcement.findMany({
-          where: {
-            classId: cls.id,
-            ...(!cls.canManage
-              ? { isPublished: true, publishedAt: { lte: new Date() } }
-              : {}),
-          },
-          orderBy: [{ isImportant: "desc" }, { publishedAt: "desc" }],
-        }),
-        db.videoProgress.findMany({
-          where: {
-            userId: req.context.user.id,
-            resourceItem: { section: { classId: cls.id } },
-          },
-        }),
-        db.slideProgress.findMany({
-          where: {
-            userId: req.context.user.id,
-            resourceItem: { section: { classId: cls.id } },
-          },
-        }),
-        db.materialDownload.findMany({
-          where: {
-            userId: req.context.user.id,
-            resourceItem: { section: { classId: cls.id } },
-          },
-        }),
-        db.resourceProgress.findMany({
-          where: {
-            userId: req.context.user.id,
-            resourceItemId: {
-              in: sections.flatMap((s) => s.resources.map((r) => r.id)),
-            },
-          },
-        }),
-        cls.canManage
-          ? Promise.all([
-              db.assignmentSubmission.groupBy({
-                by: ["assignmentId"],
-                where: {
-                  assignment: { section: { classId: cls.id } },
-                  status: { in: ["SUBMITTED", "LATE"] },
-                },
-                _count: true,
-              }),
-              db.quizAttempt.groupBy({
-                by: ["quizId"],
-                where: {
-                  quiz: { section: { classId: cls.id } },
-                  status: "NEEDS_GRADING",
-                },
-                _count: true,
-              }),
-            ]).then(([assignments, quizzes]) => [
-              ...assignments.map((a) => ({
-                id: a.assignmentId,
-                kind: "assignment",
-                count: a._count,
-              })),
-              ...quizzes.map((q) => ({
-                id: q.quizId,
-                kind: "quiz",
-                count: q._count,
-              })),
-            ])
-          : [],
-      ]);
+
     const progress = { video, slides, downloads, text };
     res.json({
       ...cls,
@@ -553,6 +649,7 @@ export function registerLearning(app: Express) {
       announcements,
       progress,
       gradingQueue,
+      isGradeLocked,
     });
   });
   app.patch("/api/v1/course-classes/:id", async (req, res) =>

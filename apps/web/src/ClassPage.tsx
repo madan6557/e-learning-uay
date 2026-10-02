@@ -515,7 +515,16 @@ export function ClassPage({
                         </div>
                         <ChevronRight size={16} />
                       </a>
-                      <Badge value={q.isVisible ? q.status : "DRAFT"} />
+                      {cls.canManage ? (
+                        <Badge value={q.isVisible ? q.status : "DRAFT"} />
+                      ) : (
+                        <Badge
+                          value={
+                            q.userStatus ??
+                            (q.isVisible ? q.status : "DRAFT")
+                          }
+                        />
+                      )}
                       {writable && (
                         <PublishButton
                           path={`/quizzes/${q.id}`}
@@ -554,7 +563,11 @@ export function ClassPage({
                         </div>
                         <ChevronRight size={16} />
                       </a>
-                      {!a.isVisible && <Badge value="DRAFT" />}
+                      {cls.canManage ? (
+                        !a.isVisible && <Badge value="DRAFT" />
+                      ) : (
+                        a.userStatus && <Badge value={a.userStatus} />
+                      )}
                       {writable && (
                         <PublishButton
                           path={`/assignments/${a.id}`}
