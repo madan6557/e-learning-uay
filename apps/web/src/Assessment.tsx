@@ -1433,11 +1433,16 @@ function ManualQuizGrading({
         onSubmit={async (f) => {
           const reason = textValue(f, "reason");
           await api("/attempts/" + attempt.id + "/grades/batch", "POST", {
-            grades: questions.map((q: any) => ({
-              questionId: q.id,
-              score: Number(values[q.id].score),
-              feedback: values[q.id].feedback,
-            })),
+            grades: questions.map((q: any) => {
+              const fb = values[q.id]?.feedback?.trim() ?? "";
+              const itemReason = reason || (fb.length >= 5 ? fb : undefined);
+              return {
+                questionId: q.id,
+                score: Number(values[q.id].score),
+                feedback: values[q.id].feedback,
+                ...(itemReason ? { reason: itemReason } : {}),
+              };
+            }),
             ...(reason ? { reason } : {}),
           });
           onSaved();
@@ -1504,8 +1509,17 @@ function ManualQuizGrading({
           </section>
         ))}
         {correction && (
-          <Field label={t.reason} hint={t.reasonHint}>
-            <textarea name="reason" minLength={5} required />
+          <Field
+            label={t.reason}
+            hint={
+              t.reasonHint +
+              " (opsional jika umpan balik soal sudah diisi minimal 5 karakter)"
+            }
+          >
+            <textarea
+              name="reason"
+              placeholder="Contoh: Koreksi penilaian jawaban essay / Banding nilai mahasiswa"
+            />
           </Field>
         )}
       </Form>
@@ -1933,12 +1947,15 @@ export function AssignmentPage({
             draftKey={`submission-grading:${grading.id}`}
             submitLabel="Simpan semua penilaian"
             onSubmit={async (f) => {
+              const reason = textValue(f, "reason");
+              const feedback = textValue(f, "feedback");
+              const autoReason =
+                reason ||
+                (feedback.trim().length >= 5 ? feedback.trim() : undefined);
               await api(`/submissions/${grading.id}/grade`, "POST", {
                 score: numberValue(f, "score"),
-                feedback: textValue(f, "feedback"),
-                ...(textValue(f, "reason")
-                  ? { reason: textValue(f, "reason") }
-                  : {}),
+                feedback,
+                ...(autoReason ? { reason: autoReason } : {}),
               });
               setGrading(null);
               info.reload();

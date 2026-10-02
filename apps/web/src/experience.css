@@ -3049,3 +3049,60 @@ table th {
   min-height: 24px;
   padding-block: 2px;
 }
+
+/* Activity list & rows (Perlu dinilai & agenda lists) */
+.activity-list {
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+.activity-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 16px !important;
+  padding: 14px 20px !important;
+  border-bottom: 1px solid var(--border) !important;
+  text-decoration: none !important;
+  color: inherit !important;
+  transition: background-color 140ms ease;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+.activity-row:last-child {
+  border-bottom: 0 !important;
+}
+.activity-row:hover {
+  background: var(--muted) !important;
+}
+.activity-row .activity-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--primary) 12%, transparent);
+  color: var(--primary);
+}
+.activity-row > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.activity-row h3 {
+  margin: 0 0 4px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.activity-row p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
+}
+.activity-row .badge {
+  flex: 0 0 auto;
+  margin-left: auto;
+}

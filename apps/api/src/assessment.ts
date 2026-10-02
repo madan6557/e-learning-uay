@@ -728,7 +728,11 @@ export function registerAssessment(app: Express) {
             const before = attempt.answerGrades.find(
               (v) => v.questionId === g.questionId,
             );
-            const reason = g.reason ?? data.reason;
+            const feedbackReason =
+              g.feedback && g.feedback.trim().length >= 5
+                ? g.feedback.trim()
+                : undefined;
+            const reason = g.reason ?? data.reason ?? feedbackReason;
             const code =
               !q ||
               !["ESSAY", "FILE_UPLOAD"].includes(q.type) ||
@@ -1168,8 +1172,13 @@ export function registerAssessment(app: Express) {
             reason: z.string().trim().min(5).max(2000).optional(),
           })
           .parse(req.body);
+        const feedbackReason =
+          data.feedback && data.feedback.trim().length >= 5
+            ? data.feedback.trim()
+            : undefined;
+        const reason = data.reason ?? feedbackReason;
         if (before.score !== null)
-          ensure(data.reason, 400, "CORRECTION_REASON_REQUIRED");
+          ensure(reason, 400, "CORRECTION_REASON_REQUIRED");
         const after = await tx.assignmentSubmission.update({
           where: { id: before.id },
           data: {
