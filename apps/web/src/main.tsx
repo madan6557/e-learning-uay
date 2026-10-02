@@ -389,19 +389,6 @@ function AuthShell({
       >
         <div className="sidebar-brand">
           <Brand home="/dashboard" />
-          <button
-            type="button"
-            className="nav-collapse-toggle"
-            onClick={() => setCollapsed((value) => !value)}
-            aria-pressed={collapsed}
-            aria-label={collapsed ? "Perluas navigasi" : t.collapseNav}
-          >
-            {collapsed ? (
-              <PanelLeftOpen size={16} />
-            ) : (
-              <PanelLeftClose size={16} />
-            )}
-          </button>
         </div>
         <p className="nav-caption">MENU</p>
         <nav aria-label="Navigasi utama">
@@ -434,6 +421,25 @@ function AuthShell({
             Akun SSO UAY
             <small className="block">Identitas dikelola oleh SSO</small>
           </span>
+        </div>
+        <div className="sidebar-collapse-section">
+          <button
+            type="button"
+            className="sidebar-collapse-btn"
+            onClick={() => setCollapsed((value) => !value)}
+            aria-pressed={collapsed}
+            aria-label={collapsed ? "Perluas navigasi" : t.collapseNav}
+            title={collapsed ? "Perluas navigasi" : undefined}
+          >
+            {collapsed ? (
+              <PanelLeftOpen size={16} />
+            ) : (
+              <>
+                <PanelLeftClose size={16} />
+                <span>Ciutkan sidebar</span>
+              </>
+            )}
+          </button>
         </div>
       </aside>
       <div className="workspace" inert={mobile && menuOpen}>

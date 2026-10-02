@@ -1,95 +1,187 @@
-# TEMPLATE FORMULIR PENGUMPULAN BUG (GOOGLE FORM / SHEETS)
-## Untuk Praktikum Pengenalan Informatika · Lab E-Learning UAY
-
-Bila Bang Iky & Alif ingin mahasiswa mengumpulkan laporan pengujian secara online lewat **Google Form**, berikut struktur pertanyaan yang tinggal disalin (copy-paste) ke Google Form:
+# TEMPLATE & SCRIPT GOOGLE FORM PENGUMPULAN HASIL QA
+## Praktikum Pengenalan Informatika · Platform E-Learning UAY
 
 ---
 
-### JUDUL FORMULIR:
-`Laporan Praktikum QA: Uji Coba Aplikasi E-Learning UAY`
+### METODE 1: OTOMATIS DENGAN GOOGLE APPS SCRIPT (Selesai dalam 10 Detik)
 
-### DESKRIPSI FORMULIR:
-`Formulir pengumpulan hasil pengujian dan laporan temuan bug pada platform E-Learning UAY untuk mahasiswa mata kuliah Pengenalan Informatika.`
+Langkah-langkah:
+1. Di halaman Google Form yang sedang Anda buka, klik tombol **Menu Titik Tiga (`⋮`)** di pojok kanan atas (di sebelah tombol ungu *Publikasikan/Kirim*).
+2. Pilih **Editor skrip** (*Script editor*).
+3. Hapus semua tulisan di editor skrip tersebut, lalu salin dan tempel (paste) kode berikut:
+
+```javascript
+function buatFormulirQA() {
+  const form = FormApp.getActiveForm();
+
+  // Bersihkan pertanyaan kosong bawaan
+  const existingItems = form.getItems();
+  for (let i = existingItems.length - 1; i >= 0; i--) {
+    form.deleteItem(existingItems[i]);
+  }
+
+  // Atur Judul & Deskripsi
+  form.setTitle("Laporan Pengujian Aplikasi (QA) - E-Learning UAY");
+  form.setDescription(
+    "Formulir pengumpulan hasil pengujian dan laporan temuan kendala/saran pada platform E-Learning UAY untuk mata kuliah Pengenalan Informatika.\n\n" +
+    "Target Web: https://e-learning-uay.vercel.app/\n" +
+    "Silakan isi formulir ini sesuai hasil pengujian yang Anda lakukan pada lembar kerja praktikum."
+  );
+
+  // --- BAGIAN 1: IDENTITAS MAHASISWA ---
+  form.addTextItem()
+    .setTitle("Nama Lengkap Mahasiswa")
+    .setRequired(true);
+
+  form.addTextItem()
+    .setTitle("NIM Mahasiswa")
+    .setRequired(true);
+
+  const akunItem = form.addListItem()
+    .setTitle("Akun Demo yang Digunakan");
+  akunItem.setChoiceValues([
+    "Mahasiswa 01", "Mahasiswa 02", "Mahasiswa 03", "Mahasiswa 04", "Mahasiswa 05",
+    "Mahasiswa 06", "Mahasiswa 07", "Mahasiswa 08", "Mahasiswa 09", "Mahasiswa 10",
+    "Dosen, M.Kom.",
+    "Lainnya"
+  ]);
+  akunItem.setRequired(true);
+
+  const deviceItem = form.addCheckboxItem()
+    .setTitle("Perangkat & Browser yang Digunakan");
+  deviceItem.setChoiceValues([
+    "PC Laboratorium (Chrome / Edge)",
+    "Laptop Pribadi (Chrome / Edge / Firefox)",
+    "HP Smartphone (Android / iOS)",
+    "Lainnya"
+  ]);
+  deviceItem.setRequired(true);
+
+  // --- BAGIAN 2: HASIL PENGUJIAN DASAR ---
+  const statusItem = form.addMultipleChoiceItem()
+    .setTitle("Hasil Pengujian 7 Langkah Uji Dasar");
+  statusItem.setChoiceValues([
+    "Semua Berjalan Lancar (100% PASS)",
+    "Sebagian Berhasil, Ada Sedikit Kendala",
+    "Menemukan Tombol Macet / Error (FAIL)"
+  ]);
+  statusItem.setRequired(true);
+
+  const fiturItem = form.addCheckboxItem()
+    .setTitle("Fitur yang Berhasil Anda Uji");
+  fiturItem.setChoiceValues([
+    "Login Akun Demo",
+    "Buka Kelas & Baca Materi Kuliah",
+    "Centang Checklist Belajar",
+    "Mengerjakan & Kumpul Kuis",
+    "Kumpul Tugas Praktikum",
+    "Cek Rekap Nilai (Gradebook)",
+    "Menu Profil & Keluar (Logout)",
+    "Eksplorasi Kreatif / Akun Dosen"
+  ]);
+
+  // --- BAGIAN 3: TEMUAN MASALAH ATAU SARAN PERBAIKAN ---
+  const section2 = form.addPageBreakItem()
+    .setTitle("Laporan Temuan Bug & Saran Perbaikan")
+    .setHelpText("Isi bagian ini jika menemukan error, tombol macet, salah ketik, atau memiliki saran perbaikan.");
+
+  form.addTextItem()
+    .setTitle("Judul Masalah / Bug")
+    .setHelpText("Contoh: Tombol submit kuis tertekan 2 kali / Teks terpotong di HP / Tidak ada (Semua lancar)");
+
+  const severityItem = form.addMultipleChoiceItem()
+    .setTitle("Tingkat Keparahan (Severity)");
+  severityItem.setChoiceValues([
+    "Kritis (Blocker) - Aplikasi macet total / blank putih",
+    "Tinggi (Major) - Fitur penting gagal bekerja",
+    "Sedang (Minor) - Fitur berjalan tapi ada error atau perilaku aneh",
+    "Rendah / Tampilan (Cosmetic) - Salah ketik teks (typo), tata letak kurang rapi, saran UI",
+    "Tidak Menemukan Masalah (Sistem Berjalan Sangat Baik)"
+  ]);
+
+  form.addParagraphTextItem()
+    .setTitle("Langkah-Langkah Menemukan Masalah (Steps to Reproduce)")
+    .setHelpText("Tuliskan langkah 1, 2, 3 yang Anda lakukan sampai masalah tersebut muncul.");
+
+  form.addParagraphTextItem()
+    .setTitle("Apa yang Terjadi vs Apa yang Seharusnya?")
+    .setHelpText("Tuliskan apa yang error/muncul di layar dan bagaimana seharusnya yang benar.");
+
+  form.addParagraphTextItem()
+    .setTitle("Saran Perbaikan Tampilan / Pengalaman Pengguna (UI/UX)")
+    .setHelpText("Tuliskan ide saran Anda agar aplikasi lebih nyaman digunakan.");
+}
+```
+
+4. Klik icon **Simpan** (💾 Disk) atau tekan `Ctrl + S`.
+5. Klik tombol **Jalankan** (*Run* / ▶️) di atas.
+6. Berikan izin akses (*Review Permissions*) akun Google Anda jika diminta (klik akun Anda → *Advanced* → *Go to script (unsafe)* → *Allow*).
+7. Kembali ke tab Google Form Anda, dan **refresh (F5)**: seluruh formulir sudah jadi secara otomatis!
 
 ---
 
-### DAFTAR PERTANYAAN (FIELDS):
+### METODE 2: SUSUNAN MANUAL (Jika Ingin Tambah Satu per Satu)
 
-#### 1. Nama Lengkap Mahasiswa
-- **Tipe:** Jawaban Singkat (*Short answer*)
-- **Wajib Diisi (Required):** Ya
+Jika ingin membuat manual di tampilan Google Form:
 
-#### 2. NIM Asli Mahasiswa
-- **Tipe:** Jawaban Singkat (*Short answer*)
-- **Wajib Diisi (Required):** Ya
+1. **Judul Formulir:**
+   `Laporan Pengujian Aplikasi (QA) - E-Learning UAY`
+   *Deskripsi:*
+   `Formulir pengumpulan hasil pengujian dan temuan kendala pada platform E-Learning UAY untuk mata kuliah Pengenalan Informatika.`
 
-#### 3. Akun Dummy yang Digunakan
-- **Tipe:** Pilihan Ganda (*Multiple choice*) atau Jawaban Singkat
-- **Contoh Opsi:**
-  - Mahasiswa Tester 01 s/d 30
-  - Dosen Tester (Dr. Rina / Dosen Tester 02)
-  - Admin Prodi Informatika
-  - Super Admin UAY / Bima Saputra (Outsider)
+2. **Pertanyaan 1:** `Nama Lengkap Mahasiswa`
+   - Tipe: **Jawaban singkat** (*Short answer*)
+   - Wajib diisi: **Aktif (ON)**
 
-#### 4. Peran (Role) yang Diuji
-- **Tipe:** Pilihan Ganda (*Multiple choice*)
-  - `Mahasiswa (Peserta Kelas)`
-  - `Dosen Pengampu (Instructor)`
-  - `Admin Program Studi`
-  - `Super Admin / Chaos Tester`
-- **Wajib Diisi:** Ya
+3. **Pertanyaan 2:** `NIM Mahasiswa`
+   - Tipe: **Jawaban singkat** (*Short answer*)
+   - Wajib diisi: **Aktif (ON)**
 
-#### 5. Fitur atau Halaman yang Diuji
-- **Tipe:** Kotak Centang (*Checkboxes*) — Boleh pilih lebih dari satu
-  - `[ ] Login & Navigasi Akun`
-  - `[ ] Profil Pengguna & Pengaturan`
-  - `[ ] Modul Materi Kuliah (Rich Text / Code / Video)`
-  - `[ ] Checklist Interaktif Materi`
-  - `[ ] Kuis Online (Pilihan Ganda / Isian / Menjodohkan)`
-  - `[ ] Pengumpulan Tugas (Assignment Submission)`
-  - `[ ] Rekap Nilai (Gradebook)`
-  - `[ ] Pembuatan Pengumuman Kelas`
-  - `[ ] Penilaian Tugas & Rubrik Esai (Role Dosen)`
-  - `[ ] Kelola Kelas & Kurikulum (Role Admin)`
-  - `[ ] Jejak Audit (Audit Trail)`
-- **Wajib Diisi:** Ya
+4. **Pertanyaan 3:** `Akun Demo yang Digunakan`
+   - Tipe: **Drop-down** atau **Pilihan ganda**
+   - Pilihan opsi:
+     - `Mahasiswa 01`
+     - `Mahasiswa 02`
+     - `Mahasiswa 03`
+     - `Mahasiswa 04`
+     - `Mahasiswa 05`
+     - `Mahasiswa 06`
+     - `Mahasiswa 07`
+     - `Mahasiswa 08`
+     - `Mahasiswa 09`
+     - `Mahasiswa 10`
+     - `Dosen, M.Kom.`
+     - `Lainnya`
+   - Wajib diisi: **Aktif (ON)**
 
-#### 6. Apakah Skenario Utama Berhasil (PASS)?
-- **Tipe:** Pilihan Ganda (*Multiple choice*)
-  - `Ya, Seluruhnya Berjalan Lancar (PASS)`
-  - `Sebagian Berjalan, Ada Sedikit Kendala`
-  - `Gagal / Menemukan Bug (FAIL)`
-- **Wajib Diisi:** Ya
+5. **Pertanyaan 4:** `Hasil Pengujian 7 Langkah Uji Dasar`
+   - Tipe: **Pilihan ganda** (*Multiple choice*)
+   - Pilihan opsi:
+     - `Semua Berjalan Lancar (100% PASS)`
+     - `Sebagian Berhasil, Ada Sedikit Kendala`
+     - `Menemukan Tombol Macet / Error (FAIL)`
+   - Wajib diisi: **Aktif (ON)**
 
-#### 7. Judul Temuan Masalah / Bug (Jika Ada)
-- **Tipe:** Jawaban Singkat (*Short answer*)
-- *Contoh: "Tombol simpan nilai tidak merespons di layar HP", "Teks penjelasan kuis terpotong"*
+6. **Pertanyaan 5:** `Judul Masalah / Bug (Jika Ada)`
+   - Tipe: **Jawaban singkat** (*Short answer*)
+   - Deskripsi/Contoh: *Tombol kuis tertekan 2 kali / Teks terpotong di HP / Tidak menemukan bug*
+   - Wajib diisi: **Nonaktif (OFF)**
 
-#### 8. Tingkat Keparahan Masalah (Severity)
-- **Tipe:** Pilihan Ganda (*Multiple choice*)
-  - `Kritis (Blocker) - Aplikasi macet/blank putih, tidak bisa lanjut sama sekali`
-  - `Tinggi (Major) - Fitur penting gagal bekerja`
-  - `Sedang (Minor) - Fitur bisa dipakai tapi ada error/perilaku aneh`
-  - `Rendah / Kosmetik (Trivial) - Salah ketik (typo), tata letak kurang rapi, usulan tampilan`
-  - `Tidak Menemukan Masalah (Sistem Bagus)`
+7. **Pertanyaan 6:** `Langkah-Langkah Menemukan Masalah`
+   - Tipe: **Paragraf** (*Long answer*)
+   - Wajib diisi: **Nonaktif (OFF)**
 
-#### 9. Langkah Menemukan Masalah (Steps to Reproduce)
-- **Tipe:** Paragraf (*Long answer text*)
-- *Tuliskan langkah 1, 2, 3 yang Anda lakukan sebelum masalah muncul.*
+8. **Pertanyaan 7:** `Apa yang Terjadi vs Apa yang Seharusnya?`
+   - Tipe: **Paragraf** (*Long answer*)
+   - Wajib diisi: **Nonaktif (OFF)**
 
-#### 10. Hasil yang Diharapkan vs Hasil Nyata
-- **Tipe:** Paragraf (*Long answer text*)
-- *Jelaskan apa yang seharusnya terjadi dan apa yang justru terjadi di layar.*
-
-#### 11. Unggah Tangkapan Layar (Screenshot Bukti)
-- **Tipe:** Upload File (*File upload*)
-- **Wajib Diisi:** Tidak (Opsional untuk nilai tambah)
-
-#### 12. Kesan & Pengalaman Menjadi Software Tester Hari Ini
-- **Tipe:** Paragraf (*Long answer text*)
-- *Apa pelajaran paling menarik yang Anda dapatkan tentang pentingnya pengujian aplikasi?*
+9. **Pertanyaan 8:** `Saran Perbaikan Tampilan / UI/UX`
+   - Tipe: **Paragraf** (*Long answer*)
+   - Wajib diisi: **Nonaktif (OFF)**
 
 ---
 
-### LINK HASIL & SPREADSHEET
-Setelah form dibuat, klik tab **Responses** → **Link to Sheets** agar seluruh laporan mahasiswa langsung otomatis terkumpul dalam satu tabel Excel/Google Sheets secara *real-time* di laptop Alif dan Bang Iky selama jam praktikum!
+### Tips Menghubungkan ke Google Sheets:
+Di tab atas formulir Google Form Anda:
+Klik tab **Jawaban** (*Responses*) → Klik ikon hijau **Tautkan ke Spreadsheet** (*Link to Sheets*) → Klik **Buat spreadsheet baru**.
+Maka seluruh laporan mahasiswa saat praktikum akan masuk ke tabel Excel/Google Sheets secara *real-time*.

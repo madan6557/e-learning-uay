@@ -2900,26 +2900,28 @@ table th {
   font-weight: 600;
   line-height: 1;
 }
-.nav-collapse-toggle {
+.sidebar-collapse-section {
+  border-top: 1px solid var(--sidebar-border);
+  padding: 8px 0 0;
+  margin-top: 8px;
+}
+.sidebar-collapse-btn {
   display: flex;
+  width: 100%;
   align-items: center;
-  gap: 10px;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  flex: 0 0 32px;
-  margin-left: auto;
-  padding: 0;
+  gap: 8px;
   border: 0;
   border-radius: var(--radius-md);
-  background: none;
-  color: var(--muted-foreground);
+  background: transparent;
+  padding: 8px 10px;
   font-size: 0.8125rem;
-  text-align: left;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  cursor: pointer;
   transition: background-color 140ms ease, color 140ms ease;
 }
-.nav-collapse-toggle:hover {
-  background: color-mix(in oklab, var(--sidebar-accent) 60%, transparent);
+.sidebar-collapse-btn:hover {
+  background: var(--sidebar-accent);
   color: var(--sidebar-foreground);
 }
 
@@ -2935,23 +2937,19 @@ table th {
   .nav-collapsed .sidebar .nav-label,
   .nav-collapsed .nav-caption,
   .nav-collapsed .brand-name,
-  .nav-collapsed .sidebar-bottom span {
+  .nav-collapsed .sidebar-bottom span,
+  .nav-collapsed .sidebar-collapse-btn span {
     display: none;
   }
   .nav-collapsed .sidebar nav a,
-  .nav-collapsed .nav-collapse-toggle {
+  .nav-collapsed .sidebar-collapse-btn {
     justify-content: center;
     padding-inline: 0;
   }
   .nav-collapsed .sidebar-brand {
+    height: 56px;
     justify-content: center;
-    flex-direction: column;
-    gap: 8px;
-    height: 88px;
     padding-inline: 0;
-  }
-  .nav-collapsed .nav-collapse-toggle {
-    margin-left: 0;
   }
   .nav-collapsed .sidebar-bottom {
     justify-content: center;
@@ -2969,7 +2967,9 @@ table th {
 }
 
 @media (max-width: 760px) {
-  .nav-collapse-toggle { display: none; }
+  .sidebar-collapse-section {
+    display: none;
+  }
 }
 
 /* Class header: the action cluster stays top-right and wraps as one block

@@ -57,15 +57,32 @@ Sekarang giliran Anda mencoba hal baru di luar langkah dasar!
 
 ## BAGIAN 3: CATATAN TEMUAN BUG ATAU SARAN TAMPILAN
 
-Jika selama pengujian Anda menemukan tombol macet, salah ketik teks (*typo*), pesan error aneh, atau tampilan yang kurang nyaman, tuliskan di bawah ini:
+Jika menemukan tombol macet, pesan error aneh, salah ketik kata, atau tampilan yang sulit dibaca, isi format sederhana di bawah ini:  
+*(💡 **Tip:** Bagian format ini sangat mudah di-copy-paste jika Anda menemukan lebih dari 1 masalah. Untuk menambah langkah, cukup tekan tombol Enter)*
 
-| Bagian | Keterangan Temuan Anda |
-|---|---|
-| **Judul Masalah / Bug** | *(contoh: Tombol submit kuis tidak sengaja tertekan 2 kali / Teks tombol terpotong di HP)* |
-| **Halaman Terkait** | *(contoh: Halaman Kuis 01 / Halaman Tugas / Menu Profil)* |
-| **Langkah Singkat Menemukan** | 1. ____________________________________________________________________<br>2. ____________________________________________________________________ |
-| **Kenyataan vs Harapan** | **Yang Terjadi:** _______________________________________________________<br>**Seharusnya:** ________________________________________________________ |
-| **Saran Perbaikan UI/UX Anda** | ________________________________________________________________________ |
+### 📋 FORM TEMUAN BUG / SARAN #1
+- **Judul Masalah / Bug :** [contoh: Tombol submit kuis tertekan 2 kali / Teks tombol terpotong]
+- **Halaman / Fitur :** [contoh: Halaman Kuis 01 / Halaman Tugas / Menu Profil]
+- **Langkah-Langkah Menemukan Masalah (Bisa tekan Enter untuk menambah nomor langkah):**
+  1. Buka halaman ...
+  2. Klik tombol ...
+  3. Yang terjadi adalah ...
+- **Yang Terjadi (Kenyataan) :** (Tulis apa yang error, macet, atau tampil aneh di layar Anda)
+- **Yang Seharusnya (Harapan) :** (Tulis seharusnya bagaimana aplikasi bekerja yang benar)
+- **Saran Perbaikan Tampilan / UX :** (Tulis saran Anda agar tampilan atau tombol lebih nyaman dipakai - opsional)
+
+─────────────────────────────────────────────────────────────────
+
+### 📋 FORM TEMUAN BUG / SARAN #2 (Opsional jika ada temuan lain)
+- **Judul Masalah / Bug :** 
+- **Halaman / Fitur :** 
+- **Langkah-Langkah Menemukan Masalah :**
+  1. 
+  2. 
+  3. 
+- **Yang Terjadi (Kenyataan) :** 
+- **Yang Seharusnya (Harapan) :** 
+- **Saran Perbaikan Tampilan / UX :** 
 
 ---
 

@@ -1,12 +1,10 @@
 # DAFTAR AKUN DEMO E-LEARNING UAY (PRAKTIK PENGENALAN INFORMATIKA)
 
 **Status:** Seluruh akun dan data uji siap pakai  
-**Perubahan Terbaru:**
+**Daftar Akun Utama:**
 - Dosen: **`Dosen, M.Kom.`** (Bukan nama orang asli)
 - Mahasiswa: **`Mahasiswa 01`** s/d **`Mahasiswa 10`**
-- Akun Khusus Chaos: **`Mahasiswa Luar (Outsider)`** & **`Akun Dinonaktifkan (Disabled)`**
 - Antrean Penilaian Dosen: **Sudah terisi otomatis** (submisi tugas & kuis dari Mahasiswa 02 siap dinilai)
-- Kelas Admin Prodi: **Sudah tersedia** Kelas Aktif, Kelas Draf, dan Kelas Arsip (Read-Only)
 
 ---
 
@@ -15,7 +13,7 @@
 | No | Peran / Role | Nama Tampilan | Identitas (NIP/NIDN) | Akun SSO | Keterangan Akses |
 |:---:|---|---|---|---|---|
 | 1 | **Super Admin** | **Admin UAY** | `ADM001` | `adm001` | Hak akses penuh seluruh sistem, audit log, & master data |
-| 2 | **Admin Prodi** | **Admin Prodi Informatika** | `ADMIF01` | `admif01` | Pengelola kurikulum & kelas Prodi IF (ada kelas aktif, draf, & arsip) |
+| 2 | **Admin Prodi** | **Admin Prodi Informatika** | `ADMIF01` | `admif01` | Pengelola kurikulum & kelas Prodi IF |
 | 3 | **Dosen Pengampu** | **Dosen, M.Kom.** | `1112089001` | `1112089001` | Dosen Kelas A. Langsung memiliki 2 antrean tugas & kuis yang perlu dinilai |
 
 ---
@@ -37,20 +35,10 @@
 
 ---
 
-## 3. Akun Khusus Pengujian Chaos / Security
-
-| No | Nama Akun | NIM | Role | Status Sistem | Skenario Pengujian Khusus |
-|:---:|---|---|---|---|---|
-| 1 | **Mahasiswa Luar (Outsider)** | `202602001` | Mahasiswa | Aktif (Tidak Terdaftar di Kelas A) | Coba buka kelas IF2101 untuk membuktikan penolakan akses |
-| 2 | **Akun Dinonaktifkan (Disabled)** | `202609999` | Mahasiswa | Dinonaktifkan (`DISABLED`) | Coba masuk untuk membuktikan sistem memblokir akun nonaktif |
-
----
-
-## 4. Cara Masuk ke Aplikasi di Laboratorium:
+## 3. Cara Masuk ke Aplikasi di Laboratorium:
 1. Buka browser **Google Chrome** di komputer/laptop: `https://e-learning-uay.vercel.app/`
 2. Gulir ke bawah ke bagian **"Akun demonstrasi"**.
 3. Temukan kartu akun Anda:
    - Jika ditugaskan sebagai dosen: klik **"Gunakan"** pada kartu **Dosen, M.Kom.**
    - Jika ditugaskan sebagai mahasiswa: klik **"Gunakan"** pada kartu **Mahasiswa 01** s/d **Mahasiswa 10**.
-   - Jika tim chaos: gunakan kartu **Mahasiswa Luar (Outsider)** atau **Akun Dinonaktifkan (Disabled)**.
 4. Sistem akan langsung mengarahkan Anda ke dashboard ruang pembelajaran tanpa perlu kata sandi!
