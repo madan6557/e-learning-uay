@@ -943,7 +943,7 @@ function Participants({
       </div>
       {members.error ? (
         <Notice error={members.error} />
-      ) : members.loading ? (
+      ) : members.loading && !members.data ? (
         <Loading />
       ) : (
         <div className="card table-wrap">
@@ -1127,7 +1127,7 @@ function QuestionBanks({
       </div>
       {banks.error ? (
         <Notice error={banks.error} />
-      ) : banks.loading ? (
+      ) : banks.loading && !banks.data ? (
         <Loading />
       ) : (
         banks.data?.map((bank) => (
@@ -1248,7 +1248,7 @@ function Files({ classId, writable }: { classId: string; writable: boolean }) {
       </div>
       {files.error ? (
         <Notice error={files.error} />
-      ) : files.loading ? (
+      ) : files.loading && !files.data ? (
         <Loading />
       ) : (
         <div className="card table-wrap">
@@ -1583,7 +1583,7 @@ function Audit({ classId }: { classId: string }) {
       </div>
       {entries.error ? (
         <Notice error={entries.error} />
-      ) : entries.loading ? (
+      ) : entries.loading && !entries.data ? (
         <Loading />
       ) : (
         <div className="audit-list">

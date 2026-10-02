@@ -17,6 +17,15 @@ export class ReadCache {
     this.pending.clear();
   }
 
+  evict(key?: string) {
+    if (key) {
+      this.values.delete(key);
+      this.pending.delete(key);
+    } else {
+      this.clear();
+    }
+  }
+
   load<T>(key: string, ttl: number, loader: () => Promise<T>): Promise<T> {
     const value = this.peek<T>(key);
     if (value !== undefined) return Promise.resolve(value);

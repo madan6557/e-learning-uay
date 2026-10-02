@@ -29,6 +29,7 @@ import {
   Action,
   Empty,
 } from "./lib";
+import { readCache } from "./readCache";
 import { Dashboard, Catalog, Profile } from "./pages";
 import { Avatar, Breadcrumbs, IconButton, UserChip } from "./ui";
 import {
@@ -434,11 +435,9 @@ function AuthShell({
             {collapsed ? (
               <PanelLeftOpen size={16} />
             ) : (
-              <>
-                <PanelLeftClose size={16} />
-                <span>Ciutkan sidebar</span>
-              </>
+              <PanelLeftClose size={16} />
             )}
+            <span className="collapse-label">Ciutkan sidebar</span>
           </button>
         </div>
       </aside>
@@ -545,14 +544,31 @@ function App() {
   }, [user, route]);
   const logout = async () => {
     if (!(await confirmUnsaved())) return;
-    const result = await api("/auth/logout", "POST", {});
-    identity.setData(null);
-    if (
-      result.logoutUrl &&
-      new URL(result.logoutUrl).origin !== location.origin
-    )
+    const result = await api("/auth/logout", "POST", {}).catch(() => ({}));
+    readCache.clear();
+    const isExternalIdp = (urlStr?: string | null) => {
+      if (!urlStr) return false;
+      try {
+        const target = new URL(urlStr);
+        if (target.origin === location.origin) return false;
+        const localAliases = ["localhost", "127.0.0.1", "[::1]"];
+        if (
+          localAliases.includes(target.hostname) &&
+          localAliases.includes(location.hostname)
+        ) {
+          return false;
+        }
+        return true;
+      } catch {
+        return false;
+      }
+    };
+    if (result?.logoutUrl && isExternalIdp(result.logoutUrl)) {
       location.assign(result.logoutUrl);
-    else navigate("/");
+    } else {
+      identity.setData(null);
+      navigate("/", true);
+    }
   };
   if (identity.loading && !user)
     return (

@@ -385,7 +385,7 @@ export function registerAuth(app: Express) {
   });
   app.post("/api/v1/auth/logout", async (req, res) => {
     const id = req.cookies[cookieName];
-    let logoutUrl = config.origin;
+    let logoutUrl: string | null = null;
     if (id) {
       const stored = await cache.take(`session:${hash(id)}`);
       if (stored && config.authMode === "oidc") {

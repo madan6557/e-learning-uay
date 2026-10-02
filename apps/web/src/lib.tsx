@@ -157,6 +157,11 @@ export function useApi<T = any>(path: string | null) {
     [error, setError] = useState<Error | null>(null),
     [loading, setLoading] = useState(Boolean(path && cached === undefined)),
     [version, setVersion] = useState(0);
+
+  const prevPathRef = useRef<string | null>(path);
+  const dataRef = useRef<T | null>(data);
+  dataRef.current = data;
+
   useEffect(() => {
     let active = true;
     setError(null);
@@ -164,9 +169,24 @@ export function useApi<T = any>(path: string | null) {
       setLoading(false);
       return;
     }
+    const pathChanged = prevPathRef.current !== path;
+    prevPathRef.current = path;
+
     const cached = readCache.peek<T>(path);
-    setData(cached ?? null);
-    setLoading(cached === undefined);
+    if (pathChanged) {
+      setData(cached ?? null);
+      setLoading(cached === undefined);
+    } else {
+      // Revalidation / reload on the same path: keep existing data to avoid
+      // full page unmounts and jarring blank-screen flashes.
+      if (dataRef.current === null) {
+        setData(cached ?? null);
+        setLoading(cached === undefined);
+      } else {
+        setLoading(false);
+      }
+    }
+
     api<T>(path)
       .then((value) => {
         if (active) setData(value);
@@ -188,7 +208,8 @@ export function useApi<T = any>(path: string | null) {
     error,
     loading,
     reload: () => {
-      readCache.clear();
+      if (path) readCache.evict(path);
+      else readCache.clear();
       setVersion((v) => v + 1);
     },
   };

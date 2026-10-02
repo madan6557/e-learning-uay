@@ -120,7 +120,7 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
     [filter, setFilter] = useState("ALL"),
     [modal, setModal] = useState(false);
   const teacher = user.role === "INSTRUCTOR";
-  if (classes.loading) return <Loading />;
+  if (classes.loading && !classes.data) return <Loading />;
   if (classes.error) return <Notice error={classes.error} />;
   const items = (classes.data ?? []).filter(
     (c) =>
@@ -231,7 +231,7 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
             </Action>
           )}
         </div>
-        {notifications.loading ? (
+        {notifications.loading && !notifications.data ? (
           <Loading />
         ) : notifications.error ? (
           <Notice error={notifications.error} />
@@ -650,7 +650,7 @@ function AdminOverview({
           [
             Database,
             t.courses,
-            courses.loading || courses.error
+            (courses.loading && !courses.data) || courses.error
               ? "—"
               : (courses.data?.length ?? 0),
           ],
@@ -791,7 +791,7 @@ function JoinClassModal({
         {!manualMode ? (
           <>
             <Field label={t.chooseClass}>
-              {openClasses.loading ? (
+              {openClasses.loading && !openClasses.data ? (
                 <Loading />
               ) : openClasses.data && openClasses.data.length > 0 ? (
                 <>
@@ -1181,7 +1181,7 @@ export function Catalog({ user }: { user: any }) {
       </div>
       {courses.error ? (
         <Notice error={courses.error} />
-      ) : courses.loading ? (
+      ) : courses.loading && !courses.data ? (
         <Loading />
       ) : (
         <div className="table-wrap card">
