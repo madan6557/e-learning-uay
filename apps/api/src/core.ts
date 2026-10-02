@@ -181,6 +181,9 @@ function productionConfigurationErrors() {
   if (!activeFileKey) {
     invalid.push("FILE_SERVICE_KEY or UAY_FILE_SERVICE_API_KEY");
   }
+  if (config.fileMode === "local") {
+    invalid.push("FILE_SERVICE_REQUIRED (mode production wajib hanya menerima file service)");
+  }
   required("FILE_ALLOWED_ORIGINS", process.env.FILE_ALLOWED_ORIGINS);
 
   if (accountUrlFromEnv && !config.accountUrl) {

@@ -316,3 +316,21 @@ test("UAY File Service: mock fixture endpoints and RFC 7233 streaming", async ()
     server.close();
   }
 });
+
+test("production mode strictly requires file service and rejects local storage", async () => {
+  const origUrl = config.fileUrl;
+  const origKey = config.fileKey;
+  try {
+    (config as any).fileUrl = "";
+    (config as any).fileKey = "";
+    assert.equal(config.fileMode, "local");
+
+    (config as any).fileUrl = "http://file-service.uay.ac.id/api/v1";
+    (config as any).fileKey = "uay_sec_live_key";
+    assert.equal(config.fileMode, "uay");
+  } finally {
+    (config as any).fileUrl = origUrl;
+    (config as any).fileKey = origKey;
+  }
+});
+

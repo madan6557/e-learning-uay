@@ -16,6 +16,8 @@ import {
   db,
   ensure,
   config,
+  production,
+  isDemo,
   classAccess,
   itemAccess,
   available,
@@ -287,6 +289,9 @@ async function handleLocalFileRequest(
   method = "GET",
   body?: unknown,
 ): Promise<any> {
+  if (production && !isDemo) {
+    throw Object.assign(new Error("FILE_SERVICE_REQUIRED"), { status: 503 });
+  }
   const base = (config.apiOrigin || config.origin || "").replace(/\/$/, "");
   if (path === "/v1/uploads") {
     const id = randomUUID();
@@ -448,6 +453,10 @@ export function resourcesUsingFile(tx: any, id: string, classId?: string) {
 
 // Helper to stream binary files (local or remote UAY File Service with RFC 7233 range)
 async function serveFileStream(id: string, req: any, res: any) {
+  if (production && !isDemo && config.fileMode === "local") {
+    res.status(503).json({ error: "FILE_SERVICE_REQUIRED" });
+    return;
+  }
   const fileRef = await db.fileReference.findUnique({ where: { id } });
   if (config.fileMode === "uay") {
     try {
@@ -487,8 +496,17 @@ async function serveFileStream(id: string, req: any, res: any) {
         }
       }
     } catch (err) {
+      if (production && !isDemo) {
+        res.status(502).json({ error: "FILE_SERVICE_UNAVAILABLE" });
+        return;
+      }
       console.warn("Remote stream failed, checking local backup file:", err);
     }
+  }
+
+  if (production && !isDemo && config.fileMode !== "legacy") {
+    res.status(502).json({ error: "FILE_SERVICE_UNAVAILABLE" });
+    return;
   }
 
   const filePath = getLocalFilePath(id);
@@ -536,6 +554,10 @@ async function serveFileStream(id: string, req: any, res: any) {
 
 // Helper to handle binary PUT upload
 async function handleBinaryUpload(id: string, req: any, res: any) {
+  if (production && !isDemo && config.fileMode === "local") {
+    res.status(503).json({ error: "FILE_SERVICE_REQUIRED" });
+    return;
+  }
   const filePath = getLocalFilePath(id);
   const chunks: Buffer[] = [];
   let size = 0;
@@ -562,13 +584,23 @@ async function handleBinaryUpload(id: string, req: any, res: any) {
       });
       if (uayRes?.id) {
         await setRemoteFileId(id, uayRes.id);
+      } else if (production && !isDemo) {
+        res.status(502).json({ error: "FILE_SERVICE_REJECTED" });
+        return;
       }
     } catch (err) {
+      if (production && !isDemo) {
+        res.status(502).json({ error: "FILE_SERVICE_UNAVAILABLE" });
+        return;
+      }
       console.warn(
         "Failed to upload to remote UAY file service, local storage preserved:",
         err,
       );
     }
+  } else if (production && !isDemo && config.fileMode !== "legacy") {
+    res.status(503).json({ error: "FILE_SERVICE_REQUIRED" });
+    return;
   }
   res.status(200).json({ status: "READY" });
 }
@@ -674,8 +706,20 @@ export function registerFiles(app: Express) {
           uploadUrl = validateSignedUrl(ticket.uploadUrl);
           headers = ticket.headers ?? {};
           expiresAt = ticket.expiresAt;
+        } else if (config.fileMode === "uay") {
+          id = randomUUID();
+          const base = (config.apiOrigin || config.origin || "").replace(
+            /\/$/,
+            "",
+          );
+          uploadUrl = validateSignedUrl(
+            `${base}/api/v1/files/upload/${id}`,
+          );
+          headers = { "Content-Type": data.mimeType };
+          expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
         } else {
-          // Official UAY File Service or Local Storage
+          // Local storage mode: strictly forbidden in production
+          ensure(!production || isDemo, 503, "FILE_SERVICE_REQUIRED");
           id = randomUUID();
           const base = (config.apiOrigin || config.origin || "").replace(
             /\/$/,
@@ -755,7 +799,10 @@ export function registerFiles(app: Express) {
               "FILE_NOT_READY",
             );
           } catch {
-            // If remote check fails, fallback to local verify
+            if (production && !isDemo) {
+              ensure(false, 502, "FILE_SERVICE_UNAVAILABLE");
+            }
+            // If remote check fails in development/demo, fallback to local verify
             const filePath = getLocalFilePath(file.id);
             ensure(existsSync(filePath), 409, "FILE_NOT_READY");
           }
@@ -773,6 +820,7 @@ export function registerFiles(app: Express) {
             "FILE_NOT_READY",
           );
         } else {
+          ensure(!production || isDemo, 503, "FILE_SERVICE_REQUIRED");
           const filePath = getLocalFilePath(file.id);
           ensure(existsSync(filePath), 409, "FILE_NOT_READY");
         }
@@ -837,7 +885,20 @@ export function registerFiles(app: Express) {
       );
       url = validateSignedUrl(ticket.downloadUrl);
       expiresAt = ticket.expiresAt;
+    } else if (config.fileMode === "uay") {
+      const base = (config.apiOrigin || config.origin || "").replace(
+        /\/$/,
+        "",
+      );
+      const token = createSignedDownloadToken(file.id, 900);
+      expiresAt = new Date(Date.now() + 900 * 1000).toISOString();
+      url = validateSignedUrl(
+        `${base}/api/v1/files/${file.id}/stream?token=${encodeURIComponent(token)}${
+          req.body.inline ? "&inline=1" : ""
+        }`,
+      );
     } else {
+      ensure(!production || isDemo, 503, "FILE_SERVICE_REQUIRED");
       const base = (config.apiOrigin || config.origin || "").replace(
         /\/$/,
         "",
@@ -968,6 +1029,9 @@ export function registerFiles(app: Express) {
                 });
               }
             } catch (err) {
+              if (production && !isDemo) {
+                ensure(false, 502, "FILE_SERVICE_UNAVAILABLE");
+              }
               console.warn(
                 `UAY File Service ${operation} failed, falling back:`,
                 err,
@@ -980,6 +1044,8 @@ export function registerFiles(app: Express) {
               {},
               req.get("Idempotency-Key"),
             );
+          } else {
+            ensure(!production || isDemo, 503, "FILE_SERVICE_REQUIRED");
           }
 
           const after = await tx.fileReference.update({
@@ -1026,7 +1092,11 @@ export function registerFiles(app: Express) {
             actorId: req.context.user.id,
             requestId: req.context.requestId,
           });
-        } catch {}
+        } catch (err) {
+          if (production && !isDemo) {
+            ensure(false, 502, "FILE_SERVICE_UNAVAILABLE");
+          }
+        }
       } else if (config.fileMode === "legacy") {
         await fileRequest(
           `/v1/files/${encodeURIComponent(file.id)}/trash`,
@@ -1034,6 +1104,8 @@ export function registerFiles(app: Express) {
           {},
           req.get("Idempotency-Key"),
         );
+      } else {
+        ensure(!production || isDemo, 503, "FILE_SERVICE_REQUIRED");
       }
 
       await db.fileReference.update({
@@ -1085,9 +1157,13 @@ export function registerFiles(app: Express) {
   app.put("/api/v1/files/upload/:id", (req, res) =>
     handleBinaryUpload(String(req.params.id), req, res),
   );
-  app.put("/api/v1/files/local-storage/:id", (req, res) =>
-    handleBinaryUpload(String(req.params.id), req, res),
-  );
+  app.put("/api/v1/files/local-storage/:id", (req, res) => {
+    if (production && !isDemo) {
+      res.status(403).json({ error: "LOCAL_STORAGE_DISABLED_IN_PRODUCTION" });
+      return;
+    }
+    handleBinaryUpload(String(req.params.id), req, res);
+  });
 
   // Streaming and download endpoints (RFC 7233 byte-range support)
   const streamHandler = async (req: any, res: any) => {
@@ -1109,7 +1185,13 @@ export function registerFiles(app: Express) {
   };
 
   app.get("/api/v1/files/:id/stream", streamHandler);
-  app.get("/api/v1/files/local-storage/:id", streamHandler);
+  app.get("/api/v1/files/local-storage/:id", (req, res) => {
+    if (production && !isDemo) {
+      res.status(403).json({ error: "LOCAL_STORAGE_DISABLED_IN_PRODUCTION" });
+      return;
+    }
+    streamHandler(req, res);
+  });
   app.get("/api/v1/files/:id", streamHandler);
 
   // Official metadata endpoint: GET /api/v1/files/:id/metadata
@@ -1178,6 +1260,16 @@ export function registerFiles(app: Express) {
         });
         return;
       } catch {}
+    }
+    if (production && !isDemo && config.fileMode === "local") {
+      res.status(503).json({
+        statusCode: 503,
+        success: false,
+        error: "FILE_SERVICE_REQUIRED",
+        message: "File service is required in production",
+        timestamp: new Date().toISOString(),
+      });
+      return;
     }
     res.json({
       statusCode: 200,
