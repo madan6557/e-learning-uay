@@ -225,7 +225,7 @@ export function registerAuth(app: Express) {
   app.get("/api/v1/auth/config", (_req, res) =>
     res.json({
       mode: config.authMode,
-      demoEnabled: isDemo && config.authMode === "oidc",
+      demoEnabled: isDemo,
       issuer: config.issuer,
       accountUrl: config.accountUrl || undefined,
       embedOrigins: config.embedOrigins,
@@ -250,7 +250,11 @@ export function registerAuth(app: Express) {
     );
   });
   app.post("/api/v1/auth/development-login", async (req, res) => {
-    ensure(!production && config.authMode === "development", 404, "NOT_FOUND");
+    ensure(
+      isDemo || (!production && config.authMode === "development"),
+      404,
+      "NOT_FOUND",
+    );
     const { userId } = z.object({ userId: z.string().uuid() }).parse(req.body);
     const user = await db.user.findUnique({ where: { id: userId } });
     ensure(user && user.status === "ACTIVE", 403, "ACCOUNT_DISABLED");
