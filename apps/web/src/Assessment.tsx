@@ -1826,7 +1826,6 @@ export function AssignmentPage({
                 }}
               />
             )}
-            {file && <p>{file.name}</p>}
           </Form>
         </section>
       )}

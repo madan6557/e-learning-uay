@@ -20,6 +20,7 @@ import {
   audit,
   transaction,
   HttpError,
+  systemAcademicSettings,
 } from "./core.js";
 
 const isSecure = Boolean(
@@ -229,6 +230,8 @@ export function registerAuth(app: Express) {
       issuer: config.issuer,
       accountUrl: config.accountUrl || undefined,
       embedOrigins: config.embedOrigins,
+      academicYear: systemAcademicSettings.academicYear,
+      semesterLabel: systemAcademicSettings.semesterLabel,
     }),
   );
   app.get("/api/v1/auth/development-users", async (_req, res) => {

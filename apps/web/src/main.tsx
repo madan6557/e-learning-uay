@@ -164,7 +164,11 @@ function Landing({ config, error }: { config: any; error?: Error | null }) {
           <div className="preview-body">
             <div className="preview-portal-card">
               <div className="portal-badge-row">
-                <span className="portal-badge">SEMESTER GANJIL 2026/2027</span>
+                <span className="portal-badge">
+                  {config?.semesterLabel ||
+                    config?.academicYear ||
+                    "SEMESTER GANJIL 2026/2027"}
+                </span>
               </div>
               <h4>Sebelum masuk</h4>
               <p>
@@ -626,7 +630,11 @@ function App() {
     page = <AssignmentPage key={id} id={id} user={user} />;
   else if (section === "catalog")
     page = ["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(user.role) ? (
-      <Catalog user={user} />
+      <Catalog
+        user={user}
+        config={config.data}
+        onConfigChange={() => config.reload()}
+      />
     ) : (
       <Empty>
         <h1>Katalog tidak tersedia</h1>
@@ -675,7 +683,12 @@ function App() {
     )
   )
     page = (
-      <Dashboard key={pathname} page={section || "dashboard"} user={user} />
+      <Dashboard
+        key={pathname}
+        page={section || "dashboard"}
+        user={user}
+        config={config.data}
+      />
     );
   else
     page = (

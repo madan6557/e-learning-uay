@@ -74,6 +74,26 @@ export const config = {
     .map((s) => s.trim())
     .filter(Boolean),
 };
+export let systemAcademicSettings = {
+  academicYear: process.env.ACADEMIC_YEAR?.trim() || "2026/2027 Ganjil",
+  semesterLabel:
+    process.env.SEMESTER_LABEL?.trim() || "SEMESTER GANJIL 2026/2027",
+};
+
+export function setSystemAcademicSettings(update: {
+  academicYear?: string;
+  semesterLabel?: string;
+}) {
+  if (update.academicYear?.trim()) {
+    systemAcademicSettings.academicYear = update.academicYear.trim();
+  }
+  if (update.semesterLabel?.trim()) {
+    systemAcademicSettings.semesterLabel = update.semesterLabel.trim();
+  } else if (update.academicYear?.trim()) {
+    systemAcademicSettings.semesterLabel = `SEMESTER ${update.academicYear.trim().toUpperCase()}`;
+  }
+  return systemAcademicSettings;
+}
 function productionConfigurationErrors() {
   const invalid: string[] = [];
 

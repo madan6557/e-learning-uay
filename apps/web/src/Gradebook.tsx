@@ -685,12 +685,22 @@ export function ImportPanel({
           <Download size={16} />
           {t.template}
         </Action>
-        <label className="upload-label">
-          {t.chooseFile}
+        <label
+          className="button secondary"
+          style={{
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          <Upload size={16} />
+          <span>{busy ? t.uploading : t.chooseFile}</span>
           <input
             type="file"
             accept=".csv,.xlsx"
             disabled={busy}
+            style={{ display: "none" }}
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (!file) return;

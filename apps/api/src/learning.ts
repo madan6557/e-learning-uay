@@ -17,6 +17,8 @@ import {
   hash,
   notify,
   config,
+  systemAcademicSettings,
+  setSystemAcademicSettings,
 } from "./core.js";
 import {
   blockSchema,
@@ -1520,4 +1522,29 @@ export function registerLearning(app: Express) {
       }),
     ),
   );
+  app.get("/api/v1/system/settings", (_req, res) => {
+    res.json(systemAcademicSettings);
+  });
+  app.put("/api/v1/system/settings", async (req, res) => {
+    ensure(req.context.user.role === "SUPER_ADMIN", 403, "FORBIDDEN");
+    const data = z
+      .object({
+        academicYear: z.string().min(3).max(50),
+        semesterLabel: z.string().min(3).max(100).optional(),
+      })
+      .parse(req.body);
+    const updated = setSystemAcademicSettings(data);
+    await audit(
+      db,
+      req.context,
+      "UPDATE",
+      "SYSTEM",
+      "academic-settings",
+      "academic-settings",
+      null,
+      updated,
+      "Pembaruan tahun akademik aktif",
+    );
+    res.json(updated);
+  });
 }

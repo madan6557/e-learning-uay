@@ -101,7 +101,15 @@ export function ClassCard({ item, index = 0 }: { item: any; index?: number }) {
     </a>
   );
 }
-export function Dashboard({ page, user }: { page: string; user: any }) {
+export function Dashboard({
+  page,
+  user,
+  config,
+}: {
+  page: string;
+  user: any;
+  config?: any;
+}) {
   const admin = ["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(user.role);
   const needsSummary = (page === "dashboard" && !admin) || page === "agenda";
   const classes = useApi<any[]>(
@@ -340,7 +348,7 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
         <>
           <section className="welcome-panel compact">
             <div>
-              <span className="pill">{t.semester}</span>
+              <span className="pill">{config?.academicYear || t.semester}</span>
               <h2>{teacher ? t.manageLearning : t.continueLearning}</h2>
               {(() => {
                 const activeOpenClass = items.find(
@@ -541,6 +549,7 @@ export function Dashboard({ page, user }: { page: string; user: any }) {
       {modal &&
         (admin ? (
           <ClassForm
+            defaultAcademicYear={config?.academicYear}
             onClose={() => setModal(false)}
             onSaved={() => {
               setModal(false);
@@ -881,9 +890,11 @@ function JoinClassModal({
 export function ClassForm({
   onClose,
   onSaved,
+  defaultAcademicYear,
 }: {
   onClose: () => void;
   onSaved: () => void;
+  defaultAcademicYear?: string;
 }) {
   const courses = useApi<any[]>("/courses");
   const [search, setSearch] = useState(""),
@@ -955,7 +966,7 @@ export function ClassForm({
           <Field label={t.academicYear}>
             <input
               name="academicYear"
-              defaultValue="2026/2027 Ganjil"
+              defaultValue={defaultAcademicYear || "2026/2027 Ganjil"}
               required
             />
           </Field>
@@ -1158,10 +1169,19 @@ export function ClassForm({
     </Modal>
   );
 }
-export function Catalog({ user }: { user: any }) {
+export function Catalog({
+  user,
+  config,
+  onConfigChange,
+}: {
+  user: any;
+  config?: any;
+  onConfigChange?: () => void;
+}) {
   const courses = useApi<any[]>("/courses");
   const [editing, setEditing] = useState<any>(null),
-    [classModal, setClassModal] = useState(false);
+    [classModal, setClassModal] = useState(false),
+    [yearModal, setYearModal] = useState(false);
   return (
     <>
       <div className="page-heading heading-with-action">
@@ -1170,6 +1190,12 @@ export function Catalog({ user }: { user: any }) {
           <h1>{t.catalog}</h1>
         </div>
         <div className="toolbar">
+          {user.role === "SUPER_ADMIN" && (
+            <button className="secondary" onClick={() => setYearModal(true)}>
+              <CalendarDays size={16} />
+              Tahun Ajaran: {config?.academicYear || "2026/2027 Ganjil"}
+            </button>
+          )}
           <button className="secondary" onClick={() => setClassModal(true)}>
             {t.newClass}
           </button>
@@ -1293,9 +1319,45 @@ export function Catalog({ user }: { user: any }) {
       )}
       {classModal && (
         <ClassForm
+          defaultAcademicYear={config?.academicYear}
           onClose={() => setClassModal(false)}
           onSaved={() => setClassModal(false)}
         />
+      )}
+      {yearModal && (
+        <Modal
+          title="Pengaturan Tahun Akademik Berjalan"
+          onClose={() => setYearModal(false)}
+        >
+          <Form
+            onCancel={() => setYearModal(false)}
+            onSubmit={async (f) => {
+              await api("/system/settings", "PUT", {
+                academicYear: textValue(f, "academicYear"),
+                semesterLabel: textValue(f, "semesterLabel"),
+              });
+              onConfigChange?.();
+              setYearModal(false);
+            }}
+          >
+            <Field label="Tahun Akademik Aktif (contoh: 2026/2027 Ganjil)">
+              <input
+                name="academicYear"
+                defaultValue={config?.academicYear || "2026/2027 Ganjil"}
+                required
+              />
+            </Field>
+            <Field label="Label Portal Landing (contoh: SEMESTER GANJIL 2026/2027)">
+              <input
+                name="semesterLabel"
+                defaultValue={
+                  config?.semesterLabel || "SEMESTER GANJIL 2026/2027"
+                }
+                required
+              />
+            </Field>
+          </Form>
+        </Modal>
       )}
     </>
   );
