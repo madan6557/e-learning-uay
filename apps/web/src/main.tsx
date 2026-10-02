@@ -14,7 +14,6 @@ import {
   ArrowRight,
   LibraryBig,
   Menu,
-  X,
   ShieldCheck,
   ClipboardCheck,
   PanelLeftClose,
@@ -284,7 +283,10 @@ function AuthShell({
   }, []);
   useEffect(() => {
     if (!menuOpen) return;
-    document.getElementById("close-mobile-menu")?.focus();
+    const activeItem = document.querySelector<HTMLElement>(
+      "#academic-navigation a.active, #academic-navigation a",
+    );
+    activeItem?.focus();
     const escape = (e: KeyboardEvent) => {
       if (e.key === "Tab") {
         const items = [
@@ -400,14 +402,6 @@ function AuthShell({
               <PanelLeftClose size={16} />
             )}
           </button>
-          <IconButton
-            id="close-mobile-menu"
-            label="Tutup menu"
-            className="mobile-menu"
-            onClick={() => setMenuOpen(false)}
-          >
-            <X size={20} />
-          </IconButton>
         </div>
         <p className="nav-caption">MENU</p>
         <nav aria-label="Navigasi utama">

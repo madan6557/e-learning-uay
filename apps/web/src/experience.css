@@ -439,7 +439,27 @@ input.score-input.changed {
 }
 .mobile-menu,
 .nav-scrim {
-  display: none;
+  display: none !important;
+}
+.topbar .mobile-menu {
+  display: none !important;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #475569;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+.topbar .mobile-menu:hover {
+  background: #f1f5f9;
+  color: #0f172a;
 }
 .profile-layout {
   display: grid;
@@ -695,8 +715,9 @@ input.score-input.changed {
     width: 100%;
     margin: 0;
   }
-  .mobile-menu {
-    display: inline-flex;
+  .mobile-menu,
+  .topbar .mobile-menu {
+    display: inline-flex !important;
   }
   .nav-scrim {
     display: block;

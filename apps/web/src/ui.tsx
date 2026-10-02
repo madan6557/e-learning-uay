@@ -21,17 +21,19 @@ export const Button = forwardRef<
 export function IconButton({
   label,
   children,
+  className = "",
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) {
   return (
-    <Button
-      {...props}
-      className={`icon-button ${props.className ?? ""}`}
+    <button
+      type="button"
+      className={`icon-button ${className}`.trim()}
       aria-label={label}
       title={label}
+      {...props}
     >
       {children}
-    </Button>
+    </button>
   );
 }
 export function initials(name = "") {
