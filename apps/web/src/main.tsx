@@ -84,15 +84,24 @@ function LoginButton({
       className={className}
       label={label}
       run={async () => {
-        const { authorizationUrl } = await api<{ authorizationUrl: string }>(
-          "/auth/authorization",
-          "POST",
-          demoUserId ? { demoUserId } : {},
-        );
         sessionStorage.setItem(
           "uay-return-path",
           location.pathname + location.search,
         );
+
+        if (demoUserId) {
+          await api("/auth/development-login", "POST", {
+            userId: demoUserId,
+          });
+          location.assign("/");
+          return;
+        }
+
+        const { authorizationUrl } = await api<{ authorizationUrl: string }>(
+          "/auth/authorization",
+          "POST",
+        );
+
         location.assign(authorizationUrl);
       }}
     >
