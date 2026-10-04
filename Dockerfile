@@ -37,11 +37,8 @@ COPY --from=builder /app/apps/api/dist apps/api/dist
 COPY --from=builder /app/apps/web/dist apps/web/dist
 COPY packages/db packages/db
 COPY packages/shared packages/shared
-COPY scripts/railway-deploy.mjs scripts/railway-deploy.mjs
-COPY scripts/railway-runtime.mjs scripts/railway-runtime.mjs
-COPY scripts/oidc-fixture.mjs scripts/oidc-fixture.mjs
-COPY scripts/file-service.mjs scripts/file-service.mjs
-COPY scripts/file-storage.mjs scripts/file-storage.mjs
+COPY scripts scripts
+COPY uploads uploads
 
 EXPOSE 3000
 CMD ["sh", "-c", "node scripts/railway-deploy.mjs && node scripts/railway-runtime.mjs"]

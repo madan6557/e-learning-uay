@@ -2,7 +2,7 @@ import { classPath } from '../shared/src/urls.js';
 import { PrismaClient } from '@prisma/client';
 import { loadEnvFile } from 'node:process';
 import { questionSchema } from '../shared/src/domain.js';
-import { generateAllDemoFiles } from '../../scripts/generate-demo-media.mjs';
+import { generateAllDemoFiles } from './demo-media.js';
 try{loadEnvFile();}catch{}
 if(process.env.NODE_ENV==='production' && process.env.AUTH_MODE!=='development' && process.env.DEMO_MODE!=='true' && process.env.RESET_DB_ON_DEPLOY!=='true' && process.env.SEED_ON_DEPLOY!=='true')throw new Error('Demo seed is disabled in production.');
 const db=new PrismaClient();
