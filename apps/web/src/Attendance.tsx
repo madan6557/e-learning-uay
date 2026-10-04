@@ -451,8 +451,8 @@ export function Attendance({
                         </span>
                       )}
 
-                      {/* Jam Jadwal */}
-                      {(s.startTime || s.endTime) && (
+                      {/* Jam Jadwal / Status Pembukaan */}
+                      {s.startTime || s.endTime ? (
                         <span
                           style={{
                             display: "inline-flex",
@@ -466,6 +466,38 @@ export function Attendance({
                           }}
                         >
                           <Clock size={11} /> {formatSchedule(s.startTime, s.endTime)}
+                        </span>
+                      ) : isCurrentlyOpen ? (
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                            fontSize: "0.78rem",
+                            color: "#166534",
+                            background: "#f0fdf4",
+                            border: "1px solid #dcfce7",
+                            padding: "2px 8px",
+                            borderRadius: 6,
+                            fontWeight: 500,
+                          }}
+                        >
+                          <Clock size={11} /> Buka Manual (Sampai Ditutup Dosen)
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                            fontSize: "0.78rem",
+                            color: "var(--muted, #64748b)",
+                            background: "var(--neutral-soft, #f8fafc)",
+                            padding: "2px 8px",
+                            borderRadius: 6,
+                          }}
+                        >
+                          <Lock size={11} /> Ditutup Manual oleh Dosen
                         </span>
                       )}
                     </div>
@@ -541,6 +573,34 @@ export function Attendance({
                   <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                     {canManage ? (
                       <>
+                        {/* Tombol Cepat Buka/Tutup Sesi Langsung */}
+                        <button
+                          type="button"
+                          className="button"
+                          title={s.isOpen ? "Tutup sesi presensi sekarang" : "Buka sesi presensi sekarang"}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 5,
+                            fontSize: "0.82rem",
+                            padding: "7px 12px",
+                            borderRadius: 8,
+                            cursor: "pointer",
+                            background: s.isOpen ? "#fee2e2" : "#f0fdf4",
+                            color: s.isOpen ? "#991b1b" : "#166534",
+                            border: `1px solid ${s.isOpen ? "#fecaca" : "#bbf7d0"}`,
+                            fontWeight: 600,
+                          }}
+                          onClick={async () => {
+                            await api(`/attendance/${s.id}`, "PATCH", { isOpen: !s.isOpen });
+                            sessionsApi.reload();
+                            setMessage(`Sesi "${s.title}" berhasil ${!s.isOpen ? "dibuka" : "ditutup"}.`);
+                          }}
+                        >
+                          {s.isOpen ? <Lock size={13} /> : <Unlock size={13} />}
+                          <span>{s.isOpen ? "Tutup Sesi" : "Buka Sesi"}</span>
+                        </button>
+
                         <button
                           type="button"
                           className="button secondary"
@@ -969,7 +1029,7 @@ function CreateSessionModal({
             <span>Jadwalkan Waktu Presensi (Mulai &amp; Selesai)</span>
           </label>
           <p style={{ margin: "4px 0 10px 24px", fontSize: "0.8rem", color: "var(--muted, #64748b)" }}>
-            Bila diaktifkan, sesi presensi akan otomatis dibuka saat jam mulai dan otomatis ditutup saat jam selesai.
+            Bila diaktifkan, sesi presensi otomatis dibuka saat jam mulai dan ditutup saat jam selesai. <strong>Jika tidak dicentang (default)</strong>, sesi akan langsung dibuka dan tetap aktif (<em>always open</em>) sampai Anda menutupnya secara manual.
           </p>
 
           {hasSchedule && (
