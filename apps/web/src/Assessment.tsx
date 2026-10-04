@@ -30,6 +30,8 @@ import {
   isoInput,
   textValue,
   numberValue,
+  Pagination,
+  usePagination,
 } from "./lib";
 import { DownloadButton, Html } from "./Content";
 import {
@@ -684,6 +686,7 @@ export function QuizPage({
   if (info.loading && !quiz) return <Loading />;
   if (info.error) return <Notice error={info.error} />;
   if (!quiz) return null;
+  const pagination = usePagination(quiz.attempts, 15);
   const current =
     active ??
     quiz.attempts.find(
@@ -889,7 +892,7 @@ export function QuizPage({
             </tr>
           </thead>
           <tbody>
-            {quiz.attempts.map((a: any) => (
+            {pagination.paginatedItems.map((a: any) => (
               <tr key={a.id}>
                 {quiz.canManage && (
                   <td>
@@ -949,6 +952,17 @@ export function QuizPage({
             ))}
           </tbody>
         </table>
+        {quiz.attempts.length > 0 && (
+          <Pagination
+            page={pagination.page}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            pageSize={pagination.pageSize}
+            onPageChange={pagination.setPage}
+            onPageSizeChange={pagination.setPageSize}
+            pageSizeOptions={[10, 15, 25, 50]}
+          />
+        )}
         {!quiz.attempts.length && <Empty>{t.noAttempts}</Empty>}
       </div>
       {editing && (
@@ -1792,6 +1806,7 @@ export function AssignmentPage({
   if (info.loading && !a) return <Loading />;
   if (info.error) return <Notice error={info.error} />;
   if (!a) return null;
+  const pagination = usePagination(a.submissions, 10);
   return (
     <DraftRouteContext.Provider value={`#/assignments/${id}`}>
       <a className="back-link" href={a.classPath ?? backHref}>
@@ -1982,7 +1997,7 @@ export function AssignmentPage({
         )}
       </div>
       <div className="submission-list">
-        {a.submissions.map((s: any) => (
+        {pagination.paginatedItems.map((s: any) => (
           <article key={s.id} className="card submission-card">
             <div className="section-heading">
               <div>
@@ -2062,6 +2077,19 @@ export function AssignmentPage({
             )}
           </article>
         ))}
+        {a.submissions.length > 0 && (
+          <div style={{ marginTop: 16 }}>
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              totalItems={pagination.totalItems}
+              pageSize={pagination.pageSize}
+              onPageChange={pagination.setPage}
+              onPageSizeChange={pagination.setPageSize}
+              pageSizeOptions={[5, 10, 20, 50]}
+            />
+          </div>
+        )}
         {!a.submissions.length && <Empty>{t.noSubmissions}</Empty>}
       </div>
       {editing && (

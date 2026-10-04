@@ -253,21 +253,84 @@ export function gradeAnswer(
     ? points
     : 0;
 }
+
+export interface GradeBand {
+  minScore: number;
+  letter: string;
+  point: number;
+}
+
+export interface GradeScalePolicy {
+  version: string;
+  name: string;
+  description?: string;
+  bands: GradeBand[];
+}
+
+export const GRADE_SCALE_PRESETS: Record<string, GradeScalePolicy> = {
+  "2026.1": {
+    version: "2026.1",
+    name: "Standar Akademik UAY 2026/2027",
+    description: "Skala nilai terstandar UAY aktif (A >= 85, A- >= 80, B+ >= 75)",
+    bands: [
+      { minScore: 85, letter: "A", point: 4.0 },
+      { minScore: 80, letter: "A-", point: 3.75 },
+      { minScore: 75, letter: "B+", point: 3.5 },
+      { minScore: 70, letter: "B", point: 3.0 },
+      { minScore: 65, letter: "B-", point: 2.75 },
+      { minScore: 60, letter: "C+", point: 2.5 },
+      { minScore: 55, letter: "C", point: 2.0 },
+      { minScore: 45, letter: "D", point: 1.0 },
+      { minScore: 0, letter: "E", point: 0.0 },
+    ],
+  },
+  "2024.1": {
+    version: "2024.1",
+    name: "Standar Akademik Lama UAY (Sebelum 2026)",
+    description: "Skala historis periode lama (A >= 80, B >= 70, C >= 60, D >= 50)",
+    bands: [
+      { minScore: 80, letter: "A", point: 4.0 },
+      { minScore: 70, letter: "B", point: 3.0 },
+      { minScore: 60, letter: "C", point: 2.0 },
+      { minScore: 50, letter: "D", point: 1.0 },
+      { minScore: 0, letter: "E", point: 0.0 },
+    ],
+  },
+};
+
+export const DEFAULT_GRADE_SCALE = GRADE_SCALE_PRESETS["2026.1"]!;
+
+export const GRADE_SOURCE_TYPES = [
+  "ASSIGNMENT",
+  "QUIZ",
+  "ASSIGNMENT_AND_QUIZ",
+  "PROGRESS",
+  "ATTENDANCE",
+  "MANUAL",
+] as const;
+export type GradeSourceType = (typeof GRADE_SOURCE_TYPES)[number];
+
+export function clampGrade(value: number | string): number {
+  const num = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(num) || isNaN(num)) return 0;
+  return Math.max(0, Math.min(100, Math.round((num + Number.EPSILON) * 100) / 100));
+}
+
+export function gradeLetterWithPolicy(
+  score: number,
+  policy?: GradeScalePolicy | GradeBand[] | null,
+): { gradeLetter: string; gradePoint: number } {
+  const bands: GradeBand[] = Array.isArray(policy)
+    ? policy
+    : policy?.bands ?? DEFAULT_GRADE_SCALE.bands;
+  const sortedBands = [...bands].sort((a, b) => b.minScore - a.minScore);
+  const matched =
+    sortedBands.find((b) => score >= b.minScore) ?? sortedBands.at(-1)!;
+  return { gradeLetter: matched.letter, gradePoint: matched.point };
+}
+
 export function gradeLetter(score: number) {
-  const bands: [number, string, number][] = [
-    [85, "A", 4],
-    [80, "A-", 3.75],
-    [75, "B+", 3.5],
-    [70, "B", 3],
-    [65, "B-", 2.75],
-    [60, "C+", 2.5],
-    [55, "C", 2],
-    [45, "D", 1],
-    [0, "E", 0],
-  ];
-  const [, letter, point] =
-    bands.find(([min]) => score >= min) ?? bands.at(-1)!;
-  return { gradeLetter: letter, gradePoint: point };
+  return gradeLetterWithPolicy(score, DEFAULT_GRADE_SCALE);
 }
 export function validateTotal(values: number[]) {
   return (

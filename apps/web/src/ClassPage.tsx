@@ -37,6 +37,8 @@ import {
   isoInput,
   textValue,
   navigate,
+  Pagination,
+  usePagination,
 } from "./lib";
 import { ResourceEditor, ResourceViewer } from "./Content";
 import {
@@ -964,6 +966,8 @@ function Participants({
     [users, setUsers] = useState<any[]>([]),
     [selected, setSelected] = useState<any[]>([]);
 
+  const pagination = usePagination(members.data ?? [], 25);
+
   useEffect(() => {
     const trimmed = query.trim();
     if (trimmed.length < 2) {
@@ -1011,7 +1015,7 @@ function Participants({
               </tr>
             </thead>
             <tbody>
-              {members.data?.map((m) => (
+              {pagination.paginatedItems.map((m) => (
                 <tr key={m.id}>
                   <td>{m.user.name}</td>
                   <td>{m.user.identifierValue}</td>
@@ -1047,6 +1051,17 @@ function Participants({
               ))}
             </tbody>
           </table>
+          {members.data && members.data.length > 0 && (
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              totalItems={pagination.totalItems}
+              pageSize={pagination.pageSize}
+              onPageChange={pagination.setPage}
+              onPageSizeChange={pagination.setPageSize}
+              pageSizeOptions={[10, 25, 50, 100]}
+            />
+          )}
           {!members.data?.length && <Empty>{t.noParticipants}</Empty>}
         </div>
       )}
@@ -1291,6 +1306,7 @@ function QuestionBanks({
 }
 function Files({ classId, writable }: { classId: string; writable: boolean }) {
   const files = useApi<any[]>(`/course-classes/${classId}/files`);
+  const pagination = usePagination(files.data ?? [], 15);
   return (
     <>
       <div className="section-heading">
@@ -1315,7 +1331,7 @@ function Files({ classId, writable }: { classId: string; writable: boolean }) {
               </tr>
             </thead>
             <tbody>
-              {files.data?.map((file) => (
+              {pagination.paginatedItems.map((file) => (
                 <tr key={file.id}>
                   <td>
                     {file.name}
@@ -1352,6 +1368,17 @@ function Files({ classId, writable }: { classId: string; writable: boolean }) {
               ))}
             </tbody>
           </table>
+          {files.data && files.data.length > 0 && (
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              totalItems={pagination.totalItems}
+              pageSize={pagination.pageSize}
+              onPageChange={pagination.setPage}
+              onPageSizeChange={pagination.setPageSize}
+              pageSizeOptions={[10, 15, 25, 50]}
+            />
+          )}
           {!files.data?.length && <Empty>{t.noFiles}</Empty>}
         </div>
       )}

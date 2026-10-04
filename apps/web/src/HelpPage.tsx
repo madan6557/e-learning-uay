@@ -10,6 +10,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { helpArticles, type HelpArticle, type HelpRole } from "./data/helpArticles.js";
+import { Pagination, usePagination } from "./lib";
 
 function normalize(value: string): string {
   return value
@@ -56,6 +57,8 @@ export function HelpPage({ user }: { user: any }) {
       return matchCategory && matchQuery;
     });
   }, [allowedArticles, category, query]);
+
+  const pagination = usePagination(filteredArticles, 8);
 
   const selectedArticle = useMemo(() => {
     if (!selectedArticleId) return null;
@@ -274,7 +277,7 @@ export function HelpPage({ user }: { user: any }) {
           {/* List of Articles */}
           <div style={{ display: "grid", gap: 12 }}>
             {filteredArticles.length > 0 ? (
-              filteredArticles.map((article) => (
+              pagination.paginatedItems.map((article) => (
                 <div
                   key={article.id}
                   onClick={() => setSelectedArticleId(article.id)}
@@ -349,6 +352,20 @@ export function HelpPage({ user }: { user: any }) {
               </div>
             )}
           </div>
+
+          {filteredArticles.length > 0 && (
+            <div style={{ marginTop: 16 }}>
+              <Pagination
+                page={pagination.page}
+                totalPages={pagination.totalPages}
+                totalItems={pagination.totalItems}
+                pageSize={pagination.pageSize}
+                onPageChange={pagination.setPage}
+                onPageSizeChange={pagination.setPageSize}
+                pageSizeOptions={[6, 8, 12, 24]}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

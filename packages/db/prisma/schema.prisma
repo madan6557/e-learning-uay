@@ -139,6 +139,8 @@ model CourseClass {
   academicYear      String       @map("academic_year")
   enrollmentKeyHash String?      @map("enrollment_key_hash")
   status            CourseStatus @default(PUBLISHED) @map("status")
+  gradeScaleVersion String?      @default("2026.1") @map("grade_scale_version")
+  gradeScalePolicy  Json?        @map("grade_scale_policy")
   createdAt         DateTime     @default(now()) @map("created_at")
   updatedAt         DateTime     @updatedAt @map("updated_at")
 
@@ -317,6 +319,8 @@ model GradeCategory {
   aggregationMethod AggregationMethod @default(SIMPLE_AVERAGE) @map("aggregation_method")
   dropLowest        Int               @default(0) @map("drop_lowest")
   kind              String            @default("ASSESSMENT") @map("kind")
+  isMandatory       Boolean           @default(false) @map("is_mandatory")
+  sourceType        String            @default("MANUAL") @map("source_type")
   order             Int               @default(0) @map("order")
   createdAt         DateTime          @default(now()) @map("created_at")
 
@@ -337,6 +341,7 @@ model FinalGradeRecord {
   finalScore         Float       @map("final_score")
   gradeLetter        String      @map("grade_letter")
   gradePoint         Float       @map("grade_point")
+  gradeScaleVersion  String?     @default("2026.1") @map("grade_scale_version")
   isLocked           Boolean     @default(false) @map("is_locked")
   publishedAt        DateTime?   @map("published_at")
   updatedAt          DateTime    @updatedAt @map("updated_at")

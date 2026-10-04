@@ -13,7 +13,7 @@ import {
   FileText,
   UserCheck,
 } from "lucide-react";
-import { api, useApi, Loading, Notice, Modal, Field, Form, textValue } from "./lib";
+import { api, useApi, Loading, Notice, Modal, Field, Form, textValue, Pagination, usePagination } from "./lib";
 
 type AttendanceStatus = "PRESENT" | "EXCUSED" | "SICK" | "ABSENT" | "LATE";
 
@@ -47,6 +47,7 @@ export function Attendance({
   const [message, setMessage] = useState<string | null>(null);
 
   const sessions = sessionsApi.data || [];
+  const sessionsPagination = usePagination(sessions, 10);
 
   // Cari sesi aktif yang sedang dibuka untuk notifikasi mahasiswa
   const activeOpenSession = useMemo(() => {
@@ -215,7 +216,7 @@ export function Attendance({
         /* ================= DAFTAR SESI ================= */
         <div style={{ display: "grid", gap: 14 }}>
           {sessions.length > 0 ? (
-            sessions.map((s) => {
+            sessionsPagination.paginatedItems.map((s) => {
               const dateStr = new Date(s.sessionDate).toLocaleDateString("id-ID", {
                 weekday: "long",
                 day: "numeric",
@@ -381,6 +382,17 @@ export function Attendance({
               <Clock size={32} style={{ margin: "0 auto 8px auto", opacity: 0.6 }} />
               <p style={{ margin: 0 }}>Belum ada sesi presensi yang dibuat pada kelas ini.</p>
             </div>
+          )}
+          {sessions.length > 0 && (
+            <Pagination
+              page={sessionsPagination.page}
+              totalPages={sessionsPagination.totalPages}
+              totalItems={sessionsPagination.totalItems}
+              pageSize={sessionsPagination.pageSize}
+              onPageChange={sessionsPagination.setPage}
+              onPageSizeChange={sessionsPagination.setPageSize}
+              pageSizeOptions={[5, 10, 20]}
+            />
           )}
         </div>
       ) : (
@@ -576,6 +588,7 @@ function ManualAttendanceModal({
 
   // Inisialisasi roster dari API
   const list = roster || rosterApi.data?.roster || [];
+  const pagination = usePagination(list, 15);
 
   const updateStudentStatus = (userId: string, status: AttendanceStatus) => {
     const updated = list.map((item) => (item.userId === userId ? { ...item, status } : item));
@@ -640,7 +653,7 @@ function ManualAttendanceModal({
             </tr>
           </thead>
           <tbody>
-            {list.map((m) => (
+            {pagination.paginatedItems.map((m) => (
               <tr key={m.userId}>
                 <td>
                   <div style={{ fontWeight: 600 }}>{m.name}</div>
@@ -689,6 +702,20 @@ function ManualAttendanceModal({
         </table>
       </div>
 
+      {list.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <Pagination
+            page={pagination.page}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            pageSize={pagination.pageSize}
+            onPageChange={pagination.setPage}
+            onPageSizeChange={pagination.setPageSize}
+            pageSizeOptions={[10, 15, 25, 50]}
+          />
+        </div>
+      )}
+
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
         <button type="button" className="button secondary" onClick={onClose} disabled={saving}>
           Batal
@@ -716,6 +743,7 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
 
   const data = recapApi.data!;
   const students = data.recap || [];
+  const pagination = usePagination(students, 25);
 
   const exportCsv = () => {
     let csv = "NIM,Nama Mahasiswa,Email,Total Sesi,Hadir,Izin,Sakit,Alpa,Terlambat,Persentase,Status Ujian\n";
@@ -766,7 +794,7 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
           </thead>
           <tbody>
             {students.length > 0 ? (
-              students.map((item) => (
+              pagination.paginatedItems.map((item) => (
                 <tr key={item.user.id}>
                   <td>
                     <div style={{ fontWeight: 600 }}>{item.user.name}</div>
@@ -819,6 +847,18 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
           </tbody>
         </table>
       </div>
+
+      {students.length > 0 && (
+        <Pagination
+          page={pagination.page}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          pageSize={pagination.pageSize}
+          onPageChange={pagination.setPage}
+          onPageSizeChange={pagination.setPageSize}
+          pageSizeOptions={[10, 25, 50, 100]}
+        />
+      )}
     </div>
   );
 }

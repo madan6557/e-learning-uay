@@ -15,6 +15,10 @@ import {
   gradeLetter,
   round,
   validateTotal,
+  clampGrade,
+  gradeLetterWithPolicy,
+  GRADE_SCALE_PRESETS,
+  DEFAULT_GRADE_SCALE,
 } from "../../../packages/shared/src/domain.js";
 import { classPath } from "../../../packages/shared/src/urls.js";
 
@@ -23,59 +27,90 @@ export async function calculateGradebook(
   classId: string,
   onlyUserId?: string,
 ) {
-  const [categories, enrollments, resources, quizzes, assignments, manual] =
-    await Promise.all([
-      tx.gradeCategory.findMany({
-        where: { classId },
-        orderBy: { order: "asc" },
-      }),
-      tx.enrollment.findMany({
-        where: {
-          classId,
-          isActive: true,
-          ...(onlyUserId ? { userId: onlyUserId } : {}),
+  const [
+    cls,
+    categories,
+    enrollments,
+    resources,
+    quizzes,
+    assignments,
+    manual,
+    attendanceSessions,
+    attendanceRecords,
+  ] = await Promise.all([
+    tx.courseClass.findUnique({
+      where: { id: classId },
+      select: {
+        id: true,
+        name: true,
+        academicYear: true,
+        gradeScaleVersion: true,
+        gradeScalePolicy: true,
+      },
+    }),
+    tx.gradeCategory.findMany({
+      where: { classId },
+      orderBy: { order: "asc" },
+    }),
+    tx.enrollment.findMany({
+      where: {
+        classId,
+        isActive: true,
+        ...(onlyUserId ? { userId: onlyUserId } : {}),
+      },
+      include: {
+        user: {
+          select: { id: true, name: true, identifierValue: true, email: true },
         },
-        include: {
-          user: {
-            select: { id: true, name: true, identifierValue: true },
+      },
+    }),
+    tx.resourceItem.findMany({
+      where: { section: { classId, isVisible: true }, isVisible: true },
+      include: {
+        videoProgresses: { where: onlyUserId ? { userId: onlyUserId } : {} },
+        slideProgresses: { where: onlyUserId ? { userId: onlyUserId } : {} },
+        downloads: { where: onlyUserId ? { userId: onlyUserId } : {} },
+      },
+    }),
+    tx.quiz.findMany({
+      where: { section: { classId }, status: "PUBLISHED" },
+      include: {
+        attempts: {
+          where: {
+            status: { not: "IN_PROGRESS" },
+            ...(onlyUserId ? { userId: onlyUserId } : {}),
           },
         },
-      }),
-      tx.resourceItem.findMany({
-        where: { section: { classId, isVisible: true }, isVisible: true },
-        include: {
-          videoProgresses: { where: onlyUserId ? { userId: onlyUserId } : {} },
-          slideProgresses: { where: onlyUserId ? { userId: onlyUserId } : {} },
-          downloads: { where: onlyUserId ? { userId: onlyUserId } : {} },
-        },
-      }),
-      tx.quiz.findMany({
-        where: { section: { classId }, status: "PUBLISHED" },
-        include: {
-          attempts: {
-            where: {
-              status: { not: "IN_PROGRESS" },
-              ...(onlyUserId ? { userId: onlyUserId } : {}),
-            },
-          },
-          questions: { select: { points: true } },
-        },
-      }),
-      tx.assignment.findMany({
-        where: { section: { classId }, isVisible: true },
-        include: {
-          submissions: {
-            where: {
-              status: { not: "SUPERSEDED" },
-              ...(onlyUserId ? { userId: onlyUserId } : {}),
-            },
+        questions: { select: { points: true } },
+      },
+    }),
+    tx.assignment.findMany({
+      where: { section: { classId }, isVisible: true },
+      include: {
+        submissions: {
+          where: {
+            status: { not: "SUPERSEDED" },
+            ...(onlyUserId ? { userId: onlyUserId } : {}),
           },
         },
-      }),
-      tx.manualGradeRecord.findMany({
-        where: { classId, ...(onlyUserId ? { userId: onlyUserId } : {}) },
-      }),
-    ]);
+      },
+    }),
+    tx.manualGradeRecord.findMany({
+      where: { classId, ...(onlyUserId ? { userId: onlyUserId } : {}) },
+    }),
+    tx.attendanceSession.findMany({
+      where: { classId },
+      select: { id: true, title: true, sessionDate: true },
+    }),
+    tx.attendanceRecord.findMany({
+      where: {
+        session: { classId },
+        ...(onlyUserId ? { userId: onlyUserId } : {}),
+      },
+      select: { sessionId: true, userId: true, status: true },
+    }),
+  ]);
+
   const [textProgress, saved] = await Promise.all([
     tx.resourceProgress.findMany({
       where: {
@@ -87,6 +122,12 @@ export async function calculateGradebook(
       where: { classId, ...(onlyUserId ? { userId: onlyUserId } : {}) },
     }),
   ]);
+
+  const policy =
+    (cls?.gradeScalePolicy as any) ??
+    GRADE_SCALE_PRESETS[cls?.gradeScaleVersion ?? "2026.1"] ??
+    DEFAULT_GRADE_SCALE;
+
   const rows = enrollments.map(({ user }) => {
     const progress = round(
       resources.length
@@ -128,97 +169,181 @@ export async function calculateGradebook(
           }, 0) / resources.length
         : 0,
     );
+
     const pending: string[] = [];
     const missing: string[] = [];
+
     const categoryScores = categories.map((category) => {
       const override = manual.find(
         (m) => m.categoryId === category.id && m.userId === user.id,
       );
-      if (override)
-        return {
-          categoryId: category.id,
-          name: category.name,
-          score: override.score,
-          weight: category.weightPercent,
-          source: "MANUAL",
-        };
-      if (category.kind === "PROGRESS")
-        return {
-          categoryId: category.id,
-          name: category.name,
-          score: progress,
-          weight: category.weightPercent,
-          source: "PROGRESS",
-        };
-      const values: { score: number; points: number }[] = [];
-      for (const quiz of quizzes.filter(
-        (q) => q.gradeCategoryId === category.id,
-      )) {
-        const attempts = quiz.attempts.filter((a) => a.userId === user.id);
-        if (attempts.some((a) => a.status === "NEEDS_GRADING"))
-          pending.push(quiz.title);
-        const completed = attempts.filter((a) => a.isGraded);
-        if (!completed.length) missing.push(quiz.title);
-        values.push({
-          score: completed.length
-            ? Math.max(...completed.map((a) => a.score))
-            : 0,
-          points: quiz.questions.reduce((s, q) => s + q.points, 0),
-        });
+      const isMandatory =
+        category.isMandatory ||
+        ["uts", "uas"].includes(category.name.trim().toLowerCase());
+      const effectiveSource =
+        category.sourceType ||
+        (category.kind === "PROGRESS" ? "PROGRESS" : "MANUAL");
+
+      let suggestedScore = 0;
+
+      if (effectiveSource === "PROGRESS" || category.kind === "PROGRESS") {
+        suggestedScore = progress;
+      } else if (effectiveSource === "ATTENDANCE") {
+        const userAtt = attendanceRecords.filter((r) => r.userId === user.id);
+        const attendedCount = userAtt.filter(
+          (r) =>
+            r.status === "PRESENT" ||
+            r.status === "EXCUSED" ||
+            r.status === "SICK",
+        ).length;
+        suggestedScore =
+          attendanceSessions.length > 0
+            ? round((attendedCount / attendanceSessions.length) * 100)
+            : 100;
+      } else {
+        const values: { score: number; points: number }[] = [];
+        const includeQuizzes =
+          effectiveSource === "QUIZ" ||
+          effectiveSource === "ASSIGNMENT_AND_QUIZ" ||
+          quizzes.some((q) => q.gradeCategoryId === category.id);
+        const includeAssignments =
+          effectiveSource === "ASSIGNMENT" ||
+          effectiveSource === "ASSIGNMENT_AND_QUIZ" ||
+          assignments.some((a) => a.gradeCategoryId === category.id);
+
+        if (includeQuizzes) {
+          for (const quiz of quizzes.filter(
+            (q) =>
+              q.gradeCategoryId === category.id ||
+              (effectiveSource === "QUIZ" && !q.gradeCategoryId),
+          )) {
+            const attempts = quiz.attempts.filter((a) => a.userId === user.id);
+            if (attempts.some((a) => a.status === "NEEDS_GRADING"))
+              pending.push(quiz.title);
+            const completed = attempts.filter((a) => a.isGraded);
+            if (!completed.length) missing.push(quiz.title);
+            const totalPoints = quiz.questions.reduce(
+              (s, q) => s + q.points,
+              0,
+            );
+            values.push({
+              score: completed.length
+                ? totalPoints
+                  ? round(
+                      (Math.max(...completed.map((a) => a.score)) /
+                        totalPoints) *
+                        100,
+                    )
+                  : 0
+                : 0,
+              points: totalPoints || 100,
+            });
+          }
+        }
+
+        if (includeAssignments) {
+          for (const assignment of assignments.filter(
+            (a) =>
+              a.gradeCategoryId === category.id ||
+              (effectiveSource === "ASSIGNMENT" && !a.gradeCategoryId),
+          )) {
+            const submission = assignment.submissions.find(
+              (s) => s.userId === user.id,
+            );
+            if (submission && submission.score === null)
+              pending.push(assignment.title);
+            if (!submission) missing.push(assignment.title);
+            values.push({
+              score:
+                submission?.score == null
+                  ? 0
+                  : assignment.maxScore
+                    ? round((submission.score / assignment.maxScore) * 100)
+                    : 0,
+              points: assignment.maxScore || 100,
+            });
+          }
+        }
+
+        if (
+          !values.length &&
+          category.weightPercent > 0 &&
+          effectiveSource !== "MANUAL"
+        ) {
+          missing.push(category.name);
+        }
+
+        if (values.length) {
+          const included = values
+            .sort((a, b) => a.score - b.score)
+            .slice(
+              Math.min(category.dropLowest, Math.max(0, values.length - 1)),
+            );
+          suggestedScore = included.length
+            ? category.aggregationMethod === "HIGHEST_SCORE"
+              ? Math.max(...included.map((v) => v.score))
+              : category.aggregationMethod === "WEIGHTED_POINTS"
+                ? included.reduce((s, v) => s + v.score * v.points, 0) /
+                  (included.reduce((s, v) => s + v.points, 0) || 1)
+                : included.reduce((s, v) => s + v.score, 0) / included.length
+            : 0;
+          suggestedScore = round(suggestedScore);
+        }
       }
-      for (const assignment of assignments.filter(
-        (a) => a.gradeCategoryId === category.id,
-      )) {
-        const submission = assignment.submissions.find(
-          (s) => s.userId === user.id,
-        );
-        if (submission && submission.score === null)
-          pending.push(assignment.title);
-        if (!submission) missing.push(assignment.title);
-        values.push({
-          score:
-            submission?.score == null
-              ? 0
-              : (submission.score / assignment.maxScore) * 100,
-          points: assignment.maxScore,
-        });
-      }
-      if (!values.length && category.weightPercent > 0)
-        missing.push(category.name);
-      const included = values
-        .sort((a, b) => a.score - b.score)
-        .slice(Math.min(category.dropLowest, Math.max(0, values.length - 1)));
-      const score = included.length
-        ? category.aggregationMethod === "HIGHEST_SCORE"
-          ? Math.max(...included.map((v) => v.score))
-          : category.aggregationMethod === "WEIGHTED_POINTS"
-            ? included.reduce((s, v) => s + v.score * v.points, 0) /
-              included.reduce((s, v) => s + v.points, 0)
-            : included.reduce((s, v) => s + v.score, 0) / included.length
-        : 0;
+
+      const finalCategoryScore = override
+        ? clampGrade(override.score)
+        : effectiveSource === "MANUAL" && suggestedScore === 0
+          ? 0
+          : clampGrade(suggestedScore);
+
       return {
         categoryId: category.id,
         name: category.name,
-        score: round(score),
         weight: category.weightPercent,
-        source: "ASSESSMENT",
+        weightPercent: category.weightPercent,
+        isMandatory,
+        sourceType: effectiveSource,
+        score: round(finalCategoryScore),
+        suggestedScore: round(suggestedScore),
+        hasManualOverride: Boolean(override),
+        source: override
+          ? "MANUAL"
+          : category.kind === "PROGRESS"
+            ? "PROGRESS"
+            : "ASSESSMENT",
       };
     });
+
     const finalScore = round(
       categoryScores.reduce((sum, c) => sum + (c.score * c.weight) / 100, 0),
     );
+    const { gradeLetter: letter, gradePoint: point } = gradeLetterWithPolicy(
+      finalScore,
+      policy,
+    );
+
     return {
       user,
       progress,
       categoryScores,
       finalScore,
-      ...gradeLetter(finalScore),
+      gradeLetter: letter,
+      gradePoint: point,
       pending,
       missing,
       record: saved.find((s) => s.userId === user.id) ?? null,
     };
   });
+
   return {
+    class: {
+      id: cls?.id ?? classId,
+      name: cls?.name,
+      academicYear: cls?.academicYear,
+      gradeScaleVersion: cls?.gradeScaleVersion ?? "2026.1",
+      gradeScalePolicy: cls?.gradeScalePolicy ?? null,
+    },
     categories,
     rows,
     weightsValid: validateTotal(categories.map((c) => c.weightPercent)),
@@ -307,6 +432,199 @@ export function registerGrades(app: Express) {
       }),
     );
   });
+  app.get(
+    "/api/v1/course-classes/:id/students/:userId/grade-breakdown",
+    async (req, res) => {
+      const cls = await classAccess(db, req.context.user, String(req.params.id));
+      const targetUserId = String(req.params.userId);
+      ensure(
+        cls.canManage || req.context.user.id === targetUserId,
+        403,
+        "FORBIDDEN",
+      );
+      const result = await calculateGradebook(db, cls.id, targetUserId);
+      const row = result.rows[0];
+      ensure(row, 404, "STUDENT_NOT_FOUND");
+
+      const [quizzes, assignments, attendanceSessions, attendanceRecords] =
+        await Promise.all([
+          db.quiz.findMany({
+            where: { section: { classId: cls.id }, status: "PUBLISHED" },
+            include: {
+              attempts: {
+                where: { userId: targetUserId, status: { not: "IN_PROGRESS" } },
+                orderBy: { score: "desc" },
+              },
+              questions: { select: { points: true } },
+            },
+          }),
+          db.assignment.findMany({
+            where: { section: { classId: cls.id }, isVisible: true },
+            include: {
+              submissions: {
+                where: { userId: targetUserId, status: { not: "SUPERSEDED" } },
+                orderBy: { submittedAt: "desc" },
+              },
+            },
+          }),
+          db.attendanceSession.findMany({
+            where: { classId: cls.id },
+            orderBy: { sessionDate: "asc" },
+          }),
+          db.attendanceRecord.findMany({
+            where: { session: { classId: cls.id }, userId: targetUserId },
+          }),
+        ]);
+
+      const breakdownCategories = result.categories.map((cat) => {
+        const catScoreInfo = row.categoryScores.find(
+          (cs) => cs.categoryId === cat.id,
+        );
+        const isMandatory =
+          cat.isMandatory ||
+          ["uts", "uas"].includes(cat.name.trim().toLowerCase());
+        const effectiveSource =
+          cat.sourceType ||
+          (cat.kind === "PROGRESS" ? "PROGRESS" : "MANUAL");
+
+        const activities: any[] = [];
+
+        if (
+          effectiveSource === "QUIZ" ||
+          effectiveSource === "ASSIGNMENT_AND_QUIZ" ||
+          quizzes.some((q) => q.gradeCategoryId === cat.id)
+        ) {
+          const matchedQuizzes = quizzes.filter(
+            (q) =>
+              q.gradeCategoryId === cat.id ||
+              (effectiveSource === "QUIZ" && !q.gradeCategoryId),
+          );
+          for (const q of matchedQuizzes) {
+            const bestAttempt = q.attempts[0];
+            const totalPoints = q.questions.reduce((s, qu) => s + qu.points, 0);
+            const rawScore = bestAttempt?.score ?? 0;
+            const normalized = totalPoints
+              ? round((rawScore / totalPoints) * 100)
+              : 0;
+            activities.push({
+              id: q.id,
+              title: q.title,
+              type: "QUIZ",
+              rawScore,
+              maxScore: totalPoints,
+              normalizedScore: normalized,
+              date: bestAttempt?.submittedAt ?? null,
+              status: bestAttempt
+                ? bestAttempt.isGraded
+                  ? "Selesai"
+                  : "Menunggu Penilaian"
+                : "Belum Mengerjakan",
+            });
+          }
+        }
+
+        if (
+          effectiveSource === "ASSIGNMENT" ||
+          effectiveSource === "ASSIGNMENT_AND_QUIZ" ||
+          assignments.some((a) => a.gradeCategoryId === cat.id)
+        ) {
+          const matchedAssignments = assignments.filter(
+            (a) =>
+              a.gradeCategoryId === cat.id ||
+              (effectiveSource === "ASSIGNMENT" && !a.gradeCategoryId),
+          );
+          for (const a of matchedAssignments) {
+            const sub = a.submissions[0];
+            const rawScore = sub?.score ?? null;
+            const maxScore = a.maxScore;
+            const normalized =
+              rawScore !== null && maxScore
+                ? round((rawScore / maxScore) * 100)
+                : 0;
+            activities.push({
+              id: a.id,
+              title: a.title,
+              type: "ASSIGNMENT",
+              rawScore,
+              maxScore,
+              normalizedScore: normalized,
+              date: sub?.submittedAt ?? null,
+              status: sub
+                ? sub.score !== null
+                  ? "Dinilai"
+                  : "Menunggu Penilaian"
+                : "Belum Mengumpulkan",
+            });
+          }
+        }
+
+        if (effectiveSource === "PROGRESS" || cat.kind === "PROGRESS") {
+          activities.push({
+            id: "progress",
+            title: "Progres Materi & Video Perkuliahan",
+            type: "PROGRESS",
+            rawScore: row.progress,
+            maxScore: 100,
+            normalizedScore: row.progress,
+            date: null,
+            status:
+              row.progress >= 100 ? "Selesai" : `${row.progress}% Selesai`,
+          });
+        }
+
+        if (effectiveSource === "ATTENDANCE") {
+          const attendedCount = attendanceRecords.filter(
+            (r) =>
+              r.status === "PRESENT" ||
+              r.status === "EXCUSED" ||
+              r.status === "SICK",
+          ).length;
+          const total = attendanceSessions.length;
+          const attPct = total > 0 ? round((attendedCount / total) * 100) : 100;
+          activities.push({
+            id: "attendance",
+            title: `Kehadiran Tatap Muka (${attendedCount}/${total} Sesi Hadir)`,
+            type: "ATTENDANCE",
+            rawScore: attendedCount,
+            maxScore: total,
+            normalizedScore: attPct,
+            date: null,
+            status: `${attPct}% Kehadiran`,
+          });
+        }
+
+        return {
+          categoryId: cat.id,
+          name: cat.name,
+          weightPercent: cat.weightPercent,
+          isMandatory,
+          sourceType: effectiveSource,
+          currentScore: catScoreInfo?.score ?? 0,
+          suggestedScore: catScoreInfo?.suggestedScore ?? 0,
+          hasManualOverride: Boolean(catScoreInfo?.hasManualOverride),
+          activities,
+        };
+      });
+
+      res.json({
+        student: row.user,
+        class: {
+          id: cls.id,
+          name: cls.name,
+          academicYear: cls.academicYear,
+          gradeScaleVersion: cls.gradeScaleVersion ?? "2026.1",
+          gradeScalePolicy: cls.gradeScalePolicy ?? null,
+        },
+        categories: breakdownCategories,
+        finalScore: row.finalScore,
+        gradeLetter: row.gradeLetter,
+        gradePoint: row.gradePoint,
+        isPublished: Boolean(row.record?.publishedAt),
+        publishedAt: row.record?.publishedAt ?? null,
+      });
+    },
+  );
+
   app.put("/api/v1/course-classes/:id/grade-categories", async (req, res) =>
     res.json(
       await mutate(req, async (tx) => {
@@ -323,8 +641,9 @@ export function registerGrades(app: Express) {
           423,
           "GRADEBOOK_LOCKED",
         );
-        const { categories } = z
+        const { categories, gradeScaleVersion } = z
           .object({
+            gradeScaleVersion: z.string().optional(),
             categories: z
               .array(
                 z.object({
@@ -342,6 +661,8 @@ export function registerGrades(app: Express) {
                   kind: z
                     .enum(["ASSESSMENT", "PROGRESS"])
                     .default("ASSESSMENT"),
+                  isMandatory: z.boolean().default(false),
+                  sourceType: z.string().default("MANUAL"),
                 }),
               )
               .min(1)
@@ -371,6 +692,10 @@ export function registerGrades(app: Express) {
         );
         for (const old of before)
           if (!categories.some((c) => c.id === old.id)) {
+            const isMandatory =
+              old.isMandatory ||
+              ["uts", "uas"].includes(old.name.trim().toLowerCase());
+            ensure(!isMandatory, 400, "MANDATORY_CATEGORY_CANNOT_BE_DELETED");
             ensure(
               (await tx.quiz.count({ where: { gradeCategoryId: old.id } })) +
                 (await tx.assignment.count({
@@ -387,15 +712,33 @@ export function registerGrades(app: Express) {
           }
         for (let order = 0; order < categories.length; order++) {
           const { id, ...data } = categories[order];
+          const isMandatory =
+            data.isMandatory ||
+            ["uts", "uas"].includes(data.name.trim().toLowerCase());
+          const sourceType =
+            data.sourceType ||
+            (data.kind === "PROGRESS" ? "PROGRESS" : "MANUAL");
           if (id)
             await tx.gradeCategory.update({
               where: { id },
-              data: { ...data, order },
+              data: { ...data, isMandatory, sourceType, order },
             });
           else
             await tx.gradeCategory.create({
-              data: { ...data, classId: cls.id, order },
+              data: {
+                ...data,
+                isMandatory,
+                sourceType,
+                classId: cls.id,
+                order,
+              },
             });
+        }
+        if (gradeScaleVersion && GRADE_SCALE_PRESETS[gradeScaleVersion]) {
+          await tx.courseClass.update({
+            where: { id: cls.id },
+            data: { gradeScaleVersion },
+          });
         }
         const after = await tx.gradeCategory.findMany({
           where: { classId: cls.id },
@@ -451,6 +794,7 @@ export function registerGrades(app: Express) {
                 finalScore: row.finalScore,
                 gradeLetter: row.gradeLetter,
                 gradePoint: row.gradePoint,
+                gradeScaleVersion: cls.gradeScaleVersion ?? "2026.1",
                 isLocked: action === "publish",
                 publishedAt: action === "publish" ? new Date() : null,
               };
@@ -505,7 +849,7 @@ export function registerGrades(app: Express) {
           const item = z.object({
             userId: z.string().uuid(),
             categoryId: z.string().uuid(),
-            score: z.number().min(0).max(100),
+            score: z.number().transform((val) => clampGrade(val)),
             reason: z.string().trim().min(5).max(2000).optional(),
           });
           const batch = req.path.endsWith("/batch");
@@ -546,9 +890,7 @@ export function registerGrades(app: Express) {
             const reason = change.reason ?? data.reason;
             const code = !enrolled
               ? "INVALID_STUDENT"
-              : !category ||
-                  category.classId !== cls.id ||
-                  category.kind !== "ASSESSMENT"
+              : !category || category.classId !== cls.id
                 ? "INVALID_CATEGORY"
                 : final?.isLocked && !final.publishedAt
                   ? "GRADEBOOK_LOCKED"

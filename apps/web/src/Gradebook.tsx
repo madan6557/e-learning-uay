@@ -1,6 +1,15 @@
 import { useLocalDraft, SaveStatus } from "./useLocalDraft";
 import { useEffect, useState } from "react";
-import { Download, Plus, Upload, GraduationCap } from "lucide-react";
+import {
+  Download,
+  Plus,
+  Upload,
+  GraduationCap,
+  Calculator,
+  Trash2,
+  Sparkles,
+  Info,
+} from "lucide-react";
 import {
   t,
   api,
@@ -16,7 +25,67 @@ import {
   date,
   textValue,
   numberValue,
+  Pagination,
+  usePagination,
 } from "./lib";
+import { confirmAction } from "./confirm";
+import { GRADE_SCALE_PRESETS } from "../../../packages/shared/src/domain";
+
+export function GradeScoreInput({
+  value,
+  onChange,
+  disabled,
+  className = "",
+  ariaLabel,
+}: {
+  value: string | number;
+  onChange: (val: string) => void;
+  disabled?: boolean;
+  className?: string;
+  ariaLabel?: string;
+}) {
+  return (
+    <input
+      className={`score-input ${className}`.trim()}
+      aria-label={ariaLabel}
+      type="number"
+      min={0}
+      max={100}
+      step="1"
+      disabled={disabled}
+      value={value}
+      onKeyDown={(e) => {
+        if (e.key === "-" || e.key === "e" || e.key === "E") {
+          e.preventDefault();
+        }
+      }}
+      onChange={(e) => {
+        const raw = e.target.value;
+        if (raw === "") {
+          onChange("");
+          return;
+        }
+        const num = parseFloat(raw);
+        if (isNaN(num)) {
+          onChange("0");
+        } else if (num > 100) {
+          onChange("100");
+        } else if (num < 0) {
+          onChange("0");
+        } else {
+          onChange(raw);
+        }
+      }}
+      onBlur={(e) => {
+        const raw = e.target.value;
+        if (raw !== "") {
+          const num = Math.max(0, Math.min(100, parseFloat(raw) || 0));
+          onChange(String(Math.round(num * 100) / 100));
+        }
+      }}
+    />
+  );
+}
 
 async function workbook() {
   const module = await import("exceljs");
@@ -47,6 +116,445 @@ async function exportSheet(name: string, headers: string[], rows: unknown[][]) {
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
+
+function StudentGradeReviewModal({
+  classId,
+  userId,
+  onClose,
+  onSaved,
+}: {
+  classId: string;
+  userId: string;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const breakdownApi = useApi<any>(
+    `/course-classes/${classId}/students/${userId}/grade-breakdown`,
+  );
+  const [editedScores, setEditedScores] = useState<Record<string, string>>({});
+  const [reason, setReason] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (breakdownApi.data) {
+      const initial: Record<string, string> = {};
+      for (const cat of breakdownApi.data.categories) {
+        initial[cat.categoryId] = String(cat.currentScore);
+      }
+      setEditedScores(initial);
+    }
+  }, [breakdownApi.data]);
+
+  if (breakdownApi.loading && !breakdownApi.data) return <Loading />;
+  if (breakdownApi.error) return <Notice error={breakdownApi.error} />;
+  if (!breakdownApi.data) return null;
+
+  const data = breakdownApi.data;
+  const categories = data.categories;
+
+  // Calculate simulated final score in real-time
+  const simulatedFinal = categories.reduce((sum: number, cat: any) => {
+    const s = parseFloat(editedScores[cat.categoryId] ?? "0") || 0;
+    return sum + (s * cat.weightPercent) / 100;
+  }, 0);
+  const roundedSimulated = Math.round(simulatedFinal * 100) / 100;
+
+  const handleUseSuggestion = (categoryId: string, suggestedScore: number) => {
+    setEditedScores((prev) => ({
+      ...prev,
+      [categoryId]: String(suggestedScore),
+    }));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const changes = categories.map((cat: any) => ({
+        userId,
+        categoryId: cat.categoryId,
+        score: parseFloat(editedScores[cat.categoryId] ?? "0") || 0,
+      }));
+
+      await api(`/course-classes/${classId}/manual-grades/batch`, "POST", {
+        changes,
+        ...(reason.trim() ? { reason: reason.trim() } : {}),
+      });
+
+      onSaved();
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal
+      title={`Tinjau & Kalkulasi Nilai: ${data.student.name}`}
+      wide
+      onClose={onClose}
+    >
+      <div style={{ marginBottom: 16 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "12px 16px",
+            background: "var(--chip-bg, #f8fafc)",
+            borderRadius: 8,
+            border: "1px solid var(--border, #e2e8f0)",
+            flexWrap: "wrap",
+            gap: 12,
+          }}
+        >
+          <div>
+            <div style={{ fontWeight: 700, fontSize: "1.05rem" }}>
+              {data.student.name}
+            </div>
+            <div style={{ fontSize: "0.85rem", color: "var(--muted, #64748b)" }}>
+              NIM: {data.student.identifierValue} · {data.student.email}
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: "0.75rem", color: "var(--muted, #64748b)" }}>
+                Simulasi Nilai Akhir
+              </div>
+              <div
+                style={{
+                  fontSize: "1.3rem",
+                  fontWeight: 800,
+                  color: "var(--primary, #0284c7)",
+                }}
+              >
+                {roundedSimulated.toFixed(2)}
+              </div>
+            </div>
+            <div
+              style={{
+                background: "#0284c7",
+                color: "#ffffff",
+                padding: "6px 14px",
+                borderRadius: 8,
+                fontSize: "0.85rem",
+                fontWeight: 700,
+              }}
+            >
+              Skala {data.class.gradeScaleVersion}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p
+        style={{
+          fontSize: "0.88rem",
+          color: "var(--muted, #64748b)",
+          margin: "0 0 16px 0",
+        }}
+      >
+        Berikut adalah rincian aktivitas capaian mahasiswa per bagian bobot penilaian.
+        Hasil kalkulasi sistem disajikan sebagai <strong>rekomendasi/saran</strong>. Anda dapat
+        mengecek dan mengoreksi nilai section sesuai evaluasi akademik Anda sebelum menekan tombol simpan draf.
+      </p>
+
+      <div
+        style={{
+          display: "grid",
+          gap: 16,
+          maxHeight: "55vh",
+          overflowY: "auto",
+          paddingRight: 4,
+          marginBottom: 20,
+        }}
+      >
+        {categories.map((cat: any) => {
+          const currentVal =
+            editedScores[cat.categoryId] ?? String(cat.currentScore);
+          return (
+            <div
+              key={cat.categoryId}
+              className="card"
+              style={{
+                padding: 16,
+                border: "1px solid var(--border, #e2e8f0)",
+                borderRadius: 8,
+                background: "var(--card-bg, #ffffff)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 12,
+                  flexWrap: "wrap",
+                  gap: 8,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 700 }}>
+                    {cat.name}
+                  </h3>
+                  <span
+                    style={{
+                      background: "rgba(2, 132, 199, 0.1)",
+                      color: "#0284c7",
+                      fontWeight: 700,
+                      fontSize: "0.75rem",
+                      padding: "2px 8px",
+                      borderRadius: 12,
+                    }}
+                  >
+                    Bobot {cat.weightPercent}%
+                  </span>
+                  {cat.isMandatory && (
+                    <span
+                      style={{
+                        background: "#fef3c7",
+                        color: "#92400e",
+                        fontWeight: 700,
+                        fontSize: "0.75rem",
+                        padding: "2px 8px",
+                        borderRadius: 12,
+                      }}
+                    >
+                      Wajib
+                    </span>
+                  )}
+                  <span
+                    style={{
+                      fontSize: "0.75rem",
+                      color: "var(--muted, #64748b)",
+                      background: "#f1f5f9",
+                      padding: "2px 8px",
+                      borderRadius: 12,
+                    }}
+                  >
+                    Sumber: {cat.sourceType}
+                  </span>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  {cat.sourceType !== "MANUAL" && (
+                    <div
+                      style={{
+                        fontSize: "0.82rem",
+                        background: "#dcfce7",
+                        color: "#15803d",
+                        padding: "4px 10px",
+                        borderRadius: 6,
+                        fontWeight: 600,
+                      }}
+                    >
+                      Saran Sistem: <strong>{cat.suggestedScore.toFixed(2)}</strong>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {cat.activities && cat.activities.length > 0 ? (
+                <div
+                  style={{
+                    marginBottom: 12,
+                    background: "#f8fafc",
+                    borderRadius: 6,
+                    border: "1px solid #e2e8f0",
+                    overflow: "hidden",
+                  }}
+                >
+                  <table style={{ margin: 0, fontSize: "0.82rem" }}>
+                    <thead>
+                      <tr style={{ background: "#f1f5f9" }}>
+                        <th style={{ padding: "6px 10px" }}>Aktivitas</th>
+                        <th style={{ padding: "6px 10px", textAlign: "center" }}>
+                          Nilai Riil
+                        </th>
+                        <th style={{ padding: "6px 10px", textAlign: "center" }}>
+                          Skala 100
+                        </th>
+                        <th style={{ padding: "6px 10px", textAlign: "right" }}>
+                          Status
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cat.activities.map((act: any, idx: number) => (
+                        <tr key={act.id || idx}>
+                          <td style={{ padding: "6px 10px" }}>
+                            <strong>{act.title}</strong>
+                            <small
+                              style={{
+                                display: "block",
+                                color: "var(--muted, #64748b)",
+                              }}
+                            >
+                              {act.type}
+                            </small>
+                          </td>
+                          <td
+                            style={{
+                              padding: "6px 10px",
+                              textAlign: "center",
+                            }}
+                          >
+                            {act.rawScore !== null
+                              ? `${act.rawScore} / ${act.maxScore}`
+                              : "—"}
+                          </td>
+                          <td
+                            style={{
+                              padding: "6px 10px",
+                              textAlign: "center",
+                              fontWeight: 700,
+                            }}
+                          >
+                            {act.normalizedScore.toFixed(2)}
+                          </td>
+                          <td
+                            style={{ padding: "6px 10px", textAlign: "right" }}
+                          >
+                            <span
+                              style={{ fontSize: "0.75rem", color: "#64748b" }}
+                            >
+                              {act.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    padding: "8px 12px",
+                    background: "#f8fafc",
+                    borderRadius: 6,
+                    fontSize: "0.82rem",
+                    color: "var(--muted, #64748b)",
+                    marginBottom: 12,
+                  }}
+                >
+                  {cat.sourceType === "MANUAL"
+                    ? "Kategori manual murni — nilai diinput langsung oleh dosen tanpa kalkulasi otomatis."
+                    : "Belum ada aktivitas yang dikerjakan mahasiswa untuk kategori ini."}
+                </div>
+              )}
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  background: "#ffffff",
+                  padding: "8px 12px",
+                  borderRadius: 6,
+                  border: "1px solid #e2e8f0",
+                  flexWrap: "wrap",
+                  gap: 8,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <label style={{ fontSize: "0.85rem", fontWeight: 600 }}>
+                    Nilai Akhir Bagian ({cat.name}):
+                  </label>
+                  <GradeScoreInput
+                    ariaLabel={`Nilai ${cat.name}`}
+                    value={currentVal}
+                    onChange={(val) =>
+                      setEditedScores((prev) => ({
+                        ...prev,
+                        [cat.categoryId]: val,
+                      }))
+                    }
+                  />
+                  <span
+                    style={{
+                      fontSize: "0.8rem",
+                      color: "var(--muted, #64748b)",
+                    }}
+                  >
+                    / 100
+                  </span>
+                </div>
+
+                {cat.sourceType !== "MANUAL" && (
+                  <button
+                    type="button"
+                    className="button secondary sm"
+                    style={{
+                      fontSize: "0.8rem",
+                      padding: "4px 10px",
+                      borderRadius: 6,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                    onClick={() =>
+                      handleUseSuggestion(cat.categoryId, cat.suggestedScore)
+                    }
+                  >
+                    <span>
+                      Gunakan Nilai Saran ({cat.suggestedScore.toFixed(2)})
+                    </span>
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <label
+          style={{
+            display: "block",
+            fontSize: "0.85rem",
+            fontWeight: 600,
+            marginBottom: 4,
+          }}
+        >
+          Alasan Perubahan / Catatan (Opsional)
+        </label>
+        <textarea
+          rows={2}
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="Catatan penyesuaian nilai atau hasil evaluasi..."
+          style={{
+            width: "100%",
+            fontSize: "0.85rem",
+            padding: "8px 12px",
+            borderRadius: 6,
+            border: "1px solid var(--border, #cbd5e1)",
+          }}
+        />
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+        <button
+          type="button"
+          className="button secondary"
+          onClick={onClose}
+          disabled={saving}
+        >
+          Batal
+        </button>
+        <button
+          type="button"
+          className="button primary"
+          onClick={handleSave}
+          disabled={saving}
+        >
+          {saving ? "Menyimpan..." : "Simpan ke Draf"}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
 export function Gradebook({
   classId,
   writable,
@@ -58,7 +566,8 @@ export function Gradebook({
   const [modal, setModal] = useState<any>(null),
     [weights, setWeights] = useState<any[]>([]),
     [acknowledge, setAcknowledge] = useState(false),
-    [message, setMessage] = useState("");
+    [message, setMessage] = useState(""),
+    [gradeScaleVersion, setGradeScaleVersion] = useState("2026.1");
   const [changes, setChanges] = useState<
     Record<string, { userId: string; categoryId: string; score: string }>
   >({});
@@ -67,6 +576,15 @@ export function Gradebook({
   const [unsaved, setUnsaved] = useState(false);
   useEffect(() => { if (!changedCount) setReason(""); }, [changedCount]);
   const data = info.data;
+
+  useEffect(() => {
+    if (data?.class?.gradeScaleVersion) {
+      setGradeScaleVersion(data.class.gradeScaleVersion);
+    }
+  }, [data?.class?.gradeScaleVersion]);
+
+  const pagination = usePagination(data?.rows ?? [], 25);
+
   if (info.loading && !data) return <Loading />;
   if (info.error) return <Notice error={info.error} />;
   if (!data) return null;
@@ -162,6 +680,55 @@ export function Gradebook({
               >
                 {t.weights}
               </button>
+              <Action
+                className="secondary"
+                disabled={locked || unsaved}
+                run={async () => {
+                  if (
+                    !(await confirmAction(
+                      "Terapkan nilai saran kalkulasi otomatis ke seluruh mahasiswa sebagai draf? Nilai saran dari aktivitas riil mahasiswa akan disimpan ke draf untuk dapat ditinjau lebih lanjut.",
+                    ))
+                  )
+                    return;
+                  const batchChanges: any[] = [];
+                  for (const r of data.rows) {
+                    for (const c of r.categoryScores) {
+                      if (
+                        c.sourceType !== "MANUAL" &&
+                        c.suggestedScore !== undefined
+                      ) {
+                        batchChanges.push({
+                          userId: r.user.id,
+                          categoryId: c.categoryId,
+                          score: c.suggestedScore,
+                        });
+                      }
+                    }
+                  }
+                  if (!batchChanges.length) {
+                    setMessage(
+                      "Tidak ada nilai kalkulasi otomatis yang tersedia untuk diterapkan.",
+                    );
+                    return;
+                  }
+                  await api(
+                    `/course-classes/${classId}/manual-grades/batch`,
+                    "POST",
+                    {
+                      changes: batchChanges,
+                      reason:
+                        "Penerapan kalkulasi otomatis sistem ke draf rekap nilai",
+                    },
+                  );
+                  setMessage(
+                    `${batchChanges.length} nilai saran otomatis berhasil diterapkan ke draf.`,
+                  );
+                  info.reload();
+                }}
+              >
+                <Calculator size={16} />
+                Terapkan Kalkulasi Otomatis ke Draf
+              </Action>
             </>
           )}
         </div>
@@ -257,35 +824,56 @@ export function Gradebook({
               </tr>
             </thead>
             <tbody>
-              {data.rows.map((r: any) => (
+              {pagination.paginatedItems.map((r: any) => (
                 <tr key={r.user.id}>
-                  <td>
-                    <strong>{r.user.name}</strong>
+                  <td
+                    style={{ cursor: writable ? "pointer" : "default" }}
+                    onClick={() => {
+                      if (writable) {
+                        setModal({ kind: "student_review", userId: r.user.id });
+                      }
+                    }}
+                    title={
+                      writable
+                        ? "Klik untuk meninjau rincian capaian & kalkulasi nilai mahasiswa"
+                        : undefined
+                    }
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <strong>{r.user.name}</strong>
+                      {writable && (
+                        <span
+                          style={{
+                            fontSize: "0.72rem",
+                            background: "rgba(2, 132, 199, 0.1)",
+                            color: "#0284c7",
+                            padding: "1px 6px",
+                            borderRadius: 4,
+                            fontWeight: 600,
+                          }}
+                        >
+                          Tinjau
+                        </span>
+                      )}
+                    </div>
                     <small className="block">{r.user.identifierValue}</small>
                   </td>
                   {r.categoryScores.map((c: any) => (
                     <td key={c.categoryId}>
                       {writable && c.source !== "PROGRESS" ? (
-                        <input
+                        <GradeScoreInput
                           className={
-                            "score-input " +
-                            (changes[r.user.id + ":" + c.categoryId]
+                            changes[r.user.id + ":" + c.categoryId]
                               ? "changed"
-                              : "")
+                              : ""
                           }
-                          aria-label={r.user.name + " · " + c.name}
-                          type="number"
-                          min={0}
-                          max={100}
-                          step="1"
-                          required
+                          ariaLabel={r.user.name + " · " + c.name}
                           value={
                             changes[r.user.id + ":" + c.categoryId]?.score ??
                             String(c.score)
                           }
-                          onChange={(e) => {
-                            const score = e.target.value,
-                              key = r.user.id + ":" + c.categoryId;
+                          onChange={(score) => {
+                            const key = r.user.id + ":" + c.categoryId;
                             setChanges((previous) => {
                               const next = { ...previous };
                               if (score !== "" && Number(score) === c.score)
@@ -329,6 +917,15 @@ export function Gradebook({
           </table>
           {!data.rows.length && <Empty>{t.noParticipants}</Empty>}
         </div>
+        <Pagination
+          page={pagination.page}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          pageSize={pagination.pageSize}
+          onPageChange={pagination.setPage}
+          onPageSizeChange={pagination.setPageSize}
+          pageSizeOptions={[10, 25, 50, -1]}
+        />
         {changedCount > 0 && (
           <Field
             label="Alasan perubahan / koreksi"
@@ -412,6 +1009,17 @@ export function Gradebook({
           </div>
         </>
       )}
+      {modal?.kind === "student_review" && (
+        <StudentGradeReviewModal
+          classId={classId}
+          userId={modal.userId}
+          onClose={() => setModal(null)}
+          onSaved={() => {
+            setMessage("Nilai draf berhasil disimpan.");
+            info.reload();
+          }}
+        />
+      )}
       {modal?.kind === "weights" && (
         <Modal title={t.weights} wide onClose={() => setModal(null)}>
           <Form
@@ -421,48 +1029,156 @@ export function Gradebook({
             onSubmit={async () => {
               await api(`/course-classes/${classId}/grade-categories`, "PUT", {
                 categories: weights,
+                gradeScaleVersion,
               });
               setModal(null);
               info.reload();
             }}
           >
+            <div style={{ marginBottom: 16 }}>
+              <Field
+                label="Kebijakan Konversi Huruf Mutu (Grade Scale Policy)"
+                hint="Versi skala nilai mengontrol pemetaan skor ke huruf mutu (A, B, C, D, E). Nilai semester lampau yang telah dikunci/diterbitkan tidak akan terpengaruh jika versi baru dipilih."
+              >
+                <select
+                  value={gradeScaleVersion}
+                  onChange={(e) => setGradeScaleVersion(e.target.value)}
+                >
+                  <option value="2026.1">
+                    2026.1 - Standar Baru UAY 2026 (A &ge; 85, B+ &ge; 80, B &ge; 75, dst.)
+                  </option>
+                  <option value="2024.1">
+                    2024.1 - Kurikulum Transisi 2024 (A &ge; 80, B+ &ge; 75, B &ge; 70, dst.)
+                  </option>
+                </select>
+              </Field>
+            </div>
             <div className="weight-editor">
-              {weights.map((c, i) => (
-                <div className="form-grid" key={c.id ?? i}>
-                  <Field label={t.category}>
-                    <input
-                      required
-                      value={c.name}
-                      onChange={(e) =>
-                        setWeights(
-                          weights.map((w, j) =>
-                            i === j ? { ...w, name: e.target.value } : w,
-                          ),
-                        )
-                      }
-                    />
-                  </Field>
-                  <Field label={t.weight}>
-                    <input
-                      type="number"
-                      required
-                      min={0}
-                      max={100}
-                      step="0.1"
-                      value={c.weightPercent}
-                      onChange={(e) =>
-                        setWeights(
-                          weights.map((w, j) =>
-                            i === j
-                              ? { ...w, weightPercent: Number(e.target.value) }
-                              : w,
-                          ),
-                        )
-                      }
-                    />
-                  </Field>
-                </div>
-              ))}
+              {weights.map((c, i) => {
+                const isMandatory =
+                  c.isMandatory ||
+                  ["uts", "uas"].includes((c.name || "").trim().toLowerCase());
+                return (
+                  <div
+                    key={c.id ?? i}
+                    style={{
+                      border: "1px solid var(--border, #e2e8f0)",
+                      borderRadius: 8,
+                      padding: 12,
+                      marginBottom: 12,
+                      background: isMandatory ? "rgba(2, 132, 199, 0.03)" : "transparent",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1.2fr 130px 1.5fr auto",
+                        gap: 12,
+                        alignItems: "end",
+                      }}
+                    >
+                      <Field label={t.category}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <input
+                            required
+                            disabled={isMandatory}
+                            value={c.name}
+                            onChange={(e) =>
+                              setWeights(
+                                weights.map((w, j) =>
+                                  i === j ? { ...w, name: e.target.value } : w,
+                                ),
+                              )
+                            }
+                          />
+                          {isMandatory && (
+                            <span
+                              style={{
+                                fontSize: "0.72rem",
+                                background: "#0284c7",
+                                color: "#fff",
+                                padding: "2px 6px",
+                                borderRadius: 4,
+                                whiteSpace: "nowrap",
+                                fontWeight: 600,
+                              }}
+                            >
+                              Wajib
+                            </span>
+                          )}
+                        </div>
+                      </Field>
+                      <Field label={`${t.weight} (%)`}>
+                        <input
+                          type="number"
+                          required
+                          min={0}
+                          max={100}
+                          step="0.1"
+                          value={c.weightPercent}
+                          onChange={(e) => {
+                            const val = Math.max(0, Math.min(100, Number(e.target.value) || 0));
+                            setWeights(
+                              weights.map((w, j) =>
+                                i === j ? { ...w, weightPercent: val } : w,
+                              ),
+                            );
+                          }}
+                        />
+                      </Field>
+                      <Field
+                        label="Sumber Kalkulasi Otomatis"
+                        hint="Pilih sumber aktivitas untuk saran nilai"
+                      >
+                        <select
+                          value={c.sourceType || (c.kind === "PROGRESS" ? "PROGRESS" : "MANUAL")}
+                          onChange={(e) =>
+                            setWeights(
+                              weights.map((w, j) =>
+                                i === j ? { ...w, sourceType: e.target.value } : w,
+                              ),
+                            )
+                          }
+                        >
+                          <option value="MANUAL">Input Manual (Tanpa Kalkulator)</option>
+                          <option value="ASSIGNMENT">Tugas Terstruktur</option>
+                          <option value="QUIZ">Kuis</option>
+                          <option value="ASSIGNMENT_AND_QUIZ">Gabungan Tugas &amp; Kuis</option>
+                          <option value="PROGRESS">Progres Belajar Materi</option>
+                          <option value="ATTENDANCE">Presensi Kehadiran</option>
+                        </select>
+                      </Field>
+                      <div style={{ paddingBottom: 4 }}>
+                        {!isMandatory ? (
+                          <button
+                            type="button"
+                            className="secondary danger"
+                            style={{ padding: "8px 10px" }}
+                            title="Hapus Kategori"
+                            onClick={() =>
+                              setWeights(weights.filter((_, j) => i !== j))
+                            }
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        ) : (
+                          <span
+                            style={{
+                              fontSize: "0.75rem",
+                              color: "var(--muted, #64748b)",
+                              display: "block",
+                              padding: "8px 4px",
+                            }}
+                            title="Kategori UTS & UAS wajib ada dan tidak dapat dihapus"
+                          >
+                            Terkunci
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
             <div className="points-counter">
               <strong>
@@ -483,6 +1199,8 @@ export function Gradebook({
                     kind: "ASSESSMENT",
                     aggregationMethod: "SIMPLE_AVERAGE",
                     dropLowest: 0,
+                    isMandatory: false,
+                    sourceType: "MANUAL",
                   },
                 ])
               }

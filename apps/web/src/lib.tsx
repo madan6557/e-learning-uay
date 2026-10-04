@@ -905,3 +905,6 @@ export function FileUpload({
     </div>
   );
 }
+
+export { Pagination, usePagination } from "./ui";
+

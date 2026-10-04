@@ -114,8 +114,27 @@ if(!await db.courseClass.findUnique({where:{id:ids.class}})){
         },
       });
     }
-    await tx.courseClass.create({data:{id:ids.class,courseId:course.id,name:'Kelas A',academicYear:'2026/2027 Ganjil',status:'PUBLISHED',instructors:{create:{userId:ids.instructor}},enrollments:{create:students.map(s=>({userId:s.id}))}}});
-    const categories=[];for(const [i,[name,weight]]of [['Tugas & praktikum',25],['Kuis',15],['UTS',25],['UAS',25],['Progres belajar',10]].entries())categories.push(await tx.gradeCategory.create({data:{classId:ids.class,name:String(name),weightPercent:Number(weight),order:i,kind:i===4?'PROGRESS':'ASSESSMENT'}}));
+    await tx.courseClass.create({data:{id:ids.class,courseId:course.id,name:'Kelas A',academicYear:'2026/2027 Ganjil',status:'PUBLISHED',gradeScaleVersion:'2026.1',instructors:{create:{userId:ids.instructor}},enrollments:{create:students.map(s=>({userId:s.id}))}}});
+    const categories=[];
+    for(const [i,[name,weight,isMandatory,sourceType]] of [
+      ['Tugas & praktikum', 25, false, 'ASSIGNMENT'],
+      ['Kuis', 15, false, 'QUIZ'],
+      ['UTS', 25, true, 'MANUAL'],
+      ['UAS', 25, true, 'MANUAL'],
+      ['Progres belajar', 10, false, 'PROGRESS'],
+    ].entries()) {
+      categories.push(await tx.gradeCategory.create({
+        data:{
+          classId:ids.class,
+          name:String(name),
+          weightPercent:Number(weight),
+          order:i,
+          kind:i===4?'PROGRESS':'ASSESSMENT',
+          isMandatory: Boolean(isMandatory),
+          sourceType: String(sourceType),
+        }
+      }));
+    }
     await tx.section.create({data:{id:ids.section,classId:ids.class,title:'Fondasi aplikasi web',description:'Kenali alur request–response dan susun halaman web pertama Anda.',order:0,type:'LECTURE'}});
     await tx.resourceItem.create({data:{id:ids.resource,sectionId:ids.section,title:'Memahami cara kerja web',resourceType:'RICH_TEXT',dynamicPayload:{blocks:[{id:'intro',type:'heading',data:{level:2,text:'Dari browser menuju server'}},{id:'paragraph',type:'paragraph',data:{text:'Setiap halaman web dimulai dari sebuah permintaan. Browser meminta sumber daya melalui HTTP, lalu server mengembalikan respons yang dapat berupa HTML, JSON, gambar, atau berkas lainnya.'}},{id:'note',type:'callout',data:{alertType:'TIP',title:'Coba langsung',text:'Buka Developer Tools pada browser, pilih tab Network, lalu muat ulang halaman untuk mengamati permintaan HTTP.'}},{id:'code',type:'code_snippet',data:{language:'javascript',filename:'request.js',showLineNumbers:true,code:'const response = await fetch("/api/v1/course-classes");\nconst classes = await response.json();\nconsole.log(classes);'}},{id:'check',type:'checklist',data:{items:[{id:'step-1',text:'Identifikasi metode HTTP pada satu permintaan.',checked:false},{id:'step-2',text:'Periksa status respons dan tipe kontennya.',checked:false}]}},{id:'table',type:'table',data:{header:true,rows:[['Metode','Kegunaan'],['GET','Membaca data'],['POST','Membuat data'],['PATCH','Memperbarui data']]}}]}}});
     await tx.section.create({data:{classId:ids.class,title:'Praktikum: halaman web semantik',description:'Latihan menyusun konten dan formulir yang aksesibel.',order:1,type:'LAB_PRACTICUM'}});
