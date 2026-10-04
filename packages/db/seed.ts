@@ -337,6 +337,262 @@ for (const r of demoResources) {
   });
 }
 
-console.log('Development seed ready. Demo media (PDF, PPT, Video) and existing records were preserved.');
+// ---------------------------------------------------------------------------
+// Demo Attendance Sessions & Records
+// ---------------------------------------------------------------------------
+const session1Id = '70000000-0000-4000-8000-000000000001';
+const session2Id = '70000000-0000-4000-8000-000000000002';
+
+const session1 = await db.attendanceSession.upsert({
+  where: { id: session1Id },
+  create: {
+    id: session1Id,
+    classId: ids.class,
+    sectionId: ids.section,
+    title: 'Pertemuan 01 · Pengantar & Fondasi HTTP Web',
+    description: 'Kontrak perkuliahan, RPS, arsitektur client-server, dan alur request-response.',
+    sessionDate: new Date(Date.now() - 7 * 86400000),
+    isOpen: false,
+    allowSelfCheckIn: false,
+    checkInCode: 'K7X9PQ',
+  },
+  update: {
+    title: 'Pertemuan 01 · Pengantar & Fondasi HTTP Web',
+    isOpen: false,
+  },
+});
+
+const session2 = await db.attendanceSession.upsert({
+  where: { id: session2Id },
+  create: {
+    id: session2Id,
+    classId: ids.class,
+    sectionId: ids.section,
+    title: 'Pertemuan 02 · Praktikum HTML Semantik & Form Aksesibel',
+    description: 'Penyusunan markup HTML semantik dan pembuatan formulir input yang aksesibel.',
+    sessionDate: new Date(),
+    isOpen: true,
+    allowSelfCheckIn: true,
+    checkInCode: 'WEB2026',
+  },
+  update: {
+    title: 'Pertemuan 02 · Praktikum HTML Semantik & Form Aksesibel',
+    isOpen: true,
+    allowSelfCheckIn: true,
+    checkInCode: 'WEB2026',
+  },
+});
+
+// Records untuk Sesi 1 (Sudah selesai, ada variasi status)
+for (const [index, student] of students.entries()) {
+  let status: 'PRESENT' | 'SICK' | 'EXCUSED' | 'ABSENT' = 'PRESENT';
+  let notes: string | null = null;
+  if (index === 2) {
+    status = 'SICK';
+    notes = 'Surat keterangan sakit dokter terlampir di prodi';
+  } else if (index === 3) {
+    status = 'EXCUSED';
+    notes = 'Dispensasi delegasi lomba karya tulis ilmiah mahasiswa';
+  }
+  await db.attendanceRecord.upsert({
+    where: { sessionId_userId: { sessionId: session1.id, userId: student.id } },
+    create: {
+      sessionId: session1.id,
+      userId: student.id,
+      status,
+      notes,
+      checkedInAt: new Date(Date.now() - 7 * 86400000),
+      verifiedBy: ids.instructor,
+    },
+    update: { status, notes },
+  });
+}
+
+// Records untuk Sesi 2 (Aktif berjalan, 4 mahasiswa sudah presensi, sisanya belum)
+for (const [index, student] of students.entries()) {
+  const isCheckedIn = index < 4;
+  await db.attendanceRecord.upsert({
+    where: { sessionId_userId: { sessionId: session2.id, userId: student.id } },
+    create: {
+      sessionId: session2.id,
+      userId: student.id,
+      status: isCheckedIn ? 'PRESENT' : 'ABSENT',
+      checkedInAt: isCheckedIn ? new Date() : null,
+      notes: isCheckedIn ? 'Presensi mandiri kode proyektor' : null,
+    },
+    update: {
+      status: isCheckedIn ? 'PRESENT' : 'ABSENT',
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Demo Assignment Submissions & Quiz Attempts (Beragam Nilai)
+// ---------------------------------------------------------------------------
+const assignmentSubmissionsData = [
+  { student: students[0], score: 88, status: 'SUBMITTED', isPublished: true, feedback: 'Implementasi struktur semantik sangat baik, heading hirarki rapi.' },
+  { student: students[2], score: 92, status: 'SUBMITTED', isPublished: true, feedback: 'Kode terstruktur, form lengkap dengan atribut aksesibilitas dan ARIA.' },
+  { student: students[3], score: 78, status: 'SUBMITTED', isPublished: true, feedback: 'Cukup baik, perhatikan penataan form kontrol dan label input.' },
+  { student: students[4], score: 85, status: 'SUBMITTED', isPublished: true, feedback: 'Desain responsif dan semantik rapi.' },
+  { student: students[5], score: 82, status: 'SUBMITTED', isPublished: true, feedback: 'Penggunaan elemen landmark tepat.' },
+];
+
+for (const sub of assignmentSubmissionsData) {
+  const existing = await db.assignmentSubmission.findFirst({
+    where: { assignmentId: ids.assignment, userId: sub.student.id, version: 1 }
+  });
+  if (existing) {
+    await db.assignmentSubmission.update({
+      where: { id: existing.id },
+      data: { score: sub.score, status: sub.status as any, isPublished: sub.isPublished, feedback: sub.feedback }
+    });
+  } else {
+    await db.assignmentSubmission.create({
+      data: {
+        assignmentId: ids.assignment,
+        userId: sub.student.id,
+        version: 1,
+        status: sub.status as any,
+        score: sub.score,
+        isPublished: sub.isPublished,
+        feedback: sub.feedback,
+        textContent: `Laporan praktikum pemrograman web dari ${sub.student.name}.`,
+        externalUrl: `https://github.com/${sub.student.identifierValue.toLowerCase()}/web-praktikum`,
+        submittedAt: new Date(Date.now() - 2 * 86400000),
+      }
+    });
+  }
+}
+
+if (quizRecord && quizRecord.questions.length > 0) {
+  const quizAttemptsData = [
+    { student: students[0], score: 80, isGraded: true, status: 'GRADED_COMPLETE', publishedAt: new Date() },
+    { student: students[2], score: 90, isGraded: true, status: 'GRADED_COMPLETE', publishedAt: new Date() },
+    { student: students[3], score: 75, isGraded: true, status: 'GRADED_COMPLETE', publishedAt: new Date() },
+    { student: students[4], score: 85, isGraded: true, status: 'GRADED_COMPLETE', publishedAt: new Date() },
+    { student: students[5], score: 70, isGraded: true, status: 'GRADED_COMPLETE', publishedAt: new Date() },
+  ];
+
+  for (const qa of quizAttemptsData) {
+    const existing = await db.quizAttempt.findFirst({
+      where: { quizId: ids.quiz, userId: qa.student.id, attemptNum: 1 }
+    });
+    if (existing) {
+      await db.quizAttempt.update({
+        where: { id: existing.id },
+        data: { score: qa.score, status: qa.status as any, isGraded: qa.isGraded, publishedAt: qa.publishedAt }
+      });
+    } else {
+      await db.quizAttempt.create({
+        data: {
+          quizId: ids.quiz,
+          userId: qa.student.id,
+          attemptNum: 1,
+          score: qa.score,
+          objectiveScore: qa.score,
+          isPassed: qa.score >= 60,
+          status: qa.status as any,
+          questionSnapshot: quizRecord.questions as any,
+          answersJson: {
+            [quizRecord.questions[0]?.id || 'q0']: ['a'],
+            [quizRecord.questions[6]?.id || 'q6']: 'Validasi server menjamin keamanan dan integritas basis data.',
+          },
+          startedAt: new Date(Date.now() - 3 * 86400000),
+          submittedAt: new Date(Date.now() - 3 * 86400000 + 1200000),
+          isGraded: qa.isGraded,
+          publishedAt: qa.publishedAt,
+        }
+      });
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Demo Learning Progress (Video, Slide, Download, Checklist)
+// ---------------------------------------------------------------------------
+const highProgressStudents = [students[0], students[2], students[4]];
+for (const student of highProgressStudents) {
+  await db.videoProgress.upsert({
+    where: { userId_resourceItemId: { userId: student.id, resourceItemId: ids.resourceVideo } },
+    create: { userId: student.id, resourceItemId: ids.resourceVideo, watchedSeconds: 300, lastPositionSeconds: 300, percent: 100 },
+    update: { watchedSeconds: 300, percent: 100 },
+  });
+  await db.slideProgress.upsert({
+    where: { userId_resourceItemId: { userId: student.id, resourceItemId: ids.resourcePpt } },
+    create: { userId: student.id, resourceItemId: ids.resourcePpt, viewedPages: [1, 2, 3, 4, 5], currentPage: 5, percent: 100 },
+    update: { viewedPages: [1, 2, 3, 4, 5], percent: 100 },
+  });
+  await db.materialDownload.upsert({
+    where: { userId_resourceItemId: { userId: student.id, resourceItemId: ids.resourcePdf } },
+    create: { userId: student.id, resourceItemId: ids.resourcePdf },
+    update: {},
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Demo Manual Grade Records (UTS & UAS) & Published Final Record
+// ---------------------------------------------------------------------------
+const existingCategories = await db.gradeCategory.findMany({
+  where: { classId: ids.class },
+  orderBy: { order: 'asc' },
+});
+
+const utsCategory = existingCategories.find((c) => c.name.toLowerCase().includes('uts'));
+const uasCategory = existingCategories.find((c) => c.name.toLowerCase().includes('uas'));
+
+if (utsCategory && uasCategory) {
+  const manualScores = [
+    { student: students[0], uts: 86, uas: 88 },
+    { student: students[1], uts: 72, uas: 75 },
+    { student: students[2], uts: 90, uas: 92 },
+    { student: students[3], uts: 75, uas: 78 },
+    { student: students[4], uts: 84, uas: 85 },
+    { student: students[5], uts: 78, uas: 80 },
+  ];
+
+  for (const ms of manualScores) {
+    await db.manualGradeRecord.upsert({
+      where: { classId_userId_categoryId: { classId: ids.class, userId: ms.student.id, categoryId: utsCategory.id } },
+      create: { classId: ids.class, userId: ms.student.id, categoryId: utsCategory.id, score: ms.uts },
+      update: { score: ms.uts },
+    });
+    await db.manualGradeRecord.upsert({
+      where: { classId_userId_categoryId: { classId: ids.class, userId: ms.student.id, categoryId: uasCategory.id } },
+      create: { classId: ids.class, userId: ms.student.id, categoryId: uasCategory.id, score: ms.uas },
+      update: { score: ms.uas },
+    });
+  }
+
+  // Seed 1 Published Final Grade Record for Mahasiswa 01 (demo letter grade scale versioning 2026.1)
+  await db.finalGradeRecord.upsert({
+    where: { classId_userId: { classId: ids.class, userId: students[0].id } },
+    create: {
+      classId: ids.class,
+      userId: students[0].id,
+      finalScore: 86.75,
+      gradeLetter: 'A',
+      gradePoint: 4.0,
+      gradeScaleVersion: '2026.1',
+      isLocked: true,
+      publishedAt: new Date(Date.now() - 86400000),
+      categoryScoresJson: [
+        { categoryId: existingCategories[0].id, name: existingCategories[0].name, weight: 25, score: 88 },
+        { categoryId: existingCategories[1].id, name: existingCategories[1].name, weight: 15, score: 80 },
+        { categoryId: utsCategory.id, name: utsCategory.name, weight: 25, score: 86 },
+        { categoryId: uasCategory.id, name: uasCategory.name, weight: 25, score: 88 },
+        { categoryId: existingCategories[4].id, name: existingCategories[4].name, weight: 10, score: 100 },
+      ],
+    },
+    update: {
+      finalScore: 86.75,
+      gradeLetter: 'A',
+      gradePoint: 4.0,
+      gradeScaleVersion: '2026.1',
+      isLocked: true,
+    },
+  });
+}
+
+console.log('Development seed ready. Demo media (PDF, PPT, Video), attendance sessions, and student scores were preserved.');
 await db.$disconnect();
 
