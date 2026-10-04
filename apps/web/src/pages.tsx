@@ -15,6 +15,9 @@ import {
   Terminal,
   FileText,
   CheckCheck,
+  Sliders,
+  Scale,
+  GraduationCap,
 } from "lucide-react";
 
 function getTimeGreeting(): string {
@@ -105,10 +108,12 @@ export function Dashboard({
   page,
   user,
   config,
+  onConfigChange,
 }: {
   page: string;
   user: any;
   config?: any;
+  onConfigChange?: () => void;
 }) {
   const admin = ["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(user.role);
   const needsSummary = (page === "dashboard" && !admin) || page === "agenda";
@@ -144,6 +149,8 @@ export function Dashboard({
         classes={classes.data ?? []}
         courses={courses}
         reload={classes.reload}
+        config={config}
+        onConfigChange={onConfigChange}
       />
     );
   const activities = details
@@ -605,13 +612,18 @@ function AdminOverview({
   classes,
   courses,
   reload,
+  config,
+  onConfigChange,
 }: {
   user: any;
   classes: any[];
   courses: { data: any[] | null; loading: boolean; error: Error | null };
   reload: () => void;
+  config?: any;
+  onConfigChange?: () => void;
 }) {
   const [creating, setCreating] = useState(false);
+  const [governanceModal, setGovernanceModal] = useState(false);
   const departmentAdmin = user.role === "DEPARTMENT_ADMIN";
   const drafts = classes.filter((c) => c.status === "DRAFT");
   const scope = departmentAdmin
@@ -636,10 +648,16 @@ function AdminOverview({
             {user.name} · {t.managementScope}: {scope}
           </p>
         </div>
-        <button className="secondary" onClick={() => setCreating(true)}>
-          <Plus size={16} />
-          {t.newClass}
-        </button>
+        <div className="toolbar" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button className="secondary" onClick={() => setGovernanceModal(true)}>
+            <Sliders size={16} />
+            Kebijakan &amp; Tahun Ajaran
+          </button>
+          <button className="primary" onClick={() => setCreating(true)}>
+            <Plus size={16} />
+            {t.newClass}
+          </button>
+        </div>
       </div>
       <section className="welcome-panel compact">
         <div>
@@ -715,6 +733,21 @@ function AdminOverview({
             </span>
           </a>
         ))}
+        <div
+          className="card"
+          style={{ cursor: "pointer" }}
+          onClick={() => setGovernanceModal(true)}
+        >
+          <Sliders size={24} style={{ color: "var(--primary, #0284c7)" }} />
+          <h3>Kebijakan &amp; Tahun Ajaran</h3>
+          <p>
+            Atur tahun akademik aktif ({config?.academicYear || "2026/2027 Ganjil"}), daftar semester, dan standar kebijakan bobot huruf mutu.
+          </p>
+          <span className="text-link">
+            Kelola Kebijakan
+            <ChevronRight size={16} />
+          </span>
+        </div>
       </div>
       <div className="section-heading">
         <h2>
@@ -751,6 +784,16 @@ function AdminOverview({
           onClose={() => setCreating(false)}
           onSaved={() => {
             setCreating(false);
+            reload();
+          }}
+        />
+      )}
+      {governanceModal && (
+        <AcademicGovernanceModal
+          config={config}
+          onClose={() => setGovernanceModal(false)}
+          onSaved={() => {
+            onConfigChange?.();
             reload();
           }}
         />
@@ -1174,6 +1217,438 @@ export function ClassForm({
     </Modal>
   );
 }
+const ACADEMIC_GRADE_PRESETS = {
+  "2026.1": {
+    version: "2026.1",
+    name: "Standar Akademik UAY 2026/2027",
+    description: "Skala nilai terstandar UAY aktif (A >= 85, A- >= 80, B+ >= 75)",
+    bands: [
+      { minScore: 85, letter: "A", point: 4.0, predicate: "Sangat Memuaskan (Istimewa)" },
+      { minScore: 80, letter: "A-", point: 3.75, predicate: "Sangat Baik" },
+      { minScore: 75, letter: "B+", point: 3.5, predicate: "Lebih dari Baik" },
+      { minScore: 70, letter: "B", point: 3.0, predicate: "Baik" },
+      { minScore: 65, letter: "B-", point: 2.75, predicate: "Cukup Baik" },
+      { minScore: 60, letter: "C+", point: 2.5, predicate: "Lebih dari Cukup" },
+      { minScore: 55, letter: "C", point: 2.0, predicate: "Cukup (Batas Minimum Matakuliah Wajib)" },
+      { minScore: 45, letter: "D", point: 1.0, predicate: "Kurang (Wajib Remediasi)" },
+      { minScore: 0, letter: "E", point: 0.0, predicate: "Gagal (Wajib Mengulang Matakuliah)" },
+    ],
+  },
+  "2024.1": {
+    version: "2024.1",
+    name: "Standar Akademik Lama UAY (Sebelum 2026)",
+    description: "Skala historis kurikulum lama (A >= 80, B >= 70, C >= 60, D >= 50)",
+    bands: [
+      { minScore: 80, letter: "A", point: 4.0, predicate: "Sangat Memuaskan" },
+      { minScore: 70, letter: "B", point: 3.0, predicate: "Baik" },
+      { minScore: 60, letter: "C", point: 2.0, predicate: "Cukup" },
+      { minScore: 50, letter: "D", point: 1.0, predicate: "Kurang" },
+      { minScore: 0, letter: "E", point: 0.0, predicate: "Gagal" },
+    ],
+  },
+};
+
+export function AcademicGovernanceModal({
+  config,
+  onClose,
+  onSaved,
+}: {
+  config?: any;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [tab, setTab] = useState<"YEAR" | "POLICY">("YEAR");
+  const [academicYear, setAcademicYear] = useState(
+    config?.academicYear || "2026/2027 Ganjil",
+  );
+  const [semesterLabel, setSemesterLabel] = useState(
+    config?.semesterLabel || "SEMESTER GANJIL 2026/2027",
+  );
+  const defaultYears = [
+    "2025/2026 Ganjil",
+    "2025/2026 Genap",
+    "2026/2027 Ganjil",
+    "2026/2027 Genap",
+    "2027/2028 Ganjil",
+    "2027/2028 Genap",
+  ];
+  const [years, setYears] = useState<string[]>(
+    config?.academicYears && config.academicYears.length > 0
+      ? config.academicYears
+      : defaultYears,
+  );
+  const [newYearInput, setNewYearInput] = useState("");
+  const [scaleVersion, setScaleVersion] = useState(
+    config?.defaultGradeScaleVersion || "2026.1",
+  );
+  const [minAttendance, setMinAttendance] = useState(
+    config?.minAttendancePercentage ?? 75,
+  );
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const handleAddYear = () => {
+    const val = newYearInput.trim();
+    if (!val) return;
+    if (!years.includes(val)) {
+      setYears([...years, val]);
+      if (!academicYear) setAcademicYear(val);
+    }
+    setNewYearInput("");
+  };
+
+  const handleRemoveYear = (y: string) => {
+    if (years.length <= 1) return;
+    const next = years.filter((item) => item !== y);
+    setYears(next);
+    if (academicYear === y) {
+      setAcademicYear(next[0]);
+    }
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await api("/system/settings", "PUT", {
+        academicYear,
+        semesterLabel,
+        academicYears: years,
+        defaultGradeScaleVersion: scaleVersion,
+        minAttendancePercentage: Number(minAttendance),
+      });
+      setMessage("Pengaturan tata kelola akademik berhasil disimpan.");
+      onSaved();
+      setTimeout(() => {
+        onClose();
+      }, 500);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const currentScale =
+    ACADEMIC_GRADE_PRESETS[scaleVersion as keyof typeof ACADEMIC_GRADE_PRESETS] ||
+    ACADEMIC_GRADE_PRESETS["2026.1"];
+
+  return (
+    <Modal title="Pengaturan & Tata Kelola Akademik" wide onClose={onClose}>
+      <form onSubmit={handleSave} style={{ padding: "8px 24px 28px 24px" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            borderBottom: "1px solid var(--border, #e2e8f0)",
+            paddingBottom: 12,
+            marginBottom: 20,
+          }}
+        >
+          <button
+            type="button"
+            className={tab === "YEAR" ? "button primary" : "button secondary"}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.88rem" }}
+            onClick={() => setTab("YEAR")}
+          >
+            <CalendarDays size={16} />
+            <span>Tahun Ajaran &amp; Semester</span>
+          </button>
+          <button
+            type="button"
+            className={tab === "POLICY" ? "button primary" : "button secondary"}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.88rem" }}
+            onClick={() => setTab("POLICY")}
+          >
+            <GraduationCap size={16} />
+            <span>Kebijakan Bobot Huruf Mutu</span>
+          </button>
+        </div>
+
+        {message && (
+          <div
+            style={{
+              background: "#ecfdf5",
+              color: "#065f46",
+              border: "1px solid #a7f3d0",
+              padding: "10px 14px",
+              borderRadius: 8,
+              marginBottom: 16,
+              fontSize: "0.88rem",
+            }}
+          >
+            {message}
+          </div>
+        )}
+
+        {tab === "YEAR" ? (
+          <div>
+            <div style={{ marginBottom: 18 }}>
+              <Field
+                label="Tahun Akademik Aktif Berjalan"
+                hint="Tahun akademik ini otomatis terpilih sebagai default saat dosen membuat kelas baru dan ditampilkan di beranda portal."
+              >
+                <select
+                  value={academicYear}
+                  onChange={(e) => {
+                    setAcademicYear(e.target.value);
+                    setSemesterLabel(`SEMESTER ${e.target.value.toUpperCase()}`);
+                  }}
+                  required
+                >
+                  {years.map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+
+            <div style={{ marginBottom: 20 }}>
+              <Field
+                label="Label Banner Portal Landing"
+                hint="Teks semester yang terpampang di halaman portal publik & login (contoh: SEMESTER GANJIL 2026/2027)."
+              >
+                <input
+                  required
+                  value={semesterLabel}
+                  onChange={(e) => setSemesterLabel(e.target.value)}
+                />
+              </Field>
+            </div>
+
+            <div
+              style={{
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                borderRadius: 10,
+                padding: "16px 18px",
+                marginBottom: 20,
+              }}
+            >
+              <h4 style={{ margin: "0 0 6px 0", fontSize: "0.95rem", fontWeight: 700 }}>
+                Daftar Semester &amp; Tahun Ajaran Tersedia
+              </h4>
+              <p style={{ margin: "0 0 14px 0", fontSize: "0.84rem", color: "#64748b" }}>
+                Daftar tahun akademik yang dapat dipilih dosen/admin saat menduplikasi kelas (clone) atau menyelenggarakan kelas baru.
+              </p>
+
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+                {years.map((y) => {
+                  const isActive = y === academicYear;
+                  return (
+                    <span
+                      key={y}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 8,
+                        background: isActive ? "#0284c7" : "#ffffff",
+                        color: isActive ? "#ffffff" : "#1e293b",
+                        border: isActive ? "1px solid #0284c7" : "1px solid #cbd5e1",
+                        padding: "4px 12px",
+                        borderRadius: 20,
+                        fontSize: "0.84rem",
+                        fontWeight: 600,
+                      }}
+                    >
+                      <span>{y}</span>
+                      {isActive && (
+                        <span
+                          style={{
+                            background: "rgba(255,255,255,0.25)",
+                            padding: "1px 6px",
+                            borderRadius: 10,
+                            fontSize: "0.72rem",
+                          }}
+                        >
+                          Aktif
+                        </span>
+                      )}
+                      {!isActive && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveYear(y)}
+                          title="Hapus semester dari daftar"
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            cursor: "pointer",
+                            color: "#94a3b8",
+                            padding: 0,
+                            display: "inline-flex",
+                            alignItems: "center",
+                          }}
+                        >
+                          &times;
+                        </button>
+                      )}
+                    </span>
+                  );
+                })}
+              </div>
+
+              <div style={{ display: "flex", gap: 8, maxWidth: 440 }}>
+                <input
+                  type="text"
+                  placeholder="Tambah tahun ajaran (cth: 2027/2028 Ganjil)"
+                  value={newYearInput}
+                  onChange={(e) => setNewYearInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddYear();
+                    }
+                  }}
+                  style={{ fontSize: "0.85rem", padding: "6px 12px" }}
+                />
+                <button
+                  type="button"
+                  className="button secondary"
+                  onClick={handleAddYear}
+                  style={{ fontSize: "0.85rem", whiteSpace: "nowrap" }}
+                >
+                  + Tambah Semester
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <div style={{ marginBottom: 18 }}>
+              <Field
+                label="Kebijakan Konversi Huruf Mutu Aktif (Grade Scale Policy)"
+                hint="Menentukan pemetaan skor nilai akhir (0-100) ke huruf mutu (A, B, C, D, E) dan bobot Indeks Prestasi (IPK)."
+              >
+                <select
+                  value={scaleVersion}
+                  onChange={(e) => setScaleVersion(e.target.value)}
+                >
+                  <option value="2026.1">
+                    2026.1 - Standar Akademik Baru UAY 2026/2027 (A &ge; 85, A- &ge; 80, B+ &ge; 75, dst.)
+                  </option>
+                  <option value="2024.1">
+                    2024.1 - Standar Akademik Transisi (Sebelum 2026 - A &ge; 80, B &ge; 70, C &ge; 60, dst.)
+                  </option>
+                </select>
+              </Field>
+            </div>
+
+            <div style={{ marginBottom: 20 }}>
+              <Field
+                label="Ambang Batas Kehadiran Mengikuti Ujian (%)"
+                hint="Persentase minimum kehadiran tatap muka mahasiswa agar berhak mengikuti ujian akhir (UTS/UAS)."
+              >
+                <input
+                  type="number"
+                  min={50}
+                  max={100}
+                  step={1}
+                  required
+                  value={minAttendance}
+                  onChange={(e) => setMinAttendance(Number(e.target.value))}
+                  style={{ maxWidth: 160 }}
+                />
+              </Field>
+            </div>
+
+            <div
+              style={{
+                border: "1px solid #e2e8f0",
+                borderRadius: 10,
+                overflow: "hidden",
+                marginBottom: 20,
+              }}
+            >
+              <div
+                style={{
+                  background: "#f8fafc",
+                  padding: "10px 16px",
+                  borderBottom: "1px solid #e2e8f0",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <strong style={{ fontSize: "0.9rem" }}>
+                  Tabel Konversi Skala Nilai: {currentScale.name}
+                </strong>
+                <span
+                  style={{
+                    fontSize: "0.75rem",
+                    background: "#e0f2fe",
+                    color: "#0369a1",
+                    padding: "2px 8px",
+                    borderRadius: 12,
+                    fontWeight: 600,
+                  }}
+                >
+                  Versi {currentScale.version}
+                </span>
+              </div>
+
+              <table style={{ margin: 0, fontSize: "0.84rem" }}>
+                <thead>
+                  <tr style={{ background: "#f1f5f9" }}>
+                    <th style={{ padding: "8px 12px" }}>Huruf Mutu</th>
+                    <th style={{ padding: "8px 12px" }}>Batas Nilai Riil</th>
+                    <th style={{ padding: "8px 12px" }}>Bobot IP</th>
+                    <th style={{ padding: "8px 12px" }}>Keterangan Akademik</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentScale.bands.map((b: any) => (
+                    <tr key={b.letter}>
+                      <td style={{ padding: "8px 12px" }}>
+                        <span className="letter-badge">{b.letter}</span>
+                      </td>
+                      <td style={{ padding: "8px 12px", fontWeight: 600 }}>
+                        &ge; {b.minScore}.00
+                      </td>
+                      <td style={{ padding: "8px 12px", fontWeight: 700, color: "#0284c7" }}>
+                        {b.point.toFixed(2)}
+                      </td>
+                      <td style={{ padding: "8px 12px", color: "#64748b" }}>
+                        {b.predicate || (b.minScore >= 55 ? "Lulus" : "Tidak Lulus / Remedi")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div
+              style={{
+                background: "rgba(2, 132, 199, 0.05)",
+                border: "1px solid rgba(2, 132, 199, 0.2)",
+                borderRadius: 8,
+                padding: "12px 16px",
+                fontSize: "0.84rem",
+                lineHeight: 1.5,
+                color: "var(--foreground, #1e293b)",
+                marginBottom: 20,
+              }}
+            >
+              <strong>🛡️ Prinsip Imutabilitas Nilai Historis:</strong>
+              <p style={{ margin: "4px 0 0 0" }}>
+                Pengaturan skala konversi nilai ini berlaku untuk perhitungan draf dan penerbitan nilai semester aktif. Nilai mahasiswa pada kelas semester lampau yang telah <strong>Diterbitkan (PUBLISHED)</strong> atau <strong>Dikunci (LOCKED)</strong> tidak akan pernah berubah secara retroaktif guna menjamin integritas rekam jejak akademik universitas.
+              </p>
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, borderTop: "1px solid #e2e8f0", paddingTop: 16 }}>
+          <button type="button" className="button secondary" onClick={onClose} disabled={saving}>
+            Batal
+          </button>
+          <button type="submit" className="button primary" disabled={saving}>
+            {saving ? "Menyimpan..." : "Simpan Perubahan Kebijakan"}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
 export function Catalog({
   user,
   config,
@@ -1186,7 +1661,7 @@ export function Catalog({
   const courses = useApi<any[]>("/courses");
   const [editing, setEditing] = useState<any>(null),
     [classModal, setClassModal] = useState(false),
-    [yearModal, setYearModal] = useState(false);
+    [governanceModal, setGovernanceModal] = useState(false);
   return (
     <>
       <div className="page-heading heading-with-action">
@@ -1195,8 +1670,8 @@ export function Catalog({
           <h1>{t.catalog}</h1>
         </div>
         <div className="toolbar">
-          {user.role === "SUPER_ADMIN" && (
-            <button className="secondary" onClick={() => setYearModal(true)}>
+          {["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(user.role) && (
+            <button className="secondary" onClick={() => setGovernanceModal(true)}>
               <CalendarDays size={16} />
               Tahun Ajaran: {config?.academicYear || "2026/2027 Ganjil"}
             </button>
@@ -1329,40 +1804,15 @@ export function Catalog({
           onSaved={() => setClassModal(false)}
         />
       )}
-      {yearModal && (
-        <Modal
-          title="Pengaturan Tahun Akademik Berjalan"
-          onClose={() => setYearModal(false)}
-        >
-          <Form
-            onCancel={() => setYearModal(false)}
-            onSubmit={async (f) => {
-              await api("/system/settings", "PUT", {
-                academicYear: textValue(f, "academicYear"),
-                semesterLabel: textValue(f, "semesterLabel"),
-              });
-              onConfigChange?.();
-              setYearModal(false);
-            }}
-          >
-            <Field label="Tahun Akademik Aktif (contoh: 2026/2027 Ganjil)">
-              <input
-                name="academicYear"
-                defaultValue={config?.academicYear || "2026/2027 Ganjil"}
-                required
-              />
-            </Field>
-            <Field label="Label Portal Landing (contoh: SEMESTER GANJIL 2026/2027)">
-              <input
-                name="semesterLabel"
-                defaultValue={
-                  config?.semesterLabel || "SEMESTER GANJIL 2026/2027"
-                }
-                required
-              />
-            </Field>
-          </Form>
-        </Modal>
+      {governanceModal && (
+        <AcademicGovernanceModal
+          config={config}
+          onClose={() => setGovernanceModal(false)}
+          onSaved={() => {
+            onConfigChange?.();
+            courses.reload();
+          }}
+        />
       )}
     </>
   );

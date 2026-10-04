@@ -60,10 +60,12 @@ export function ClassPage({
   resourceSlug,
   selectedKind,
   selectedSlug,
+  config,
 }: {
   id: string;
   tab: string;
   user: any;
+  config?: any;
   resourceSlug: string | null;
   selectedKind: "quizzes" | "assignments" | null;
   selectedSlug: string | null;
@@ -932,20 +934,34 @@ export function ClassPage({
             <Field label={t.className}>
               <input name="name" required defaultValue={cls.name} />
             </Field>
-            <Field label={`${t.academicYear} & Semester Baru`}>
-              <input
+            <Field
+              label={`${t.academicYear} & Semester Baru`}
+              hint="Pilih semester tujuan duplikasi materi perkuliahan."
+            >
+              <select
                 name="academicYear"
                 required
-                list="academic-year-options"
-                placeholder="Pilih atau ketik (cth: 2026/2027 Ganjil)"
-                defaultValue="2026/2027 Ganjil"
-              />
-              <datalist id="academic-year-options">
-                <option value="2026/2027 Ganjil" />
-                <option value="2026/2027 Genap" />
-                <option value="2027/2028 Ganjil" />
-                <option value="2027/2028 Genap" />
-              </datalist>
+                defaultValue={
+                  cls.academicYear.includes("Ganjil")
+                    ? cls.academicYear.replace("Ganjil", "Genap")
+                    : config?.academicYear || "2026/2027 Genap"
+                }
+              >
+                {(
+                  config?.academicYears || [
+                    "2025/2026 Ganjil",
+                    "2025/2026 Genap",
+                    "2026/2027 Ganjil",
+                    "2026/2027 Genap",
+                    "2027/2028 Ganjil",
+                    "2027/2028 Genap",
+                  ]
+                ).map((year: string) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
             </Field>
           </Form>
         </Modal>

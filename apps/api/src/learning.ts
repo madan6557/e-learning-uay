@@ -1638,11 +1638,18 @@ export function registerLearning(app: Express) {
     res.json(systemAcademicSettings);
   });
   app.put("/api/v1/system/settings", async (req, res) => {
-    ensure(req.context.user.role === "SUPER_ADMIN", 403, "FORBIDDEN");
+    ensure(
+      ["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(req.context.user.role),
+      403,
+      "FORBIDDEN",
+    );
     const data = z
       .object({
         academicYear: z.string().min(3).max(50),
         semesterLabel: z.string().min(3).max(100).optional(),
+        academicYears: z.array(z.string().min(3).max(50)).optional(),
+        defaultGradeScaleVersion: z.string().optional(),
+        minAttendancePercentage: z.number().min(0).max(100).optional(),
       })
       .parse(req.body);
     const updated = setSystemAcademicSettings(data);
@@ -1655,7 +1662,7 @@ export function registerLearning(app: Express) {
       "academic-settings",
       null,
       updated,
-      "Pembaruan tahun akademik aktif",
+      "Pembaruan tahun akademik & kebijakan tata kelola prodi",
     );
     res.json(updated);
   });

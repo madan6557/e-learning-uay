@@ -16,10 +16,33 @@ function generateRandomCode(): string {
 
 export function registerAttendanceRoutes(app: Express) {
   // 1. GET /api/v1/course-classes/:id/attendance
-  // Mengambil seluruh sesi presensi kelas beserta ringkasan status
+  // Mengambil seluruh sesi presensi kelas beserta ringkasan status dan sinkronisasi jadwal otomatis
   app.get("/api/v1/course-classes/:id/attendance", async (req, res) => {
     const cls = await classAccess(db, req.context.user, String(req.params.id));
     const user = req.context.user;
+    const now = new Date();
+
+    // Sinkronisasi otomatis sesi terjadwal:
+    // 1. Buka otomatis sesi terjadwal yang waktu mulainya telah tiba (startTime <= now) dan belum lewat endTime
+    await db.attendanceSession.updateMany({
+      where: {
+        classId: cls.id,
+        isOpen: false,
+        startTime: { lte: now },
+        OR: [{ endTime: null }, { endTime: { gte: now } }],
+      },
+      data: { isOpen: true },
+    });
+
+    // 2. Tutup otomatis sesi yang telah melewati batas endTime
+    await db.attendanceSession.updateMany({
+      where: {
+        classId: cls.id,
+        isOpen: true,
+        endTime: { lt: now },
+      },
+      data: { isOpen: false },
+    });
 
     const sessions = await db.attendanceSession.findMany({
       where: { classId: cls.id },
@@ -54,6 +77,10 @@ export function registerAttendanceRoutes(app: Express) {
       const absentCount = s.records.filter((r) => r.status === "ABSENT").length;
       const lateCount = s.records.filter((r) => r.status === "LATE").length;
 
+      const isScheduled = Boolean(!s.isOpen && s.startTime && now < s.startTime);
+      const isLive = Boolean(s.isOpen && (!s.endTime || now <= s.endTime));
+      const isExpired = Boolean(s.endTime && now > s.endTime);
+
       return {
         id: s.id,
         classId: s.classId,
@@ -65,6 +92,10 @@ export function registerAttendanceRoutes(app: Express) {
         startTime: s.startTime,
         endTime: s.endTime,
         isOpen: s.isOpen,
+        isScheduled,
+        isLive,
+        isExpired,
+        requiresCode: Boolean(s.checkInCode && s.checkInCode.trim().length > 0),
         // Sembunyikan kode jika mahasiswa dan sesi ditutup
         checkInCode: cls.canManage || s.isOpen ? s.checkInCode : undefined,
         allowSelfCheckIn: s.allowSelfCheckIn,
@@ -94,7 +125,7 @@ export function registerAttendanceRoutes(app: Express) {
   });
 
   // 2. POST /api/v1/course-classes/:id/attendance
-  // Dosen/Admin membuat sesi presensi baru untuk pertemuan tertentu
+  // Dosen/Admin membuat sesi presensi baru untuk pertemuan tertentu (Default Tanpa Kode & Dukungan Jadwal)
   app.post("/api/v1/course-classes/:id/attendance", async (req, res) =>
     res.status(201).json(
       await mutate(req, async (tx) => {
@@ -113,28 +144,43 @@ export function registerAttendanceRoutes(app: Express) {
             sectionId: z.string().uuid().nullable().optional(),
             sessionDate: z
               .string()
-              .datetime()
               .optional()
               .transform((d) => (d ? new Date(d) : new Date())),
             startTime: z
               .string()
-              .datetime()
               .nullable()
               .optional()
               .transform((d) => (d ? new Date(d) : null)),
             endTime: z
               .string()
-              .datetime()
               .nullable()
               .optional()
               .transform((d) => (d ? new Date(d) : null)),
-            isOpen: z.boolean().default(false),
+            isOpen: z.boolean().optional(),
             allowSelfCheckIn: z.boolean().default(true),
-            checkInCode: z.string().min(4).max(10).optional(),
+            requireCode: z.boolean().default(false),
+            checkInCode: z.string().max(10).optional().nullable(),
           })
           .parse(req.body);
 
-        const code = (data.checkInCode || generateRandomCode()).toUpperCase();
+        const now = new Date();
+
+        // Kode presensi: DEFAULT TANPA KODE (null) kecuali requireCode = true atau kode custom diisi
+        let code: string | null = null;
+        if (data.requireCode || (data.checkInCode && data.checkInCode.trim().length > 0)) {
+          code = (
+            data.checkInCode && data.checkInCode.trim().length >= 4
+              ? data.checkInCode.trim()
+              : generateRandomCode()
+          ).toUpperCase();
+        }
+
+        // Status awal buka sesi:
+        // Jika dijadwalkan di masa depan (startTime > now) dan isOpen tidak ditentukan khusus, mulai sebagai terjadwal (false)
+        let initialIsOpen = data.isOpen ?? true;
+        if (data.startTime && data.startTime > now && data.isOpen === undefined) {
+          initialIsOpen = false;
+        }
 
         const session = await tx.attendanceSession.create({
           data: {
@@ -145,7 +191,7 @@ export function registerAttendanceRoutes(app: Express) {
             sessionDate: data.sessionDate,
             startTime: data.startTime,
             endTime: data.endTime,
-            isOpen: data.isOpen,
+            isOpen: initialIsOpen,
             allowSelfCheckIn: data.allowSelfCheckIn,
             checkInCode: code,
           },
@@ -208,33 +254,40 @@ export function registerAttendanceRoutes(app: Express) {
             sectionId: z.string().uuid().nullable().optional(),
             sessionDate: z
               .string()
-              .datetime()
               .optional()
               .transform((d) => (d ? new Date(d) : undefined)),
             startTime: z
               .string()
-              .datetime()
               .nullable()
               .optional()
               .transform((d) => (d ? new Date(d) : null)),
             endTime: z
               .string()
-              .datetime()
               .nullable()
               .optional()
               .transform((d) => (d ? new Date(d) : null)),
             isOpen: z.boolean().optional(),
             allowSelfCheckIn: z.boolean().optional(),
+            requireCode: z.boolean().optional(),
             regenerateCode: z.boolean().optional(),
-            checkInCode: z.string().min(4).max(10).optional(),
+            checkInCode: z.string().max(10).nullable().optional(),
           })
           .parse(req.body);
 
         let nextCode = session.checkInCode;
+        if (data.requireCode === false) {
+          nextCode = null;
+        } else if (data.requireCode === true && !nextCode) {
+          nextCode = generateRandomCode();
+        }
+
         if (data.regenerateCode) {
           nextCode = generateRandomCode();
-        } else if (data.checkInCode) {
-          nextCode = data.checkInCode.toUpperCase();
+        } else if (data.checkInCode !== undefined) {
+          nextCode =
+            data.checkInCode && data.checkInCode.trim().length > 0
+              ? data.checkInCode.trim().toUpperCase()
+              : null;
         }
 
         const updated = await tx.attendanceSession.update({
@@ -468,6 +521,22 @@ export function registerAttendanceRoutes(app: Express) {
           include: { class: { include: { course: true } } },
         });
         ensure(session, 404, "NOT_FOUND");
+        const now = new Date();
+
+        // Jika sesi terjadwal dan saat ini dalam rentang waktu perkuliahan, aktifkan otomatis
+        if (
+          !session.isOpen &&
+          session.startTime &&
+          session.startTime <= now &&
+          (!session.endTime || now <= session.endTime)
+        ) {
+          session.isOpen = true;
+          await tx.attendanceSession.update({
+            where: { id: session.id },
+            data: { isOpen: true },
+          });
+        }
+
         ensure(session.isOpen, 403, "SESSION_CLOSED");
         ensure(session.allowSelfCheckIn, 403, "SELF_CHECKIN_DISABLED");
         ensure(session.class.status === "PUBLISHED", 403, "CLASS_NOT_PUBLISHED");
@@ -479,7 +548,6 @@ export function registerAttendanceRoutes(app: Express) {
         ensure(enrollment && enrollment.isActive, 403, "ENROLLMENT_REQUIRED");
 
         // Validasi jendela waktu perkuliahan bila ditentukan
-        const now = new Date();
         if (session.startTime && now < session.startTime) {
           ensure(false, 400, "SESSION_NOT_STARTED_YET");
         }
@@ -487,12 +555,13 @@ export function registerAttendanceRoutes(app: Express) {
           ensure(false, 400, "SESSION_EXPIRED");
         }
 
-        // Validasi kode presensi
+        // Validasi kode presensi (Hanya jika sesi mensyaratkan kode)
         const { code } = z
-          .object({ code: z.string().min(1).max(20) })
+          .object({ code: z.string().max(20).optional().nullable() })
           .parse(req.body);
 
-        if (session.checkInCode) {
+        if (session.checkInCode && session.checkInCode.trim().length > 0) {
+          ensure(code && code.trim().length > 0, 400, "CODE_REQUIRED");
           ensure(
             session.checkInCode.trim().toUpperCase() === code.trim().toUpperCase(),
             400,

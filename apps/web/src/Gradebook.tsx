@@ -193,363 +193,384 @@ function StudentGradeReviewModal({
       wide
       onClose={onClose}
     >
-      <div style={{ marginBottom: 16 }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "12px 16px",
-            background: "var(--chip-bg, #f8fafc)",
-            borderRadius: 8,
-            border: "1px solid var(--border, #e2e8f0)",
-            flexWrap: "wrap",
-            gap: 12,
-          }}
-        >
-          <div>
-            <div style={{ fontWeight: 700, fontSize: "1.05rem" }}>
-              {data.student.name}
+      <div
+        style={{
+          padding: "16px 24px 28px 24px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 16,
+        }}
+      >
+        <div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "14px 18px",
+              background: "var(--chip-bg, #f8fafc)",
+              borderRadius: 10,
+              border: "1px solid var(--border, #e2e8f0)",
+              flexWrap: "wrap",
+              gap: 12,
+            }}
+          >
+            <div>
+              <div style={{ fontWeight: 700, fontSize: "1.08rem" }}>
+                {data.student.name}
+              </div>
+              <div style={{ fontSize: "0.85rem", color: "var(--muted, #64748b)" }}>
+                NIM: {data.student.identifierValue} · {data.student.email}
+              </div>
             </div>
-            <div style={{ fontSize: "0.85rem", color: "var(--muted, #64748b)" }}>
-              NIM: {data.student.identifierValue} · {data.student.email}
-            </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: "0.75rem", color: "var(--muted, #64748b)" }}>
-                Simulasi Nilai Akhir
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontSize: "0.75rem", color: "var(--muted, #64748b)" }}>
+                  Simulasi Nilai Akhir
+                </div>
+                <div
+                  style={{
+                    fontSize: "1.4rem",
+                    fontWeight: 800,
+                    color: "var(--primary, #0284c7)",
+                  }}
+                >
+                  {roundedSimulated.toFixed(2)}
+                </div>
               </div>
               <div
                 style={{
-                  fontSize: "1.3rem",
-                  fontWeight: 800,
-                  color: "var(--primary, #0284c7)",
+                  background: "#0284c7",
+                  color: "#ffffff",
+                  padding: "6px 14px",
+                  borderRadius: 8,
+                  fontSize: "0.85rem",
+                  fontWeight: 700,
                 }}
               >
-                {roundedSimulated.toFixed(2)}
+                Skala {data.class.gradeScaleVersion}
               </div>
-            </div>
-            <div
-              style={{
-                background: "#0284c7",
-                color: "#ffffff",
-                padding: "6px 14px",
-                borderRadius: 8,
-                fontSize: "0.85rem",
-                fontWeight: 700,
-              }}
-            >
-              Skala {data.class.gradeScaleVersion}
             </div>
           </div>
         </div>
-      </div>
 
-      <p
-        style={{
-          fontSize: "0.88rem",
-          color: "var(--muted, #64748b)",
-          margin: "0 0 16px 0",
-        }}
-      >
-        Berikut adalah rincian aktivitas capaian mahasiswa per bagian bobot penilaian.
-        Hasil kalkulasi sistem disajikan sebagai <strong>rekomendasi/saran</strong>. Anda dapat
-        mengecek dan mengoreksi nilai section sesuai evaluasi akademik Anda sebelum menekan tombol simpan draf.
-      </p>
+        <p
+          style={{
+            fontSize: "0.88rem",
+            color: "var(--muted, #64748b)",
+            margin: 0,
+            lineHeight: 1.5,
+          }}
+        >
+          Berikut adalah rincian aktivitas capaian mahasiswa per bagian bobot penilaian.
+          Hasil kalkulasi sistem disajikan sebagai <strong>rekomendasi/saran</strong>. Anda dapat
+          mengecek dan mengoreksi nilai section sesuai evaluasi akademik Anda sebelum menekan tombol simpan draf.
+        </p>
 
-      <div
-        style={{
-          display: "grid",
-          gap: 16,
-          maxHeight: "55vh",
-          overflowY: "auto",
-          paddingRight: 4,
-          marginBottom: 20,
-        }}
-      >
-        {categories.map((cat: any) => {
-          const currentVal =
-            editedScores[cat.categoryId] ?? String(cat.currentScore);
-          return (
-            <div
-              key={cat.categoryId}
-              className="card"
-              style={{
-                padding: 16,
-                border: "1px solid var(--border, #e2e8f0)",
-                borderRadius: 8,
-                background: "var(--card-bg, #ffffff)",
-              }}
-            >
+        <div
+          style={{
+            display: "grid",
+            gap: 16,
+            marginBottom: 8,
+          }}
+        >
+          {categories.map((cat: any) => {
+            const currentVal =
+              editedScores[cat.categoryId] ?? String(cat.currentScore);
+            return (
               <div
+                key={cat.categoryId}
+                className="card"
                 style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: 12,
-                  flexWrap: "wrap",
-                  gap: 8,
+                  padding: 16,
+                  border: "1px solid var(--border, #e2e8f0)",
+                  borderRadius: 8,
+                  background: "var(--card-bg, #ffffff)",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 700 }}>
-                    {cat.name}
-                  </h3>
-                  <span
-                    style={{
-                      background: "rgba(2, 132, 199, 0.1)",
-                      color: "#0284c7",
-                      fontWeight: 700,
-                      fontSize: "0.75rem",
-                      padding: "2px 8px",
-                      borderRadius: 12,
-                    }}
-                  >
-                    Bobot {cat.weightPercent}%
-                  </span>
-                  {cat.isMandatory && (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 12,
+                    flexWrap: "wrap",
+                    gap: 8,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 700 }}>
+                      {cat.name}
+                    </h3>
                     <span
                       style={{
-                        background: "#fef3c7",
-                        color: "#92400e",
+                        background: "rgba(2, 132, 199, 0.1)",
+                        color: "#0284c7",
                         fontWeight: 700,
                         fontSize: "0.75rem",
                         padding: "2px 8px",
                         borderRadius: 12,
                       }}
                     >
-                      Wajib
+                      Bobot {cat.weightPercent}%
                     </span>
-                  )}
-                  <span
-                    style={{
-                      fontSize: "0.75rem",
-                      color: "var(--muted, #64748b)",
-                      background: "#f1f5f9",
-                      padding: "2px 8px",
-                      borderRadius: 12,
-                    }}
-                  >
-                    Sumber: {cat.sourceType}
-                  </span>
-                </div>
-
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  {cat.sourceType !== "MANUAL" && (
-                    <div
+                    {cat.isMandatory && (
+                      <span
+                        style={{
+                          background: "#fef3c7",
+                          color: "#92400e",
+                          fontWeight: 700,
+                          fontSize: "0.75rem",
+                          padding: "2px 8px",
+                          borderRadius: 12,
+                        }}
+                      >
+                        Wajib
+                      </span>
+                    )}
+                    <span
                       style={{
-                        fontSize: "0.82rem",
-                        background: "#dcfce7",
-                        color: "#15803d",
-                        padding: "4px 10px",
-                        borderRadius: 6,
-                        fontWeight: 600,
+                        fontSize: "0.75rem",
+                        color: "var(--muted, #64748b)",
+                        background: "#f1f5f9",
+                        padding: "2px 8px",
+                        borderRadius: 12,
                       }}
                     >
-                      Saran Sistem: <strong>{cat.suggestedScore.toFixed(2)}</strong>
-                    </div>
+                      Sumber: {cat.sourceType}
+                    </span>
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    {cat.sourceType !== "MANUAL" && (
+                      <div
+                        style={{
+                          fontSize: "0.82rem",
+                          background: "#dcfce7",
+                          color: "#15803d",
+                          padding: "4px 10px",
+                          borderRadius: 6,
+                          fontWeight: 600,
+                        }}
+                      >
+                        Saran Sistem: <strong>{cat.suggestedScore.toFixed(2)}</strong>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {cat.activities && cat.activities.length > 0 ? (
+                  <div
+                    style={{
+                      marginBottom: 12,
+                      background: "#f8fafc",
+                      borderRadius: 6,
+                      border: "1px solid #e2e8f0",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <table style={{ margin: 0, fontSize: "0.82rem" }}>
+                      <thead>
+                        <tr style={{ background: "#f1f5f9" }}>
+                          <th style={{ padding: "6px 10px" }}>Aktivitas</th>
+                          <th style={{ padding: "6px 10px", textAlign: "center" }}>
+                            Nilai Riil
+                          </th>
+                          <th style={{ padding: "6px 10px", textAlign: "center" }}>
+                            Skala 100
+                          </th>
+                          <th style={{ padding: "6px 10px", textAlign: "right" }}>
+                            Status
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {cat.activities.map((act: any, idx: number) => (
+                          <tr key={act.id || idx}>
+                            <td style={{ padding: "6px 10px" }}>
+                              <strong>{act.title}</strong>
+                              <small
+                                style={{
+                                 display: "block",
+                                  color: "var(--muted, #64748b)",
+                                }}
+                              >
+                                {act.type}
+                              </small>
+                            </td>
+                            <td
+                              style={{
+                                padding: "6px 10px",
+                                textAlign: "center",
+                              }}
+                            >
+                              {act.rawScore !== null
+                                ? `${act.rawScore} / ${act.maxScore}`
+                                : "—"}
+                            </td>
+                            <td
+                              style={{
+                                padding: "6px 10px",
+                                textAlign: "center",
+                                fontWeight: 700,
+                              }}
+                            >
+                              {act.normalizedScore.toFixed(2)}
+                            </td>
+                            <td
+                              style={{ padding: "6px 10px", textAlign: "right" }}
+                            >
+                              <span
+                                style={{ fontSize: "0.75rem", color: "#64748b" }}
+                              >
+                                {act.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      padding: "8px 12px",
+                      background: "#f8fafc",
+                      borderRadius: 6,
+                      fontSize: "0.82rem",
+                      color: "var(--muted, #64748b)",
+                      marginBottom: 12,
+                    }}
+                  >
+                    {cat.sourceType === "MANUAL"
+                      ? "Kategori manual murni — nilai diinput langsung oleh dosen tanpa kalkulasi otomatis."
+                      : "Belum ada aktivitas yang dikerjakan mahasiswa untuk kategori ini."}
+                  </div>
+                )}
+
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    background: "#ffffff",
+                    padding: "8px 12px",
+                    borderRadius: 6,
+                    border: "1px solid #e2e8f0",
+                    flexWrap: "wrap",
+                    gap: 8,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <label style={{ fontSize: "0.85rem", fontWeight: 600 }}>
+                      Nilai Akhir Bagian ({cat.name}):
+                    </label>
+                    <GradeScoreInput
+                      ariaLabel={`Nilai ${cat.name}`}
+                      value={currentVal}
+                      onChange={(val) =>
+                        setEditedScores((prev) => ({
+                          ...prev,
+                          [cat.categoryId]: val,
+                        }))
+                      }
+                    />
+                    <span
+                      style={{
+                        fontSize: "0.8rem",
+                        color: "var(--muted, #64748b)",
+                      }}
+                    >
+                      / 100
+                    </span>
+                  </div>
+
+                  {cat.sourceType !== "MANUAL" && (
+                    <button
+                      type="button"
+                      className="button secondary sm"
+                      style={{
+                        fontSize: "0.8rem",
+                        padding: "4px 10px",
+                        borderRadius: 6,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                      onClick={() =>
+                        handleUseSuggestion(cat.categoryId, cat.suggestedScore)
+                      }
+                    >
+                      <span>
+                        Gunakan Nilai Saran ({cat.suggestedScore.toFixed(2)})
+                      </span>
+                    </button>
                   )}
                 </div>
               </div>
+            );
+          })}
+        </div>
 
-              {cat.activities && cat.activities.length > 0 ? (
-                <div
-                  style={{
-                    marginBottom: 12,
-                    background: "#f8fafc",
-                    borderRadius: 6,
-                    border: "1px solid #e2e8f0",
-                    overflow: "hidden",
-                  }}
-                >
-                  <table style={{ margin: 0, fontSize: "0.82rem" }}>
-                    <thead>
-                      <tr style={{ background: "#f1f5f9" }}>
-                        <th style={{ padding: "6px 10px" }}>Aktivitas</th>
-                        <th style={{ padding: "6px 10px", textAlign: "center" }}>
-                          Nilai Riil
-                        </th>
-                        <th style={{ padding: "6px 10px", textAlign: "center" }}>
-                          Skala 100
-                        </th>
-                        <th style={{ padding: "6px 10px", textAlign: "right" }}>
-                          Status
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {cat.activities.map((act: any, idx: number) => (
-                        <tr key={act.id || idx}>
-                          <td style={{ padding: "6px 10px" }}>
-                            <strong>{act.title}</strong>
-                            <small
-                              style={{
-                                display: "block",
-                                color: "var(--muted, #64748b)",
-                              }}
-                            >
-                              {act.type}
-                            </small>
-                          </td>
-                          <td
-                            style={{
-                              padding: "6px 10px",
-                              textAlign: "center",
-                            }}
-                          >
-                            {act.rawScore !== null
-                              ? `${act.rawScore} / ${act.maxScore}`
-                              : "—"}
-                          </td>
-                          <td
-                            style={{
-                              padding: "6px 10px",
-                              textAlign: "center",
-                              fontWeight: 700,
-                            }}
-                          >
-                            {act.normalizedScore.toFixed(2)}
-                          </td>
-                          <td
-                            style={{ padding: "6px 10px", textAlign: "right" }}
-                          >
-                            <span
-                              style={{ fontSize: "0.75rem", color: "#64748b" }}
-                            >
-                              {act.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div
-                  style={{
-                    padding: "8px 12px",
-                    background: "#f8fafc",
-                    borderRadius: 6,
-                    fontSize: "0.82rem",
-                    color: "var(--muted, #64748b)",
-                    marginBottom: 12,
-                  }}
-                >
-                  {cat.sourceType === "MANUAL"
-                    ? "Kategori manual murni — nilai diinput langsung oleh dosen tanpa kalkulasi otomatis."
-                    : "Belum ada aktivitas yang dikerjakan mahasiswa untuk kategori ini."}
-                </div>
-              )}
+        <div>
+          <label
+            style={{
+              display: "block",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              marginBottom: 6,
+            }}
+          >
+            Alasan Perubahan / Catatan (Opsional)
+          </label>
+          <textarea
+            rows={2}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Catatan penyesuaian nilai atau hasil evaluasi..."
+            style={{
+              width: "100%",
+              fontSize: "0.85rem",
+              padding: "10px 14px",
+              borderRadius: 8,
+              border: "1px solid var(--border, #cbd5e1)",
+            }}
+          />
+        </div>
 
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  background: "#ffffff",
-                  padding: "8px 12px",
-                  borderRadius: 6,
-                  border: "1px solid #e2e8f0",
-                  flexWrap: "wrap",
-                  gap: 8,
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <label style={{ fontSize: "0.85rem", fontWeight: 600 }}>
-                    Nilai Akhir Bagian ({cat.name}):
-                  </label>
-                  <GradeScoreInput
-                    ariaLabel={`Nilai ${cat.name}`}
-                    value={currentVal}
-                    onChange={(val) =>
-                      setEditedScores((prev) => ({
-                        ...prev,
-                        [cat.categoryId]: val,
-                      }))
-                    }
-                  />
-                  <span
-                    style={{
-                      fontSize: "0.8rem",
-                      color: "var(--muted, #64748b)",
-                    }}
-                  >
-                    / 100
-                  </span>
-                </div>
-
-                {cat.sourceType !== "MANUAL" && (
-                  <button
-                    type="button"
-                    className="button secondary sm"
-                    style={{
-                      fontSize: "0.8rem",
-                      padding: "4px 10px",
-                      borderRadius: 6,
-                      cursor: "pointer",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 4,
-                    }}
-                    onClick={() =>
-                      handleUseSuggestion(cat.categoryId, cat.suggestedScore)
-                    }
-                  >
-                    <span>
-                      Gunakan Nilai Saran ({cat.suggestedScore.toFixed(2)})
-                    </span>
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div style={{ marginBottom: 16 }}>
-        <label
+        <div
           style={{
-            display: "block",
-            fontSize: "0.85rem",
-            fontWeight: 600,
-            marginBottom: 4,
+            position: "sticky",
+            bottom: -28,
+            background: "rgba(255, 255, 255, 0.95)",
+            backdropFilter: "blur(8px)",
+            padding: "16px 0 8px 0",
+            borderTop: "1px solid var(--border, #e2e8f0)",
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 10,
+            marginTop: 8,
+            zIndex: 10,
           }}
         >
-          Alasan Perubahan / Catatan (Opsional)
-        </label>
-        <textarea
-          rows={2}
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          placeholder="Catatan penyesuaian nilai atau hasil evaluasi..."
-          style={{
-            width: "100%",
-            fontSize: "0.85rem",
-            padding: "8px 12px",
-            borderRadius: 6,
-            border: "1px solid var(--border, #cbd5e1)",
-          }}
-        />
-      </div>
-
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-        <button
-          type="button"
-          className="button secondary"
-          onClick={onClose}
-          disabled={saving}
-        >
-          Batal
-        </button>
-        <button
-          type="button"
-          className="button primary"
-          onClick={handleSave}
-          disabled={saving}
-        >
-          {saving ? "Menyimpan..." : "Simpan ke Draf"}
-        </button>
+          <button
+            type="button"
+            className="button secondary"
+            onClick={onClose}
+            disabled={saving}
+          >
+            Batal
+          </button>
+          <button
+            type="button"
+            className="button primary"
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {saving ? "Menyimpan..." : "Simpan ke Draf"}
+          </button>
+        </div>
       </div>
     </Modal>
   );
@@ -825,20 +846,30 @@ export function Gradebook({
             </thead>
             <tbody>
               {pagination.paginatedItems.map((r: any) => (
-                <tr key={r.user.id}>
-                  <td
-                    style={{ cursor: writable ? "pointer" : "default" }}
-                    onClick={() => {
-                      if (writable) {
-                        setModal({ kind: "student_review", userId: r.user.id });
-                      }
-                    }}
-                    title={
-                      writable
-                        ? "Klik untuk meninjau rincian capaian & kalkulasi nilai mahasiswa"
-                        : undefined
+                <tr
+                  key={r.user.id}
+                  className={writable ? "clickable-grade-row" : ""}
+                  onClick={(e) => {
+                    if (!writable) return;
+                    const target = e.target as HTMLElement;
+                    if (
+                      target.tagName === "INPUT" ||
+                      target.tagName === "TEXTAREA" ||
+                      target.closest("button") ||
+                      target.closest("input") ||
+                      target.closest("textarea")
+                    ) {
+                      return;
                     }
-                  >
+                    setModal({ kind: "student_review", userId: r.user.id });
+                  }}
+                  title={
+                    writable
+                      ? "Klik baris untuk meninjau rincian capaian & kalkulasi nilai mahasiswa"
+                      : undefined
+                  }
+                >
+                  <td>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <strong>{r.user.name}</strong>
                       {writable && (

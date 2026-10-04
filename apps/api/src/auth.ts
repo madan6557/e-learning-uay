@@ -232,6 +232,9 @@ export function registerAuth(app: Express) {
       embedOrigins: config.embedOrigins,
       academicYear: systemAcademicSettings.academicYear,
       semesterLabel: systemAcademicSettings.semesterLabel,
+      academicYears: systemAcademicSettings.academicYears,
+      defaultGradeScaleVersion: systemAcademicSettings.defaultGradeScaleVersion,
+      minAttendancePercentage: systemAcademicSettings.minAttendancePercentage,
     }),
   );
   app.get("/api/v1/auth/development-users", async (_req, res) => {

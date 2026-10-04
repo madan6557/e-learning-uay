@@ -423,6 +423,9 @@ export function registerGrades(app: Express) {
     }
     res.json({ canManage: true, ...(await calculateGradebook(db, cls.id)) });
   });
+  app.get("/api/v1/grade-scales", (_req, res) => {
+    res.json(GRADE_SCALE_PRESETS);
+  });
   app.get("/api/v1/course-classes/:id/grade-categories", async (req, res) => {
     const cls = await classAccess(db, req.context.user, String(req.params.id));
     res.json(

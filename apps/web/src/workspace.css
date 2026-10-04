@@ -742,20 +742,21 @@ td small {
   min-width: 110px;
 }
 .modal {
-  --modal-max-height: 88vh;
+  --modal-max-height: min(84vh, 880px);
   border: 1px solid var(--line);
-  border-radius: 15px;
+  border-radius: 16px;
   padding: 0;
-  max-width: calc(100vw - 32px);
-  width: 580px;
+  max-width: min(calc(100vw - 48px), 1080px);
+  width: 600px;
   max-height: var(--modal-max-height);
+  margin: auto;
   overflow: hidden;
   box-shadow: 0 30px 100px #1e2e3f38;
   color: #17202b;
   background: #fff;
 }
 .modal.wide {
-  width: 940px;
+  width: 980px;
 }
 .modal-scroll {
   max-height: calc(var(--modal-max-height) - 2px);
@@ -764,6 +765,14 @@ td small {
   border-radius: inherit;
   scrollbar-width: thin;
   scrollbar-color: var(--border-strong) transparent;
+  padding-bottom: 24px;
+}
+.clickable-grade-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.clickable-grade-row:hover {
+  background-color: #f1f5f9 !important;
 }
 .modal::backdrop {
   background: #0f1a2559;

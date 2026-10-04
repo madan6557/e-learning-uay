@@ -122,19 +122,50 @@ export let systemAcademicSettings = {
   academicYear: process.env.ACADEMIC_YEAR?.trim() || "2026/2027 Ganjil",
   semesterLabel:
     process.env.SEMESTER_LABEL?.trim() || "SEMESTER GANJIL 2026/2027",
+  academicYears: [
+    "2025/2026 Ganjil",
+    "2025/2026 Genap",
+    "2026/2027 Ganjil",
+    "2026/2027 Genap",
+    "2027/2028 Ganjil",
+    "2027/2028 Genap",
+  ],
+  defaultGradeScaleVersion: "2026.1",
+  minAttendancePercentage: 75,
 };
 
 export function setSystemAcademicSettings(update: {
   academicYear?: string;
   semesterLabel?: string;
+  academicYears?: string[];
+  defaultGradeScaleVersion?: string;
+  minAttendancePercentage?: number;
 }) {
   if (update.academicYear?.trim()) {
-    systemAcademicSettings.academicYear = update.academicYear.trim();
+    const ay = update.academicYear.trim();
+    systemAcademicSettings.academicYear = ay;
+    if (!systemAcademicSettings.academicYears.includes(ay)) {
+      systemAcademicSettings.academicYears.push(ay);
+    }
   }
   if (update.semesterLabel?.trim()) {
     systemAcademicSettings.semesterLabel = update.semesterLabel.trim();
   } else if (update.academicYear?.trim()) {
     systemAcademicSettings.semesterLabel = `SEMESTER ${update.academicYear.trim().toUpperCase()}`;
+  }
+  if (Array.isArray(update.academicYears) && update.academicYears.length > 0) {
+    const list = update.academicYears.map((y) => y.trim()).filter(Boolean);
+    systemAcademicSettings.academicYears = Array.from(new Set(list));
+  }
+  if (update.defaultGradeScaleVersion?.trim()) {
+    systemAcademicSettings.defaultGradeScaleVersion =
+      update.defaultGradeScaleVersion.trim();
+  }
+  if (typeof update.minAttendancePercentage === "number") {
+    systemAcademicSettings.minAttendancePercentage = Math.max(
+      0,
+      Math.min(100, update.minAttendancePercentage),
+    );
   }
   return systemAcademicSettings;
 }

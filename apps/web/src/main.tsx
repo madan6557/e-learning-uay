@@ -588,6 +588,7 @@ function App() {
             ? (itemSlug ?? null)
             : null
         }
+        config={config.data}
       />
     );
   else if (section === "quizzes" && id)
@@ -625,6 +626,7 @@ function App() {
         page={section || "dashboard"}
         user={user}
         config={config.data}
+        onConfigChange={() => config.reload()}
       />
     );
   else
