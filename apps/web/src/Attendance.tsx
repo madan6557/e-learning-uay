@@ -17,13 +17,69 @@ import { api, useApi, Loading, Notice, Modal, Field, Form, textValue, Pagination
 
 type AttendanceStatus = "PRESENT" | "EXCUSED" | "SICK" | "ABSENT" | "LATE";
 
-const statusLabels: Record<AttendanceStatus, { label: string; badge: string; color: string }> = {
-  PRESENT: { label: "Hadir", badge: "badge-success", color: "#10b981" },
-  EXCUSED: { label: "Izin", badge: "badge-warning", color: "#f59e0b" },
-  SICK: { label: "Sakit", badge: "badge-primary", color: "#3b82f6" },
-  ABSENT: { label: "Alpa", badge: "badge-gray", color: "#ef4444" },
-  LATE: { label: "Terlambat", badge: "badge-purple", color: "#8b5cf6" },
+const statusLabels: Record<
+  AttendanceStatus,
+  { label: string; bg: string; text: string; border: string; dot: string; color: string }
+> = {
+  PRESENT: { label: "Hadir", bg: "#ecfdf5", text: "#065f46", border: "#a7f3d0", dot: "#10b981", color: "#10b981" },
+  EXCUSED: { label: "Izin", bg: "#fef3c7", text: "#92400e", border: "#fde68a", dot: "#f59e0b", color: "#f59e0b" },
+  SICK: { label: "Sakit", bg: "#eff6ff", text: "#1d4ed8", border: "#bfdbfe", dot: "#3b82f6", color: "#3b82f6" },
+  ABSENT: { label: "Tidak Hadir (Alpa)", bg: "#fef2f2", text: "#991b1b", border: "#fecaca", dot: "#ef4444", color: "#ef4444" },
+  LATE: { label: "Terlambat", bg: "#f5f3ff", text: "#6b21a8", border: "#ddd6fe", dot: "#8b5cf6", color: "#8b5cf6" },
 };
+
+function AttendanceStatusBadge({
+  status,
+  isOpen,
+}: {
+  status?: AttendanceStatus | null;
+  isOpen: boolean;
+}) {
+  if (isOpen && (!status || status === "ABSENT")) {
+    return (
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 5,
+          fontSize: "0.8rem",
+          fontWeight: 600,
+          color: "#b45309",
+          background: "#fffbeb",
+          border: "1px solid #fde68a",
+          padding: "3px 10px",
+          borderRadius: 999,
+        }}
+      >
+        <Clock size={12} />
+        Belum Presensi
+      </span>
+    );
+  }
+
+  const fallback = { label: "Belum Ada Data", bg: "#f8fafc", text: "#64748b", border: "#e2e8f0", dot: "#94a3b8" };
+  const cfg = (status && statusLabels[status]) || fallback;
+
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        fontSize: "0.8rem",
+        fontWeight: 600,
+        color: cfg.text,
+        background: cfg.bg,
+        border: `1px solid ${cfg.border}`,
+        padding: "3px 10px",
+        borderRadius: 999,
+      }}
+    >
+      <span style={{ width: 6, height: 6, borderRadius: "50%", background: cfg.dot }} />
+      {cfg.label}
+    </span>
+  );
+}
 
 export function Attendance({
   classId,
@@ -83,7 +139,7 @@ export function Attendance({
       {/* Banner Notifikasi Presensi Aktif untuk Mahasiswa */}
       {activeOpenSession && (
         <div
-          className="card active-attendance-banner"
+          className="active-attendance-banner"
           style={{
             background: "linear-gradient(135deg, #0284c7 0%, #0369a1 100%)",
             color: "#ffffff",
@@ -93,47 +149,70 @@ export function Attendance({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            boxShadow: "0 4px 12px rgba(2, 132, 199, 0.25)",
+            boxShadow: "0 4px 16px -4px rgba(2, 132, 199, 0.3)",
+            gap: 16,
+            flexWrap: "wrap",
           }}
         >
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+          <div style={{ flex: 1, minWidth: 280 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
               <span
                 style={{
-                  background: "rgba(255, 255, 255, 0.25)",
-                  padding: "2px 8px",
-                  borderRadius: 12,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  background: "rgba(255, 255, 255, 0.2)",
+                  color: "#ffffff",
+                  padding: "3px 10px",
+                  borderRadius: 20,
                   fontSize: "0.75rem",
                   fontWeight: 700,
+                  letterSpacing: "0.04em",
                   textTransform: "uppercase",
                 }}
               >
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    background: "#4ade80",
+                    boxShadow: "0 0 8px #4ade80",
+                    display: "inline-block",
+                  }}
+                />
                 Sedang Berlangsung
               </span>
             </div>
-            <h3 style={{ margin: "0 0 4px 0", fontSize: "1.25rem", fontWeight: 700 }}>
+            <h3 style={{ margin: "0 0 6px 0", fontSize: "1.25rem", fontWeight: 700, color: "#ffffff", letterSpacing: "-0.01em" }}>
               {activeOpenSession.title}
             </h3>
-            <p style={{ margin: 0, opacity: 0.9, fontSize: "0.9rem" }}>
+            <p style={{ margin: 0, color: "rgba(255, 255, 255, 0.92)", fontSize: "0.88rem", lineHeight: 1.5 }}>
               Dosen telah membuka sesi presensi. Masukkan kode 6 digit untuk melakukan presensi mandiri.
             </p>
           </div>
           <button
             type="button"
-            className="button"
             style={{
               background: "#ffffff",
               color: "#0369a1",
               fontWeight: 700,
-              padding: "10px 20px",
+              fontSize: "0.88rem",
+              padding: "10px 22px",
               borderRadius: 8,
               border: "none",
               cursor: "pointer",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              whiteSpace: "nowrap",
+              transition: "all 0.15s ease",
             }}
             onClick={() => setModal({ kind: "checkin", session: activeOpenSession })}
           >
-            Isi Presensi Sekarang
+            <KeyRound size={16} />
+            <span>Isi Presensi Sekarang</span>
           </button>
         </div>
       )}
@@ -223,33 +302,42 @@ export function Attendance({
                 month: "short",
                 year: "numeric",
               });
+              const isCurrentlyOpen = s.isOpen;
 
               return (
                 <div
                   key={s.id}
-                  className="card"
+                  className="card session-card"
                   style={{
-                    padding: "18px 20px",
-                    borderRadius: 10,
-                    border: "1px solid var(--border, #e2e8f0)",
-                    background: "var(--card-bg, #ffffff)",
+                    padding: "20px 22px",
+                    borderRadius: 12,
+                    border: isCurrentlyOpen ? "1.5px solid #38bdf8" : "1px solid var(--border, #e2e8f0)",
+                    borderLeft: isCurrentlyOpen ? "5px solid #0284c7" : "5px solid #94a3b8",
+                    background: isCurrentlyOpen
+                      ? "linear-gradient(to right, #f8fafc 0%, #ffffff 100%)"
+                      : "var(--card-bg, #ffffff)",
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
                     flexWrap: "wrap",
-                    gap: 16,
+                    gap: 18,
+                    boxShadow: isCurrentlyOpen
+                      ? "0 4px 12px -2px rgba(2, 132, 199, 0.12)"
+                      : "var(--shadow, 0 1px 3px rgba(0,0,0,0.04))",
+                    transition: "all 0.2s ease",
                   }}
                 >
                   <div style={{ flex: 1, minWidth: 260 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                      <span style={{ fontSize: "0.8rem", color: "var(--muted, #64748b)", fontWeight: 500 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                      <span style={{ fontSize: "0.82rem", color: "var(--muted, #64748b)", fontWeight: 500 }}>
                         {dateStr}
                       </span>
-                      {s.isOpen ? (
+                      {isCurrentlyOpen ? (
                         <span
                           style={{
-                            background: "#dcfce7",
+                            background: "#ecfdf5",
                             color: "#15803d",
+                            border: "1px solid #bbf7d0",
                             fontSize: "0.72rem",
                             fontWeight: 700,
                             padding: "2px 8px",
@@ -259,13 +347,14 @@ export function Attendance({
                             gap: 4,
                           }}
                         >
-                          <Unlock size={12} /> Terbuka
+                          <Unlock size={12} /> Sesi Dibuka
                         </span>
                       ) : (
                         <span
                           style={{
                             background: "#f1f5f9",
                             color: "#64748b",
+                            border: "1px solid #e2e8f0",
                             fontSize: "0.72rem",
                             fontWeight: 600,
                             padding: "2px 8px",
@@ -279,48 +368,54 @@ export function Attendance({
                         </span>
                       )}
                     </div>
-                    <h3 style={{ margin: "0 0 6px 0", fontSize: "1.1rem", fontWeight: 700 }}>{s.title}</h3>
+                    <h3 style={{ margin: "0 0 6px 0", fontSize: "1.1rem", fontWeight: 700, color: "var(--foreground, #0f172a)" }}>
+                      {s.title}
+                    </h3>
                     {s.description && (
-                      <p style={{ margin: "0 0 8px 0", color: "var(--muted, #64748b)", fontSize: "0.88rem" }}>
+                      <p style={{ margin: "0 0 8px 0", color: "var(--muted, #64748b)", fontSize: "0.875rem", lineHeight: 1.5 }}>
                         {s.description}
                       </p>
                     )}
 
                     {/* Stats untuk Dosen */}
                     {canManage && s.stats && (
-                      <div style={{ display: "flex", gap: 12, fontSize: "0.82rem", color: "#475569", flexWrap: "wrap" }}>
-                        <span style={{ color: "#10b981", fontWeight: 600 }}>Hadir: {s.stats.presentCount}</span>
-                        <span style={{ color: "#f59e0b", fontWeight: 600 }}>Izin: {s.stats.excusedCount}</span>
-                        <span style={{ color: "#3b82f6", fontWeight: 600 }}>Sakit: {s.stats.sickCount}</span>
-                        <span style={{ color: "#8b5cf6", fontWeight: 600 }}>Terlambat: {s.stats.lateCount}</span>
-                        <span style={{ color: "#ef4444", fontWeight: 600 }}>Alpa: {s.stats.absentCount}</span>
-                        <span style={{ color: "#64748b" }}>/ Total {s.stats.totalStudents} Mhs</span>
+                      <div style={{ display: "flex", gap: 6, fontSize: "0.8rem", flexWrap: "wrap", marginTop: 8 }}>
+                        <span style={{ background: "#ecfdf5", color: "#065f46", border: "1px solid #a7f3d0", padding: "2px 8px", borderRadius: 6, fontWeight: 600 }}>
+                          Hadir: {s.stats.presentCount}
+                        </span>
+                        <span style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a", padding: "2px 8px", borderRadius: 6, fontWeight: 600 }}>
+                          Izin: {s.stats.excusedCount}
+                        </span>
+                        <span style={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe", padding: "2px 8px", borderRadius: 6, fontWeight: 600 }}>
+                          Sakit: {s.stats.sickCount}
+                        </span>
+                        <span style={{ background: "#f5f3ff", color: "#6b21a8", border: "1px solid #ddd6fe", padding: "2px 8px", borderRadius: 6, fontWeight: 600 }}>
+                          Terlambat: {s.stats.lateCount}
+                        </span>
+                        <span style={{ background: "#fef2f2", color: "#991b1b", border: "1px solid #fecaca", padding: "2px 8px", borderRadius: 6, fontWeight: 600 }}>
+                          Alpa: {s.stats.absentCount}
+                        </span>
+                        <span style={{ background: "#f8fafc", color: "#64748b", border: "1px solid #e2e8f0", padding: "2px 8px", borderRadius: 6 }}>
+                          Total: {s.stats.totalStudents} Mhs
+                        </span>
                       </div>
                     )}
 
                     {/* Status untuk Mahasiswa */}
                     {!canManage && (
-                      <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ fontSize: "0.85rem", color: "var(--muted, #64748b)" }}>Status Anda:</span>
-                        {s.myRecord ? (
-                          <span
-                            style={{
-                              fontSize: "0.82rem",
-                              fontWeight: 700,
-                              color: statusLabels[s.myRecord.status as AttendanceStatus]?.color || "#64748b",
-                              background: "rgba(0,0,0,0.04)",
-                              padding: "2px 10px",
-                              borderRadius: 12,
-                            }}
-                          >
-                            {statusLabels[s.myRecord.status as AttendanceStatus]?.label || s.myRecord.status}
-                          </span>
-                        ) : (
-                          <span style={{ fontSize: "0.82rem", color: "#ef4444", fontWeight: 600 }}>Belum Presensi</span>
-                        )}
+                      <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                        <span style={{ fontSize: "0.85rem", color: "var(--muted, #64748b)", fontWeight: 500 }}>
+                          Status Kehadiran:
+                        </span>
+                        <AttendanceStatusBadge status={s.myRecord?.status} isOpen={s.isOpen} />
                         {s.myRecord?.checkedInAt && (
-                          <span style={{ fontSize: "0.78rem", color: "var(--muted, #94a3b8)" }}>
-                            (Pukul {new Date(s.myRecord.checkedInAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })})
+                          <span style={{ fontSize: "0.8rem", color: "var(--muted, #64748b)" }}>
+                            (Presensi pukul {new Date(s.myRecord.checkedInAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })})
+                          </span>
+                        )}
+                        {s.myRecord?.notes && (
+                          <span style={{ fontSize: "0.8rem", color: "var(--muted, #64748b)", fontStyle: "italic" }}>
+                            — {s.myRecord.notes}
                           </span>
                         )}
                       </div>
@@ -328,13 +423,21 @@ export function Attendance({
                   </div>
 
                   {/* Tombol Aksi */}
-                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                     {canManage ? (
                       <>
                         <button
                           type="button"
                           className="button secondary"
-                          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.85rem", cursor: "pointer" }}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 6,
+                            fontSize: "0.85rem",
+                            cursor: "pointer",
+                            padding: "8px 14px",
+                            borderRadius: 8,
+                          }}
                           onClick={() => setModal({ kind: "code", session: s })}
                         >
                           <QrCode size={15} />
@@ -343,15 +446,19 @@ export function Attendance({
 
                         <button
                           type="button"
-                          className="button"
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
                             gap: 6,
                             fontSize: "0.85rem",
+                            fontWeight: 600,
                             background: "var(--primary, #0284c7)",
                             color: "#ffffff",
+                            border: "none",
+                            borderRadius: 8,
+                            padding: "8px 16px",
                             cursor: "pointer",
+                            boxShadow: "0 2px 6px rgba(2, 132, 199, 0.25)",
                           }}
                           onClick={() => setModal({ kind: "manual", session: s })}
                         >
@@ -364,8 +471,21 @@ export function Attendance({
                       s.myRecord?.status !== "PRESENT" && (
                         <button
                           type="button"
-                          className="button primary"
-                          style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 6,
+                            fontSize: "0.85rem",
+                            fontWeight: 600,
+                            background: "#0284c7",
+                            color: "#ffffff",
+                            border: "none",
+                            borderRadius: 8,
+                            padding: "9px 18px",
+                            cursor: "pointer",
+                            boxShadow: "0 2px 8px rgba(2, 132, 199, 0.25)",
+                            transition: "all 0.15s ease",
+                          }}
                           onClick={() => setModal({ kind: "checkin", session: s })}
                         >
                           <KeyRound size={15} />

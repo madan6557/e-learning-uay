@@ -408,22 +408,31 @@ for (const [index, student] of students.entries()) {
   });
 }
 
-// Records untuk Sesi 2 (Aktif berjalan, 4 mahasiswa sudah presensi, sisanya belum)
+// Records untuk Sesi 2 (Aktif berjalan, 4 mahasiswa sudah presensi mandiri, sisanya belum)
 for (const [index, student] of students.entries()) {
   const isCheckedIn = index < 4;
-  await db.attendanceRecord.upsert({
-    where: { sessionId_userId: { sessionId: session2.id, userId: student.id } },
-    create: {
-      sessionId: session2.id,
-      userId: student.id,
-      status: isCheckedIn ? 'PRESENT' : 'ABSENT',
-      checkedInAt: isCheckedIn ? new Date() : null,
-      notes: isCheckedIn ? 'Presensi mandiri kode proyektor' : null,
-    },
-    update: {
-      status: isCheckedIn ? 'PRESENT' : 'ABSENT',
-    },
-  });
+  if (isCheckedIn) {
+    await db.attendanceRecord.upsert({
+      where: { sessionId_userId: { sessionId: session2.id, userId: student.id } },
+      create: {
+        sessionId: session2.id,
+        userId: student.id,
+        status: 'PRESENT',
+        checkedInAt: new Date(),
+        notes: 'Presensi mandiri kode proyektor',
+      },
+      update: {
+        status: 'PRESENT',
+        checkedInAt: new Date(),
+        notes: 'Presensi mandiri kode proyektor',
+      },
+    });
+  } else {
+    // Mahasiswa belum presensi di sesi yang masih aktif
+    await db.attendanceRecord.deleteMany({
+      where: { sessionId: session2.id, userId: student.id },
+    });
+  }
 }
 
 // ---------------------------------------------------------------------------
