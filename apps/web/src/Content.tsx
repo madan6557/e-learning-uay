@@ -603,21 +603,15 @@ export function ResourceEditor({
             </select>
           </Field>
         </div>
-        {["DOCUMENT", "VIDEO_MEDIA", "LAB_PRACTICUM"].includes(
-          draft.resourceType,
-        ) && (
+        {["DOCUMENT", "LAB_PRACTICUM"].includes(draft.resourceType) && (
           <>
             <FileUpload
               classId={classId}
-              purpose={
-                draft.resourceType === "VIDEO_MEDIA" ? "VIDEO" : "RESOURCE"
-              }
+              purpose="RESOURCE"
               accept={
                 draft.resourceType === "DOCUMENT"
                   ? "application/pdf"
-                  : draft.resourceType === "VIDEO_MEDIA"
-                    ? "video/mp4,video/webm"
-                    : undefined
+                  : undefined
               }
               onUploaded={(f) =>
                 payload({ fileObjectId: f.id, fileName: f.name })
@@ -625,6 +619,36 @@ export function ResourceEditor({
             />
             {draft.dynamicPayload.fileObjectId && (
               <p>{draft.dynamicPayload.fileName ?? t.saved}</p>
+            )}
+          </>
+        )}
+        {draft.resourceType === "VIDEO_MEDIA" && (
+          <>
+            <Field label="URL Video Embed (YouTube / External)">
+              <input
+                type="url"
+                placeholder="https://www.youtube.com/embed/... atau https://..."
+                value={draft.dynamicPayload.url ?? ""}
+                onChange={(e) => payload({ url: e.target.value })}
+              />
+            </Field>
+            {!draft.dynamicPayload.url && (
+              <>
+                <p style={{ fontSize: 13, color: "var(--muted)", margin: "8px 0 4px" }}>
+                  Atau unggah berkas video (MP4):
+                </p>
+                <FileUpload
+                  classId={classId}
+                  purpose="VIDEO"
+                  accept="video/mp4,video/webm"
+                  onUploaded={(f) =>
+                    payload({ fileObjectId: f.id, fileName: f.name })
+                  }
+                />
+                {draft.dynamicPayload.fileObjectId && (
+                  <p>{draft.dynamicPayload.fileName ?? t.saved}</p>
+                )}
+              </>
             )}
           </>
         )}
@@ -1041,7 +1065,7 @@ export function ResourceViewer({
             <ExternalLink size={16} />
           </a>
         )}
-        {p.fileObjectId && (
+        {p.fileObjectId && !p.url && (
           <DownloadButton
             fileId={p.fileObjectId}
             resourceId={resource.id}
@@ -1188,6 +1212,43 @@ function PdfViewer({
     </div>
   );
 }
+function parseEmbedUrl(url?: string): { isEmbed: boolean; embedUrl: string } {
+  if (!url) return { isEmbed: false, embedUrl: "" };
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes("youtube.com") || u.hostname.includes("youtu.be")) {
+      let id = "";
+      if (u.hostname.includes("youtu.be")) {
+        id = u.pathname.slice(1);
+      } else if (u.pathname.includes("/embed/")) {
+        id = u.pathname.split("/embed/")[1];
+      } else {
+        id = u.searchParams.get("v") || "";
+      }
+      if (id) {
+        id = id.split("&")[0].split("?")[0];
+        return {
+          isEmbed: true,
+          embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0`,
+        };
+      }
+    }
+    if (u.hostname.includes("drive.google.com")) {
+      const match = url.match(/\/file\/d\/([^\/]+)/);
+      if (match) {
+        return {
+          isEmbed: true,
+          embedUrl: `https://drive.google.com/file/d/${match[1]}/preview`,
+        };
+      }
+    }
+    if (url.includes("/embed/")) {
+      return { isEmbed: true, embedUrl: url };
+    }
+  } catch {}
+  return { isEmbed: false, embedUrl: url };
+}
+
 function VideoViewer({
   resource,
   previous,
@@ -1197,92 +1258,147 @@ function VideoViewer({
   previous: any;
   writable: boolean;
 }) {
+  const payload = resource.dynamicPayload || {};
+  const embed = parseEmbedUrl(payload.url);
   const ref = useRef<HTMLVideoElement>(null),
-    [url, setUrl] = useState(""),
+    [url, setUrl] = useState(embed.isEmbed ? embed.embedUrl : ""),
     [progress, setProgress] = useState(previous?.percent ?? 0),
     [error, setError] = useState<Error | null>(null),
     busy = useRef(false),
     initialized = useRef(!writable),
     watched = useRef(previous?.watchedSeconds ?? 0);
-  async function commit() {
-    const video = ref.current;
-    if (!writable || !video || busy.current) return;
+
+  async function commit(position?: number) {
+    if (!writable || busy.current) return;
+    const pos = position !== undefined ? position : ref.current?.currentTime;
+    if (pos === undefined && !embed.isEmbed) return;
     busy.current = true;
     try {
+      const duration = payload.durationSeconds || 300;
+      const targetPos = pos !== undefined ? pos : duration;
       const result = await api(`/resources/${resource.id}/progress`, "POST", {
-        position: video.currentTime,
+        position: Math.min(targetPos, duration),
       });
       watched.current = result.watchedSeconds;
       initialized.current = true;
       setProgress(result.percent);
       setError(null);
-      // Resume from the server's contiguous frontier after a connection gap.
-      if (video.currentTime > watched.current + 1)
-        video.currentTime = watched.current;
+      if (ref.current && ref.current.currentTime > watched.current + 1)
+        ref.current.currentTime = watched.current;
     } catch (e) {
       setError(e as Error);
     } finally {
       busy.current = false;
     }
   }
+
   useEffect(() => {
-    api(
-      `/files/${resource.dynamicPayload.fileObjectId}/download-ticket`,
-      "POST",
-      { resourceId: resource.id, inline: true },
-    )
-      .then((ticket) => setUrl(ticket.url))
-      .catch(setError);
-  }, [resource.id]);
+    if (payload.url) {
+      if (!embed.isEmbed) setUrl(payload.url);
+      return;
+    }
+    if (payload.fileObjectId) {
+      api(
+        `/files/${payload.fileObjectId}/download-ticket`,
+        "POST",
+        { resourceId: resource.id, inline: true },
+      )
+        .then((ticket) => setUrl(ticket.url))
+        .catch(setError);
+    }
+  }, [resource.id, payload.fileObjectId, payload.url]);
+
   useEffect(() => {
-    if (!writable) return;
+    if (!writable || embed.isEmbed) return;
     const timer = setInterval(() => {
       const video = ref.current;
       if (video && !video.paused) void commit();
     }, 5000);
     return () => clearInterval(timer);
-  }, [resource.id, writable]);
+  }, [resource.id, writable, embed.isEmbed]);
+
   return (
     <div className="video-viewer">
-      {url && (
-        <video
-          ref={ref}
-          src={url}
-          controls
-          controlsList="nodownload"
-          onLoadedMetadata={() => {
-            if (ref.current)
-              ref.current.currentTime = Math.min(
-                previous?.lastPositionSeconds ?? 0,
-                watched.current,
-              );
-            void commit();
+      {embed.isEmbed ? (
+        <div
+          style={{
+            position: "relative",
+            width: "100%",
+            paddingBottom: "56.25%",
+            height: 0,
+            borderRadius: 8,
+            overflow: "hidden",
+            backgroundColor: "#000",
+            marginBottom: 16,
           }}
-          onPlay={() => {
-            if (!initialized.current) ref.current?.pause();
-            void commit();
-          }}
-          onPause={() => void commit()}
-          onEnded={() => void commit()}
-          onRateChange={() => {
-            if (writable && ref.current && ref.current.playbackRate > 1)
-              ref.current.playbackRate = 1;
-          }}
-          onSeeking={() => {
-            if (
-              writable &&
-              ref.current &&
-              ref.current.currentTime > watched.current + 0.5
-            )
-              ref.current.currentTime = watched.current;
-          }}
-        />
+        >
+          <iframe
+            title={resource.title}
+            src={embed.embedUrl}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              border: 0,
+            }}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+          />
+        </div>
+      ) : (
+        url && (
+          <video
+            ref={ref}
+            src={url}
+            controls
+            controlsList="nodownload"
+            onLoadedMetadata={() => {
+              if (ref.current)
+                ref.current.currentTime = Math.min(
+                  previous?.lastPositionSeconds ?? 0,
+                  watched.current,
+                );
+              void commit();
+            }}
+            onPlay={() => {
+              if (!initialized.current) ref.current?.pause();
+              void commit();
+            }}
+            onPause={() => void commit()}
+            onEnded={() => void commit()}
+            onRateChange={() => {
+              if (writable && ref.current && ref.current.playbackRate > 1)
+                ref.current.playbackRate = 1;
+            }}
+            onSeeking={() => {
+              if (
+                writable &&
+                ref.current &&
+                ref.current.currentTime > watched.current + 0.5
+              )
+                ref.current.currentTime = watched.current;
+            }}
+          />
+        )
       )}
       <div className="progress-label">
         <span>{t.watched}</span>
         <strong>{Math.round(progress)}%</strong>
       </div>
       <progress value={progress} max={100} />
+      {embed.isEmbed && writable && progress < 100 && (
+        <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
+          <button
+            type="button"
+            className="button"
+            onClick={() => void commit(payload.durationSeconds || 300)}
+          >
+            Tandai Selesai Menonton
+          </button>
+        </div>
+      )}
       {error && <Notice error={error} />}
     </div>
   );

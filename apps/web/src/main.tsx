@@ -136,9 +136,6 @@ function PublicShell({ children }: { children: ReactNode }) {
   );
 }
 function Landing({ config, error }: { config: any; error?: Error | null }) {
-  const users = useApi<any[]>(
-    config?.demoEnabled ? "/auth/development-users" : null,
-  );
   return (
     <PublicShell>
       {error && <Notice error={error} />}
@@ -232,47 +229,6 @@ function Landing({ config, error }: { config: any; error?: Error | null }) {
           </article>
         ))}
       </section>
-      {config?.demoEnabled && (
-        <section className="demo-section">
-          <div className="section-heading">
-            <div>
-              <span className="environment-badge">
-                <span className="badge-dot" />
-                LINGKUNGAN UJI
-              </span>
-              <h2>Akun demonstrasi</h2>
-              <p>Masuk sebagai salah satu peran. Semua data di sini contoh.</p>
-            </div>
-          </div>
-          {users.loading ? (
-            <Loading />
-          ) : users.error ? (
-            <Notice error={users.error} />
-          ) : (
-            <div className="demo-grid">
-              {users.data?.map((u) => (
-                <article className="demo-card" key={u.id}>
-                  <Avatar name={u.name} />
-                  <div>
-                    <strong>{u.name}</strong>
-                    <small>
-                      {(t.roles as any)[u.role]} · {u.identifierValue}
-                    </small>
-                  </div>
-                  <LoginButton
-                    className="demo-login-btn"
-                    label={`Masuk sebagai ${u.name}`}
-                    demoUserId={u.id}
-                  >
-                    <span>Gunakan</span>
-                    <ArrowRight size={14} />
-                  </LoginButton>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-      )}
     </PublicShell>
   );
 }

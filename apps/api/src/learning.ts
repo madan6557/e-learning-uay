@@ -110,8 +110,16 @@ export async function validateResource(raw: unknown, tx: any, classId: string) {
   validateWindow(data.availableFrom, data.availableUntil);
   if (data.resourceType === "DOCUMENT")
     ensure(p.fileObjectId && p.totalPages, 400, "DOCUMENT_REQUIRED");
-  if (data.resourceType === "VIDEO_MEDIA")
-    ensure(p.fileObjectId && p.durationSeconds, 400, "VIDEO_REQUIRED");
+  if (data.resourceType === "VIDEO_MEDIA") {
+    ensure((p.fileObjectId || p.url) && p.durationSeconds, 400, "VIDEO_REQUIRED");
+    if (p.url) {
+      ensure(
+        config.embedOrigins.includes(new URL(p.url).origin),
+        400,
+        "EMBED_NOT_ALLOWED",
+      );
+    }
+  }
   if (
     ["VIRTUAL_SIMULATOR", "TELECONFERENCE", "EXTERNAL_LINK"].includes(
       data.resourceType,

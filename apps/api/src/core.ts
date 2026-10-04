@@ -112,7 +112,7 @@ export const config = {
   ),
   embedOrigins: (
     process.env.EMBED_ALLOWED_ORIGINS ??
-    "https://www.youtube.com,https://www.youtube-nocookie.com,https://drive.google.com"
+    "https://www.youtube.com,https://www.youtube-nocookie.com,https://drive.google.com,https://youtu.be"
   )
     .split(",")
     .map((s) => s.trim())

@@ -294,7 +294,12 @@ const demoResources = [
     description: 'Penjelasan mendalam proses pengiriman request dari browser hingga rendering respon server.',
     resourceType: 'VIDEO_MEDIA' as const,
     contentOrder: 3,
-    dynamicPayload: { fileObjectId: ids.fileVideo, durationSeconds: 300 },
+    dynamicPayload: {
+      provider: 'YOUTUBE',
+      url: 'https://www.youtube.com/embed/2JYT5f2isg4',
+      durationSeconds: 300,
+      minWatchPercent: 80
+    },
     isVisible: true
   }
 ];

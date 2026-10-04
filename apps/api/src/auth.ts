@@ -226,7 +226,7 @@ export function registerAuth(app: Express) {
   app.get("/api/v1/auth/config", (_req, res) =>
     res.json({
       mode: config.authMode,
-      demoEnabled: isDemo,
+      demoEnabled: false,
       issuer: config.issuer,
       accountUrl: config.accountUrl || undefined,
       embedOrigins: config.embedOrigins,
