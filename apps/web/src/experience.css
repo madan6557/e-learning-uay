@@ -3160,7 +3160,7 @@ table th {
   border-bottom: 1px solid var(--border) !important;
   text-decoration: none !important;
   color: inherit !important;
-  transition: background-color 140ms ease;
+  transition: background-color 140ms ease, transform 140ms ease;
   width: 100% !important;
   box-sizing: border-box !important;
 }
@@ -3168,7 +3168,10 @@ table th {
   border-bottom: 0 !important;
 }
 .activity-row:hover {
-  background: var(--muted) !important;
+  background: #f8fafc !important;
+}
+.activity-row:hover h3 {
+  color: var(--primary, #0284c7) !important;
 }
 .activity-row .activity-icon {
   display: flex;
@@ -3180,6 +3183,10 @@ table th {
   border-radius: var(--radius-md);
   background: color-mix(in oklab, var(--primary) 12%, transparent);
   color: var(--primary);
+  transition: all 140ms ease;
+}
+.activity-row:hover .activity-icon {
+  background: color-mix(in oklab, var(--primary) 22%, transparent);
 }
 .activity-row > div {
   flex: 1 1 auto;
@@ -3190,6 +3197,7 @@ table th {
   font-size: 0.9375rem;
   font-weight: 600;
   color: var(--foreground);
+  transition: color 140ms ease;
 }
 .activity-row p {
   margin: 0;
