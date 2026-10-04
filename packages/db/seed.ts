@@ -498,6 +498,7 @@ if (quizRecord && quizRecord.questions.length > 0) {
             [quizRecord.questions[6]?.id || 'q6']: 'Validasi server menjamin keamanan dan integritas basis data.',
           },
           startedAt: new Date(Date.now() - 3 * 86400000),
+          expiresAt: new Date(Date.now() + 3600000),
           submittedAt: new Date(Date.now() - 3 * 86400000 + 1200000),
           isGraded: qa.isGraded,
           publishedAt: qa.publishedAt,
