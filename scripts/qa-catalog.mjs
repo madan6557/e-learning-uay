@@ -28,6 +28,9 @@ const familyRanges = {
   NOT: 7,
   FIL: 9,
   PRG: 6,
+  ATT: 6,
+  ISO: 3,
+  REC: 3,
 };
 const modules = {
   ACC: "SSO & akses",
@@ -45,6 +48,9 @@ const modules = {
   NOT: "Notifikasi",
   FIL: "File Service",
   PRG: "Progres belajar",
+  ATT: "Presensi & kehadiran",
+  ISO: "Isolasi Program Studi",
+  REC: "Integrasi Dashboard Rektor",
   AUD: "Jejak audit",
   OPS: "Operasional",
   FUT: "Rilis lanjutan",
@@ -79,6 +85,9 @@ function add(
     GRD: "Buka kelas uji QA-V5 → Nilai; siapkan kategori dan jawaban sesuai data uji.",
     ANN: "Buka kelas uji QA-V5 → Pengumuman.",
     NOT: "Buka pusat notifikasi; siapkan aktivitas pada kelas uji QA-V5.",
+    ATT: "Buka kelas uji QA-V5 → Presensi; gunakan sesi presensi sesuai data uji.",
+    ISO: "Buka menu pencarian pengguna atau manajemen akademik pada prodi terkait.",
+    REC: "Buka endpoint bridging /api/v1/integrations/rector/snapshot dengan bearer token.",
     AUD: "Buka kelas uji QA-V5 → Jejak audit dengan akun yang berwenang.",
     OPS: "Buka runbook staging dan alat pemantauan untuk komponen yang diuji.",
     FUT: "Pastikan fitur tersedia pada rilis yang diuji; jika belum tersedia, catat Terblokir.",
@@ -2368,6 +2377,176 @@ cases
       })),
     );
   });
+
+// ATT - Attendance & Presensi Perkuliahan
+add(
+  "ATT",
+  "Mahasiswa",
+  "3.1.2",
+  "Validasi kode presensi mandiri case-insensitive dan auto-trim",
+  "Sesi presensi aktif dengan kode 6 digit.",
+  "Masukkan kode presensi dengan huruf kecil dan spasi di awal/akhir.",
+  "Kode tervalidasi sukses dan kehadiran tercatat HADIR (PRESENT).",
+  {
+    automation: existing(
+      "tests/attendance.test.ts",
+      "Attendance: check-in code validation is case-insensitive and trims whitespace",
+      "unit",
+    ),
+  },
+);
+add(
+  "ATT",
+  "Dosen",
+  "3.1.2",
+  "Ambang batas kehadiran 75% untuk kelayakan ujian",
+  "Rekap kehadiran mahasiswa dengan persentase di atas dan di bawah 75%.",
+  "Hitung persentase kehadiran terhadap total sesi perkuliahan.",
+  "Mahasiswa dengan kehadiran >= 75% dinyatakan ELIGIBLE; < 75% dinyatakan NOT_ELIGIBLE.",
+  {
+    automation: existing(
+      "tests/attendance.test.ts",
+      "Attendance: exam eligibility threshold strictly enforces 75% rule",
+      "unit",
+    ),
+  },
+);
+add(
+  "ATT",
+  "Dosen",
+  "3.1.2",
+  "Override manual presensi dosen dan pencatatan dispensasi/izin",
+  "Daftar hadir mahasiswa pada sesi perkuliahan tertentu.",
+  "Ubah status mahasiswa menjadi SAKIT/IZIN dengan catatan dispensasi.",
+  "Status tersimpan dan catatan izin tampil pada lembar presensi dan rekap.",
+  {
+    automation: existing(
+      "tests/attendance.test.ts",
+      "Attendance: manual override transitions and note handling",
+      "unit",
+    ),
+  },
+);
+add(
+  "ATT",
+  "Dosen",
+  "3.1.2",
+  "Buka sesi presensi perkuliahan dengan kode acak dan durasi",
+  "Kelas aktif pada semester berjalan.",
+  "Klik Buka Presensi, tentukan judul pertemuan, tipe mandiri dan durasi 30 menit.",
+  "Sesi presensi aktif, kode 6 digit digenerate, dan roster mahasiswa otomatis terisi.",
+);
+add(
+  "ATT",
+  "Dosen",
+  "3.1.2",
+  "Aksi cepat Tandai Semua Hadir pada lembar presensi",
+  "Sesi presensi perkuliahan tatap muka.",
+  "Klik tombol Tandai Semua Hadir lalu simpan presensi.",
+  "Seluruh mahasiswa yang belum memiliki catatan langsung diperbarui menjadi HADIR.",
+);
+add(
+  "ATT",
+  "Dosen",
+  "3.1.2",
+  "Rekapitulasi presensi semester per mahasiswa dan ekspor CSV",
+  "Kelas dengan beberapa sesi perkuliahan yang sudah selesai.",
+  "Buka tab Rekap Presensi lalu klik Ekspor CSV.",
+  "Tabel rekap menampilkan persentase tiap mahasiswa beserta berkas CSV unduhan.",
+);
+
+// ISO - Isolasi Program Studi & Multi-Afiliasi
+add(
+  "ISO",
+  "Admin Prodi",
+  "2.2",
+  "Admin Prodi hanya melihat pengguna dalam lingkup prodinya",
+  "Akun Admin Prodi dengan scope prodi tertentu.",
+  "Cari pengguna melalui API/antarmuka dengan berbagai kata kunci.",
+  "Hanya pengguna yang memiliki kesamaan prodi yang muncul dalam hasil pencarian.",
+  {
+    automation: existing(
+      "tests/department-isolation.test.ts",
+      "Department Isolation: Department Admin only sees users within their department scope",
+      "unit",
+    ),
+  },
+);
+add(
+  "ISO",
+  "Dosen",
+  "2.2",
+  "Dosen multi-afiliasi dapat mengakses prodi-prodi yang terafiliasi",
+  "Akun dosen dengan klaim departmentScopes jamak (misal: IF dan SI).",
+  "Lakukan pencarian pengguna dan kelola kelas pada kedua prodi tersebut.",
+  "Dosen dapat melihat dan mengelola pengguna pada kedua program studi terafiliasi.",
+  {
+    automation: existing(
+      "tests/department-isolation.test.ts",
+      "Department Isolation: Multi-affiliation lecturer accesses multiple scoped departments",
+      "unit",
+    ),
+  },
+);
+add(
+  "ISO",
+  "Super Admin",
+  "2.2",
+  "Super Admin memiliki cakupan universal seluruh program studi",
+  "Akun Super Admin universitas.",
+  "Cari pengguna dan kelola master data lintas seluruh program studi.",
+  "Semua pengguna dan mata kuliah dari seluruh fakultas/prodi dapat diakses.",
+  {
+    automation: existing(
+      "tests/department-isolation.test.ts",
+      "Department Isolation: Super Admin has university-wide scope",
+      "unit",
+    ),
+  },
+);
+
+// REC - Integrasi Dashboard Rektor UAY
+add(
+  "REC",
+  "Operator / DevOps",
+  "7.2",
+  "Kontrak skema ReportingSnapshot sesuai spesifikasi Dashboard Rektor",
+  "Klien Dashboard Rektor UAY memanggil endpoint snapshot.",
+  "Periksa payload JSON terhadap definisi antarmuka ReportingSnapshot.",
+  "Format telemetry memuat id, generatedAt, summary, departments, dan classes secara presisi.",
+  {
+    automation: existing(
+      "tests/rector-bridging.test.ts",
+      "Rector Bridging: ReportingSnapshot schema conforms to Dashboard Rektor contract",
+      "api",
+    ),
+  },
+);
+add(
+  "REC",
+  "Operator / DevOps",
+  "7.2",
+  "Validasi otorisasi Bearer Token pada endpoint integrasi rektor",
+  "Request tanpa token atau dengan token salah ke /api/v1/integrations/rector/snapshot.",
+  "Panggil endpoint integrasi dengan Authorization header tidak valid.",
+  "Request ditolak HTTP 401 Unauthorized; token valid diterima HTTP 200.",
+  {
+    automation: existing(
+      "tests/rector-bridging.test.ts",
+      "Rector Bridging: token authorization gate rejects invalid credentials",
+      "api",
+    ),
+  },
+);
+add(
+  "REC",
+  "Operator / DevOps",
+  "7.2",
+  "Agregasi metrik aktivitas perkuliahan dan publikasi prodi",
+  "Data kelas, materi, tugas, dan kuis lintas program studi.",
+  "Panggil endpoint snapshot dan hitung agregasi metrik.",
+  "Total materi, tugas, kuis, dan rasio kelas aktif teragregasi akurat per prodi.",
+);
 
 // Human-facing copy only; identifiers and assertion mappings remain stable.
 const copyCorrections = {

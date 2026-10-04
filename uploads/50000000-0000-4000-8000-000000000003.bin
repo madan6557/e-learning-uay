@@ -1,0 +1,116 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R 6 0 R 8 0 R 10 0 R 12 0 R] /Count 5 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 842 595] /Resources << /Font << /F1 3 0 R >> >> /Contents 5 0 R >>
+endobj
+5 0 obj
+<< /Length 160 >>
+stream
+BT
+/F1 16 Tf
+50 500 Td
+(SLIDE 1: PENGANTAR TEKNOLOGI WEB) Tj
+0 -24 Td
+(Program Studi Teknik Informatika - UAY) Tj
+0 -24 Td
+(Dosen Pengampu: Dosen, M.Kom.) Tj
+ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 842 595] /Resources << /Font << /F1 3 0 R >> >> /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 216 >>
+stream
+BT
+/F1 16 Tf
+50 500 Td
+(SLIDE 2: BAGAIMANA WEB BEKERJA?) Tj
+0 -24 Td
+(Browser  Client  melakukan permintaan via HTTP/HTTPS ke Server.) Tj
+0 -24 Td
+(Server memproses dan mengembalikan respons dokumen atau JSON.) Tj
+ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 842 595] /Resources << /Font << /F1 3 0 R >> >> /Contents 9 0 R >>
+endobj
+9 0 obj
+<< /Length 234 >>
+stream
+BT
+/F1 16 Tf
+50 500 Td
+(SLIDE 3: STRUKTUR DOKUMEN HTML SEMANTIK) Tj
+0 -24 Td
+(Gunakan tag semantik: <header>, <nav>, <main>, <article>, <footer>.) Tj
+0 -24 Td
+(Meningkatkan SEO, aksesibilitas screen reader, dan maintainability.) Tj
+ET
+endstream
+endobj
+10 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 842 595] /Resources << /Font << /F1 3 0 R >> >> /Contents 11 0 R >>
+endobj
+11 0 obj
+<< /Length 245 >>
+stream
+BT
+/F1 16 Tf
+50 500 Td
+(SLIDE 4: METODE HTTP & RESTFUL API) Tj
+0 -24 Td
+(GET  Membaca , POST  Membuat , PUT/PATCH  Memperbarui , DELETE  Menghapus .) Tj
+0 -24 Td
+(Status Code: 200 OK, 201 Created, 400 Bad Request, 401/403 Auth, 500 Error.) Tj
+ET
+endstream
+endobj
+12 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 842 595] /Resources << /Font << /F1 3 0 R >> >> /Contents 13 0 R >>
+endobj
+13 0 obj
+<< /Length 212 >>
+stream
+BT
+/F1 16 Tf
+50 500 Td
+(SLIDE 5: KESIMPULAN & TUGAS MINGGU KE-1) Tj
+0 -24 Td
+(Pelajari modul dan kerjakan Praktikum 01 pada E-Learning UAY.) Tj
+0 -24 Td
+(Sesi diskusi dan tanya jawab dibuka di forum kelas.) Tj
+ET
+endstream
+endobj
+xref
+0 14
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000141 00000 n 
+0000000216 00000 n 
+0000000342 00000 n 
+0000000553 00000 n 
+0000000679 00000 n 
+0000000946 00000 n 
+0000001072 00000 n 
+0000001357 00000 n 
+0000001485 00000 n 
+0000001782 00000 n 
+0000001910 00000 n 
+trailer
+<< /Size 14 /Root 1 0 R >>
+startxref
+2174
+%%EOF

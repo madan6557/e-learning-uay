@@ -1,0 +1,82 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R 6 0 R 8 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 5 0 R >>
+endobj
+5 0 obj
+<< /Length 183 >>
+stream
+BT
+/F1 16 Tf
+50 750 Td
+(E-Learning UAY - Universitas Achmad Yani) Tj
+0 -24 Td
+(Silabus & Rencana Pembelajaran Semester  RPS ) Tj
+0 -24 Td
+(Mata Kuliah: Pemrograman Web  IF2101 ) Tj
+ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 271 >>
+stream
+BT
+/F1 16 Tf
+50 750 Td
+(Capaian Pembelajaran Lulusan  CPL :) Tj
+0 -24 Td
+(1. Mahasiswa memahami protokol HTTP, DNS, dan TCP/IP.) Tj
+0 -24 Td
+(2. Mahasiswa mampu menyusun dokumen web semantik.) Tj
+0 -24 Td
+(3. Mahasiswa mampu merancang antarmuka aksesibel dan aman.) Tj
+ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 9 0 R >>
+endobj
+9 0 obj
+<< /Length 248 >>
+stream
+BT
+/F1 16 Tf
+50 750 Td
+(Referensi & Buku Ajar:) Tj
+0 -24 Td
+(1. MDN Web Docs - HTML, CSS, JavaScript Standards.) Tj
+0 -24 Td
+(2. Technical Design E-Learning UAY v5.0.) Tj
+0 -24 Td
+(3. World Wide Web Consortium  W3C  Accessibility Guidelines.) Tj
+ET
+endstream
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000127 00000 n 
+0000000202 00000 n 
+0000000328 00000 n 
+0000000562 00000 n 
+0000000688 00000 n 
+0000001010 00000 n 
+0000001136 00000 n 
+trailer
+<< /Size 10 /Root 1 0 R >>
+startxref
+1435
+%%EOF

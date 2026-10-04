@@ -40,6 +40,9 @@
     "Notifikasi",
     "File Service",
     "Progres belajar",
+    "Presensi & kehadiran",
+    "Isolasi Program Studi",
+    "Integrasi Dashboard Rektor",
     "Jejak audit",
     "Operasional",
     "Rilis lanjutan",
@@ -122,6 +125,21 @@
       "code": "PRG",
       "range": "PRG-001–006",
       "module": "Progres belajar"
+    },
+    {
+      "code": "ATT",
+      "range": "ATT-001–006",
+      "module": "Presensi & kehadiran"
+    },
+    {
+      "code": "ISO",
+      "range": "ISO-001–003",
+      "module": "Isolasi Program Studi"
+    },
+    {
+      "code": "REC",
+      "range": "REC-001–003",
+      "module": "Integrasi Dashboard Rektor"
     }
   ],
   "cases": [
@@ -14948,6 +14966,574 @@
       "manualReason": "Penerimaan pilot memerlukan bukti lintas layanan dan persetujuan pihak terkait.",
       "tags": [],
       "scope": "external",
+      "priorityBasis": "Prioritas diturunkan dari cakupan rilis §3.1; bukan pemetaan per butir requirement resmi."
+    },
+    {
+      "id": "TC-ATT-001",
+      "priority": "P0",
+      "role": "Mahasiswa",
+      "module": "Presensi & kehadiran",
+      "family": "ATT",
+      "title": "Validasi kode presensi mandiri case-insensitive dan auto-trim",
+      "type": "Fungsional",
+      "section": "3.1.2",
+      "sourceLine": 296,
+      "requirements": [
+        "ATT-001–006"
+      ],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Sesi presensi aktif dengan kode 6 digit.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Mahasiswa melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka kelas uji QA-V5 → Presensi; gunakan sesi presensi sesuai data uji.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Masukkan kode presensi dengan huruf kecil dan spasi di awal/akhir.",
+          "expected": "Kode tervalidasi sukses dan kehadiran tercatat HADIR (PRESENT)."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Kode tervalidasi sukses dan kehadiran tercatat HADIR (PRESENT)."
+        }
+      ],
+      "expected": "Kode tervalidasi sukses dan kehadiran tercatat HADIR (PRESENT).",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "unit",
+        "file": "tests/attendance.test.ts",
+        "title": "Attendance: check-in code validation is case-insensitive and trims whitespace",
+        "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Prioritas diturunkan dari cakupan rilis §3.1; bukan pemetaan per butir requirement resmi."
+    },
+    {
+      "id": "TC-ATT-002",
+      "priority": "P0",
+      "role": "Dosen",
+      "module": "Presensi & kehadiran",
+      "family": "ATT",
+      "title": "Ambang batas kehadiran 75% untuk kelayakan ujian",
+      "type": "Fungsional",
+      "section": "3.1.2",
+      "sourceLine": 296,
+      "requirements": [
+        "ATT-001–006"
+      ],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Rekap kehadiran mahasiswa dengan persentase di atas dan di bawah 75%.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Dosen melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka kelas uji QA-V5 → Presensi; gunakan sesi presensi sesuai data uji.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Hitung persentase kehadiran terhadap total sesi perkuliahan.",
+          "expected": "Mahasiswa dengan kehadiran >= 75% dinyatakan ELIGIBLE; < 75% dinyatakan NOT_ELIGIBLE."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Mahasiswa dengan kehadiran >= 75% dinyatakan ELIGIBLE; < 75% dinyatakan NOT_ELIGIBLE."
+        }
+      ],
+      "expected": "Mahasiswa dengan kehadiran >= 75% dinyatakan ELIGIBLE; < 75% dinyatakan NOT_ELIGIBLE.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "unit",
+        "file": "tests/attendance.test.ts",
+        "title": "Attendance: exam eligibility threshold strictly enforces 75% rule",
+        "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Prioritas diturunkan dari cakupan rilis §3.1; bukan pemetaan per butir requirement resmi."
+    },
+    {
+      "id": "TC-ATT-003",
+      "priority": "P0",
+      "role": "Dosen",
+      "module": "Presensi & kehadiran",
+      "family": "ATT",
+      "title": "Override manual presensi dosen dan pencatatan dispensasi/izin",
+      "type": "Fungsional",
+      "section": "3.1.2",
+      "sourceLine": 296,
+      "requirements": [
+        "ATT-001–006"
+      ],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Daftar hadir mahasiswa pada sesi perkuliahan tertentu.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Dosen melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka kelas uji QA-V5 → Presensi; gunakan sesi presensi sesuai data uji.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Ubah status mahasiswa menjadi SAKIT/IZIN dengan catatan dispensasi.",
+          "expected": "Status tersimpan dan catatan izin tampil pada lembar presensi dan rekap."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Status tersimpan dan catatan izin tampil pada lembar presensi dan rekap."
+        }
+      ],
+      "expected": "Status tersimpan dan catatan izin tampil pada lembar presensi dan rekap.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "unit",
+        "file": "tests/attendance.test.ts",
+        "title": "Attendance: manual override transitions and note handling",
+        "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Prioritas diturunkan dari cakupan rilis §3.1; bukan pemetaan per butir requirement resmi."
+    },
+    {
+      "id": "TC-ATT-004",
+      "priority": "P0",
+      "role": "Dosen",
+      "module": "Presensi & kehadiran",
+      "family": "ATT",
+      "title": "Buka sesi presensi perkuliahan dengan kode acak dan durasi",
+      "type": "Fungsional",
+      "section": "3.1.2",
+      "sourceLine": 296,
+      "requirements": [
+        "ATT-001–006"
+      ],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Kelas aktif pada semester berjalan.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Dosen melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka kelas uji QA-V5 → Presensi; gunakan sesi presensi sesuai data uji.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Klik Buka Presensi, tentukan judul pertemuan, tipe mandiri dan durasi 30 menit.",
+          "expected": "Sesi presensi aktif, kode 6 digit digenerate, dan roster mahasiswa otomatis terisi."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Sesi presensi aktif, kode 6 digit digenerate, dan roster mahasiswa otomatis terisi."
+        }
+      ],
+      "expected": "Sesi presensi aktif, kode 6 digit digenerate, dan roster mahasiswa otomatis terisi.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": null,
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Prioritas diturunkan dari cakupan rilis §3.1; bukan pemetaan per butir requirement resmi."
+    },
+    {
+      "id": "TC-ATT-005",
+      "priority": "P0",
+      "role": "Dosen",
+      "module": "Presensi & kehadiran",
+      "family": "ATT",
+      "title": "Aksi cepat Tandai Semua Hadir pada lembar presensi",
+      "type": "Fungsional",
+      "section": "3.1.2",
+      "sourceLine": 296,
+      "requirements": [
+        "ATT-001–006"
+      ],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Sesi presensi perkuliahan tatap muka.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Dosen melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka kelas uji QA-V5 → Presensi; gunakan sesi presensi sesuai data uji.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Klik tombol Tandai Semua Hadir lalu simpan presensi.",
+          "expected": "Seluruh mahasiswa yang belum memiliki catatan langsung diperbarui menjadi HADIR."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Seluruh mahasiswa yang belum memiliki catatan langsung diperbarui menjadi HADIR."
+        }
+      ],
+      "expected": "Seluruh mahasiswa yang belum memiliki catatan langsung diperbarui menjadi HADIR.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": null,
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Prioritas diturunkan dari cakupan rilis §3.1; bukan pemetaan per butir requirement resmi."
+    },
+    {
+      "id": "TC-ATT-006",
+      "priority": "P0",
+      "role": "Dosen",
+      "module": "Presensi & kehadiran",
+      "family": "ATT",
+      "title": "Rekapitulasi presensi semester per mahasiswa dan ekspor CSV",
+      "type": "Fungsional",
+      "section": "3.1.2",
+      "sourceLine": 296,
+      "requirements": [
+        "ATT-001–006"
+      ],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Kelas dengan beberapa sesi perkuliahan yang sudah selesai.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Dosen melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka kelas uji QA-V5 → Presensi; gunakan sesi presensi sesuai data uji.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Buka tab Rekap Presensi lalu klik Ekspor CSV.",
+          "expected": "Tabel rekap menampilkan persentase tiap mahasiswa beserta berkas CSV unduhan."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Tabel rekap menampilkan persentase tiap mahasiswa beserta berkas CSV unduhan."
+        }
+      ],
+      "expected": "Tabel rekap menampilkan persentase tiap mahasiswa beserta berkas CSV unduhan.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": null,
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Prioritas diturunkan dari cakupan rilis §3.1; bukan pemetaan per butir requirement resmi."
+    },
+    {
+      "id": "TC-ISO-001",
+      "priority": "P0",
+      "role": "Admin Prodi",
+      "module": "Isolasi Program Studi",
+      "family": "ISO",
+      "title": "Admin Prodi hanya melihat pengguna dalam lingkup prodinya",
+      "type": "Fungsional",
+      "section": "2.2",
+      "sourceLine": 159,
+      "requirements": [
+        "ISO-001–003"
+      ],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Akun Admin Prodi dengan scope prodi tertentu.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Admin Prodi melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka menu pencarian pengguna atau manajemen akademik pada prodi terkait.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Cari pengguna melalui API/antarmuka dengan berbagai kata kunci.",
+          "expected": "Hanya pengguna yang memiliki kesamaan prodi yang muncul dalam hasil pencarian."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Hanya pengguna yang memiliki kesamaan prodi yang muncul dalam hasil pencarian."
+        }
+      ],
+      "expected": "Hanya pengguna yang memiliki kesamaan prodi yang muncul dalam hasil pencarian.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "unit",
+        "file": "tests/department-isolation.test.ts",
+        "title": "Department Isolation: Department Admin only sees users within their department scope",
+        "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Prioritas diturunkan dari cakupan rilis §3.1; bukan pemetaan per butir requirement resmi."
+    },
+    {
+      "id": "TC-ISO-002",
+      "priority": "P0",
+      "role": "Dosen",
+      "module": "Isolasi Program Studi",
+      "family": "ISO",
+      "title": "Dosen multi-afiliasi dapat mengakses prodi-prodi yang terafiliasi",
+      "type": "Fungsional",
+      "section": "2.2",
+      "sourceLine": 159,
+      "requirements": [
+        "ISO-001–003"
+      ],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Akun dosen dengan klaim departmentScopes jamak (misal: IF dan SI).",
+      "steps": [
+        {
+          "action": "Masuk sebagai Dosen melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka menu pencarian pengguna atau manajemen akademik pada prodi terkait.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Lakukan pencarian pengguna dan kelola kelas pada kedua prodi tersebut.",
+          "expected": "Dosen dapat melihat dan mengelola pengguna pada kedua program studi terafiliasi."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Dosen dapat melihat dan mengelola pengguna pada kedua program studi terafiliasi."
+        }
+      ],
+      "expected": "Dosen dapat melihat dan mengelola pengguna pada kedua program studi terafiliasi.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "unit",
+        "file": "tests/department-isolation.test.ts",
+        "title": "Department Isolation: Multi-affiliation lecturer accesses multiple scoped departments",
+        "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Prioritas diturunkan dari cakupan rilis §3.1; bukan pemetaan per butir requirement resmi."
+    },
+    {
+      "id": "TC-ISO-003",
+      "priority": "P0",
+      "role": "Super Admin",
+      "module": "Isolasi Program Studi",
+      "family": "ISO",
+      "title": "Super Admin memiliki cakupan universal seluruh program studi",
+      "type": "Fungsional",
+      "section": "2.2",
+      "sourceLine": 159,
+      "requirements": [
+        "ISO-001–003"
+      ],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Akun Super Admin universitas.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Super Admin melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka menu pencarian pengguna atau manajemen akademik pada prodi terkait.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Cari pengguna dan kelola master data lintas seluruh program studi.",
+          "expected": "Semua pengguna dan mata kuliah dari seluruh fakultas/prodi dapat diakses."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Semua pengguna dan mata kuliah dari seluruh fakultas/prodi dapat diakses."
+        }
+      ],
+      "expected": "Semua pengguna dan mata kuliah dari seluruh fakultas/prodi dapat diakses.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "unit",
+        "file": "tests/department-isolation.test.ts",
+        "title": "Department Isolation: Super Admin has university-wide scope",
+        "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Prioritas diturunkan dari cakupan rilis §3.1; bukan pemetaan per butir requirement resmi."
+    },
+    {
+      "id": "TC-REC-001",
+      "priority": "P0",
+      "role": "Operator / DevOps",
+      "module": "Integrasi Dashboard Rektor",
+      "family": "REC",
+      "title": "Kontrak skema ReportingSnapshot sesuai spesifikasi Dashboard Rektor",
+      "type": "Fungsional",
+      "section": "7.2",
+      "sourceLine": 1931,
+      "requirements": [
+        "REC-001–003"
+      ],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Klien Dashboard Rektor UAY memanggil endpoint snapshot.",
+      "steps": [
+        {
+          "action": "Gunakan lingkungan staging atau database terisolasi; catat versi aplikasi dan waktu mulai.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka endpoint bridging /api/v1/integrations/rector/snapshot dengan bearer token.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Periksa payload JSON terhadap definisi antarmuka ReportingSnapshot.",
+          "expected": "Format telemetry memuat id, generatedAt, summary, departments, dan classes secara presisi."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Format telemetry memuat id, generatedAt, summary, departments, dan classes secara presisi."
+        }
+      ],
+      "expected": "Format telemetry memuat id, generatedAt, summary, departments, dan classes secara presisi.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "api",
+        "file": "tests/rector-bridging.test.ts",
+        "title": "Rector Bridging: ReportingSnapshot schema conforms to Dashboard Rektor contract",
+        "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Prioritas diturunkan dari cakupan rilis §3.1; bukan pemetaan per butir requirement resmi."
+    },
+    {
+      "id": "TC-REC-002",
+      "priority": "P0",
+      "role": "Operator / DevOps",
+      "module": "Integrasi Dashboard Rektor",
+      "family": "REC",
+      "title": "Validasi otorisasi Bearer Token pada endpoint integrasi rektor",
+      "type": "Fungsional",
+      "section": "7.2",
+      "sourceLine": 1931,
+      "requirements": [
+        "REC-001–003"
+      ],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Request tanpa token atau dengan token salah ke /api/v1/integrations/rector/snapshot.",
+      "steps": [
+        {
+          "action": "Gunakan lingkungan staging atau database terisolasi; catat versi aplikasi dan waktu mulai.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka endpoint bridging /api/v1/integrations/rector/snapshot dengan bearer token.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Panggil endpoint integrasi dengan Authorization header tidak valid.",
+          "expected": "Request ditolak HTTP 401 Unauthorized; token valid diterima HTTP 200."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Request ditolak HTTP 401 Unauthorized; token valid diterima HTTP 200."
+        }
+      ],
+      "expected": "Request ditolak HTTP 401 Unauthorized; token valid diterima HTTP 200.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "api",
+        "file": "tests/rector-bridging.test.ts",
+        "title": "Rector Bridging: token authorization gate rejects invalid credentials",
+        "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Prioritas diturunkan dari cakupan rilis §3.1; bukan pemetaan per butir requirement resmi."
+    },
+    {
+      "id": "TC-REC-003",
+      "priority": "P0",
+      "role": "Operator / DevOps",
+      "module": "Integrasi Dashboard Rektor",
+      "family": "REC",
+      "title": "Agregasi metrik aktivitas perkuliahan dan publikasi prodi",
+      "type": "Fungsional",
+      "section": "7.2",
+      "sourceLine": 1931,
+      "requirements": [
+        "REC-001–003"
+      ],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Data kelas, materi, tugas, dan kuis lintas program studi.",
+      "steps": [
+        {
+          "action": "Gunakan lingkungan staging atau database terisolasi; catat versi aplikasi dan waktu mulai.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka endpoint bridging /api/v1/integrations/rector/snapshot dengan bearer token.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Panggil endpoint snapshot dan hitung agregasi metrik.",
+          "expected": "Total materi, tugas, kuis, dan rasio kelas aktif teragregasi akurat per prodi."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Total materi, tugas, kuis, dan rasio kelas aktif teragregasi akurat per prodi."
+        }
+      ],
+      "expected": "Total materi, tugas, kuis, dan rasio kelas aktif teragregasi akurat per prodi.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": null,
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
       "priorityBasis": "Prioritas diturunkan dari cakupan rilis §3.1; bukan pemetaan per butir requirement resmi."
     }
   ]

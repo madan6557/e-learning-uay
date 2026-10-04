@@ -47,6 +47,7 @@ import {
   AssignmentPage,
 } from "./Assessment";
 import { Gradebook, ImportPanel } from "./Gradebook";
+import { Attendance } from "./Attendance";
 import { questionSchema } from "../../../packages/shared/src/domain";
 import { classPath, contentPath, itemSlug } from "./router";
 
@@ -134,6 +135,7 @@ export function ClassPage({
   const isArchived = cls.status === "ARCHIVED";
   const tabs = [
     ["content", t.content],
+    ["attendance", "Presensi"],
     ["gradebook", t.gradebook],
     ["announcements", t.announcements],
     ...(cls.canManage
@@ -622,6 +624,14 @@ export function ClassPage({
           </div>
         </>
       )}
+      {tab === "attendance" && (
+        <Attendance
+          classId={cls.id}
+          writable={writable}
+          canManage={cls.canManage}
+          user={user}
+        />
+      )}
       {tab === "gradebook" && (
         <Gradebook classId={cls.id} writable={writable} />
       )}
@@ -884,6 +894,24 @@ export function ClassPage({
       {modal?.kind === "clone" && (
         <Modal title={t.cloneClass} onClose={() => setModal(null)}>
           <p>{t.cloneDescription}</p>
+          <div
+            style={{
+              background: "rgba(2, 132, 199, 0.06)",
+              border: "1px solid rgba(2, 132, 199, 0.2)",
+              borderRadius: 8,
+              padding: "10px 14px",
+              marginBottom: 16,
+              fontSize: "0.85rem",
+              lineHeight: 1.5,
+              color: "var(--foreground, #1e293b)",
+            }}
+          >
+            <strong>Informasi Penanganan Jadwal &amp; Peserta:</strong>
+            <ul style={{ paddingLeft: 16, margin: "6px 0 0 0" }}>
+              <li>Seluruh jadwal rilis dan deadline periode lama otomatis di-reset ke draf bersih agar tidak mengunci di semester baru.</li>
+              <li>Peserta (mahasiswa) lama tidak diikutsertakan. Kelas baru akan dimulai dengan 0 peserta siap untuk pendaftaran angkatan baru.</li>
+            </ul>
+          </div>
           <Form
             draftKey="clone-class"
             onSubmit={async (f) => {
@@ -902,8 +930,20 @@ export function ClassPage({
             <Field label={t.className}>
               <input name="name" required defaultValue={cls.name} />
             </Field>
-            <Field label={t.academicYear}>
-              <input name="academicYear" required />
+            <Field label={`${t.academicYear} & Semester Baru`}>
+              <input
+                name="academicYear"
+                required
+                list="academic-year-options"
+                placeholder="Pilih atau ketik (cth: 2026/2027 Ganjil)"
+                defaultValue="2026/2027 Ganjil"
+              />
+              <datalist id="academic-year-options">
+                <option value="2026/2027 Ganjil" />
+                <option value="2026/2027 Genap" />
+                <option value="2027/2028 Ganjil" />
+                <option value="2027/2028 Genap" />
+              </datalist>
             </Field>
           </Form>
         </Modal>

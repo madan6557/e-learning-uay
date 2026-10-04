@@ -526,7 +526,8 @@
     "LAB_PRACTICUM": "Praktikum",
     "SEMINAR": "Seminar",
     "WORKSHOP": "Lokakarya",
-    "EXAM": "Ujian"
+    "EXAM": "Ujian",
+    "OTHER": "Lainnya"
   },
   "questionTypes": {
     "SINGLE_CHOICE": "Pilihan tunggal",

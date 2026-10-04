@@ -24,6 +24,8 @@ import { registerAssessment, expireAttempts } from "./assessment.js";
 import { registerGrades } from "./grades.js";
 import { registerFiles } from "./files.js";
 import { registerImports } from "./imports.js";
+import { registerAttendanceRoutes } from "./attendance.js";
+import { registerRectorBridgeRoutes } from "./rector-bridge.js";
 import { pathToFileURL } from "node:url";
 import { existsSync } from "node:fs";
 import { request as httpRequest } from "node:http";
@@ -172,6 +174,8 @@ export function createApp() {
   registerGrades(app);
   registerFiles(app);
   registerImports(app);
+  registerAttendanceRoutes(app);
+  registerRectorBridgeRoutes(app);
   app.use("/api", (_req, res) =>
     res.status(404).json({ error: { code: "NOT_FOUND" } }),
   );

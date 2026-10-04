@@ -47,6 +47,7 @@ const QuizPage = lazy(() =>
 const AssignmentPage = lazy(() =>
   import("./Assessment").then((m) => ({ default: m.AssignmentPage })),
 );
+import { HelpPage } from "./HelpPage";
 import "./styles.css";
 import "./workspace.css";
 import "./experience.css";
@@ -656,36 +657,7 @@ function App() {
   else if (section === "profile")
     page = <Profile user={user} accountUrl={config.data?.accountUrl} />;
   else if (section === "help")
-    page = (
-      <>
-        <div className="page-heading">
-          <h1>{t.help}</h1>
-          <p>Hal yang paling sering ditanyakan.</p>
-        </div>
-        <div className="help-grid">
-          {[
-            [
-              "Akun & akses",
-              "Data akun mengikuti SSO UAY. Buka Profil untuk melihat identitas dan informasi pengelolaannya.",
-            ],
-            [
-              "Kelas & pembelajaran",
-              "Buka menu Kelas untuk melihat materi, tugas, kuis, dan pengumuman dari pengajar.",
-            ],
-            [
-              "Draft & penyimpanan",
-              "Perubahan editor tersimpan otomatis di perangkat. Gunakan Simpan semua perubahan untuk mengirimnya ke server.",
-            ],
-            ["Jadwal & bantuan", t.supportText + " " + t.timeZone],
-          ].map(([title, text]) => (
-            <article className="card" key={title}>
-              <h2>{title}</h2>
-              <p>{text}</p>
-            </article>
-          ))}
-        </div>
-      </>
-    );
+    page = <HelpPage user={user} />;
   else if (
     ["", "dashboard", "classes", "agenda", "grades", "notifications"].includes(
       section,

@@ -2,10 +2,30 @@ import { classPath } from '../shared/src/urls.js';
 import { PrismaClient } from '@prisma/client';
 import { loadEnvFile } from 'node:process';
 import { questionSchema } from '../shared/src/domain.js';
+import { generateAllDemoFiles } from '../../scripts/generate-demo-media.mjs';
 try{loadEnvFile();}catch{}
 if(process.env.NODE_ENV==='production' && process.env.AUTH_MODE!=='development' && process.env.DEMO_MODE!=='true' && process.env.RESET_DB_ON_DEPLOY!=='true' && process.env.SEED_ON_DEPLOY!=='true')throw new Error('Demo seed is disabled in production.');
 const db=new PrismaClient();
-export const ids={admin:'00000000-0000-4000-8000-000000000001',instructor:'00000000-0000-4000-8000-000000000002',student:'00000000-0000-4000-8000-000000000003',student2:'00000000-0000-4000-8000-000000000004',outsider:'00000000-0000-4000-8000-000000000005',department:'00000000-0000-4000-8000-000000000006',course:'10000000-0000-4000-8000-000000000001',class:'20000000-0000-4000-8000-000000000001',section:'30000000-0000-4000-8000-000000000001',resource:'40000000-0000-4000-8000-000000000001',quiz:'50000000-0000-4000-8000-000000000001',assignment:'60000000-0000-4000-8000-000000000001'};
+export const ids={
+  admin:'00000000-0000-4000-8000-000000000001',
+  instructor:'00000000-0000-4000-8000-000000000002',
+  student:'00000000-0000-4000-8000-000000000003',
+  student2:'00000000-0000-4000-8000-000000000004',
+  outsider:'00000000-0000-4000-8000-000000000005',
+  department:'00000000-0000-4000-8000-000000000006',
+  course:'10000000-0000-4000-8000-000000000001',
+  class:'20000000-0000-4000-8000-000000000001',
+  section:'30000000-0000-4000-8000-000000000001',
+  resource:'40000000-0000-4000-8000-000000000001',
+  resourcePdf:'40000000-0000-4000-8000-000000000002',
+  resourcePpt:'40000000-0000-4000-8000-000000000003',
+  resourceVideo:'40000000-0000-4000-8000-000000000004',
+  filePdf:'50000000-0000-4000-8000-000000000002',
+  filePpt:'50000000-0000-4000-8000-000000000003',
+  fileVideo:'50000000-0000-4000-8000-000000000004',
+  quiz:'50000000-0000-4000-8000-000000000001',
+  assignment:'60000000-0000-4000-8000-000000000001'
+};
 
 const students = [
   { id: ids.student, name: 'Mahasiswa 01', identifierValue: '202601001' },
@@ -197,5 +217,102 @@ if(quizRecord && quizRecord.questions.length > 0){
   }
 }
 
-console.log('Development seed ready. Existing records were preserved.');
+// Generate actual demo files to uploads/ directory
+generateAllDemoFiles();
+
+// Upsert demo FileReferences in database
+const demoFiles = [
+  {
+    id: ids.filePdf,
+    classId: ids.class,
+    ownerId: ids.instructor,
+    purpose: 'RESOURCE',
+    name: 'Buku Panduan & Silabus Pemrograman Web.pdf',
+    mimeType: 'application/pdf',
+    sizeBytes: 1700,
+    checksum: 'f2e1f47ba23019888998',
+    status: 'READY'
+  },
+  {
+    id: ids.filePpt,
+    classId: ids.class,
+    ownerId: ids.instructor,
+    purpose: 'RESOURCE',
+    name: 'Slide Presentasi Pertemuan 1 - Arsitektur Web.pdf',
+    mimeType: 'application/pdf',
+    sizeBytes: 2519,
+    checksum: 'c67811239a9c88776655',
+    status: 'READY'
+  },
+  {
+    id: ids.fileVideo,
+    classId: ids.class,
+    ownerId: ids.instructor,
+    purpose: 'RESOURCE',
+    name: 'Video Pembelajaran - Alur HTTP Request Response.mp4',
+    mimeType: 'video/mp4',
+    sizeBytes: 244,
+    checksum: '1712f49341cd11223344',
+    status: 'READY'
+  }
+];
+
+for (const f of demoFiles) {
+  await db.fileReference.upsert({
+    where: { id: f.id },
+    create: f,
+    update: { name: f.name, mimeType: f.mimeType, sizeBytes: f.sizeBytes, status: f.status }
+  });
+}
+
+// Upsert demo ResourceItems in Pertemuan 1 (Section 0)
+const demoResources = [
+  {
+    id: ids.resourcePdf,
+    sectionId: ids.section,
+    title: 'Buku Panduan & Silabus Pemrograman Web',
+    description: 'Silabus perkuliahan dan rencana pembelajaran semester (RPS) resmi dalam format PDF.',
+    resourceType: 'DOCUMENT' as const,
+    contentOrder: 1,
+    dynamicPayload: { fileObjectId: ids.filePdf, totalPages: 3 },
+    isVisible: true
+  },
+  {
+    id: ids.resourcePpt,
+    sectionId: ids.section,
+    title: 'Slide Presentasi Pertemuan 1 · Arsitektur Web',
+    description: 'Bahan tayang kuliah tatap muka mengenai client-server, protokol HTTP, dan HTML semantik.',
+    resourceType: 'DOCUMENT' as const,
+    contentOrder: 2,
+    dynamicPayload: { fileObjectId: ids.filePpt, totalPages: 5 },
+    isVisible: true
+  },
+  {
+    id: ids.resourceVideo,
+    sectionId: ids.section,
+    title: 'Video Pembelajaran · Alur HTTP Request–Response',
+    description: 'Penjelasan mendalam proses pengiriman request dari browser hingga rendering respon server.',
+    resourceType: 'VIDEO_MEDIA' as const,
+    contentOrder: 3,
+    dynamicPayload: { fileObjectId: ids.fileVideo, durationSeconds: 300 },
+    isVisible: true
+  }
+];
+
+for (const r of demoResources) {
+  await db.resourceItem.upsert({
+    where: { id: r.id },
+    create: r,
+    update: {
+      title: r.title,
+      description: r.description,
+      resourceType: r.resourceType,
+      dynamicPayload: r.dynamicPayload,
+      isVisible: r.isVisible
+    }
+  });
+}
+
+console.log('Development seed ready. Demo media (PDF, PPT, Video) and existing records were preserved.');
 await db.$disconnect();
+

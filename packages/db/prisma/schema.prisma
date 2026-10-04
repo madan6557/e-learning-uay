@@ -94,6 +94,7 @@ model User {
   finalGrades       FinalGradeRecord[]
   notifications     Notification[]
   auditLogs         AuditLog[]
+  attendanceRecords AttendanceRecord[]
 
   @@index([role, status])
   @@index([status])
@@ -146,7 +147,8 @@ model CourseClass {
   sections        Section[]
   gradeCategories GradeCategory[]
   finalGrades     FinalGradeRecord[]
-  announcements   Announcement[]
+  announcements      Announcement[]
+  attendanceSessions AttendanceSession[]
 
   @@index([courseId, academicYear])
   @@map("course_classes")
@@ -189,6 +191,7 @@ enum SectionType {
   SEMINAR
   WORKSHOP
   EXAM
+  OTHER
 }
 
 model Section {
@@ -205,9 +208,10 @@ model Section {
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt @map("updated_at")
 
-  resources   ResourceItem[]
-  quizzes     Quiz[]
-  assignments Assignment[]
+  resources          ResourceItem[]
+  quizzes            Quiz[]
+  assignments        Assignment[]
+  attendanceSessions AttendanceSession[]
 
   @@unique([classId, order])
   @@index([classId])
@@ -675,3 +679,59 @@ model ManualGradeRecord {
   @@unique([classId, userId, categoryId])
   @@map("manual_grade_records")
 }
+
+// ---------------------------------------------------------------------------
+// Attendance and presence
+// ---------------------------------------------------------------------------
+
+enum AttendanceStatus {
+  PRESENT
+  EXCUSED
+  SICK
+  ABSENT
+  LATE
+}
+
+model AttendanceSession {
+  id               String             @id @default(uuid()) @map("session_id")
+  classId          String             @map("class_id")
+  class            CourseClass        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  sectionId        String?            @map("section_id")
+  section          Section?           @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  title            String             @map("title")
+  description      String?            @map("description")
+  sessionDate      DateTime           @default(now()) @map("session_date")
+  startTime        DateTime?          @map("start_time")
+  endTime          DateTime?          @map("end_time")
+  isOpen           Boolean            @default(false) @map("is_open")
+  checkInCode      String?            @map("check_in_code")
+  allowSelfCheckIn Boolean            @default(true) @map("allow_self_check_in")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+
+  records          AttendanceRecord[]
+
+  @@index([classId, sessionDate])
+  @@index([sectionId])
+  @@map("attendance_sessions")
+}
+
+model AttendanceRecord {
+  id          String            @id @default(uuid()) @map("record_id")
+  sessionId   String            @map("session_id")
+  session     AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId      String            @map("user_id")
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      AttendanceStatus  @default(ABSENT) @map("status")
+  checkedInAt DateTime?         @map("checked_in_at")
+  notes       String?           @map("notes")
+  verifiedBy  String?           @map("verified_by")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  @@unique([sessionId, userId])
+  @@index([userId])
+  @@index([sessionId, status])
+  @@map("attendance_records")
+}
+

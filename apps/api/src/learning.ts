@@ -66,7 +66,7 @@ const sectionSchema = z.object({
   title,
   description: z.string().max(10000).default(""),
   type: z
-    .enum(["LECTURE", "LAB_PRACTICUM", "SEMINAR", "WORKSHOP", "EXAM"])
+    .enum(["LECTURE", "LAB_PRACTICUM", "SEMINAR", "WORKSHOP", "EXAM", "OTHER"])
     .default("LECTURE"),
   isVisible: z.boolean().default(false),
   startDate: date,
@@ -403,10 +403,17 @@ export function registerLearning(app: Express) {
     ensure(u.role !== "STUDENT", 403, "WRITE_ACCESS_DENIED");
     const search = String(req.query.q ?? "").slice(0, 100);
     ensure(search.length >= 2, 400, "SEARCH_TOO_SHORT");
+    const scopeFilter =
+      u.role === "SUPER_ADMIN"
+        ? {}
+        : u.departmentScopes.length > 0
+          ? { departmentScopes: { hasSome: u.departmentScopes } }
+          : {};
     res.json(
       await db.user.findMany({
         where: {
           status: "ACTIVE",
+          ...scopeFilter,
           OR: [
             { name: { contains: search, mode: "insensitive" } },
             { identifierValue: { contains: search } },

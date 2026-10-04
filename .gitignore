@@ -16,3 +16,6 @@ deployment/backups/
 apps/qa/public/reports/*
 !apps/qa/public/reports/latest.json
 apps/qa/public/source/
+scratch/
+docs/qa/*.zip
+docs/qa/hasil-qa-mahasiswa/
