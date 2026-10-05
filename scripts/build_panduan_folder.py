@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 """
 Build and synchronize the dedicated 'Panduan' folder at E:\\UVAYA\\Project\\Panduan.
-Contains:
-1. Buku Panduan Penggunaan E-Learning UAY.docx (Word Document with all UI screenshots)
-2. Buku Panduan Penggunaan E-Learning UAY.pdf (Printable PDF with official cover & screenshots)
-3. BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md (Master Markdown)
-4. PANDUAN_OPERASIONAL_PENGGUNA_UAY.md (Operational Markdown)
-5. Sosialisasi dan Panduan Penggunaan E-Learning UAY.pptx (16:9 Presentation Slides)
+Integrates panduan.html content into the complete guide bundle:
+1. BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md (Master Markdown with 33 'Bagaimana Cara...' tutorials)
+2. PANDUAN_OPERASIONAL_PENGGUNA_UAY.md (Operational Markdown)
+3. Buku Panduan Penggunaan E-Learning UAY.docx (Word Document with all 33 screenshots and control tables)
+4. Buku Panduan Penggunaan E-Learning UAY.pdf (Printable PDF with official cover & screenshots)
+5. Sosialisasi dan Panduan Penggunaan E-Learning UAY.pptx (Presentation Slides)
 6. SLIDE-PRESENTASI-SOSIALISASI-ELEARNING-UAY.html (Interactive HTML Slides)
-7. images/ (12 Full HD UI Screenshots + Official UAY Emblem)
+7. images/ (All UI Screenshots + Tutorial screenshots + Official UAY Emblem)
 8. README.md (User-friendly index and file instructions)
 """
 import os
@@ -23,43 +23,33 @@ IMAGES_DIR = DOCS_DIR / "images"
 PROJECT_ROOT = Path(r"E:\UVAYA\Project")
 PANDUAN_DIR = PROJECT_ROOT / "Panduan"
 PANDUAN_IMAGES_DIR = PANDUAN_DIR / "images"
-
 CHROME_PATH = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 
 def setup_directories():
     PANDUAN_DIR.mkdir(parents=True, exist_ok=True)
     PANDUAN_IMAGES_DIR.mkdir(parents=True, exist_ok=True)
-    print(f"Directory ready: {PANDUAN_DIR}")
+    (PANDUAN_IMAGES_DIR / "tutorial").mkdir(parents=True, exist_ok=True)
+    (DOCS_DIR / "images" / "tutorial").mkdir(parents=True, exist_ok=True)
+    print(f"Directories verified: {PANDUAN_DIR}")
 
-def copy_images():
-    print("Copying screenshots and official logo to Panduan/images...")
-    for img in IMAGES_DIR.glob("*.*"):
-        shutil.copy2(img, PANDUAN_IMAGES_DIR / img.name)
-    print(f"Copied {len(list(PANDUAN_IMAGES_DIR.glob('*.*')))} image files.")
+def sync_images():
+    print("Syncing screenshots and tutorial images...")
+    # Sync tutorial images from Panduan/images/tutorial to docs/images/tutorial if missing
+    src_tut = PANDUAN_IMAGES_DIR / "tutorial"
+    dst_tut = DOCS_DIR / "images" / "tutorial"
+    if src_tut.exists():
+        for img in src_tut.glob("*.*"):
+            shutil.copy2(img, dst_tut / img.name)
+    print(f"Verified {len(list(dst_tut.glob('*.*')))} tutorial images in {dst_tut}")
 
-def copy_documents():
-    print("Copying DOCX, PPTX, HTML, and MD guides...")
-    # Markdown
-    shutil.copy2(DOCS_DIR / "BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md", PANDUAN_DIR / "BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md")
-    shutil.copy2(DOCS_DIR / "PANDUAN_OPERASIONAL_PENGGUNA_UAY.md", PANDUAN_DIR / "PANDUAN_OPERASIONAL_PENGGUNA_UAY.md")
-    
-    # DOCX
-    docx_src = DOCS_DIR / "Buku Panduan Penggunaan E-Learning UAY.docx"
-    if docx_src.exists():
-        shutil.copy2(docx_src, PANDUAN_DIR / "Buku Panduan Penggunaan E-Learning UAY.docx")
-        shutil.copy2(docx_src, PROJECT_ROOT / "Buku Panduan Penggunaan E-Learning UAY.docx")
+def run_markdown_and_docx_generators():
+    print("Executing integrate_panduan_html.py...")
+    cmd1 = 'python "scripts/integrate_panduan_html.py"'
+    subprocess.run(cmd1, cwd=str(ROOT), shell=True, check=True)
 
-    # PPTX
-    pptx_src = DOCS_DIR / "Sosialisasi dan Panduan Penggunaan E-Learning UAY.pptx"
-    if pptx_src.exists():
-        shutil.copy2(pptx_src, PANDUAN_DIR / "Sosialisasi dan Panduan Penggunaan E-Learning UAY.pptx")
-        shutil.copy2(pptx_src, PROJECT_ROOT / "Sosialisasi dan Panduan Penggunaan E-Learning UAY.pptx")
-
-    # HTML Slides
-    html_src = DOCS_DIR / "SLIDE-PRESENTASI-SOSIALISASI-ELEARNING-UAY.html"
-    if html_src.exists():
-        shutil.copy2(html_src, PANDUAN_DIR / "SLIDE-PRESENTASI-SOSIALISASI-ELEARNING-UAY.html")
-        shutil.copy2(html_src, PROJECT_ROOT / "SLIDE-PRESENTASI-SOSIALISASI-ELEARNING-UAY.html")
+    print("Executing generate_guide_docx.py...")
+    cmd2 = 'python "scripts/generate_guide_docx.py"'
+    subprocess.run(cmd2, cwd=str(ROOT), shell=True, check=True)
 
 def generate_pdf_guide():
     print("Generating printable PDF guide via Chrome headless...")
@@ -68,7 +58,6 @@ def generate_pdf_guide():
         md_text = f.read()
 
     # Convert Markdown to a clean, styled HTML for PDF printing
-    # Basic conversion rules
     html_body = []
     lines = md_text.splitlines()
     in_table = False
@@ -92,13 +81,17 @@ def generate_pdf_guide():
         
         table_html = ['<div class="table-container"><table><thead><tr>']
         for c in cleaned[0]:
-            table_html.append(f'<th>{c.replace("**", "<strong>").replace("**", "</strong>")}</th>')
+            c_clean = c.replace("**", "<strong>").replace("**", "</strong>")
+            table_html.append(f'<th>{c_clean}</th>')
         table_html.append('</tr></thead><tbody>')
         for row in cleaned[1:]:
             table_html.append('<tr>')
-            for cell in row:
+            for idx, cell in enumerate(row):
                 c_clean = cell.replace("**", "<strong>").replace("**", "</strong>")
-                table_html.append(f'<td>{c_clean}</td>')
+                if idx == 0:
+                    table_html.append(f'<td><strong>{c_clean}</strong></td>')
+                else:
+                    table_html.append(f'<td>{c_clean}</td>')
             table_html.append('</tr>')
         table_html.append('</tbody></table></div>')
         html_body.append('\n'.join(table_html))
@@ -111,10 +104,13 @@ def generate_pdf_guide():
         if s.startswith("# BUKU PANDUAN PENGGUNAAN RESMI"):
             skip_title = False
             continue
-        if skip_title or s.startswith("**Pedoman Praktis") or s.startswith("*Edisi Ramah"):
+        if skip_title or s.startswith("**Pedoman Lengkap") or s.startswith("*Edisi Komprehensif"):
             continue
         if s == "---":
             html_body.append('<hr class="divider" />')
+            continue
+
+        if s.startswith("<a id=") or s.startswith("</a>"):
             continue
 
         if s.startswith("|") and s.endswith("|"):
@@ -138,7 +134,10 @@ def generate_pdf_guide():
             continue
 
         # Headings
-        if s.startswith("## "):
+        if s.startswith("# "):
+            title = s[2:]
+            html_body.append(f'<h1 class="part-title">{title}</h1>')
+        elif s.startswith("## "):
             title = s[3:]
             html_body.append(f'<h2 class="h1-title">{title}</h2>')
         elif s.startswith("### "):
@@ -152,10 +151,11 @@ def generate_pdf_guide():
             html_body.append(f'<div class="callout">{callout}</div>')
         elif s.startswith("- ") or s.startswith("* "):
             item = s[2:].replace("**", "<strong>").replace("**", "</strong>")
+            item = re.sub(r'\[(.*?)\]\((.*?)\)', r'<a href="\2">\1</a>', item)
             html_body.append(f'<li class="list-item">{item}</li>')
         elif len(s) > 2 and s[0].isdigit() and s[1:3] in (". ", ") "):
             num_item = s[3:].replace("**", "<strong>").replace("**", "</strong>")
-            html_body.append(f'<li class="num-item" value="{s[0]}">{num_item}</li>')
+            html_body.append(f'<div class="step-item"><span class="step-num">{s[:2]}</span><span>{num_item}</span></div>')
         elif s:
             p_text = s.replace("**", "<strong>").replace("**", "</strong>")
             p_text = re.sub(r'\[(.*?)\]\((.*?)\)', r'<a href="\2">\1</a>', p_text)
@@ -172,7 +172,7 @@ def generate_pdf_guide():
   <style>
     @page {{
       size: A4;
-      margin: 20mm 18mm 20mm 18mm;
+      margin: 18mm 16mm 18mm 16mm;
       @bottom-right {{
         content: counter(page);
       }}
@@ -182,14 +182,14 @@ def generate_pdf_guide():
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
       color: #1e293b;
       line-height: 1.6;
-      font-size: 11pt;
+      font-size: 10.5pt;
       margin: 0;
       padding: 0;
       background: #ffffff;
     }}
     .cover {{
       text-align: center;
-      padding: 60px 20px 40px;
+      padding: 50px 20px 40px;
       page-break-after: always;
       display: flex;
       flex-direction: column;
@@ -202,123 +202,144 @@ def generate_pdf_guide():
       font-weight: 800;
       color: #166534;
       letter-spacing: 0.5px;
-      margin-bottom: 30px;
+      margin-bottom: 25px;
     }}
     .cover-logo {{
       width: 140px;
       height: 140px;
-      margin: 20px auto 30px;
+      margin: 15px auto 25px;
     }}
     .main-title {{
-      font-size: 24pt;
+      font-size: 22pt;
       font-weight: 900;
       color: #166534;
       line-height: 1.25;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
     }}
     .sub-title {{
-      font-size: 13pt;
+      font-size: 12pt;
       color: #0f172a;
       max-width: 650px;
-      margin: 0 auto 40px;
+      margin: 0 auto 35px;
       line-height: 1.4;
     }}
     .meta-box {{
-      font-size: 10pt;
+      font-size: 9.5pt;
       color: #64748b;
       border-top: 1px solid #cbd5e1;
-      padding-top: 20px;
+      padding-top: 18px;
       max-width: 500px;
       margin: 0 auto;
     }}
+    .part-title {{
+      font-size: 17pt;
+      color: #166534;
+      background: #f0fdf4;
+      border-left: 6px solid #166534;
+      padding: 10px 14px;
+      margin-top: 36px;
+      margin-bottom: 18px;
+      page-break-after: avoid;
+    }}
     .h1-title {{
-      font-size: 16pt;
+      font-size: 14pt;
       color: #166534;
       border-bottom: 2px solid #166534;
-      padding-bottom: 6px;
-      margin-top: 28px;
-      margin-bottom: 14px;
+      padding-bottom: 4px;
+      margin-top: 24px;
+      margin-bottom: 12px;
       page-break-after: avoid;
     }}
     .h2-title {{
-      font-size: 13pt;
+      font-size: 12pt;
       color: #15803d;
-      margin-top: 20px;
+      margin-top: 16px;
       margin-bottom: 8px;
       page-break-after: avoid;
     }}
     .h3-title {{
-      font-size: 11.5pt;
+      font-size: 11pt;
       color: #0f172a;
-      margin-top: 14px;
+      margin-top: 12px;
       margin-bottom: 6px;
       page-break-after: avoid;
     }}
     .para {{
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       text-align: justify;
     }}
-    .list-item, .num-item {{
-      margin-left: 24px;
-      margin-bottom: 6px;
+    .list-item {{
+      margin-left: 20px;
+      margin-bottom: 5px;
       text-align: justify;
+    }}
+    .step-item {{
+      display: flex;
+      gap: 10px;
+      margin-bottom: 8px;
+      text-align: justify;
+    }}
+    .step-num {{
+      font-weight: 700;
+      color: #166534;
+      flex: none;
     }}
     .divider {{
       border: none;
       border-top: 1px solid #e2e8f0;
-      margin: 24px 0;
+      margin: 20px 0;
     }}
     .callout {{
-      background: #fefce8;
-      border-left: 4px solid #ca8a04;
-      padding: 12px 16px;
-      font-size: 10pt;
-      color: #854d0e;
-      margin: 14px 0;
+      background: #f0fdf4;
+      border-left: 4px solid #166534;
+      padding: 10px 14px;
+      font-size: 9.5pt;
+      color: #166534;
+      margin: 12px 0;
       border-radius: 4px;
       page-break-inside: avoid;
     }}
     .img-container {{
       text-align: center;
-      margin: 18px 0 6px 0;
+      margin: 14px 0 6px 0;
       page-break-inside: avoid;
     }}
     .img-container img {{
       max-width: 95%;
       height: auto;
-      border-radius: 8px;
+      border-radius: 6px;
       border: 1px solid #cbd5e1;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08);
     }}
     .caption {{
       text-align: center;
-      font-size: 9pt;
+      font-size: 8.5pt;
       font-style: italic;
       color: #64748b;
-      margin-bottom: 18px;
+      margin-bottom: 14px;
       page-break-before: avoid;
     }}
     .table-container {{
-      margin: 16px 0;
+      margin: 14px 0;
       overflow-x: auto;
       page-break-inside: avoid;
     }}
     table {{
       width: 100%;
       border-collapse: collapse;
-      font-size: 9.5pt;
-      margin-bottom: 10px;
+      font-size: 9pt;
+      margin-bottom: 8px;
     }}
     th {{
       background: #166534;
       color: white;
-      padding: 8px 10px;
+      padding: 7px 9px;
       text-align: left;
       font-weight: 700;
       border: 1px solid #166534;
     }}
     td {{
-      padding: 7px 10px;
+      padding: 6px 9px;
       border: 1px solid #e2e8f0;
       color: #1e293b;
     }}
@@ -332,9 +353,9 @@ def generate_pdf_guide():
     <div class="inst-title">UNIVERSITAS ACHMAD YANI (UAY)<br />LEMBAGA PENGEMBANGAN TEKNOLOGI INFORMASI & PEMBELAJARAN</div>
     <img class="cover-logo" src="images/uay-logo.png" alt="Logo UAY" />
     <h1 class="main-title">BUKU PANDUAN PENGGUNAAN RESMI<br />E-LEARNING UAY</h1>
-    <div class="sub-title">Pedoman Operasional Praktis Sistem Pembelajaran Digital Kampus Berbasis Peran<br /><strong>(Dosen Pengampu · Mahasiswa · Admin Program Studi · Pimpinan)</strong></div>
+    <div class="sub-title">Pedoman Operasional Praktis Pembelajaran Digital Berbasis Pertanyaan Tutorial<br /><strong>(Bagaimana Cara: Dosen Pengampu · Mahasiswa · Admin Program Studi · Pimpinan)</strong></div>
     <div class="meta-box">
-      <strong>Edisi Ramah Pengguna Non-Teknis · Terbit: Oktober 2026</strong><br />
+      <strong>Edisi Komprehensif Ramah Pengguna Non-Teknis · Terbit: Oktober 2026</strong><br />
       Alamat Portal Resmi: <strong>https://e-learning.uay.ac.id</strong><br />
       Banjarmasin, Kalimantan Selatan
     </div>
@@ -354,13 +375,14 @@ def generate_pdf_guide():
     cmd = f'"{CHROME_PATH}" --headless --disable-gpu --print-to-pdf="{out_pdf}" --print-to-pdf-no-header "file:///{str(temp_html).replace(chr(92), "/")}"'
     subprocess.run(cmd, shell=True, check=True)
     
-    # Also copy to root Project
+    # Also copy to root Project and docs
     shutil.copy2(out_pdf, PROJECT_ROOT / "Buku Panduan Penggunaan E-Learning UAY.pdf")
+    shutil.copy2(out_pdf, DOCS_DIR / "Buku Panduan Penggunaan E-Learning UAY.pdf")
     
     # Clean temp html
     if temp_html.exists():
         temp_html.unlink()
-    print(f"Generated PDF successfully: {out_pdf} and copied to {PROJECT_ROOT}")
+    print(f"Generated PDF successfully: {out_pdf} and copied to {PROJECT_ROOT} & {DOCS_DIR}")
 
 def create_readme():
     print("Writing Panduan/README.md...")
@@ -369,7 +391,7 @@ def create_readme():
 **Tahun Akademik:** 2026/2027  
 **Penerbit:** Pusat Data, Informasi, dan Pembelajaran Digital UAY Banjarmasin  
 
-Folder ini memuat seluruh materi sosialisasi dan buku panduan resmi penggunaan sistem E-Learning UAY yang telah disesuaikan khusus untuk **pengguna non-teknis** (Dosen, Mahasiswa, Staf Administrasi Tata Usaha, dan Pimpinan Universitas). Setiap langkah dilengkapi **tangkapan layar antarmuka asli sistem**.
+Folder ini memuat seluruh materi panduan resmi penggunaan sistem E-Learning UAY yang telah disesuaikan khusus untuk **pengguna non-teknis** (Dosen, Mahasiswa, Staf Administrasi Tata Usaha, dan Pimpinan Universitas). Setiap topik disajikan dalam bentuk **pertanyaan tutorial praktis (*\"Bagaimana Cara...?\"*)** dan dilengkapi **tangkapan layar antarmuka asli sistem dengan penanda visual**.
 
 ---
 
@@ -378,36 +400,59 @@ Folder ini memuat seluruh materi sosialisasi dan buku panduan resmi penggunaan s
 | Nama Berkas | Format | Peruntukan & Cara Membuka |
 |:---|:---:|:---|
 | **[Buku Panduan Penggunaan E-Learning UAY.pdf](Buku%20Panduan%20Penggunaan%20E-Learning%20UAY.pdf)** | **PDF (Dokumen Resmi)** | Buku panduan lengkap dengan tata letak siap cetak / siap dibaca di ponsel dan laptop tanpa aplikasi Microsoft Office. |
-| **[Buku Panduan Penggunaan E-Learning UAY.docx](Buku%20Panduan%20Penggunaan%20E-Learning%20UAY.docx)** | **Word (DOCX)** | Dokumen resmi lengkap dengan seluruh tangkapan layar antarmuka dan logo resmi UAY. Dapat diedit di Microsoft Word. |
-| **[Sosialisasi dan Panduan Penggunaan E-Learning UAY.pptx](Sosialisasi%20dan%20Panduan%20Penggunaan%20E-Learning%20UAY.pptx)** | **PowerPoint (PPTX)** | 24 Salindia (Slide) presentasi resmi rasio 16:9 untuk pemaparan di layar proyektor saat sesi sosialisasi dosen dan mahasiswa baru. |
-| **[SLIDE-PRESENTASI-SOSIALISASI-ELEARNING-UAY.html](SLIDE-PRESENTASI-SOSIALISASI-ELEARNING-UAY.html)** | **Web Interaktif (HTML)** | Salindia presentasi interaktif berbasis web. Cukup klik ganda untuk membuka di Google Chrome. Dilengkapi simulator presensi proyektor, kalkulator nilai mutu, dan pengukur batas hadir 75%. |
-| **[BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md](BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md)** | **Markdown (MD)** | Versi teks terstruktur lengkap untuk portal web atau dokumentasi digital kampus. |
+| **[Buku Panduan Penggunaan E-Learning UAY.docx](Buku%20Panduan%20Penggunaan%20E-Learning%20UAY.docx)** | **Word (DOCX)** | Dokumen resmi lengkap dengan seluruh tangkapan layar antarmuka, penanda visual, dan tabel kontrol. Dapat diedit di Microsoft Word. |
+| **[BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md](BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md)** | **Markdown (MD)** | Versi teks terstruktur lengkap 33 tutorial untuk portal web atau dokumentasi digital kampus. |
 | **[PANDUAN_OPERASIONAL_PENGGUNA_UAY.md](PANDUAN_OPERASIONAL_PENGGUNA_UAY.md)** | **Markdown (MD)** | Ringkasan operasional langkah demi langkah bagi dosen dan mahasiswa. |
-| **[images/](images/)** | **Folder Gambar HD** | Memuat 12 tangkapan layar beresolusi tinggi yang digunakan di seluruh buku panduan serta lambang resmi UAY. |
+| **[Sosialisasi dan Panduan Penggunaan E-Learning UAY.pptx](Sosialisasi%20dan%20Panduan%20Penggunaan%20E-Learning%20UAY.pptx)** | **PowerPoint (PPTX)** | 24 Salindia (Slide) presentasi resmi rasio 16:9 untuk pemaparan di layar proyektor saat sesi sosialisasi. |
+| **[SLIDE-PRESENTASI-SOSIALISASI-ELEARNING-UAY.html](SLIDE-PRESENTASI-SOSIALISASI-ELEARNING-UAY.html)** | **Web Interaktif (HTML)** | Salindia presentasi interaktif berbasis web. Cukup klik ganda untuk membuka di Google Chrome. |
+| **[images/](images/)** | **Folder Gambar HD** | Menyimpan seluruh tangkapan layar beresolusi tinggi (termasuk folder `images/tutorial/` yang berisi 33 tangkapan layar tutorial). |
 
 ---
 
-## RINGKASAN CARA MENGGUNAKAN UNTUK PENGGUNA
+## INDEKS 33 TUTORIAL "BAGAIMANA CARA...?"
 
-### 1. Untuk Dosen Pengampu di Kelas
-1. Buka **https://e-learning.uay.ac.id** $\rightarrow$ Klik **"Masuk dengan Akun Kampus"**.
-2. Masuk ke mata kuliah Anda $\rightarrow$ Buka tab **"Presensi"** $\rightarrow$ Klik **"+ Buka Presensi Baru"**.
-3. Tampilkan ke layar proyektor. Mahasiswa akan melihat **6 digit kode besar** dan **Barcode QR**.
-4. Jika ada mahasiswa yang terkendala ponsel, buka tab **"Lembar Presensi (Roster)"** lalu ubah statusnya menjadi **Hadir** secara manual.
-5. Untuk menilai tugas mahasiswa, klik nama tugas $\rightarrow$ buka tab **Pengumpulan** $\rightarrow$ masukkan nilai angka dan catatan masukan.
-6. Pada akhir semester, buka tab **Buku Nilai** $\rightarrow$ klik **"Ekspor Nilai Akhir ke Excel"**.
+### 1. Semua Pengguna (Dasar)
+- **[U1]** Bagaimana Cara Masuk ke E-Learning UAY Menggunakan Akun Kampus?
+- **[U2]** Bagaimana Cara Menavigasi Menu dan Memulihkan Draf yang Belum Tersimpan?
+- **[U3]** Bagaimana Cara Memeriksa Profil Akun, Notifikasi, Bantuan, dan Keluar dari Sistem?
 
 ### 2. Untuk Mahasiswa
-1. Buka **https://e-learning.uay.ac.id** di ponsel/laptop $\rightarrow$ Masuk dengan NIM Anda.
-2. Saat jam kuliah, buka mata kuliah $\rightarrow$ Klik tombol biru **"Isi Presensi Mandiri"**.
-3. Ketikkan 6 digit kode yang tampil di layar proyektor dosen $\rightarrow$ Klik **"Kirim Presensi"**.
-4. Kumpulkan tugas kuliah dengan mengunggah berkas PDF pada menu tugas yang ditentukan.
-5. Pantau lencana kehadiran Anda: pastikan selalu berada di atas **75%** agar berhak mengikuti UAS.
+- **[M1]** Bagaimana Cara Mahasiswa Menemukan Mata Kuliah dan Bergabung ke Kelas Perkuliahan?
+- **[M2]** Bagaimana Cara Mahasiswa Mengisi Presensi Kuliah (Satu Klik atau Kode PIN)?
+- **[M3]** Bagaimana Cara Mempelajari Materi Teks, Membaca Modul PDF, dan Menonton Video Kuliah?
+- **[M4]** Bagaimana Cara Mengumpulkan Berkas Tugas Kuliah dan Memeriksa Riwayat Versi Jawaban?
+- **[M5]** Bagaimana Cara Mengerjakan Kuis dan Ujian Daring Sampai Berhasil Terkumpul?
+- **[M6]** Bagaimana Cara Memeriksa Nilai Akhir, Masukan Dosen, dan Rekap Kehadiran Kuliah?
 
-### 3. Untuk Admin Program Studi
-1. Buka menu **"Kelas"** $\rightarrow$ Klik **"+ Buka Kelas Perkuliahan Baru"**.
-2. Beri nama rombel kelas dan pilih semester aktif.
-3. Buka tab **"Peserta & Pengampu"** untuk menugaskan dosen (termasuk dosen luar prodi) dan memasukkan mahasiswa sesuai KRS.
+### 3. Untuk Dosen Pengampu
+- **[D1]** Bagaimana Cara Dosen Menyiapkan Kelas dan Mengatur Pertemuan Kuliah (Section)?
+- **[D2]** Bagaimana Cara Dosen Mengunggah Modul Ajar PDF dan Bahan Praktikum ke Dalam Kelas?
+- **[D3]** Bagaimana Cara Dosen Mengatur Video Pembelajaran dan Tautan Materi Kuliah?
+- **[D4]** Bagaimana Cara Dosen Menyusun Artikel Teks dan Mengimpor Bahan Bacaan ke Kelas?
+- **[D5]** Bagaimana Cara Dosen Membuat Tugas dengan Tenggat Waktu dan Batas Toleransi?
+- **[D6]** Bagaimana Cara Dosen Memeriksa Berkas, Menilai Jawaban, dan Menerbitkan Nilai Tugas?
+- **[D7]** Bagaimana Cara Dosen Membuat Kuis Daring dan Mengatur Batas Waktu serta Publikasi Hasil?
+- **[D8]** Bagaimana Cara Dosen Menyusun Kunci Jawaban Soal Objektif (Pilihan Ganda, Benar-Salah, Jamak)?
+- **[D9]** Bagaimana Cara Dosen Menyusun Soal Menjodohkan, Mengurutkan, Uraian (Esai), dan Unggahan Berkas?
+- **[D10]** Bagaimana Cara Dosen Menilai Jawaban Kuis Mahasiswa dan Mengelola Bank Soal?
+- **[D11]** Bagaimana Cara Dosen Membuka Sesi Presensi Kuliah dengan Jadwal atau Kode PIN 6-Digit?
+- **[D12]** Bagaimana Cara Dosen Mengubah Jadwal, Menutup, dan Memperpanjang Waktu Sesi Presensi?
+- **[D13]** Bagaimana Cara Dosen Mengoreksi Kehadiran Manual di Lembar Roster dan Mengekspor Rekap?
+- **[D14]** Bagaimana Cara Dosen Mengatur Bobot Penilaian dan Sumber Nilai Kategori di Buku Nilai?
+- **[D15]** Bagaimana Cara Dosen Meninjau, Menghitung Nilai Otomatis, dan Mempublikasikan Nilai Akhir?
+- **[D16]** Bagaimana Cara Dosen Mengelola Peserta Kelas, Menulis Pengumuman, dan Menggandakan (Kloning) Kelas?
+
+### 4. Untuk Admin Program Studi
+- **[A1]** Bagaimana Cara Admin Program Studi Memeriksa Cakupan dan Wilayah Kelola Prodi?
+- **[A2]** Bagaimana Cara Admin Program Studi Menambahkan Mata Kuliah Kurikulum dan Membuka Rombel Baru?
+- **[A3]** Bagaimana Cara Admin Program Studi Mendaftarkan Dosen Pengampu dan Memasukkan Mahasiswa?
+- **[A4]** Bagaimana Cara Admin Program Studi Mengimpor Data Peserta, Nilai, atau Bank Soal dari Excel?
+- **[A5]** Bagaimana Cara Admin Program Studi Memantau Aktivitas Perkuliahan dan Mengarsipkan Kelas Selesai?
+
+### 5. Untuk Super Administrator & Pimpinan
+- **[S1]** Bagaimana Cara Super Admin Meninjau Administrasi Perkuliahan Seluruh Fakultas?
+- **[S2]** Bagaimana Cara Super Admin Menetapkan Periode Tahun Ajaran Aktif dan Mengatur Banner Semester?
+- **[S3]** Bagaimana Cara Super Admin Menetapkan Kebijakan Skala Huruf Mutu dan Ambang Batas Hadir 75%?
 
 ---
 
@@ -424,8 +469,8 @@ Folder ini memuat seluruh materi sosialisasi dan buku panduan resmi penggunaan s
 
 def build_all():
     setup_directories()
-    copy_images()
-    copy_documents()
+    sync_images()
+    run_markdown_and_docx_generators()
     generate_pdf_guide()
     create_readme()
     print("\nAll guide assets assembled and verified in E:\\UVAYA\\Project\\Panduan!")

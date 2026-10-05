@@ -679,6 +679,7 @@ export function QuizPage({
     [grading, setGrading] = useState<any>(null),
     [byQuestion, setByQuestion] = useState("");
   const quiz = info.data;
+  const pagination = usePagination(quiz?.attempts ?? [], 15);
   useEffect(() => {
     if (quiz?.path && location.pathname.startsWith("/quizzes/"))
       navigate(quiz.path, true);
@@ -686,7 +687,6 @@ export function QuizPage({
   if (info.loading && !quiz) return <Loading />;
   if (info.error) return <Notice error={info.error} />;
   if (!quiz) return null;
-  const pagination = usePagination(quiz.attempts, 15);
   const current =
     active ??
     quiz.attempts.find(
@@ -1799,6 +1799,7 @@ export function AssignmentPage({
     [link, setLink] = useState(""),
     [receipt, setReceipt] = useState<any>(null);
   const a = info.data;
+  const pagination = usePagination(a?.submissions ?? [], 10);
   useEffect(() => {
     if (a?.path && location.pathname.startsWith("/assignments/"))
       navigate(a.path, true);
@@ -1806,7 +1807,6 @@ export function AssignmentPage({
   if (info.loading && !a) return <Loading />;
   if (info.error) return <Notice error={info.error} />;
   if (!a) return null;
-  const pagination = usePagination(a.submissions, 10);
   return (
     <DraftRouteContext.Provider value={`#/assignments/${id}`}>
       <a className="back-link" href={a.classPath ?? backHref}>

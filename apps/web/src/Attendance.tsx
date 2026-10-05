@@ -1524,13 +1524,13 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
     sessions: any[];
     recap: any[];
   }>(`/course-classes/${classId}/attendance/recap`);
+  const students = recapApi.data?.recap ?? [];
+  const pagination = usePagination(students, 25);
 
   if (recapApi.loading && !recapApi.data) return <Loading />;
   if (recapApi.error) return <Notice error={recapApi.error} />;
 
   const data = recapApi.data!;
-  const students = data.recap || [];
-  const pagination = usePagination(students, 25);
 
   const exportCsv = () => {
     let csv = "NIM,Nama Mahasiswa,Email,Total Sesi,Hadir,Izin,Sakit,Alpa,Terlambat,Persentase,Status Ujian\n";

@@ -17,12 +17,14 @@ from docx.oxml.ns import qn
 ROOT = Path(r"E:\UVAYA\Project\E - Learning UAY")
 DOCS_DIR = ROOT / "docs"
 PROJECT_ROOT = Path(r"E:\UVAYA\Project")
+PANDUAN_DIR = PROJECT_ROOT / "Panduan"
 OUT_DOCX = DOCS_DIR / "Buku Panduan Penggunaan E-Learning UAY.docx"
 OUT_ROOT_DOCX = PROJECT_ROOT / "Buku Panduan Penggunaan E-Learning UAY.docx"
 
 def sanitize_xml(s):
     if not isinstance(s, str):
         return ""
+    s = s.replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '"')
     return re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', s)
 
 def set_cell_background(cell, fill_hex):
@@ -197,11 +199,20 @@ def create_guide_docx():
         img_match = re.match(r'!\[(.*?)\]\((.*?)\)', stripped)
         if img_match:
             img_rel = img_match.group(2).strip()
-            img_file = DOCS_DIR / img_rel
-            if not img_file.exists():
-                # Try images/ direct
-                img_file = DOCS_DIR / "images" / Path(img_rel).name
-            if img_file.exists():
+            candidates = [
+                DOCS_DIR / img_rel,
+                PANDUAN_DIR / img_rel,
+                DOCS_DIR / "images" / "tutorial" / Path(img_rel).name,
+                PANDUAN_DIR / "images" / "tutorial" / Path(img_rel).name,
+                DOCS_DIR / "images" / Path(img_rel).name,
+                PANDUAN_DIR / "images" / Path(img_rel).name
+            ]
+            img_file = None
+            for cand in candidates:
+                if cand.exists():
+                    img_file = cand
+                    break
+            if img_file and img_file.exists():
                 p_img = doc.add_paragraph()
                 p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 p_img.paragraph_format.space_before = Pt(8)
@@ -222,13 +233,25 @@ def create_guide_docx():
             r_cap.font.color.rgb = C_MUTED
             continue
 
+        # Skip anchor tags
+        if stripped.startswith("<a id=") or stripped.startswith("</a>"):
+            continue
+
         # Headings
-        if stripped.startswith("## "):
+        if stripped.startswith("# "):
+            h = doc.add_heading(level=1)
+            r = h.add_run(sanitize_xml(stripped[2:]))
+            r.font.name = "Arial"
+            r.font.bold = True
+            r.font.color.rgb = C_PRIMARY
+            h.paragraph_format.space_before = Pt(22)
+            h.paragraph_format.space_after = Pt(8)
+        elif stripped.startswith("## "):
             h = doc.add_heading(level=1)
             r = h.add_run(sanitize_xml(stripped[3:]))
             r.font.name = "Arial"
             r.font.bold = True
-            r.font.color.rgb = C_PRIMARY
+            r.font.color.rgb = RGBColor(21, 128, 61)
             h.paragraph_format.space_before = Pt(16)
             h.paragraph_format.space_after = Pt(6)
         elif stripped.startswith("### "):
@@ -236,7 +259,7 @@ def create_guide_docx():
             r = h.add_run(sanitize_xml(stripped[4:]))
             r.font.name = "Arial"
             r.font.bold = True
-            r.font.color.rgb = RGBColor(21, 128, 61)
+            r.font.color.rgb = C_SECONDARY
             h.paragraph_format.space_before = Pt(12)
             h.paragraph_format.space_after = Pt(4)
         elif stripped.startswith("#### "):
@@ -282,7 +305,8 @@ def create_guide_docx():
 
     doc.save(str(OUT_DOCX))
     shutil.copy2(OUT_DOCX, OUT_ROOT_DOCX)
-    print(f"Formatted DOCX generated: {OUT_DOCX} and copied to {OUT_ROOT_DOCX}")
+    shutil.copy2(OUT_DOCX, PANDUAN_DIR / "Buku Panduan Penggunaan E-Learning UAY.docx")
+    print(f"Formatted DOCX generated: {OUT_DOCX} and copied to {OUT_ROOT_DOCX} & {PANDUAN_DIR}")
 
 if __name__ == "__main__":
     create_guide_docx()
