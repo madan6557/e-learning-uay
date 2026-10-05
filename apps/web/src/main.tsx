@@ -63,7 +63,13 @@ function Brand({
   return (
     <a className="brand" href={home} aria-label="UAY E-Learning beranda">
       <span className="brand-mark" aria-hidden="true">
-        UAY
+        <img
+          src="/uay-logo.png"
+          alt="Logo UAY"
+          className="brand-logo-img"
+          width="26"
+          height="26"
+        />
       </span>
       {!collapsed && <span className="brand-name">E-Learning UAY</span>}
     </a>
@@ -431,7 +437,13 @@ function AuthShell({
               href="/dashboard"
               aria-label="UAY E-Learning beranda"
             >
-              UAY
+              <img
+                src="/uay-logo.png"
+                alt="Logo UAY"
+                className="brand-logo-img"
+                width="24"
+                height="24"
+              />
             </a>
             <Breadcrumbs
               items={

@@ -81,6 +81,8 @@ jobs:
           ssh \
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
+            -o ServerAliveInterval=15 \
+            -o ServerAliveCountMax=4 \
             uay-deploy@${{ secrets.UAY_VPS_HOST }} \
             'mkdir -p /opt/uay/e-learning/application/uploads'
 
@@ -96,7 +98,10 @@ jobs:
             --exclude='packages/*/node_modules/' \
             --exclude='uploads/' \
             --exclude='release/' \
-            -e "ssh -o BatchMode=yes -o StrictHostKeyChecking=yes" \
+            --exclude='docs/' \
+            --exclude='tmp/' \
+            --exclude='scratch/' \
+            -e "ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=15 -o ServerAliveCountMax=4" \
             ./ \
             uay-deploy@${{ secrets.UAY_VPS_HOST }}:/opt/uay/e-learning/application/
 
@@ -105,6 +110,8 @@ jobs:
           ssh \
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
+            -o ServerAliveInterval=15 \
+            -o ServerAliveCountMax=4 \
             uay-deploy@${{ secrets.UAY_VPS_HOST }} \
             'cd /opt/uay/e-learning/application && npm ci'
 
@@ -113,6 +120,8 @@ jobs:
           ssh \
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
+            -o ServerAliveInterval=15 \
+            -o ServerAliveCountMax=4 \
             uay-deploy@${{ secrets.UAY_VPS_HOST }} \
             '
             cd /opt/uay/e-learning/application
@@ -133,6 +142,8 @@ jobs:
           ssh \
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
+            -o ServerAliveInterval=15 \
+            -o ServerAliveCountMax=4 \
             uay-deploy@${{ secrets.UAY_VPS_HOST }} \
             'cd /opt/uay/e-learning/application && npm run build'
 
@@ -141,6 +152,8 @@ jobs:
           ssh \
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
+            -o ServerAliveInterval=15 \
+            -o ServerAliveCountMax=4 \
             uay-deploy@${{ secrets.UAY_VPS_HOST }} \
             'sudo /usr/bin/systemctl restart uay-elearning-api.service'
 
@@ -149,6 +162,8 @@ jobs:
           ssh \
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
+            -o ServerAliveInterval=15 \
+            -o ServerAliveCountMax=4 \
             uay-deploy@${{ secrets.UAY_VPS_HOST }} \
             '
             for i in $(seq 1 30); do
@@ -170,6 +185,8 @@ jobs:
           ssh \
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
+            -o ServerAliveInterval=15 \
+            -o ServerAliveCountMax=4 \
             uay-deploy@${{ secrets.UAY_VPS_HOST }} \
             '
             for i in $(seq 1 30); do
