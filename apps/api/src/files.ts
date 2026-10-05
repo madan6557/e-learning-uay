@@ -641,6 +641,12 @@ async function handleBinaryUpload(id: string, req: any, res: any) {
 }
 
 export function registerFiles(app: Express) {
+  app.get("/api/v1/files/health", async (req, res) => {
+    const data = await checkFileService({ requestId: req.context.requestId });
+    res.json({ statusCode: 200, success: true, data,
+      message: data.simulated ? "Local storage simulation is available" : "File service is healthy" });
+  });
+
   app.post("/api/v1/files/upload-ticket", async (req, res) =>
     res.json(
       await mutate(req, async (tx) => {
@@ -1228,9 +1234,5 @@ export function registerFiles(app: Express) {
       message: "Repositories retrieved successfully", timestamp: new Date().toISOString() });
   });
 
-  app.get("/api/v1/files/health", async (req, res) => {
-    const data = await checkFileService({ requestId: req.context.requestId });
-    res.json({ statusCode: 200, success: true, data,
-      message: data.simulated ? "Local storage simulation is available" : "File service is healthy" });
-  });
+
 }
