@@ -776,23 +776,42 @@ export function registerLearning(app: Express) {
   app.get("/api/v1/course-classes/:id/participants", async (req, res) => {
     const cls = await classAccess(db, req.context.user, String(req.params.id));
     ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
-    res.json(
-      await db.enrollment.findMany({
-        where: { classId: cls.id },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              identifierValue: true,
-              email: true,
-              status: true,
-            },
+    const enrollments = await db.enrollment.findMany({
+      where: { classId: cls.id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            identifierValue: true,
+            email: true,
+            status: true,
+            lastLoginAt: true,
+            lastActiveAt: true,
           },
         },
-        orderBy: { enrolledAt: "asc" },
-      }),
-    );
+      },
+      orderBy: { enrolledAt: "asc" },
+    });
+
+    const now = Date.now();
+    const formatted = enrollments.map((e) => {
+      const activeTimestamp = e.user.lastActiveAt ?? e.user.lastLoginAt;
+      const isOnline = activeTimestamp
+        ? now - new Date(activeTimestamp).getTime() <= 5 * 60 * 1000
+        : false;
+
+      return {
+        ...e,
+        user: {
+          ...e.user,
+          lastActiveAt: activeTimestamp ? activeTimestamp.toISOString() : null,
+          isOnline,
+        },
+      };
+    });
+
+    res.json(formatted);
   });
   app.post("/api/v1/course-classes/:id/participants", async (req, res) =>
     res.json(

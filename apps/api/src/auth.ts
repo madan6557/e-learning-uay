@@ -136,6 +136,7 @@ async function syncUser(claims: JWTPayload) {
     // successful sync also re-activates a previously revoked cache row.
     status: "ACTIVE" as const,
     lastLoginAt: new Date(),
+    lastActiveAt: new Date(),
   };
   return transaction(async (tx) => {
     const before = await tx.user.findUnique({ where: { ssoUserId } });
@@ -264,6 +265,13 @@ export function registerAuth(app: Express) {
     const { userId } = z.object({ userId: z.string().uuid() }).parse(req.body);
     const user = await db.user.findUnique({ where: { id: userId } });
     ensure(user && user.status === "ACTIVE", 403, "ACCOUNT_DISABLED");
+    const now = new Date();
+    await db.user
+      .update({
+        where: { id: userId },
+        data: { lastLoginAt: now, lastActiveAt: now },
+      })
+      .catch(() => {});
     await issue(res, {
       userId,
       expires: Date.now() + 900000,
@@ -490,6 +498,18 @@ export async function authenticate(
     ip: req.ip ?? "",
     userAgent: req.get("User-Agent")?.slice(0, 500) ?? "",
   };
+  const activeKey = `active:${user.id}`;
+  cache.get(activeKey).then((recent) => {
+    if (!recent) {
+      cache.set(activeKey, "1", 60).catch(() => {});
+      db.user
+        .update({
+          where: { id: user.id },
+          data: { lastActiveAt: new Date() },
+        })
+        .catch(() => {});
+    }
+  }).catch(() => {});
   _res.setHeader(
     "Server-Timing",
     `auth;dur=${(performance.now() - authStarted).toFixed(1)}`,

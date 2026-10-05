@@ -80,6 +80,7 @@ model User {
   /// SSO `users.status`. DISABLED blocks every request, including live sessions.
   status           UserStatus     @default(ACTIVE) @map("status")
   lastLoginAt      DateTime?      @map("last_login_at")
+  lastActiveAt     DateTime?      @map("last_active_at")
   createdAt        DateTime       @default(now()) @map("created_at")
   updatedAt        DateTime       @updatedAt @map("updated_at")
 

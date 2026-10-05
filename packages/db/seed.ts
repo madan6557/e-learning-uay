@@ -45,11 +45,34 @@ const students = [
   identifierType: 'NIM' as const,
 }));
 
+const nowTime = Date.now();
+const studentActiveOffsetsMs: (number | null)[] = [
+  2 * 60 * 1000,    // Mahasiswa 01: 2 min ago (Online sekarang)
+  15 * 60 * 1000,   // Mahasiswa 02: 15 min ago
+  45 * 60 * 1000,   // Mahasiswa 03: 45 min ago
+  2 * 3600 * 1000,  // Mahasiswa 04: 2 jam yang lalu
+  5 * 3600 * 1000,  // Mahasiswa 05: 5 jam yang lalu
+  22 * 3600 * 1000, // Mahasiswa 06: 22 jam yang lalu
+  28 * 3600 * 1000, // Mahasiswa 07: Kemarin
+  48 * 3600 * 1000, // Mahasiswa 08: 2 hari yang lalu
+  5 * 86400 * 1000, // Mahasiswa 09: 5 hari yang lalu
+  null,             // Mahasiswa 10: Belum pernah aktif
+];
+
 const users = [
-  { id: ids.admin, name: 'Admin UAY', role: 'SUPER_ADMIN' as const, userType: 'ADMIN' as const, identifierType: 'NIP' as const, identifierValue: 'ADM001', status: 'ACTIVE' as const },
-  { id: ids.department, name: 'Admin Prodi Informatika', role: 'DEPARTMENT_ADMIN' as const, userType: 'STAFF' as const, identifierType: 'NIP' as const, identifierValue: 'ADMIF01', status: 'ACTIVE' as const },
-  { id: ids.instructor, name: 'Dosen, M.Kom.', role: 'INSTRUCTOR' as const, userType: 'LECTURER' as const, identifierType: 'NIDN' as const, identifierValue: '1112089001', status: 'ACTIVE' as const },
-  ...students.map(s => ({ ...s, status: 'ACTIVE' as const })),
+  { id: ids.admin, name: 'Admin UAY', role: 'SUPER_ADMIN' as const, userType: 'ADMIN' as const, identifierType: 'NIP' as const, identifierValue: 'ADM001', status: 'ACTIVE' as const, lastLoginAt: new Date(), lastActiveAt: new Date() },
+  { id: ids.department, name: 'Admin Prodi Informatika', role: 'DEPARTMENT_ADMIN' as const, userType: 'STAFF' as const, identifierType: 'NIP' as const, identifierValue: 'ADMIF01', status: 'ACTIVE' as const, lastLoginAt: new Date(nowTime - 10 * 60000), lastActiveAt: new Date(nowTime - 10 * 60000) },
+  { id: ids.instructor, name: 'Dosen, M.Kom.', role: 'INSTRUCTOR' as const, userType: 'LECTURER' as const, identifierType: 'NIDN' as const, identifierValue: '1112089001', status: 'ACTIVE' as const, lastLoginAt: new Date(), lastActiveAt: new Date() },
+  ...students.map((s, idx) => {
+    const offset = studentActiveOffsetsMs[idx];
+    const ts = offset !== null && offset !== undefined ? new Date(nowTime - offset) : null;
+    return {
+      ...s,
+      status: 'ACTIVE' as const,
+      lastLoginAt: ts,
+      lastActiveAt: ts,
+    };
+  }),
 ] as const;
 
 // Clean up any leftover chaos/disabled demo accounts
@@ -76,6 +99,8 @@ for(const user of users){
         identifierValue: user.identifierValue,
         username: user.identifierValue.toLowerCase(),
         status: user.status,
+        lastLoginAt: user.lastLoginAt,
+        lastActiveAt: user.lastActiveAt,
         departmentScopes: user.role === 'DEPARTMENT_ADMIN' ? ['IF'] : [],
       }
     });
@@ -92,6 +117,8 @@ for(const user of users){
         username: user.identifierValue.toLowerCase(),
         status: user.status,
         ssoUserId: user.id,
+        lastLoginAt: user.lastLoginAt,
+        lastActiveAt: user.lastActiveAt,
         departmentScopes: user.role === 'DEPARTMENT_ADMIN' ? ['IF'] : [],
       }
     });

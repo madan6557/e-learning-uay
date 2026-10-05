@@ -969,6 +969,67 @@ export function ClassPage({
     </DraftRouteContext.Provider>
   );
 }
+function formatLastActive(isoString?: string | null, isOnline?: boolean) {
+  if (isOnline) {
+    return (
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+          background: "#ecfdf5",
+          color: "#15803d",
+          border: "1px solid #bbf7d0",
+          fontSize: "0.75rem",
+          fontWeight: 700,
+          padding: "2px 8px",
+          borderRadius: 12,
+        }}
+      >
+        <span
+          style={{
+            width: 7,
+            height: 7,
+            borderRadius: "50%",
+            background: "#22c55e",
+            boxShadow: "0 0 6px #22c55e",
+          }}
+        />
+        Online Sekarang
+      </span>
+    );
+  }
+
+  if (!isoString) {
+    return (
+      <span style={{ fontSize: "0.82rem", color: "var(--muted, #94a3b8)", fontStyle: "italic" }}>
+        Belum pernah aktif
+      </span>
+    );
+  }
+
+  const d = new Date(isoString);
+  const diffSec = Math.floor((Date.now() - d.getTime()) / 1000);
+
+  if (diffSec < 60) return <span style={{ color: "#15803d", fontWeight: 600 }}>Baru saja</span>;
+  if (diffSec < 3600) return <span>{Math.floor(diffSec / 60)} menit yang lalu</span>;
+  if (diffSec < 86400) return <span>{Math.floor(diffSec / 3600)} jam yang lalu</span>;
+  if (diffSec < 172800) {
+    return (
+      <span>
+        Kemarin, {d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })} WIB
+      </span>
+    );
+  }
+
+  return (
+    <span title={d.toLocaleString("id-ID")}>
+      {d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })},{" "}
+      {d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })} WIB
+    </span>
+  );
+}
+
 function Participants({
   classId,
   writable,
@@ -1026,6 +1087,7 @@ function Participants({
                 <th>{t.name}</th>
                 <th>{t.studentNumber}</th>
                 <th>{t.email}</th>
+                <th>Terakhir Online</th>
                 <th>{t.status}</th>
                 <th />
               </tr>
@@ -1036,6 +1098,9 @@ function Participants({
                   <td>{m.user.name}</td>
                   <td>{m.user.identifierValue}</td>
                   <td>{m.user.email}</td>
+                  <td style={{ whiteSpace: "nowrap" }}>
+                    {formatLastActive(m.user.lastActiveAt, m.user.isOnline)}
+                  </td>
                   <td>
                     <Badge value={m.isActive ? "ACTIVE" : "INACTIVE"} />
                   </td>
