@@ -1,616 +1,556 @@
 # -*- coding: utf-8 -*-
 """
 Generator for Master Markdown User Guide of E-Learning Universitas Achmad Yani (UAY).
-Produces comprehensive, authoritative documentation from Super Admin down to Student.
+Produces comprehensive, authoritative, visual, and 100% non-technical user documentation.
+Focuses strictly on 'HOW TO USE' the system with realistic UI captures and clear instructions.
+All technical jargon (Keycloak, JWT, PostgreSQL, Docker, endpoints) is strictly removed.
 """
 from pathlib import Path
+import shutil
 
 ROOT = Path(r"E:\UVAYA\Project\E - Learning UAY")
 DOCS_DIR = ROOT / "docs"
+PROJECT_ROOT = Path(r"E:\UVAYA\Project")
 
 GUIDE_MD_CONTENT = """# BUKU PANDUAN PENGGUNAAN RESMI E-LEARNING UNIVERSITAS ACHMAD YANI (UAY)
-**Pedoman Komprehensif Operasional Sistem Pembelajaran Digital Berbasis Peran**
-*Edisi Terpadu: Versi 5.2 · Terbit: Oktober 2026 · Target: Super Administrator, Admin Program Studi, Dosen Pengampu, & Mahasiswa*
+**Pedoman Praktis Penggunaan Sistem Pembelajaran Digital Kampus Berbasis Peran**
+*Edisi Ramah Pengguna · Terbit: Oktober 2026 · Target Pembaca: Dosen Pengampu, Mahasiswa, Admin Program Studi, & Pimpinan Kampus*
 
 ---
 
-## KATA PENGANTAR & RINGKASAN EKSEKUTIF
+## KATA PENGANTAR
 
-Sistem **E-Learning Universitas Achmad Yani (UAY)** merupakan platform pembelajaran digital resmi institusi yang mengintegrasikan seluruh proses akademik tatap muka maupun daring. Sistem ini dirancang untuk mewujudkan tata kelola akademik yang transparan, akuntabel, dan terstandar di seluruh fakultas dan program studi di lingkungan UAY.
+Sistem **E-Learning Universitas Achmad Yani (UAY)** yang beralamat resmi di **https://e-learning.uay.ac.id** hadir sebagai sarana pembelajaran digital terpadu untuk mempermudah kegiatan perkuliahan, presensi kelas, pembagian materi, pengumpulan tugas, dan rekapitulasi nilai akhir.
 
-Buku panduan ini disusun sebagai rujukan operasional resmi bagi seluruh pemangku kepentingan (*stakeholders*) kampus, mulai dari tingkat pimpinan universitas, administrator program studi, dosen pengampu mata kuliah, hingga mahasiswa. Seluruh alur kerja yang dipaparkan dalam buku panduan ini merujuk langsung pada antarmuka aplikasi terpasang dan aturan akademik universitas terbaru.
-
----
-
-## DAFTAR ISI
-
-1. [BAB 1: PENDAHULUAN & ARSITEKTUR EKOSISTEM DIGITAL UAY](#bab-1-pendahuluan--arsitektur-ekosistem-digital-uay)
-   - 1.1 [Visi & Nilai Utama Sistem](#11-visi--nilai-utama-sistem)
-   - 1.2 [Ekosistem Terpadu: SSO, File-Service, E-Learning, & Dashboard Rektor](#12-ekosistem-terpadu-sso-file-service-e-learning--dashboard-rektor)
-   - 1.3 [Kebutuhan Perangkat & Peramban yang Didukung](#13-kebutuhan-perangkat--peramban-yang-didukung)
-2. [BAB 2: MATRIKS PERAN & HAK AKSES PENGGUNA (ROLE-BASED ACCESS CONTROL)](#bab-2-matriks-peran--hak-akses-pengguna-role-based-access-control)
-   - 2.1 [Klasifikasi Peran Pengguna](#21-klasifikasi-peran-pengguna)
-   - 2.2 [Tabel Matriks Hak Akses Antar-Fitur Lengkap](#22-tabel-matriks-hak-akses-antar-fitur-lengkap)
-3. [BAB 3: ALUR AUTENTIKASI TUNGGAL (SINGLE SIGN-ON / SSO UAY)](#bab-3-alur-autentikasi-tunggal-single-sign-on--sso-uay)
-   - 3.1 [Prinsip Keamanan Zero Local Password](#31-prinsip-keamanan-zero-local-password)
-   - 3.2 [Prosedur Masuk Menggunakan SSO UAY](#32-prosedur-masuk-menggunakan-sso-uay)
-   - 3.3 [Autentikasi Dua Faktor (MFA / 2FA)](#33-autentikasi-dua-faktor-mfa--2fa)
-   - 3.4 [Manajemen Sesi & Logout Terpadu](#34-manajemen-sesi--logout-terpadu)
-   - 3.5 [Pemulihan Akun & Reset Kata Sandi SSO](#35-pemulihan-akun--reset-kata-sandi-sso)
-4. [BAB 4: PANDUAN SUPER ADMINISTRATOR & PIMPINAN UNIVERSITAS](#bab-4-panduan-super-administrator--pimpinan-universitas)
-   - 4.1 [Universal Scope & Kendali Lintas Fakultas](#41-universal-scope--kendali-lintas-fakultas)
-   - 4.2 [Manajemen Pengguna Global & Sinkronisasi Direktori SSO](#42-manajemen-pengguna-global--sinkronisasi-direktori-sso)
-   - 4.3 [Tata Kelola Kebijakan Akademik & Tahun Ajaran (Academic Governance)](#43-tata-kelola-kebijakan-akademik--tahun-ajaran-academic-governance)
-   - 4.4 [Pengelolaan Master Katalog Mata Kuliah Universitas](#44-pengelolaan-master-katalog-mata-kuliah-universitas)
-   - 4.5 [Audit Log Global & Pengawasan Keamanan Sistem](#45-audit-log-global--pengawasan-keamanan-sistem)
-   - 4.6 [Integrasi Telemetri Eksekutif Dashboard Rektor UAY](#46-integrasi-telemetri-eksekutif-dashboard-rektor-uay)
-   - 4.7 [Manajemen Penyimpanan & Kuota File Service](#47-manajemen-penyimpanan--kuota-file-service)
-5. [BAB 5: PANDUAN ADMINISTRATOR PROGRAM STUDI (DEPARTMENT ADMIN)](#bab-5-panduan-administrator-program-studi-department-admin)
-   - 5.1 [Prinsip Isolasi Data Tingkat Program Studi (Department Scopes)](#51-prinsip-isolasi-data-tingkat-program-studi-department-scopes)
-   - 5.2 [Pembuatan & Konfigurasi Kelas Perkuliahan Semester](#52-pembuatan--konfigurasi-kelas-perkuliahan-semester)
-   - 5.3 [Penugasan Dosen Utama & Dosen Lintas Program Studi (Multi-Afiliasi)](#53-penugasan-dosen-utama--dosen-lintas-program-studi-multi-afiliasi)
-   - 5.4 [Manajemen Peserta Kuliah (Enrollment Mahasiswa & Toggle Status Aktif)](#54-manajemen-peserta-kuliah-enrollment-mahasiswa--toggle-status-aktif)
-   - 5.5 [Monitoring Kesiapan Perkuliahan & Audit Silabus Awal Semester](#55-monitoring-kesiapan-perkuliahan--audit-silabus-awal-semester)
-   - 5.6 [Rekapitulasi Presensi & Pelaporan Nilai Tingkat Program Studi](#56-rekapitulasi-presensi--pelaporan-nilai-tingkat-program-studi)
-6. [BAB 6: PANDUAN DOSEN / PENGAMPU KELAS (INSTRUCTOR)](#bab-6-panduan-dosen--pengampu-kelas-instructor)
-   - 6.1 [Navigasi Dashboard Dosen, Filter Prodi, & Antrean Penilaian (Grading Queue)](#61-navigasi-dashboard-dosen-filter-prodi--antrean-penilaian-grading-queue)
-   - 6.2 [Struktur Kelas: Pertemuan (Sections), Silabus, & Pengumuman Terarah](#62-struktur-kelas-pertemuan-sections-silabus--pengumuman-terarah)
-   - 6.3 [Pengunggahan & Pengelolaan Materi Perkuliahan (4 Format Media)](#63-pengunggahan--pengelolaan-materi-perkuliahan-4-format-media)
-   - 6.4 [Aturan Penyelesaian Belajar (Completion Rules) & Proteksi Unduh](#64-aturan-penyelesaian-belajar-completion-rules--proteksi-unduh)
-   - 6.5 [Pengelolaan Tugas Kuliah (Assignments) & Rubrik Penilaian](#65-pengelolaan-tugas-kuliah-assignments--rubrik-penilaian)
-   - 6.6 [Penyusunan Kuis & Ujian (8 Ragam Soal, Bank Soal, & Impor Excel)](#66-penyusunan-kuis--ujian-8-ragam-soal-bank-soal--impor-excel)
-   - 6.7 [Konfigurasi Timer Ujian & 4 Mode Publikasi Hasil](#67-konfigurasi-timer-ujian--4-mode-publikasi-hasil)
-   - 6.8 [Presensi Layar Proyektor (Kode 6-Digit & QR Code Dinamis)](#68-presensi-layar-proyektor-kode-6-digit--qr-code-dinamis)
-   - 6.9 [Presensi Roster Manual, Aksi 'Tandai Semua Hadir', & Catatan Dispensasi](#69-presensi-roster-manual-aksi-tandai-semua-hadir--catatan-dispensasi)
-   - 6.10 [Rekapitulasi Presensi Semester & Ekspor CSV](#610-rekapitulasi-presensi-semester--ekspor-csv)
-   - 6.11 [Pengelolaan Buku Nilai (Gradebook) & Kalkulasi Bobot Otomatis](#611-pengelolaan-buku-nilai-gradebook--kalkulasi-bobot-otomatis)
-   - 6.12 [Fitur Kloning Kelas Semester Baru (Clean Draft & Reset Jadwal)](#612-fitur-kloning-kelas-semester-baru-clean-draft--reset-jadwal)
-   - 6.13 [Log Audit Kelas & Transparansi Perubahan Data](#613-log-audit-kelas--transparansi-perubahan-data)
-7. [BAB 7: PANDUAN MAHASISWA (STUDENT)](#bab-7-panduan-mahasiswa-student)
-   - 7.1 [Beranda Mahasiswa, Ringkasan Akademik, & Agenda Tenggat Waktu](#71-beranda-mahasiswa-ringkasan-akademik--agenda-tenggat-waktu)
-   - 7.2 [Pengisian Presensi Mandiri (Kode 6-Digit & Pemindaian QR Code)](#72-pengisian-presensi-mandiri-kode-6-digit--pemindaian-qr-code)
-   - 7.3 [Mempelajari Materi Kuliah & Pelacakan Progres (Anti-Cheat Frontier)](#73-mempelajari-materi-kuliah--pelacakan-progres-anti-cheat-frontier)
-   - 7.4 [Pengumpulan Tugas Kuliah & Pemantauan Masukan Dosen](#74-pengumpulan-tugas-kuliah--pemantauan-masukan-dosen)
-   - 7.5 [Pelaksanaan Kuis & Ujian Daring (Auto-Save & Navigasi Soal)](#75-pelaksanaan-kuis--ujian-daring-auto-save--navigasi-soal)
-   - 7.6 [Pemantauan Ambang Batas Kehadiran 75% Syarat Ujian (UTS/UAS)](#76-pemantauan-ambang-batas-kehadiran-75-syarat-ujian-utsuas)
-   - 7.7 [Buku Nilai Pribadi (Transparansi Komponen Evaluasi & Huruf Mutu)](#77-buku-nilai-pribadi-transparansi-komponen-evaluasi--huruf-mutu)
-   - 7.8 [Pusat Notifikasi & Layanan Bantuan Mandiri](#78-pusat-notifikasi--layanan-bantuan-mandiri)
-8. [BAB 8: KEBIJAKAN AKADEMIK & STANDAR EVALUASI INSTITUSI](#bab-8-kebijakan-akademik--standar-evaluasi-institusi)
-   - 8.1 [Tabel Standar Rentang Nilai Huruf Mutu UAY (Preset 2026.1)](#81-tabel-standar-rentang-nilai-huruf-mutu-uay-preset-20261)
-   - 8.2 [Rumus & Pembobotan Nilai Akhir Semester](#82-rumus--pembobotan-nilai-akhir-semester)
-   - 8.3 [Regulasi Ambang Batas Kehadiran Minimal 75%](#83-regulasi-ambang-batas-kehadiran-minimal-75)
-9. [BAB 9: INTEGRASI TELEMETRI EKSEKUTIF DASHBOARD REKTOR UAY](#bab-9-integrasi-telemetri-eksekutif-dashboard-rektor-uay)
-   - 9.1 [Tujuan & Manfaat Bagi Pimpinan Universitas](#91-tujuan--manfaat-bagi-pimpinan-universitas)
-   - 9.2 [Struktur Snapshot Telemetri Real-Time](#92-struktur-snapshot-telemetri-real-time)
-10. [BAB 10: FAQ & PANDUAN PEMECAHAN MASALAH (TROUBLESHOOTING)](#bab-10-faq--panduan-pemecahan-masalah-troubleshooting)
-   - 10.1 [Kendala Login & SSO](#101-kendala-login--sso)
-   - 10.2 [Kendala Presensi Perkuliahan](#102-kendala-presensi-perkuliahan)
-   - 10.3 [Kendala Materi & Pelacakan Progres Video/Slide](#103-kendala-materi--pelacakan-progres-videoslide)
-   - 10.4 [Kendala Pengunggahan Tugas & Kuis](#104-kendala-pengunggahan-tugas--kuis)
-   - 10.5 [Kendala Hak Akses Dosen & Admin Prodi](#105-kendala-hak-akses-dosen--admin-prodi)
-11. [BAB 11: PUSAT BANTUAN & KONTAK LAYANAN TERPADU TIK UAY](#bab-11-pusat-bantuan--kontak-layanan-terpadu-tik-uay)
-   - 11.1 [Pusat Bantuan Mandiri Terintegrasi (Help Center)](#111-pusat-bantuan-mandiri-terintegrasi-help-center)
-   - 11.2 [Saluran Bantuan Resmi Helpdesk UAY](#112-saluran-bantuan-resmi-helpdesk-uay)
+Buku panduan ini disusun khusus agar **sangat mudah dipahami oleh pengguna non-teknis** (Bapak/Ibu Dosen, Saudara/i Mahasiswa, Staf Administrasi Tata Usaha, dan Pimpinan Universitas). Seluruh langkah disajikan secara langsung (*how to use*), bertahap, dan dilengkapi **tangkapan layar antarmuka asli sistem** sehingga Anda dapat langsung mengikuti panduan tanpa kebingungan.
 
 ---
 
-## BAB 1: PENDAHULUAN & ARSITEKTUR EKOSISTEM DIGITAL UAY
+## KAMUS ISTILAH SISTEM (GLOSARIUM AWAM)
 
-### 1.1 Visi & Nilai Utama Sistem
-E-Learning UAY dibangun dengan visi menyediakan platform pembelajaran modern, handal, dan berintegritas tinggi. Sistem mengusung empat pilar utama:
-1. **Keamanan & Autentikasi Tunggal (Single Sign-On)**: Menggunakan portal identitas kampus resmi. Tidak ada penyimpanan kata sandi terpisah di aplikasi e-learning.
-2. **Isolasi Data Berjenjang (Department Scoping)**: Setiap program studi memiliki ruang kerja independen, menjamin kerahasiaan data dan kemudahan tata kelola kurikulum.
-3. **Akuntabilitas Kehadiran Terstandar**: Sistem presensi hibrida (mandiri kode 6-digit, QR code, serta roster manual) dengan pemantauan otomatis kelayakan ujian minimal **75%**.
-4. **Visibilitas Eksekutif Real-Time**: Integrasi langsung dengan **Dashboard Rektor UAY** yang menyajikan metrik keaktifan perkuliahan universitas secara transparan dan akurat.
+Untuk memudahkan pembacaan, berikut arti istilah yang ada di sistem dalam bahasa sehari-hari:
 
-### 1.2 Ekosistem Terpadu: SSO, File-Service, E-Learning, & Dashboard Rektor
-Ekosistem digital kampus UAY terdiri dari empat komponen yang saling terhubung:
-
-```
-+-----------------------------------------------------------------------------------+
-|                           PORTAL SSO UAY (Keycloak)                               |
-|              - Otentikasi Terpusat  - Multi-Factor Authentication (MFA)          |
-+-----------------------------------------------------------------------------------+
-                                         │ Token JWT
-                                         ▼
-+-----------------------------------------------------------------------------------+
-|                                E-LEARNING UAY                                     |
-|  [Super Admin]  ──►  [Admin Prodi]  ──►  [Dosen Pengampu]  ──►  [Mahasiswa]       |
-|  - Tata Kelola       - Kelas Prodi       - Materi & Kuis        - Presensi Mandiri|
-|  - Katalog MK        - Enrol Mahasiswa   - Presensi Proyektor   - Unggah Tugas    |
-|  - Kebijakan Nilai   - Dosen Lintas      - Gradebook Otomatis   - Syarat Ujian 75%|
-+-----------------------------------------------------------------------------------+
-           ▲                                                        │
-           │ Kuota & Berkas                                         │ Snapshot Telemetri
-           ▼                                                        ▼
-+-------------------------------------+  +------------------------------------------+
-|          FILE-SERVICE UAY           |  |           DASHBOARD REKTOR UAY           |
-|  - Penyimpanan Dokumen/PDF/Slide    |  |  - Agregasi Keaktifan Perkuliahan Kampus |
-|  - Streaming Video Perkuliahan      |  |  - Monitoring Capaian Kurikulum & SKS    |
-+-------------------------------------+  +------------------------------------------+
-```
-
-### 1.3 Kebutuhan Perangkat & Peramban yang Didukung
-Aplikasi berbasis web modern responsif (Single Page Application) yang dapat diakses melalui:
-- **Komputer / Laptop**: Google Chrome (versi 110+), Mozilla Firefox (versi 110+), Microsoft Edge (versi 110+), Apple Safari (versi 16+).
-- **Ponsel Pintar / Tablet**: Android Chrome, iOS Safari, Samsung Internet.
-- **Koneksi Internet**: Minimal 512 Kbps untuk teks/dokumen; disarankan minimal 2 Mbps untuk pemutaran materi video.
+| Istilah di Layar | Nama Sehari-hari | Penjelasan Sederhana |
+|:---|:---|:---|
+| **Akun Kampus (SSO)** | Akun Resmi Mahasiswa / Dosen | Anda cukup menggunakan satu akun resmi UAY (NIM untuk mahasiswa atau email `@uay.ac.id` untuk dosen/staf) untuk membuka semua layanan kampus. |
+| **Kelas / Rombel** | Kelas Perkuliahan | Ruang belajar daring untuk satu mata kuliah pada semester aktif (contoh: *Algoritma & Pemrograman - Kelas A*). |
+| **Presensi Mandiri** | Absensi Mandiri Mahasiswa | Fitur di mana mahasiswa mencatat kehadirannya sendiri dari ponsel/laptop dengan mengetik 6 digit kode angka atau memindai barcode QR di kelas. |
+| **Lembar Roster** | Lembar Absensi Manual Dosen | Daftar seluruh mahasiswa di kelas. Dosen menggunakannya jika ada mahasiswa yang izin resmi, sakit, atau ponselnya bermasalah. |
+| **Batas Hadir 75%** | Syarat Minimal Mengikuti Ujian | Aturan resmi universitas: mahasiswa wajib hadir minimal 75% perkuliahan agar berhak mengikuti Ujian Akhir Semester (UAS). |
+| **Tugas Kuliah** | Tempat Pengumpulan Tugas | Halaman tempat dosen memberikan instruksi soal dan mahasiswa mengunggah lembar jawaban (PDF/Word). |
+| **Kunci Unduhan** | Syarat Selesai Belajar | Pengaturan agar mahasiswa menyimak modul bacaan atau menonton video sampai selesai sebelum tombol download materi aktif. |
+| **Buku Nilai (Gradebook)** | Lembar Nilai Akhir Dosen | Tempat dosen menentukan persentase bobot penilaian (Presensi, Tugas, Kuis, UTS, UAS) dan menghitung Nilai Akhir serta Huruf Mutu secara otomatis. |
+| **Kloning Kelas** | Salin Materi ke Semester Baru | Fitur praktis bagi dosen untuk menyalin seluruh bahan kuliah ke semester berikutnya hanya dengan 1 kali klik. |
+| **Pusat Bantuan** | Layanan Bantuan Pengguna | Menu bantuan terpadu di dalam sistem dan jalur kontak langsung ke Tim Helpdesk TIK UAY. |
 
 ---
 
-## BAB 2: MATRIKS PERAN & HAK AKSES PENGGUNA (ROLE-BASED ACCESS CONTROL)
+## DAFTAR ISI PANDUAN
 
-### 2.1 Klasifikasi Peran Pengguna
-Dalam sistem E-Learning UAY, terdapat empat tingkatan peran pengguna:
-1. **Super Administrator (`SUPER_ADMIN`)**: Administrator sistem tingkat universitas dan pimpinan TIK. Memiliki hak akses menyeluruh ke seluruh modul, fakultas, dan program studi.
-2. **Administrator Program Studi (`DEPARTMENT_ADMIN`)**: Staf akademik yang ditugaskan mengelola kurikulum, kelas, penugasan dosen, dan pendaftaran mahasiswa pada program studi tertentu.
-3. **Dosen / Pengampu Kelas (`INSTRUCTOR`)**: Tenaga pendidik yang mengampu mata kuliah. Bertanggung jawab atas materi, penugasan, pelaksanaan kuis/ujian, presensi perkuliahan, dan pembobotan nilai akhir.
-4. **Mahasiswa (`STUDENT`)**: Peserta didik yang terdaftar pada kelas perkuliahan aktif. Berhak mengakses materi, mengisi presensi mandiri, mengumpulkan tugas, mengikuti ujian, dan memantau rekapitulasi kehadiran serta nilai pribadi.
-
-### 2.2 Tabel Matriks Hak Akses Antar-Fitur Lengkap
-
-| Fitur / Modul Operasional | Mahasiswa | Dosen | Admin Prodi | Super Admin |
-|:---|:---:|:---:|:---:|:---:|
-| **Masuk via SSO UAY & Profil Pribadi** | ✓ | ✓ | ✓ | ✓ |
-| **Pusat Bantuan Mandiri (Help Center)** | ✓ | ✓ | ✓ | ✓ |
-| **Melihat Kelas yang Diikuti / Diampu** | ✓ | ✓ | ✓ | ✓ |
-| **Mengisi Presensi Mandiri (Kode/QR)** | ✓ | - | - | - |
-| **Melihat Rekap Kehadiran & Status 75%** | ✓ | ✓ | ✓ | ✓ |
-| **Mengunduh Materi Kuliah (PDF/Slide/Video)** | ✓* *(setelah syarat)* | ✓ | ✓ | ✓ |
-| **Mengumpulkan Tugas & Mengikuti Kuis** | ✓ | - | - | - |
-| **Melihat Buku Nilai Pribadi** | ✓ | - | - | - |
-| **Membuka Presensi Layar Proyektor (Kode 6-Digit)**| - | ✓ | ✓ | ✓ |
-| **Mengoreksi Presensi Roster Manual & Sakit/Izin** | - | ✓ | ✓ | ✓ |
-| **Mengunggah & Mengatur Materi Kuliah** | - | ✓ | ✓ | ✓ |
-| **Membuat Tugas & Rubrik Penilaian** | - | ✓ | ✓ | ✓ |
-| **Membuat Kuis, Ujian, & Bank Soal (8 Tipe)** | - | ✓ | ✓ | ✓ |
-| **Menilai Tugas & Jawaban Esai Mahasiswa** | - | ✓ | ✓ | ✓ |
-| **Mengelola Bobot Nilai & Gradebook Kelas** | - | ✓ | ✓ | ✓ |
-| **Mengekspor Rekap Presensi & Nilai (CSV)** | - | ✓ | ✓ | ✓ |
-| **Kloning Kelas untuk Semester Baru** | - | ✓ | ✓ | ✓ |
-| **Membuat Kelas Perkuliahan Baru** | - | - | ✓ | ✓ |
-| **Menugaskan Dosen Pengampu & Dosen Lintas Prodi** | - | - | ✓ | ✓ |
-| **Mengelola Pendaftaran Mahasiswa (Enrollment)** | - | - | ✓ | ✓ |
-| **Monitoring Kesiapan Perkuliahan Prodi** | - | - | ✓ | ✓ |
-| **Mengelola Master Katalog Mata Kuliah Kampus** | - | - | - | ✓ |
-| **Konfigurasi Kebijakan & Tahun Ajaran Global** | - | - | - | ✓ |
-| **Audit Log Global & Pengawasan Keamanan** | - | - | - | ✓ |
-| **Snapshot Telemetri Dashboard Rektor** | - | - | - | ✓ |
-
----
-
-## BAB 3: ALUR AUTENTIKASI TUNGGAL (SINGLE SIGN-ON / SSO UAY)
-
-### 3.1 Prinsip Keamanan Zero Local Password
-E-Learning UAY menerapkan standar keamanan modern:
-- Aplikasi **tidak menyimpan kata sandi** pengguna di basis data lokal.
-- Semua kredensial diverifikasi langsung oleh peladen **SSO Keycloak Universitas Achmad Yani**.
-- Kebijakan ini memastikan kata sandi mahasiswa dan dosen tetap aman dan terpusat pada satu pintu akses resmi.
-
-### 3.2 Prosedur Masuk Menggunakan SSO UAY
-1. Buka halaman utama E-Learning UAY pada alamat resmi kampus (`https://elearning.uay.ac.id`).
-2. Klik tombol utama berwarna hijau: **"Masuk dengan SSO UAY"**.
-3. Sistem mengarahkan peramban Anda ke laman autentikasi resmi SSO (`https://sso.uay.ac.id`).
-4. Masukkan **Alamat Email Kampus Resmi** (atau NIM bagi mahasiswa / NIDN bagi dosen).
-5. Masukkan **Kata Sandi SSO** Anda.
-6. Klik **"Masuk"**. Sistem akan memvalidasi kredensial dan secara instan mengarahkan Anda kembali ke beranda E-Learning sesuai hak peran Anda.
-
-### 3.3 Autentikasi Dua Faktor (MFA / 2FA)
-Untuk peran pimpinan, dosen, dan administrator, akun SSO dapat dilengkapi dengan Autentikasi Dua Faktor:
-- Setelah memasukkan kata sandi, sistem meminta 6-digit kode verifikasi waktu nyata (*Time-based One-Time Password / TOTP*).
-- Buka aplikasi autentikator di ponsel Anda (contoh: Google Authenticator / Microsoft Authenticator), masukkan kode 6-digit tersebut, lalu konfirmasi.
-
-### 3.4 Manajemen Sesi & Logout Terpadu
-- **Durasi Sesi**: Sesi aktif dilindungi oleh token keamanan bertenggat waktu. Aktivitas pengguna secara berkala memperbarui tiket otorisasi.
-- **Keluar Bersih (Logout)**: Klik ikon foto profil di sudut kanan atas, lalu klik tombol **"Keluar"**. Sistem akan mengakhiri sesi lokal dan memutus tiket otentikasi pada server SSO untuk mencegah penyalahgunaan pada perangkat publik.
-
-### 3.5 Pemulihan Akun & Reset Kata Sandi SSO
-Apabila Anda lupa kata sandi SSO:
-1. Pada laman masuk SSO UAY, klik tautan **"Lupa Kata Sandi?"**.
-2. Masukkan email institusi Anda untuk menerima tautan pemulihan resmi.
-3. Jika terdapat kendala email tidak aktif, hubungi Helpdesk SSO TIK UAY melalui email `sso-admin@uay.ac.id`.
+1. [BAB 1: PANDUAN KILAT 3 MENIT (MULAI HARI INI)](#bab-1-panduan-kilat-3-menit-mulai-hari-ini)
+   - 1.1 [Panduan Cepat Dosen: Mengajar & Buka Presensi di Kelas](#11-panduan-cepat-dosen-mengajar--buka-presensi-di-kelas)
+   - 1.2 [Panduan Cepat Mahasiswa: Masuk Kuliah, Absen, & Kumpul Tugas](#12-panduan-cepat-mahasiswa-masuk-kuliah-absen--kumpul-tugas)
+   - 1.3 [Panduan Cepat Admin Prodi: Membuka Kelas Semester Baru](#13-panduan-cepat-admin-prodi-membuka-kelas-semester-baru)
+2. [BAB 2: CARA MASUK KE SISTEM (LOGIN AKUN KAMPUS)](#bab-2-cara-masuk-ke-sistem-login-akun-kampus)
+   - 2.1 [Langkah-Langkah Masuk Akun](#21-langkah-langkah-masuk-akun)
+   - 2.2 [Bila Lupa Kata Sandi](#22-bila-lupa-kata-sandi)
+   - 2.3 [Keluar Akun dengan Aman (Logout)](#23-keluar-akun-dengan-aman-logout)
+3. [BAB 3: PERAN PENGGUNA DI KAMPUS](#bab-3-peran-pengguna-di-kampus)
+4. [BAB 4: PANDUAN LENGKAP UNTUK MAHASISWA](#bab-4-panduan-lengkap-untuk-mahasiswa)
+   - 4.1 [Melihat Beranda & Mata Kuliah Aktif](#41-melihat-beranda--mata-kuliah-aktif)
+   - 4.2 [Cara Presensi Mandiri (Kode 6-Digit & Barcode QR)](#42-cara-presensi-mandiri-kode-6-digit--barcode-qr)
+   - 4.3 [Membaca Materi & Menonton Video Pembelajaran](#43-membaca-materi--menonton-video-pembelajaran)
+   - 4.4 [Cara Mengirimkan Berkas Tugas Kuliah](#44-cara-mengirimkan-berkas-tugas-kuliah)
+   - 4.5 [Mengerjakan Kuis & Ujian Online](#45-mengerjakan-kuis--ujian-online)
+   - 4.6 [Memeriksa Rekap Kehadiran Sendiri (Batas 75%)](#46-memeriksa-rekap-kehadiran-sendiri-batas-75)
+   - 4.7 [Melihat Nilai Akhir & Catatan Masukan Dosen](#47-melihat-nilai-akhir--catatan-masukan-dosen)
+5. [BAB 5: PANDUAN LENGKAP UNTUK DOSEN PENGAMPU](#bab-5-panduan-lengkap-untuk-dosen-pengampu)
+   - 5.1 [Tampilan Utama Dosen & Memilih Kelas](#51-tampilan-utama-dosen--memilih-kelas)
+   - 5.2 [Membuka Presensi di Layar Proyektor Kelas](#52-membuka-presensi-di-layar-proyektor-kelas)
+   - 5.3 [Mengoreksi Kehadiran Manual di Lembar Roster (Izin / Sakit)](#53-mengoreksi-kehadiran-manual-di-lembar-roster-izin--sakit)
+   - 5.4 [Melihat Rekapitulasi Presensi Semester & Kelayakan Ujian](#54-melihat-rekapitulasi-presensi-semester--kelayakan-ujian)
+   - 5.5 [Mengunggah Bahan Kuliah (Dokumen PDF, Slide PPT, & Video)](#55-mengunggah-bahan-kuliah-dokumen-pdf-slide-ppt--video)
+   - 5.6 [Membuat Tugas Perkuliahan](#56-membuat-tugas-perkuliahan)
+   - 5.7 [Memeriksa & Menilai Tugas Mahasiswa](#57-memeriksa--menilai-tugas-mahasiswa)
+   - 5.8 [Mengatur Bobot Nilai & Ekspor ke Excel (Buku Nilai)](#58-mengatur-bobot-nilai--ekspor-ke-excel-buku-nilai)
+   - 5.9 [Menyalin Materi ke Semester Baru (Fitur Kloning Kelas)](#59-menyalin-materi-ke-semester-baru-fitur-kloning-kelas)
+6. [BAB 6: PANDUAN UNTUK PENGELOLA PRODI (ADMIN PRODI)](#bab-6-panduan-untuk-pengelola-prodi-admin-prodi)
+   - 6.1 [Membuka Kelas Kuliah Semester Baru](#61-membuka-kelas-kuliah-semester-baru)
+   - 6.2 [Menugaskan Dosen Pengampu (Termasuk Dosen Lintas Prodi)](#62-menugaskan-dosen-pengampu-termasuk-dosen-lintas-prodi)
+   - 6.3 [Mendaftarkan Mahasiswa ke Dalam Kelas](#63-mendaftarkan-mahasiswa-ke-dalam-kelas)
+   - 6.4 [Mencetak Rekap Kehadiran & Nilai Program Studi](#64-mencetak-rekap-kehadiran--nilai-program-studi)
+7. [BAB 7: PANDUAN PENGURUS & PIMPINAN UNIVERSITAS](#bab-7-panduan-pengurus--pimpinan-universitas)
+   - 7.1 [Pemantauan Keaktifan Kuliah Seluruh Fakultas](#71-pemantauan-keaktifan-kuliah-seluruh-fakultas)
+   - 7.2 [Penetapan Kalender Semester & Standar Nilai Huruf Mutu](#72-penetapan-kalender-semester--standar-nilai-huruf-mutu)
+8. [BAB 8: ATURAN AKADEMIK & STANDAR NILAI UAY](#bab-8-aturan-akademik--standar-nilai-uay)
+   - 8.1 [Tabel Konversi Nilai Angka ke Huruf Mutu](#81-tabel-konversi-nilai-angka-ke-huruf-mutu)
+   - 8.2 [Ketentuan Wajib Kehadiran Minimal 75%](#82-ketentuan-wajib-kehadiran-minimal-75)
+9. [BAB 9: PERTANYAAN SERING DITANYAKAN (FAQ)](#bab-9-pertanyaan-sering-ditanyakan-faq)
+10. [BAB 10: PUSAT BANTUAN & KONTAK RESMI TIK UAY](#bab-10-pusat-bantuan--kontak-resmi-tik-uay)
 
 ---
 
-## BAB 4: PANDUAN SUPER ADMINISTRATOR & PIMPINAN UNIVERSITAS
+## BAB 1: PANDUAN KILAT 3 MENIT (MULAI HARI INI)
 
-### 4.1 Universal Scope & Kendali Lintas Fakultas
-Sebagai `SUPER_ADMIN`:
-- Anda memiliki akses pandang dan kendali universal (*Universal Scope*) mencakup seluruh fakultas dan program studi.
-- Anda dapat berpindah peninjauan antar-prodi tanpa hambatan isolasi data.
+### 1.1 Panduan Cepat Dosen: Mengajar & Buka Presensi di Kelas
+Jika Bapak/Ibu Dosen saat ini sudah berada di ruang kuliah dan ingin membuka absensi kelas dalam waktu singkat:
 
-### 4.2 Manajemen Pengguna Global & Sinkronisasi Direktori SSO
-- **Pencarian Pengguna**: Cari akun berdasarkan Nama, NIM, NIDN, atau Email kampus.
-- **Status Akun**: Memantau status keaktifan akun (`ACTIVE` atau `DISABLED`). Akun yang berstatus nonaktif di SSO otomatis ditolak aksesnya oleh E-Learning.
-- **Penetapan Peran Global**: Menetapkan peran operasional (`SUPER_ADMIN`, `DEPARTMENT_ADMIN`, `INSTRUCTOR`, `STUDENT`).
-- **Penetapan Department Scopes**: Menentukan daftar kode program studi yang dapat dikelola oleh seorang Admin Program Studi.
+1. Buka peramban internet di laptop Anda, masuk ke **https://e-learning.uay.ac.id**.
+2. Klik tombol **"Masuk dengan Akun Kampus"** menggunakan email resmi `@uay.ac.id`.
+3. Klik mata kuliah yang sedang berlangsung $\rightarrow$ Pilih menu tab **"Presensi"**.
+4. Klik tombol **"+ Buka Presensi Baru"** $\rightarrow$ Atur waktu pengisian (misal: *15 menit*) $\rightarrow$ Klik **"Buka Presensi Sekarang"**.
+5. Hubungkan laptop ke layar proyektor kelas. Layar akan langsung menampilkan **6 Angka Kode Kehadiran Besar** dan **Barcode QR** untuk mahasiswa.
 
-### 4.3 Tata Kelola Kebijakan Akademik & Tahun Ajaran (Academic Governance)
-Super Admin dapat membuka jendela modal **"Kebijakan & Tahun Ajaran"** melalui Dashboard Admin:
-1. **Tahun Akademik Aktif**: Mengatur periode semester aktif kampus (contoh: `2026/2027 Ganjil`, `2026/2027 Genap`).
-2. **Daftar Semester Resmi**: Menambah atau memperbarui opsi semester yang dapat dipilih saat pembuatan kelas baru.
-3. **Standar Skala Huruf Mutu UAY**: Memilih preset skala penilaian aktif:
-   - **Standar Akademik UAY 2026/2027** (`Preset 2026.1`): Standar resmi aktif institusi.
-   - **Standar Akademik Lama** (`Preset 2024.1`): Khusus penyesuaian arsip masa lalu.
-
-### 4.4 Pengelolaan Master Katalog Mata Kuliah Universitas
-Menu **/catalog** memungkinkan pengelolaan kurikulum resmi:
-- **Tambah Mata Kuliah**: Masukkan Kode Mata Kuliah (contoh: `IF-201`), Nama Mata Kuliah, Bobot SKS (1–6 SKS), dan Program Studi pemilik kurikulum.
-- **Pencarian & Filter**: Memfilter mata kuliah berdasarkan prodi atau mencari judul mata kuliah secara cepat.
-
-### 4.5 Audit Log Global & Pengawasan Keamanan Sistem
-- Setiap aksi administratif krusial (pembuatan kelas, pengubahan nilai, penghapusan materi, penerbitan kuis) terekam dalam **Audit Log**.
-- Informasi yang dicatat: Waktu kejadian (*timestamp*), ID Pengguna pelaku aksi, alamat IP, aksi yang dilakukan, dan entitas data yang terpengaruh.
-
-### 4.6 Integrasi Telemetri Eksekutif Dashboard Rektor UAY
-E-Learning UAY menyediakan jalur bridging data bagi pimpinan universitas (Rektor & Wakil Rektor):
-- **Endpoint**: `GET /api/v1/integrations/rector/snapshot`
-- **Keamanan**: Dilindungi oleh *Bearer Secret Token* (`RECTOR_INTEGRATION_TOKEN`).
-- **Data yang Disajikan ke Dashboard Rektor**:
-  - Jumlah total kelas aktif per fakultas dan prodi.
-  - Jumlah materi perkuliahan terbit (Dokumen, Slide, Video, Lainnya).
-  - Jumlah penugasan dan pelaksanaan kuis aktif.
-  - Rasio rata-rata presensi kehadiran mahasiswa se-universitas.
-
-### 4.7 Manajemen Penyimpanan & Kuota File Service
-- Seluruh dokumen, slide PDF/PPT, dan rekaman video dikelola melalui **File Service UAY**.
-- Super Admin dapat memantau utilisasi ruang penyimpanan (*storage volume*) dan memastikan kebijakan retensi berkas berjalan optimal.
+> **💡 Tips Cepat Dosen:**
+> Bila ada mahasiswa yang tidak membawa HP atau kehabisan paket data, buka tab **"Lembar Presensi (Roster)"**, cari nama mahasiswa tersebut, lalu pilih status **"Hadir"** secara manual.
 
 ---
 
-## BAB 5: PANDUAN ADMINISTRATOR PROGRAM STUDI (DEPARTMENT ADMIN)
+### 1.2 Panduan Cepat Mahasiswa: Masuk Kuliah, Absen, & Kumpul Tugas
+Bagi Saudara/i Mahasiswa:
 
-### 5.1 Prinsip Isolasi Data Tingkat Program Studi (Department Scopes)
-Administrator Program Studi memiliki kewenangan tata kelola yang terisolasi (*Department Scoped*):
-- Admin Prodi Teknik Informatika hanya berwenang melihat data, mahasiswa, dan kelas pada Prodi Teknik Informatika.
-- Hal ini menjamin privasi nilai dan kerapian administrasi antar-fakultas.
-
-### 5.2 Pembuatan & Konfigurasi Kelas Perkuliahan Semester
-Setiap menjelang awal semester:
-1. Buka menu **"Dashboard"** atau **"Kelas"**.
-2. Klik tombol **"+ Kelas Baru"**.
-3. Pilih **Mata Kuliah** dari katalog yang tersedia di prodi Anda.
-4. Masukkan **Nama Kelas / Rombel** (contoh: *Kelas A*, *Kelas Pagi*, *Reguler B*).
-5. Pilih **Tahun Ajaran** (contoh: *2026/2027 Ganjil*).
-6. Tentukan kapasitas maksimal mahasiswa.
-7. Klik **"Simpan Kelas"**. Kelas baru akan berstatus **DRAFT** hingga siap diterbitkan.
-
-### 5.3 Penugasan Dosen Utama & Dosen Lintas Program Studi (Multi-Afiliasi)
-1. Buka detail kelas yang telah dibuat $\rightarrow$ pilih tab **"Peserta & Pengampu"**.
-2. Klik **"Tambah Dosen Pengampu"**.
-3. Ketikkan Nama atau NIDN dosen yang bersangkutan.
-4. Sistem mendukung penugasan **Dosen Lintas Program Studi**: dosen dari program studi lain yang mengajar di prodi Anda dapat dicari dan ditugaskan secara langsung.
-5. Tetapkan peran dosen: *Dosen Utama* atau *Dosen Pendamping (Team Teaching)*.
-
-### 5.4 Manajemen Peserta Kuliah (Enrollment Mahasiswa & Toggle Status Aktif)
-1. Pada tab **"Peserta"** di dalam kelas, klik **"Tambah Mahasiswa"**.
-2. Pilih mahasiswa berdasarkan NIM atau Nama. Mahasiswa dapat ditambahkan secara perorangan maupun massal.
-3. **Toggle Status Aktif Peserta**:
-   - Jika terdapat mahasiswa yang mengundurkan diri, cuti akademik, atau belum menyelesaikan registrasi KRS, Admin Prodi dapat menonaktifkan status mahasiswa (*Nonaktifkan Keikutsertaan*).
-   - Mahasiswa berstatus nonaktif tidak akan dapat mengakses materi atau mengisi presensi kelas tersebut, namun riwayat akademiknya tetap tersimpan aman.
-
-### 5.5 Monitoring Kesiapan Perkuliahan & Audit Silabus Awal Semester
-- Admin Prodi dapat memantau indikator status setiap kelas di prodinya:
-  - Berapa kelas yang masih berstatus `DRAFT`.
-  - Berapa kelas yang sudah `PUBLISHED` (Diterbitkan).
-  - Apakah dosen pengampu telah mengunggah silabus dan materi untuk Pertemuan 1 s.d. 3 sebelum perkuliahan perdana dimulai.
-
-### 5.6 Rekapitulasi Presensi & Pelaporan Nilai Tingkat Program Studi
-- Mengakses tab **"Buku Nilai"** dan **"Rekap Presensi"** kelas untuk mencetak Berita Acara Perkuliahan (BAP).
-- Memastikan rasio kelayakan ujian mahasiswa di program studi memenuhi standar minimal universitas (**75%**).
+1. **Cara Mengisi Absen Kuliah**:
+   - Buka **https://e-learning.uay.ac.id** di ponsel/laptop Anda $\rightarrow$ Masuk dengan NIM Anda.
+   - Buka mata kuliah yang sedang diajarkan saat ini.
+   - Klik tombol **"Isi Presensi Mandiri"**.
+   - Ketik **6 digit kode angka** yang ada di layar proyektor dosen $\rightarrow$ Klik **"Kirim Presensi"**.
+2. **Cara Mengumpulkan Tugas**:
+   - Buka mata kuliah $\rightarrow$ Klik judul tugas pada pertemuan yang bersangkutan.
+   - Klik **"Pilih File"** $\rightarrow$ Pilih berkas tugas Anda (disarankan format **PDF**).
+   - Klik tombol **"Kirim Tugas"** $\rightarrow$ Pastikan muncul tanda centang hijau *"Sudah Dikumpulkan Tepat Waktu"*.
+3. **Cara Mengecek Kehadiran Sendiri**:
+   - Buka tab **"Presensi"** di kelas.
+   - Lencana **HIJAU** ($\ge 75\%$) berarti Anda **Aman Mengikuti Ujian (UAS)**.
+   - Lencana **MERAH** ($< 75\%$) berarti kehadiran Anda kurang dan berisiko tidak boleh ikut UAS.
 
 ---
 
-## BAB 6: PANDUAN DOSEN / PENGAMPU KELAS (INSTRUCTOR)
+### 1.3 Panduan Cepat Admin Prodi: Membuka Kelas Semester Baru
+Untuk staf tata usaha atau pengelola prodi menjelang perkuliahan semester baru:
+1. Masuk ke **https://e-learning.uay.ac.id** dengan akun staf prodi Anda.
+2. Buka menu **"Kelas"** di bilah kiri $\rightarrow$ Klik tombol **"+ Buka Kelas Perkuliahan Baru"**.
+3. Pilih mata kuliah dari kurikulum prodi, beri nama rombongan belajar (contoh: *Kelas A - Pagi*), dan pilih semester aktif.
+4. Klik tab **"Peserta & Pengampu"**:
+   - Klik **"+ Tambah Dosen"** untuk menugaskan dosen pengampu (bisa dosen satu prodi maupun dosen lintas fakultas).
+   - Klik **"+ Tambah Mahasiswa"** untuk memasukkan daftar mahasiswa sesuai KRS yang disetujui.
 
-### 6.1 Navigasi Dashboard Dosen, Filter Prodi, & Antrean Penilaian (Grading Queue)
-Setelah masuk, dosen akan melihat Dashboard Pengajaran:
-- **Filter Multi-Afiliasi Program Studi**: Jika Anda mengajar di lebih dari satu prodi, klik tombol filter di atas daftar kelas untuk menyaring kelas per prodi.
-- **Antrean Penilaian (*Grading Queue*)**: Menampilkan daftar tugas mahasiswa dan kuis bertipe esai yang telah dikumpulkan dan menanti pemeriksaan Anda. Klik langsung untuk menuju lembar penilaian.
+---
 
-### 6.2 Struktur Kelas: Pertemuan (Sections), Silabus, & Pengumuman Terarah
-- **Pertemuan (*Sections*)**: Pembelajaran diorganisasikan per pertemuan (contoh: *Pertemuan 1: Kontrak Kuliah & Pengantar*, *Pertemuan 2*, dst.).
-- **Pengurutan Pertemuan**: Dosen dapat menata urutan pertemuan menggunakan tombol naik/turun atau menyeret ikon pegangan (*drag handle*).
-- **Pengumuman Kelas**: Terbitkan pengumuman penting yang akan memunculkan banner notifikasi langsung di dashboard seluruh mahasiswa kelas tersebut.
+## BAB 2: CARA MASUK KE SISTEM (LOGIN AKUN KAMPUS)
 
-### 6.3 Pengunggahan & Pengelolaan Materi Perkuliahan (4 Format Media)
-Pada setiap pertemuan, klik **"+ Tambah Materi"**. Pilih jenis media yang sesuai:
-1. **DOKUMEN**: Untuk silabus perkuliahan, modul ajar praktikum, dan materi bacaan (format PDF, DOCX).
-2. **SLIDE**: Untuk salindia presentasi perkuliahan (format PPT, PPTX, PDF Slide). Mahasiswa dapat menavigasi slide secara interaktif.
-3. **VIDEO**: Untuk rekaman pengajaran atau video penjelasan (format MP4 atau tautan embed video).
-4. **LAINNYA**: Untuk materi pendukung, berkas *source code*, dataset latihan, tautan eksternal GitHub, dsb.
+### 2.1 Langkah-Langkah Masuk Akun
+1. Buka peramban internet (Google Chrome, Mozilla Firefox, Safari, atau Microsoft Edge) pada laptop atau ponsel Anda.
+2. Ketik alamat situs: **https://e-learning.uay.ac.id**
+3. Di halaman utama, Anda akan melihat tampilan gerbang masuk resmi Universitas Achmad Yani.
 
-### 6.4 Aturan Penyelesaian Belajar (Completion Rules) & Proteksi Unduh
-Dosen dapat mengaktifkan fitur **"Syarat Penyelesaian Belajar"**:
-- **Proteksi Unduh Berkas**: Tombol unduh dokumen dinonaktifkan bagi mahasiswa sebelum mahasiswa menyelesaikan pembacaan dokumen atau menonton video materi secara tuntas.
-- **Pencegah Manipulasi Waktu Video (*Anti-Skip Frontier Tracker*)**: Pemutar video mencatat durasi tonton nyata. Mahasiswa yang mempercepat atau melompati linimasa video ke bagian akhir tidak akan mendapatkan progres 100%.
+![Tampilan Halaman Masuk Akun Kampus](images/01-halaman-masuk-sso.png)
+*Gambar 2.1: Tampilan Halaman Masuk Resmi E-Learning UAY (https://e-learning.uay.ac.id/login)*
 
-### 6.5 Pengelolaan Tugas Kuliah (Assignments) & Rubrik Penilaian
-1. Klik **"+ Tambah Tugas"** pada pertemuan terkait.
-2. Atur parameter tugas:
-   - **Judul & Instruksi Tugas**: Tulis deskripsi tugas dengan jelas.
-   - **Tenggat Waktu (*Due Date*)**: Batas waktu normal pengumpulan tugas.
-   - **Batas Toleransi Terlambat (*Cut-off Date*)**: Waktu sistem menolak seluruh pengumpulan lebih lanjut.
-   - **Format Berkas yang Diizinkan**: Dokumen (PDF/DOCX), Arsip (ZIP), atau tautan penyimpanan awan (*Cloud Link*).
-3. **Pemeriksaan & Rubrik**:
-   - Unduh atau pratinjau berkas tugas mahasiswa langsung di browser.
-   - Berikan skor numerik (0–100) dan catatan masukan kualitatif (*feedback*).
+4. Untuk masuk:
+   - Klik tombol hijau **"Masuk dengan Akun Kampus (SSO UAY)"** atau masukkan data Anda pada formulir yang tersedia.
+   - **Mahasiswa**: Masukkan **NIM** dan kata sandi akun kampus Anda.
+   - **Dosen & Tenaga Kependidikan**: Masukkan **Email Resmi Kampus** (`nama@uay.ac.id`) dan kata sandi akun Anda.
+5. Klik tombol **"Masuk ke Kelas"**. Sistem akan mengenali peran Anda secara otomatis dan membuka halaman belajar yang sesuai.
 
-### 6.6 Penyusunan Kuis & Ujian (8 Ragam Soal, Bank Soal, & Impor Excel)
-E-Learning UAY menyediakan mesin evaluasi canggih dengan 8 variasi tipe soal:
-1. **Pilihan Ganda Tunggal (*Single Choice*)**: Satu jawaban benar dengan opsi acak.
-2. **Pilihan Ganda Kompleks (*Multiple Select*)**: Memilih lebih dari satu opsi yang benar dengan skor parsial/penuh.
-3. **Benar / Salah (*True / False*)**: Pernyataan biner.
-4. **Isian Singkat (*Short Answer*)**: Jawaban kata/frasa spesifik.
-5. **Menjodohkan (*Matching*)**: Memasangkan premis dengan respons yang tepat.
-6. **Mengurutkan (*Ordering*)**: Menyusun runtutan kronologis atau tahapan logis.
-7. **Esai (*Essay*)**: Jawaban terbuka yang dinilai secara manual oleh dosen.
-8. **Unggah Berkas (*File Upload*)**: Soal hitungan/desain di mana mahasiswa mengunggah lembar jawaban foto/PDF.
+### 2.2 Bila Lupa Kata Sandi
+Jika Anda tidak dapat mengingat kata sandi akun Anda:
+1. Klik tautan **"Lupa Kata Sandi?"** yang ada di bawah kolom isian sandi.
+2. Masukkan NIM atau email kampus yang terdaftar. Petunjuk pemulihan sandi akan dikirim ke email pemulihan Anda.
+3. Anda juga dapat langsung mengunjungi **Pusat Layanan TIK UAY** di Gedung Rektorat Lantai 2 untuk bantuan reset sandi.
 
-- **Bank Soal & Impor Excel**: Dosen dapat mengunggah puluhan soal sekaligus menggunakan berkas template Excel resmi tanpa perlu mengetik manual satu demi satu.
+### 2.3 Keluar Akun dengan Aman (Logout)
+Bila Anda menggunakan komputer bersama di laboratorium kampus atau perpustakaan:
+1. Klik foto inisial profil Anda di sudut kanan atas layar.
+2. Pilih menu bertanda merah **"Keluar" (Logout)**.
+3. Menutup peramban saja tidak cukup; selalu pastikan Anda sudah menekan tombol Keluar agar akun belajar Anda terlindungi dari penggunaan orang lain.
 
-### 6.7 Konfigurasi Timer Ujian & 4 Mode Publikasi Hasil
-- **Mode Timer**:
-  - *Independen dari Deadline*: Mahasiswa mendapat durasi penuh pengerjaan sejak klik mulai, meskipun mendekati jam tutup kalender.
-  - *Serentak dengan Deadline*: Waktu berhenti secara mutlak begitu batas jam penutupan ujian tiba.
-- **Mode Publikasi Nilai**:
-  - `AUTO`: Nilai instan muncul begitu mahasiswa menyelesaikan ujian (cocok untuk kuis latihan mandiri).
-  - `HIDDEN`: Skor disembunyikan sepenuhnya dari mahasiswa.
-  - `MANUAL`: Nilai baru tampil kepada mahasiswa setelah dosen menekan tombol *"Publikasikan Hasil"*.
-  - `SCHEDULED`: Nilai otomatis terbuka pada tanggal dan jam rilis yang telah ditentukan dosen.
+---
 
-### 6.8 Presensi Layar Proyektor (Kode 6-Digit & QR Code Dinamis)
-Saat memulai sesi kuliah di kelas:
-1. Buka kelas $\rightarrow$ pilih tab **"Presensi"**.
-2. Klik tombol **"Buka Sesi Presensi Baru"**.
-3. Masukkan judul pertemuan (contoh: *Pertemuan 4: Algoritma Pencarian*), pilih durasi aktif (contoh: 15 menit), lalu klik **"Buka Presensi Sekarang"**.
-4. Sistem memuat **Mode Layar Proyektor (Projector Mode)**:
-   - Kode 6-Digit tampil besar di tengah layar (contoh: **7 2 9 4 1 0**).
-   - QR Code dinamis siap dipindai kamera gawai mahasiswa.
-   - Terdapat penghitung waktu mundur (*Countdown Timer*) dan pemantau jumlah mahasiswa hadir langsung (*Live Counter*).
+## BAB 3: PERAN PENGGUNA DI KAMPUS
 
-### 6.9 Presensi Roster Manual, Aksi 'Tandai Semua Hadir', & Catatan Dispensasi
-Jika mahasiswa terkendala gawai atau memiliki surat izin resmi:
-1. Buka sub-tab **"Lembar Presensi (Roster)"**.
-2. Cari nama atau NIM mahasiswa terkait.
-3. Ubah status presensi pada menu pilihan:
-   - **Hadir (PRESENT)**
-   - **Izin (EXCUSED)**
-   - **Sakit (SICK)**
-   - **Alfa (ABSENT)**
-4. Masukkan catatan dispensasi (contoh: *"Surat Sakit No. 12/KLINIK/X/2026"*).
-5. **Tombol Cepat "Tandai Semua Hadir"**: Pada kelas tatap muka penuh, klik tombol ini untuk mengubah seluruh mahasiswa berstatus alfa menjadi hadir dalam satu klik, kemudian sesuaikan mahasiswa yang berhalangan sebelum menyimpan.
+Sistem E-Learning UAY membagi kewenangan ke dalam 4 kelompok pengguna:
 
-### 6.10 Rekapitulasi Presensi Semester & Ekspor CSV
-1. Masuk ke sub-tab **"Rekap Semester"** pada menu Presensi.
-2. Layar menampilkan matriks kehadiran seluruh pertemuan, akumulasi persentase kehadiran (%), dan indikator status kelayakan ujian:
-   - Lencana Hijau: $\ge 75\%$ (Memenuhi Syarat Ujian).
-   - Lencana Merah: $< 75\%$ (Peringatan Belum Memenuhi Syarat).
-3. Klik **"Ekspor Data Presensi (CSV)"** untuk mengunduh berkas laporan resmi yang dapat dibuka di Microsoft Excel.
+| Peran Pengguna | Penjelasan Peran di Kampus | Contoh Pengguna |
+|:---|:---|:---|
+| **Mahasiswa** | Mengikuti perkuliahan, mengisi kehadiran mandiri, mengunduh bahan ajar, mengumpulkan tugas, mengikuti ujian, dan melihat nilai. | Seluruh mahasiswa aktif UAY |
+| **Dosen Pengampu** | Mengajar mata kuliah, membuka presensi di layar proyektor, mengoreksi absensi manual, membagikan materi, membuat tugas & kuis, dan mengolah nilai akhir. | Dosen tetap & dosen luar prodi |
+| **Admin Program Studi** | Menyiapkan rombel kelas tiap semester, menugaskan dosen pengampu, mendaftarkan mahasiswa sesuai KRS, dan mencetak rekap prodi. | Staf Tata Usaha / Admin Prodi |
+| **Pimpinan & Pengurus** | Memantau aktivitas perkuliahan seluruh fakultas secara umum melalui layar statistik terpadu. | Rektorat, Dekanat, & Tim TIK |
 
-### 6.11 Pengelolaan Buku Nilai (Gradebook) & Kalkulasi Bobot Otomatis
+---
+
+## BAB 4: PANDUAN LENGKAP UNTUK MAHASISWA
+
+### 4.1 Melihat Beranda & Mata Kuliah Aktif
+Setelah Anda berhasil masuk, Anda akan langsung disambut oleh **Beranda Mahasiswa**.
+
+![Tampilan Beranda Mahasiswa](images/02-beranda-mahasiswa.png)
+*Gambar 4.1: Tampilan Beranda Mahasiswa dengan Kartu Mata Kuliah dan Pengingat Tugas*
+
+Pada halaman ini terdapat 3 bagian utama:
+1. **Pemberitahuan Tugas Mendatang**: Kotak kuning di bagian atas yang mengingatkan tugas apa saja yang harus dikumpulkan dalam waktu dekat beserta batas waktu penyerahannya.
+2. **Kartu Mata Kuliah**: Daftar mata kuliah yang Anda program pada semester ini. Setiap kartu menampilkan:
+   - Nama mata kuliah, kode MK, dan bobot SKS.
+   - Nama dosen pengampu.
+   - Persentase kehadiran Anda saat ini (misal: *100% Aman UAS*).
+   - Judul pertemuan kuliah yang sedang berjalan.
+3. **Tombol "Masuk Kelas"**: Klik tombol ini untuk membuka halaman pertemuan dan bahan belajar mata kuliah tersebut.
+
+---
+
+### 4.2 Cara Presensi Mandiri (Kode 6-Digit & Barcode QR)
+Ketika dosen mengumumkan bahwa sesi absensi kelas telah dibuka:
+1. Masuk ke mata kuliah yang sedang berlangsung di kelas.
+2. Di bagian atas halaman kelas, perhatikan kotak bertuliskan **"Sesi Presensi Pertemuan Telah Dibuka"**.
+3. Klik tombol biru **"Isi Presensi Sekarang"**.
+4. Jendela pengisian akan muncul di layar ponsel/laptop Anda:
+
+![Tampilan Presensi Mandiri Mahasiswa](images/04-presensi-mandiri-mahasiswa.png)
+*Gambar 4.2: Tampilan Formulir Presensi Mandiri Mahasiswa dengan Masukan 6 Angka*
+
+5. Perhatikan layar proyektor dosen di depan kelas:
+   - Ketikkan **6 digit kode angka** yang tertera di proyektor (misalnya: `8 4 9 2 0 1`).
+   - Atau klik ikon kamera untuk memindai **Barcode QR** yang tampil di proyektor.
+6. Klik tombol hijau **"Kirim Presensi Kehadiran"**.
+7. Sistem akan memverifikasi kode Anda. Bila sukses, status kehadiran Anda langsung berubah menjadi **"HADIR"**.
+
+> **💡 Catatan Penting Mahasiswa:**
+> Sesi presensi memiliki batas waktu (biasanya 15 menit). Jangan menunda pengisian kode. Jika ponsel Anda mati atau kuota mendadak habis, segera beritahukan dosen pengampu di kelas agar dosen dapat mencatat nama Anda secara langsung.
+
+---
+
+### 4.3 Membaca Materi & Menonton Video Pembelajaran
+Di dalam setiap pertemuan, Bapak/Ibu Dosen menyediakan bahan perkuliahan:
+- **Dokumen Bacaan (PDF & Word)**: Anda dapat langsung membaca isi modul di peramban tanpa harus mengunduhnya terlebih dahulu.
+- **Slide Presentasi (PPT / PPTX)**: Salindia materi kuliah dapat dipelajari lembar demi lembar.
+- **Video Pembelajaran**: Putar video penjelasan kuliah secara normal. Sistem menghitung durasi tontonan asli Anda. Hindari mempercepat secara paksa ke detik terakhir karena sistem membutuhkan bukti tontonan agar materi tercatat selesai.
+- **Syarat Unduh Materi**: Bila dosen mengaktifkan aturan penyelesaian, Anda wajib menyimak modul bacaan atau menonton video hingga selesai sebelum tombol download materi menjadi aktif.
+
+---
+
+### 4.4 Cara Mengirimkan Berkas Tugas Kuliah
+Ketika ada tugas yang diberikan oleh dosen:
+1. Buka mata kuliah $\rightarrow$ Klik judul tugas pada pertemuan yang ditentukan.
+2. Baca instruksi tugas, batas waktu pengumpulan, dan format berkas yang diminta.
+3. Klik tombol **"Pilih File"**, lalu pilih lembar jawaban tugas Anda dari laptop atau ponsel (format **PDF** sangat disarankan).
+4. Klik tombol hijau **"Kirim Tugas"**.
+
+![Tampilan Pengumpulan Tugas Mahasiswa](images/08-pengumpulan-tugas-mahasiswa.png)
+*Gambar 4.3: Halaman Pengumpulan Tugas Mahasiswa dengan Bukti Waktu Kirim Berkas*
+
+5. Setelah berkas terkirim, layar akan menampilkan tanda bukti pengumpulan hijau bertuliskan: **"SUDAH DIKUMPULKAN TEPAT WAKTU"** lengkap dengan tanggal, jam, dan ukuran berkas.
+6. Selama batas waktu akhir belum terlewati, Anda masih dapat memperbarui atau menukar berkas bila ada revisi jawaban.
+
+---
+
+### 4.5 Mengerjakan Kuis & Ujian Online
+1. Pada pertemuan yang memiliki kuis atau ujian daring, klik tombol **"Mulai Ujian"**.
+2. Perhatikan durasi sisa waktu di pojok atas (misal: *60 Menit*).
+3. Kerjakan soal satu demi satu.
+4. **Penyimpanan Otomatis (Auto-Save)**: Setiap kali Anda memilih opsi jawaban atau mengetik esai, sistem langsung menyimpannya secara otomatis ke server kampus. Jika koneksi internet Anda terputus sejenak, jawaban Anda tidak akan hilang.
+5. Setelah seluruh butir soal terjawab, klik tombol **"Kumpulkan dan Selesaikan Ujian"**.
+
+---
+
+### 4.6 Memeriksa Rekap Kehadiran Sendiri (Batas 75%)
+1. Klik tab **"Presensi"** di dalam mata kuliah Anda.
+2. Layar akan menampilkan daftar seluruh pertemuan dari awal hingga akhir semester beserta status kehadiran Anda.
+3. Perhatikan lencana kelayakan:
+   - **Lencana Hijau (LAYAK UJIAN)**: Persentase kehadiran Anda $\ge 75\%$. Anda berhak mengikuti Ujian Akhir Semester (UAS).
+   - **Lencana Merah (TIDAK LAYAK)**: Persentase kehadiran Anda $< 75\%$. Jika Anda pernah berhalangan hadir karena sakit atau ada tugas dinas kampus, segera serahkan surat bukti resmi kepada dosen pengampu agar status ketidakhadiran Anda diubah menjadi "Sakit" atau "Izin".
+
+---
+
+### 4.7 Melihat Nilai Akhir & Catatan Masukan Dosen
+- Buka tab **"Buku Nilai"** di kelas untuk memantau nilai tugas, kuis, nilai UTS, dan nilai UAS.
+- Anda dapat mengklik setiap tugas untuk membaca **catatan masukan dan saran evaluasi** yang dituliskan oleh Bapak/Ibu Dosen agar Anda mengetahui aspek mana yang perlu ditingkatkan pada tugas berikutnya.
+
+---
+
+## BAB 5: PANDUAN LENGKAP UNTUK DOSEN PENGAMPU
+
+### 5.1 Tampilan Utama Dosen & Memilih Kelas
+Saat Bapak/Ibu Dosen masuk ke E-Learning UAY:
+1. Anda akan melihat seluruh kelas perkuliahan yang Anda ampu pada semester aktif ini.
+2. Jika Bapak/Ibu mengajar di beberapa program studi sekaligus, Anda dapat menyaring kelas berdasarkan nama prodi.
+3. Setiap kelas dilengkapi indikator jumlah peserta mahasiswa dan jumlah tugas yang siap dinilai.
+
+---
+
+### 5.2 Membuka Presensi di Layar Proyektor Kelas
+Ketika perkuliahan tatap muka di kelas dimulai:
+1. Sambungkan laptop Bapak/Ibu ke proyektor kelas.
+2. Buka mata kuliah $\rightarrow$ Klik menu tab **"Presensi"** $\rightarrow$ Klik tombol hijau **"+ Buka Presensi Baru"**.
+3. Ketikkan topik perkuliahan hari ini (contoh: *Pertemuan 4: Algoritma Greedy*).
+4. Tentukan batas waktu absensi (misalnya: *15 Menit*).
+5. Klik **"Buka Presensi Sekarang"**. Layar laptop akan berpindah ke **Mode Layar Proyektor**:
+
+![Tampilan Presensi Proyektor Dosen](images/03-presensi-proyektor-dosen.png)
+*Gambar 5.1: Mode Layar Proyektor Kelas Menampilkan 6 Digit Kode Angka, Barcode QR, dan Penghitung Hadir Waktu Nyata*
+
+6. Pada layar proyektor tampak:
+   - **6 Digit Angka Besar**: Mahasiswa cukup mengetik angka ini di ponsel mereka.
+   - **Barcode QR**: Mahasiswa dapat memindainya langsung menggunakan kamera HP.
+   - **Penghitung Waktu Mundur**: Menampilkan sisa waktu toleransi presensi.
+   - **Live Counter Mahasiswa Hadir**: Menampilkan jumlah mahasiswa yang telah berhasil check-in secara langsung (misal: *38 dari 42 Mahasiswa Hadir*).
+7. Setelah waktu habis atau seluruh mahasiswa sudah hadir, Bapak/Ibu dapat menekan tombol merah **"Tutup Presensi Sekarang"**.
+
+---
+
+### 5.3 Mengoreksi Kehadiran Manual di Lembar Roster (Izin / Sakit)
+Bila terdapat mahasiswa yang tidak hadir karena sakit, ada dispensasi kegiatan kampus, atau mengalami kendala gawai:
+1. Klik tab **"Lembar Presensi (Roster)"** pada pertemuan yang bersangkutan.
+
+![Tampilan Lembar Presensi Roster Dosen](images/05-presensi-roster-manual.png)
+*Gambar 5.2: Lembar Presensi Roster Dosen untuk Pengisian Status Hadir, Izin, Sakit, atau Alfa*
+
+2. Pada baris nama mahasiswa terkait, klik kolom status dan ubah menjadi:
+   - **HADIR**: Jika mahasiswa berada di kelas namun terkendala baterai HP/kuota internet.
+   - **IZIN**: Jika mahasiswa memiliki surat dispensasi kegiatan resmi organisasi/fakultas.
+   - **SAKIT**: Jika mahasiswa melampirkan surat keterangan dokter dari klinik/rumah sakit.
+   - **ALFA**: Jika mahasiswa tidak hadir tanpa ada pemberitahuan.
+3. Ketikkan nomor surat izin/sakit pada kolom keterangan untuk bukti arsip perkuliahan.
+4. **Tombol "Tandai Semua Hadir"**: Bila seluruh kelas hadir tanpa terkecuali, klik tombol ini sekali saja untuk menghemat waktu, lalu klik **"Simpan Perubahan"**.
+
+---
+
+### 5.4 Melihat Rekapitulasi Presensi Semester & Kelayakan Ujian
+Bapak/Ibu dapat memantau kedisiplinan perkuliahan mahasiswa sepanjang semester:
+1. Klik tab **"Rekap Presensi"** di kelas Anda.
+
+![Tampilan Rekap Presensi Semester](images/06-rekap-presensi-semester.png)
+*Gambar 5.3: Rekapitulasi Presensi Perkuliahan Semester dengan Indikator Batas 75% Kelayakan Ujian*
+
+2. Sistem menampilkan matriks lengkap kehadiran dari Pertemuan 1 hingga Pertemuan 14/16:
+   - Total Hadir, Izin, Sakit, dan Alfa masing-masing mahasiswa.
+   - Kalkulasi persentase kehadiran kumulatif otomatis.
+   - **Lencana Hijau (LAYAK UJIAN)**: Mahasiswa memenuhi syarat kehadiran $\ge 75\%$.
+   - **Lencana Merah (TIDAK LAYAK)**: Mahasiswa dengan kehadiran $< 75\%$ yang perlu konseling akademik.
+3. Klik tombol hijau **"Ekspor Data Presensi (Excel / CSV)"** untuk mengunduh berkas laporan kehadiran sebagai lampiran Berita Acara Perkuliahan (BAP).
+
+---
+
+### 5.5 Mengunggah Bahan Kuliah (Dokumen PDF, Slide PPT, & Video)
+Untuk menambahkan bahan ajar pada pertemuan tertentu:
+1. Pada pertemuan yang dituju, klik tombol **"+ Tambah Bahan Ajar"**.
+
+![Tampilan Unggah Bahan Kuliah](images/07-unggah-materi-kuliah.png)
+*Gambar 5.4: Jendela Pilihan Tambah Materi Perkuliahan (PDF, Slide PPT, Video, atau Link)*
+
+2. Pilih jenis materi yang ingin dibagikan:
+   - **📄 Dokumen**: Untuk modul ajar, silabus, atau bacaan ilmiah (format PDF atau DOCX).
+   - **📊 Slide**: Untuk bahan tayang presentasi kuliah (format PPTX atau PDF).
+   - **🎥 Video**: Untuk rekaman kuliah atau tutorial video (format MP4 atau tautan video).
+   - **🔗 Tautan Luar**: Untuk referensi website perpustakaan atau artikel luar.
+3. Masukkan **Judul Materi** dan petunjuk belajar singkat bagi mahasiswa.
+4. Tarik berkas dari folder laptop Anda ke kotak unggah (*dropzone*).
+5. **Opsi Kunci Unduhan**: Centang kotak *"Mahasiswa wajib membaca/menonton sebelum mengunduh"* jika Bapak/Ibu ingin memastikan mahasiswa menyimak materi terlebih dahulu.
+6. Klik tombol **"Simpan & Terbitkan Materi"**.
+
+---
+
+### 5.6 Membuat Tugas Perkuliahan
+1. Klik tombol **"+ Tambah Tugas"** pada pertemuan terkait.
+2. Tuliskan **Judul Tugas** dan rincian instruksi soal pengerjaan.
+3. Atur tanggal dan waktu pengumpulan:
+   - **Tenggat Waktu Normal (Due Date)**: Batas waktu penyerahan wajar.
+   - **Batas Toleransi Keterlambatan (Cut-off Date)**: Waktu setelah sistem menolak pengumpulan berkas tambahan.
+4. Tentukan batas ukuran berkas dan jenis dokumen yang diperbolehkan (misal: *Wajib PDF*).
+5. Klik **"Simpan Tugas"**.
+
+---
+
+### 5.7 Memeriksa & Menilai Tugas Mahasiswa
+Ketika mahasiswa telah mengumpulkan jawaban:
+1. Buka tugas tersebut $\rightarrow$ Klik tab **"Pengumpulan"**.
+2. Klik nama mahasiswa yang ingin dinilai. Layar akan menampilkan **Tampilan Pemeriksaan Khusus**:
+
+![Tampilan Pemeriksaan Tugas Dosen](images/09-pemeriksaan-tugas-dosen.png)
+*Gambar 5.5: Layar Penilaian Tugas Dosen dengan Pratinjau Dokumen PDF, Nilai Angka, dan Kolom Catatan Evaluasi*
+
+3. **Pratinjau Dokumen**: Berkas PDF mahasiswa langsung tampil di panel sebelah kiri tanpa perlu Bapak/Ibu unduh satu per satu.
+4. **Formulir Nilai**: Masukkan nilai angka (skala 0 sampai 100) di panel sebelah kanan.
+5. **Catatan Evaluasi**: Ketikkan saran perbaikan dan masukan bagi mahasiswa agar mereka memahami aspek evaluasi dari Bapak/Ibu.
+6. Klik tombol hijau **"Simpan Nilai & Lanjut ke Mahasiswa Berikutnya"**.
+
+---
+
+### 5.8 Mengatur Bobot Nilai & Ekspor ke Excel (Buku Nilai)
+Sistem menyediakan **Buku Nilai (Gradebook)** yang secara otomatis mengolah seluruh nilai mahasiswa:
 1. Buka tab **"Buku Nilai"** di kelas Anda.
-2. Atur persentase bobot setiap kategori evaluasi (total wajib 100%):
-   - Contoh komposisi standar: *Presensi Kehadiran (10%)*, *Tugas & Praktikum (20%)*, *Kuis (15%)*, *UTS (25%)*, *UAS (30%)*.
-3. Sistem secara otomatis mengalkulasi nilai kumulatif numerik dan mengonversinya ke **Huruf Mutu** (A, A-, B+, B, B-, C+, C, D, E) berdasarkan kebijakan akademik universitas.
-4. Klik **"Ekspor Nilai Akhir"** untuk pelaporan nilai ke bagian akademik.
 
-### 6.12 Fitur Kloning Kelas Semester Baru (Clean Draft & Reset Jadwal)
-Saat memasuki semester baru:
-1. Dosen tidak perlu membuat ulang materi dari nol. Buka kelas lama Anda, klik tombol **"Kloning Kelas Ini"**.
-2. Masukkan nama kelas baru dan pilih periode semester baru.
-3. **Mekanisme Cerdas Kloning E-Learning UAY**:
-   - Seluruh silabus, materi, tugas, dan kuis disalin ke dalam status **Draf Bersih (Clean Draft)**.
-   - Jadwal deadline dan kuis di-reset menjadi belum terjadwal agar tidak bertabrakan dengan kalender akademik baru.
-   - Peserta mahasiswa kelas lama **TIDAK diikutsertakan**, memastikan integritas dan privasi data antar-angkatan.
+![Tampilan Buku Nilai Gradebook](images/10-buku-nilai-gradebook.png)
+*Gambar 5.6: Buku Nilai (Gradebook) dengan Pengaturan Bobot Komponen, Kalkulasi Otomatis, dan Konversi Huruf Mutu*
 
-### 6.13 Log Audit Kelas & Transparansi Perubahan Data
-Tab **"Log Audit"** menyajikan rekam jejak setiap aksi pengubahan konten, perubahan nilai, atau koreksi presensi. Hal ini menjamin transparansi penuh dan mencegah sengketa nilai di kemudian hari.
-
----
-
-## BAB 7: PANDUAN MAHASISWA (STUDENT)
-
-### 7.1 Beranda Mahasiswa, Ringkasan Akademik, & Agenda Tenggat Waktu
-Setelah masuk via SSO UAY, mahasiswa disambut oleh antarmuka terpadu:
-- **Kartu Mata Kuliah Aktif**: Menampilkan daftar kelas semester berjalan, nama dosen pengampu, bobot SKS, dan persentase progres belajar.
-- **Agenda & Tenggat Waktu**: Menampilkan daftar tugas dan kuis yang mendekati batas waktu pengumpulan secara urut waktu.
-- **Ringkasan Kehadiran Rata-Rata**: Memberikan sinyal visual apakah rata-rata kehadiran Anda berada di zona aman ($\ge 75\%$).
-
-### 7.2 Pengisian Presensi Mandiri (Kode 6-Digit & Pemindaian QR Code)
-Saat perkuliahan dimulai dan dosen mengumumkan sesi presensi dibuka:
-1. Buka kelas mata kuliah yang bersangkutan di laptop atau ponsel Anda.
-2. Di bagian paling atas kelas, muncul banner biru: **"Presensi Perkuliahan Sedang Dibuka"**.
-3. Klik tombol **"Isi Presensi Mandiri"**.
-4. Masukkan **6-Digit Kode Kehadiran** yang ditampilkan dosen pada proyektor (contoh: `582914`).
-   - Kode bersifat *case-insensitive* dan spasi otomatis dibersihkan oleh sistem.
-   - Alternatif: Anda juga dapat memindai **QR Code** di layar menggunakan kamera ponsel.
-5. Klik **"Kirim Presensi Sekarang"**.
-6. Notifikasi hijau akan muncul mengonfirmasi kehadiran Anda: *"Presensi Berhasil Dicatat: HADIR"*.
-
-### 7.3 Mempelajari Materi Kuliah & Pelacakan Progres (Anti-Cheat Frontier)
-- **Membaca Dokumen & Modul**: Pratinjau langsung berkas modul (PDF/DOCX) di browser Anda. Setiap halaman yang Anda baca dicatat oleh peladen.
-- **Navigasi Slide Presentasi**: Geser salindia perkuliahan satu per satu untuk menandai progres pemahaman materi.
-- **Menonton Video Pembelajaran**: Pemutar video terintegrasi mendukung penyesuaian resolusi dan jeda.
-  - *Penting*: Anda wajib menonton linimasa video secara utuh. Melompati linimasa video secara paksa tidak akan diakui sebagai progres penyelesaian.
-- **Akses Unduh Berkas**: Jika dosen mengaktifkan aturan penyelesaian, tautan unduh berkas baru akan terbuka setelah progres materi Anda mencapai 100%.
-
-### 7.4 Pengumpulan Tugas Kuliah & Pemantauan Masukan Dosen
-1. Klik nama tugas pada pertemuan terkait.
-2. Baca rincian instruksi, batas pengumpulan (*Due Date*), dan rubrik penilaian yang ditetapkan dosen.
-3. Pilih berkas tugas dari komputer/gawai Anda (PDF, DOCX, ZIP) atau masukkan tautan Google Drive / GitHub jika diminta.
-4. Klik tombol **"Kirim Tugas"**.
-5. Pastikan tanda konfirmasi waktu pengumpulan berhasil muncul di layar. Anda dapat memperbarui unggahan tugas selama batas waktu toleransi belum ditutup.
-6. Setelah diperiksa dosen, nilai beserta catatan evaluasi akan langsung tampil di halaman tugas dan pusat notifikasi Anda.
-
-### 7.5 Pelaksanaan Kuis & Ujian Daring (Auto-Save & Navigasi Soal)
-1. Klik judul kuis atau ujian pada pertemuan yang dijadwalkan.
-2. Periksa parameter ujian: durasi pengerjaan, batas percobaan (*attempt*), dan batas waktu akhir.
-3. Klik **"Mulai Pengerjaan"**.
-4. **Fitur Auto-Save**: Setiap jawaban yang Anda klik atau ketikkan otomatis tersimpan di server. Anda tidak perlu khawatir kehilangan jawaban jika terjadi gangguan internet sesaat.
-5. Gunakan nomor soal di bilah samping untuk berpindah antar-soal.
-6. Setelah seluruh soal selesai dijawab, klik **"Kumpulkan dan Selesaikan Ujian"**.
-7. Konfirmasi pengumpulan. Nilai Anda akan tampil seketika atau diumumkan kemudian sesuai dengan kebijakan publikasi dosen pengampu.
-
-### 7.6 Pemantauan Ambang Batas Kehadiran 75% Syarat Ujian (UTS/UAS)
-Universitas Achmad Yani memberlakukan ketentuan ketat mengenai kelayakan ujian:
-- Mahasiswa **wajib memiliki tingkat kehadiran minimal 75%** dari total pertemuan tatap muka.
-- Buka tab **"Presensi"** di dalam kelas untuk mengecek:
-  - Total sesi perkuliahan yang telah diselenggarakan.
-  - Rincian Hadir, Izin, Sakit, dan Alfa.
-  - **Lencana Kelayakan Ujian**:
-    - **"MEMENUHI SYARAT UJIAN"** (Warna Hijau): Anda berhak mengikuti UTS/UAS.
-    - **"BELUM MEMENUHI SYARAT UJIAN"** (Warna Merah): Kehadiran Anda berada di bawah 75%. Segera temui dosen pengampu atau serahkan bukti surat izin/sakit resmi sebelum batas akhir pengisian nilai.
-
-### 7.7 Buku Nilai Pribadi (Transparansi Komponen Evaluasi & Huruf Mutu)
-- Buka menu navigasi **"Nilai"** untuk melihat ringkasan seluruh mata kuliah.
-- Masuk ke salah satu kelas $\rightarrow$ tab **"Buku Nilai"** untuk melihat transparansi rincian nilai tugas, kuis, UTS, dan UAS beserta bobotnya masing-masing.
-
-### 7.8 Pusat Notifikasi & Layanan Bantuan Mandiri
-- Ikon lonceng di bilah atas menampilkan pembaruan terkini: pengumuman dosen, tugas baru, dan terbitnya nilai.
-- Akses menu **"Bantuan"** kapan saja untuk mencari panduan pemecahan masalah mandiri.
+2. Klik **"Atur Bobot Komponen"** untuk menentukan persentase setiap unsur penilaian (total wajib berjumlah 100%):
+   - Contoh komposisi standar UAY:
+     - Presensi Kehadiran: **10%**
+     - Tugas & Praktikum: **25%**
+     - Kuis Online: **15%**
+     - Ujian Tengah Semester (UTS): **25%**
+     - Ujian Akhir Semester (UAS): **25%**
+3. Sistem secara otomatis menghitung:
+   - **Nilai Akhir Angka** (0.00 – 100.00).
+   - **Huruf Mutu Resmi** (A, A-, B+, B, B-, C+, C, D, E) sesuai rentang nilai resmi UAY.
+   - **Status Kelulusan** (LULUS / TIDAK LULUS).
+4. Klik tombol **"Ekspor Nilai Akhir ke Excel"** untuk mengunduh rekapitulasi nilai lengkap siap serah ke bagian akademik prodi/fakultas.
 
 ---
 
-## BAB 8: KEBIJAKAN AKADEMIK & STANDAR EVALUASI INSTITUSI
+### 5.9 Menyalin Materi ke Semester Baru (Fitur Kloning Kelas)
+Saat memasuki tahun ajaran atau semester baru, Bapak/Ibu tidak perlu mengetik ulang materi silabus dari nol:
+1. Buka kelas semester terdahulu yang materinya ingin digunakan kembali.
+2. Klik tombol **"Kloning Kelas Ini"** pada menu pengaturan kelas.
+3. Beri nama rombel baru (misal: *Kelas A - Semester Ganjil 2026/2027*).
+4. Seluruh modul, susunan pertemuan, tugas, dan kuis akan disalin secara otomatis dalam status draf rapi. Data mahasiswa lama dan presensi lama otomatis dibersihkan sehingga kelas baru langsung siap diajarkan.
 
-### 8.1 Tabel Standar Rentang Nilai Huruf Mutu UAY (Preset 2026.1)
-Berdasarkan Keputusan Akademik Universitas Achmad Yani, skala nilai huruf mutu resmi yang berlaku per Semester Ganjil 2026/2027 adalah sebagai berikut:
+---
 
-| Rentang Skor Numerik | Huruf Mutu | Bobot Indeks Prestasi (Point) | Status Keterangan |
+## BAB 6: PANDUAN UNTUK PENGELOLA PRODI (ADMIN PRODI)
+
+### 6.1 Membuka Kelas Kuliah Semester Baru
+Bagi staf tata usaha atau admin program studi:
+1. Masuk ke sistem $\rightarrow$ Buka menu **"Kelas"** di bilah navigasi kiri.
+
+![Tampilan Kelola Kelas Admin Prodi](images/11-kelola-kelas-admin.png)
+*Gambar 6.1: Layar Pengelolaan Kelas Program Studi oleh Admin Tata Usaha*
+
+2. Klik tombol hijau **"+ Buka Kelas Perkuliahan Baru"**.
+3. Pilih nama mata kuliah dari katalog kurikulum prodi yang telah ditetapkan.
+4. Beri nama rombongan belajar (contoh: *Kelas A - Pagi*).
+5. Pilih tahun ajaran dan semester (misal: *2026/2027 Ganjil*), lalu klik **"Simpan"**.
+
+---
+
+### 6.2 Menugaskan Dosen Pengampu (Termasuk Dosen Lintas Prodi)
+1. Buka kelas yang baru dibuat $\rightarrow$ Pilih tab **"Peserta & Pengampu"**.
+2. Klik tombol **"+ Tambah Dosen"**.
+3. Ketikkan nama atau NIDN dosen pengampu.
+4. **Dosen Lintas Prodi/Fakultas**: Jika mata kuliah diampu oleh dosen dari program studi atau fakultas lain (contoh: dosen Bahasa Indonesia, Agama, atau Bahasa Inggris), Anda cukup mengetikkan nama beliau di pencarian. Sistem mendukung penuh penugasan dosen lintas unit tanpa kendala.
+
+---
+
+### 6.3 Mendaftarkan Mahasiswa ke Dalam Kelas
+1. Pada tab **"Peserta & Pengampu"**, klik tombol **"+ Tambah Mahasiswa"**.
+2. Pilih mahasiswa yang telah menyetujui Kartu Rencana Studi (KRS) untuk mata kuliah tersebut.
+3. Mahasiswa yang ditambahkan akan otomatis melihat mata kuliah ini saat mereka masuk ke portal E-Learning UAY.
+4. Jika ada mahasiswa yang membatalkan KRS atau cuti kuliah, Anda dapat menonaktifkan status mahasiswa tersebut dari daftar rombel kelas.
+
+---
+
+### 6.4 Mencetak Rekap Kehadiran & Nilai Program Studi
+Admin prodi dapat memantau keterlaksanaan perkuliahan di lingkungan prodinya:
+- Buka tab **"Rekap Presensi"** dan **"Buku Nilai"** di kelas yang diinginkan.
+- Unduh laporan ke format Excel untuk keperluan arsip Berita Acara Perkuliahan (BAP) dan kelengkapan dokumen akreditasi program studi.
+
+---
+
+## BAB 7: PANDUAN PENGURUS & PIMPINAN UNIVERSITAS
+
+### 7.1 Pemantauan Keaktifan Kuliah Seluruh Fakultas
+Bagi pimpinan universitas (Rektorat & Dekanat):
+- Sistem menyajikan ringkasan statistik keaktifan perkuliahan seluruh fakultas secara waktu nyata:
+  - Jumlah kelas perkuliahan yang aktif per semester.
+  - Jumlah materi kuliah dan tugas yang dibagikan dosen setiap pekannya.
+  - Rata-rata tingkat kehadiran mahasiswa di setiap program studi.
+- Informasi disajikan dalam bentuk grafik eksekutif yang bersih, mudah dipantau, dan akuntabel.
+
+### 7.2 Penetapan Kalender Semester & Standar Nilai Huruf Mutu
+Pengurus universitas menetapkan semester yang sedang berjalan dan memastikan rentang huruf mutu akademik berlaku seragam di seluruh fakultas di lingkungan UAY.
+
+---
+
+## BAB 8: ATURAN AKADEMIK & STANDAR NILAI UAY
+
+### 8.1 Tabel Konversi Nilai Angka ke Huruf Mutu
+Sesuai Peraturan Akademik Universitas Achmad Yani, rentang konversi nilai akhir adalah:
+
+| Rentang Nilai Angka Akhir | Huruf Mutu | Angka Bobot Mutu | Keterangan Kelulusan |
 |:---:|:---:|:---:|:---|
-| **$\ge 85.00$** | **A** | **4.00** | Sangat Baik (Istimewa) |
-| **$80.00 - 84.99$** | **A-** | **3.75** | Sangat Baik |
-| **$75.00 - 79.99$** | **B+** | **3.50** | Baik Sekali |
-| **$70.00 - 74.99$** | **B** | **3.00** | Baik |
-| **$65.00 - 69.99$** | **B-** | **2.75** | Cukup Baik |
-| **$60.00 - 64.99$** | **C+** | **2.50** | Cukup |
-| **$55.00 - 59.99$** | **C** | **2.00** | Cukup (Batas Kelulusan Minimal) |
-| **$45.00 - 54.99$** | **D** | **1.00** | Kurang (Wajib Perbaikan) |
-| **$< 45.00$** | **E** | **0.00** | Gagal (Wajib Mengulang) |
-
-### 8.2 Rumus & Pembobotan Nilai Akhir Semester
-Nilai Akhir Mahasiswa dihitung berdasarkan rumus pembobotan proporsional:
-$$\text{Nilai Akhir} = \sum_{i=1}^{k} \left( \frac{\text{Bobot Kategori}_i}{100} \times \text{Rata-rata Skor}_i \right)$$
-
-Di mana total seluruh bobot kategori wajib memenuhi:
-$$\sum_{i=1}^{k} \text{Bobot Kategori}_i = 100\%$$
-
-Sistem E-Learning UAY secara otomatis menolak penyimpanan konfigurasi gradebook jika akumulasi persentase bobot tidak tepat bernilai 100%.
-
-### 8.3 Regulasi Ambang Batas Kehadiran Minimal 75%
-1. Sesuai Buku Pedoman Akademik UAY, mahasiswa yang memiliki akumulasi ketidakhadiran (alfa/tanpa keterangan) melebihi 25% dari total sesi perkuliahan aktif dinyatakan **TIDAK BERHAK MENGIKUTI UJIAN AKHIR SEMESTER (UAS)**.
-2. Nilai kehadiran dihitung secara matematis oleh sistem:
-   $$\text{Persentase Kehadiran} = \frac{\text{Jumlah Sesi Hadir} + \text{Jumlah Sesi Izin Resmi}}{\text{Total Sesi Perkuliahan yang Diselenggarakan}} \times 100\%$$
-3. Status Sakit dan Izin Resmi hanya diakui jika dosen pengampu telah memperbarui status presensi pada Roster dan membubuhkan catatan nomor surat keterangan.
+| **85,00 s.d. 100** | **A** | **4,00** | Sangat Baik (Istimewa) |
+| **80,00 s.d. 84,99** | **A-** | **3,75** | Sangat Baik |
+| **75,00 s.d. 79,99** | **B+** | **3,50** | Baik Sekali |
+| **70,00 s.d. 74,99** | **B** | **3,00** | Baik |
+| **65,00 s.d. 69,99** | **B-** | **2,75** | Cukup Baik |
+| **60,00 s.d. 64,99** | **C+** | **2,50** | Cukup |
+| **55,00 s.d. 59,99** | **C** | **2,00** | Lulus (Batas Minimal Lulus) |
+| **45,00 s.d. 54,99** | **D** | **1,00** | Kurang (Perlu Ujian Ulang) |
+| **Di bawah 45,00** | **E** | **0,00** | Tidak Lulus (Wajib Mengulang) |
 
 ---
 
-## BAB 9: INTEGRASI TELEMETRI EKSEKUTIF DASHBOARD REKTOR UAY
-
-### 9.1 Tujuan & Manfaat Bagi Pimpinan Universitas
-Integrasi E-Learning dengan **Dashboard Rektor UAY** bertujuan menyediakan visibilitas menyeluruh bagi Rektor, para Wakil Rektor, dan Badan Penjaminan Mutu Akademik (BPM) untuk memantau kelancaran kegiatan belajar mengajar secara *real-time* tanpa mengganggu privasi detail kelas.
-
-### 9.2 Struktur Snapshot Telemetri Real-Time
-Aplikasi E-Learning menyediakan endpoint aman `GET /api/v1/integrations/rector/snapshot` yang mengembalikan data agregat terstruktur:
-
-```json
-{
-  "system": "E-Learning UAY",
-  "generatedAt": "2026-10-05T06:15:00Z",
-  "academicYear": "2026/2027 Ganjil",
-  "overview": {
-    "totalFaculties": 4,
-    "totalDepartments": 12,
-    "totalActiveClasses": 248,
-    "totalEnrolledStudents": 4120,
-    "totalLecturersActive": 185
-  },
-  "contentActivity": {
-    "totalPublishedSections": 1984,
-    "documentsUploaded": 3410,
-    "slideDecksPublished": 1820,
-    "videoLecturesStreamed": 890,
-    "assignmentsActive": 980,
-    "quizzesAdministered": 640
-  },
-  "attendanceCompliance": {
-    "universityAverageAttendance": 91.4,
-    "eligibleStudentsRate": 94.2,
-    "sessionsConductedThisWeek": 496
-  }
-}
-```
-
-Melalui data telemetri ini, pimpinan universitas dapat segera mendeteksi program studi yang membutuhkan perhatian khusus, mengevaluasi rasio keaktifan dosen, serta memastikan kepatuhan standar mutu akademik kampus.
+### 8.2 Ketentuan Wajib Kehadiran Minimal 75%
+1. Mahasiswa wajib menghadiri **minimal 75%** dari total seluruh pertemuan kuliah semester.
+2. Mahasiswa yang persentase kehadirannya di bawah 75% **tidak diperbolehkan mengikuti Ujian Akhir Semester (UAS)**.
+3. Rumus persentase kehadiran:
+   $$\\text{Persentase Kehadiran} = \\frac{\\text{Jumlah Hadir} + \\text{Jumlah Sakit/Izin Resmi}}{\\text{Total Pertemuan Selesai}} \\times 100\\%$$
+4. Mahasiswa yang berhalangan hadir karena sakit atau izin resmi wajib menyerahkan surat keterangan kepada dosen pengampu agar dicatat ke lembar Roster sebelum penutupan nilai semester.
 
 ---
 
-## BAB 10: FAQ & PANDUAN PEMECAHAN MASALAH (TROUBLESHOOTING)
+## BAB 9: PERTANYAAN SERING DITANYAKAN (FAQ)
 
-### 10.1 Kendala Login & SSO
-- **Tanya**: Saat klik "Masuk dengan SSO UAY", muncul pesan *Session Expired* atau kesalahan otentikasi.
-  - **Solusi**: Bersihkan cache dan cookies browser Anda, atau gunakan jendela penyamaran (*Incognito Window*). Pastikan Anda mengakses alamat resmi `https://sso.uay.ac.id`.
-- **Tanya**: Saya lupa kata sandi email kampus/SSO saya.
-  - **Solusi**: Klik tautan *"Lupa Kata Sandi"* di halaman portal SSO atau hubungi helpdesk TIK melalui `sso-admin@uay.ac.id`. E-Learning tidak dapat mereset kata sandi secara langsung.
+### 9.1 Kendala Saat Masuk Akun
+- **Tanya: Saya tidak bisa masuk ke akun E-Learning UAY.**
+  - **Jawaban**: Pastikan Anda membuka situs resmi **https://e-learning.uay.ac.id**. Gunakan NIM dan kata sandi akun kampus Anda untuk mahasiswa, atau email `@uay.ac.id` untuk dosen. Jika masih berkendala, gunakan menu *Lupa Kata Sandi* atau hubungi Helpdesk TIK.
 
-### 10.2 Kendala Presensi Perkuliahan
-- **Tanya**: Mahasiswa memasukkan kode 6-digit namun sistem menampilkan *"Kode Tidak Valid atau Telah Berakhir"*.
-  - **Solusi**: Pastikan jam di gawai Anda tersinkronisasi otomatis dengan waktu internet. Periksa apakah batas durasi sesi presensi dosen telah habis. Jika sesi telah ditutup, mintalah dosen untuk mengoreksi kehadiran Anda melalui lembar Roster manual.
-- **Tanya**: Tampilan proyektor dosen tidak menampilkan QR Code.
-  - **Solusi**: Periksa koneksi internet laptop dosen. Kode 6-digit teks tetap dapat digunakan mahasiswa secara mandiri tanpa memindai QR code.
+### 9.2 Kendala Presensi Mahasiswa
+- **Tanya: Muncul pesan "Kode Kadaluarsa atau Tidak Valid" saat memasukkan 6 angka.**
+  - **Jawaban**: 
+    1. Pastikan jam di ponsel Anda sudah disetel otomatis dari jaringan internet (WITA).
+    2. Periksa apakah batas waktu absensi (15 menit) sudah ditutup dosen. Jika sudah ditutup, mintalah dosen untuk memasukkan kehadiran Anda lewat Lembar Presensi (Roster) manual di laptop dosen.
+- **Tanya: Gambar Barcode QR di proyektor dosen tidak terbaca oleh kamera ponsel.**
+  - **Jawaban**: Anda tidak harus memindai barcode. Cukup ketikkan **6 digit kode angka** yang tertulis besar di layar proyektor ke kotak presensi di ponsel Anda.
 
-### 10.3 Kendala Materi & Pelacakan Progres Video/Slide
-- **Tanya**: Mengapa tombol unduh berkas modul (PDF/Slide) berwarna abu-abu dan tidak dapat diklik?
-  - **Solusi**: Dosen mengaktifkan aturan *Completion Rules*. Anda wajib membaca seluruh halaman dokumen atau menonton video materi hingga 100% sebelum tombol unduh diaktifkan oleh peladen.
-- **Tanya**: Saya sudah menonton video tetapi persentase progres tertahan di 80%.
-  - **Solusi**: Sistem menggunakan *Anti-Skip Frontier Tracker*. Putar video secara normal tanpa mempercepat linimasa (*scrubbing*) ke bagian akhir. Pastikan koneksi internet stabil agar sinyal pencatatan progres dapat terkirim berkala ke peladen.
-
-### 10.4 Kendala Pengunggahan Tugas & Kuis
-- **Tanya**: Berkas tugas gagal diunggah dan muncul peringatan ukuran berkas.
-  - **Solusi**: Pastikan ukuran berkas tidak melebihi kuota maksimal (standar 25 MB). Jika berkas laporan atau video proyek berukuran sangat besar, kompres berkas ke format PDF/ZIP atau unggah ke Google Drive resmi UAY dan serahkan tautannya pada kolom yang disediakan.
-- **Tanya**: Koneksi internet terputus saat sedang mengerjakan kuis online.
-  - **Solusi**: Jangan panik. Seluruh jawaban yang telah Anda klik otomatis tersimpan (*auto-save*). Segera sambungkan kembali koneksi internet Anda dan muat ulang (*refresh*) halaman ujian untuk melanjutkan pengerjaan selama durasi timer masih tersisa.
-
-### 10.5 Kendala Hak Akses Dosen & Admin Prodi
-- **Tanya**: Dosen tidak menemukan mata kuliah yang diampunya di daftar kelas.
-  - **Solusi**: Hubungi Administrator Program Studi terkait untuk memastikan bahwa NIDN Anda telah ditugaskan sebagai dosen pengampu pada kelas tersebut.
-- **Tanya**: Admin Prodi tidak dapat mengakses menu di luar prodinya.
-  - **Solusi**: Ini merupakan mekanisme keamanan resmi (*Department Scoping*). Admin Prodi hanya berwenang mengelola prodi yang terdaftar pada mandat akunnya. Jika Anda mengelola dua prodi, mintalah Super Admin untuk menambahkan cakupan prodi pada profil SSO Anda.
+### 9.3 Kendala Mengunggah Tugas
+- **Tanya: Muncul peringatan "Ukuran Berkas Terlalu Besar" saat mengumpulkan tugas.**
+  - **Jawaban**: Batas berkas langsung di sistem adalah 25 MB. Jika Anda mengumpulkan tugas video atau dokumen berukuran besar, unggah berkas tersebut ke Google Drive akun kampus UAY Anda terlebih dahulu, lalu cantumkan tautan (link) Google Drive tersebut pada kolom tugas di sistem.
 
 ---
 
-## BAB 11: PUSAT BANTUAN & KONTAK LAYANAN TERPADU TIK UAY
+## BAB 10: PUSAT BANTUAN & KONTAK RESMI TIK UAY
 
-### 11.1 Pusat Bantuan Mandiri Terintegrasi (Help Center)
-Aplikasi E-Learning UAY dilengkapi dengan **Help Center Mandiri** yang dapat diakses langsung melalui menu navigasi samping atau tautan **/help**:
-- Menyediakan lebih dari **50 Artikel Panduan Praktis** yang disusun per peran (Mahasiswa, Dosen, Admin).
-- Kolom pencarian instan cerdas untuk menemukan jawaban cepat seputar kendala teknis.
+Sistem E-Learning UAY menyediakan portal bantuan mandiri yang dapat diakses langsung dari menu aplikasi:
 
-### 11.2 Saluran Bantuan Resmi Helpdesk UAY
-Apabila Anda membutuhkan bantuan teknis lanjutan, silakan menghubungi tim dukungan resmi kami melalui saluran berikut:
+![Tampilan Pusat Bantuan Pengguna](images/12-pusat-bantuan-helpdesk.png)
+*Gambar 10.1: Pusat Bantuan Pengguna dengan Pencarian Topik Masalah dan Kontak Tim Helpdesk*
 
-| Layanan / Divisi | Saluran Kontak | Jam Operasional | Cakupan Layanan |
-|:---|:---|:---:|:---|
-| **Helpdesk Akademik E-Learning** | `elearning-support@uay.ac.id` | Senin – Jumat (08.00 – 16.00 WITA) | Kendala kelas, presensi, tugas, dan rekap nilai |
-| **Layanan Akun & SSO Kampus** | `sso-admin@uay.ac.id` | Senin – Jumat (08.00 – 16.00 WITA) | Reset akun, lupa sandi, aktivasi MFA 2FA |
-| **Layanan Terpadu TIK UAY (Fisik)**| Gedung Rektorat UAY Lt. 2 | Hari Kerja Kampus | Konsultasi teknis tatap muka & verifikasi identitas |
+Bila Bapak/Ibu Dosen atau Saudara/i Mahasiswa membutuhkan asistensi lebih lanjut:
+
+| Saluran Bantuan | Kontak & Lokasi | Jam Operasional |
+|:---|:---|:---:|
+| **Surel Bantuan E-Learning** | `elearning-support@uay.ac.id` | Senin – Jumat (08.00 – 16.00 WITA) |
+| **Layanan Akun & Sandi Kampus** | `sso-admin@uay.ac.id` | Senin – Jumat (08.00 – 16.00 WITA) |
+| **Layanan Tatap Muka** | Gedung Rektorat UAY Lantai 2 (Ruang TIK) | Jam Kerja Kantor Kampus |
+| **Pusat Bantuan Mandiri di Aplikasi** | Menu **"Bantuan"** di sudut bilah kiri | 24 Jam Non-Stop |
 
 ---
-*Dokumen Buku Panduan Resmi ini diterbitkan dan diawasi oleh Pusat Data, Informasi, dan Pembelajaran Digital Universitas Achmad Yani (UAY).*
+*Diterbitkan oleh Pusat Data, Informasi, dan Pembelajaran Digital Universitas Achmad Yani (UAY) Banjarmasin.*
 """
 
-def generate_markdown_guides():
+def generate_markdown():
+    print("Writing docs/BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md...")
     out_master = DOCS_DIR / "BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md"
-    out_operational = DOCS_DIR / "PANDUAN_OPERASIONAL_PENGGUNA_UAY.md"
-    
     with open(out_master, "w", encoding="utf-8") as f:
         f.write(GUIDE_MD_CONTENT)
-    print(f"Master guide generated: {out_master} ({len(GUIDE_MD_CONTENT)} characters)")
-    
-    with open(out_operational, "w", encoding="utf-8") as f:
+
+    print("Writing docs/PANDUAN_OPERASIONAL_PENGGUNA_UAY.md...")
+    out_op = DOCS_DIR / "PANDUAN_OPERASIONAL_PENGGUNA_UAY.md"
+    with open(out_op, "w", encoding="utf-8") as f:
         f.write(GUIDE_MD_CONTENT)
-    print(f"Operational guide synced: {out_operational}")
+
+    print("Writing root Project/BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md...")
+    out_root = PROJECT_ROOT / "BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md"
+    with open(out_root, "w", encoding="utf-8") as f:
+        f.write(GUIDE_MD_CONTENT)
+
+    # Ensure images exist in root as well if needed
+    root_images = PROJECT_ROOT / "docs" / "images"
+    root_images.mkdir(parents=True, exist_ok=True)
+    for img in (DOCS_DIR / "images").glob("*.png"):
+        shutil.copy2(img, root_images / img.name)
+
+    print("Successfully generated master markdown guides with rich UI captures!")
 
 if __name__ == "__main__":
-    generate_markdown_guides()
+    generate_markdown()

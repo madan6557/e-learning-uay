@@ -542,10 +542,10 @@
         <div class="grid-3">
           <div class="card">
             <div class="card-top-bar" style="background:var(--primary-light)"></div>
-            <div class="card-title">🔐 Single Sign-On (SSO)</div>
+            <div class="card-title">🔐 Satu Akun Kampus (SSO)</div>
             <ul>
-              <li>Otentikasi terpusat via Keycloak UAY</li>
-              <li>Zero-password lokal (Aman & Terstandar)</li>
+              <li>Satu Akun Resmi Kampus Terpadu</li>
+              <li>Praktis & Aman tanpa sandi baru</li>
               <li>Dukungan Autentikasi Dua Faktor (MFA)</li>
             </ul>
           </div>
@@ -589,32 +589,32 @@
       </div>
 
       <!-- SLIDE 3: SSO FLOW -->
-      <div class="slide" data-category="all" data-note="Jelaskan bahwa tidak ada registrasi mandiri atau buat password lokal. Seluruh akun menggunakan email resmi UAY.">
+      <div class="slide" data-category="all" data-note="Jelaskan bahwa seluruh pengguna cukup menggunakan akun resmi kampus UAY tanpa perlu membuat akun baru.">
         <div class="slide-header">
           <span class="slide-badge badge-green">AUTENTIKASI TERPADU</span>
-          <h2 class="slide-title">Alur Masuk Tunggal: Single Sign-On (SSO UAY)</h2>
-          <p class="slide-desc">Menjamin keamanan tingkat tinggi dengan verifikasi identitas terpusat di server Keycloak resmi universitas.</p>
+          <h2 class="slide-title">Alur Masuk Praktis: Satu Akun Kampus (SSO UAY)</h2>
+          <p class="slide-desc">Menjamin kemudahan dan keamanan dengan satu akun resmi kampus universitas.</p>
         </div>
         <div class="grid-2">
           <div class="card">
             <div class="card-top-bar" style="background:var(--primary)"></div>
             <div class="card-title">Langkah Masuk (Semua Pengguna)</div>
             <ul>
-              <li><strong>1. Akses Portal:</strong> Buka <code>https://elearning.uay.ac.id</code></li>
-              <li><strong>2. Klik Masuk SSO:</strong> Tombol hijau di beranda mengarahkan ke <code>sso.uay.ac.id</code></li>
-              <li><strong>3. Masukkan Kredensial:</strong> Gunakan Email Kampus / NIM / NIDN</li>
-              <li><strong>4. Verifikasi MFA:</strong> Input 6-digit TOTP jika 2FA aktif</li>
-              <li><strong>5. Otomatis ke Dashboard:</strong> Sesi aktif secara aman tanpa password lokal</li>
+              <li><strong>1. Akses Portal:</strong> Buka <code>https://e-learning.uay.ac.id</code></li>
+              <li><strong>2. Klik Masuk Akun Kampus:</strong> Tombol hijau di beranda portal</li>
+              <li><strong>3. Masukkan Data Akun:</strong> Gunakan NIM (Mahasiswa) atau Email Kampus (Dosen/Staf)</li>
+              <li><strong>4. Verifikasi Keamanan:</strong> Masukkan kode jika diminta</li>
+              <li><strong>5. Otomatis ke Dashboard:</strong> Sesi aktif secara aman sesuai peran Anda</li>
             </ul>
           </div>
           <div class="card">
             <div class="card-top-bar" style="background:var(--amber)"></div>
             <div class="card-title">Keamanan & Panduan Penting</div>
             <ul>
-              <li><strong>Zero Local Password:</strong> E-Learning tidak menyimpan password lokal sama sekali.</li>
-              <li><strong>Logout Bersih:</strong> Klik 'Keluar' pada gawai bersama untuk memutus tiket SSO.</li>
-              <li><strong>Lupa Password:</strong> Dilakukan via portal SSO di <code>sso.uay.ac.id</code>.</li>
-              <li><strong>Audit Sesi:</strong> Setiap login terekam dalam Audit Log demi akuntabilitas.</li>
+              <li><strong>Satu Akun Kampus:</strong> Cukup gunakan NIM atau email resmi kampus untuk semua layanan.</li>
+              <li><strong>Logout Bersih:</strong> Selalu klik 'Keluar' pada komputer laboratorium/bersama.</li>
+              <li><strong>Lupa Password:</strong> Klik tautan 'Lupa Kata Sandi' atau hubungi Tim TIK UAY.</li>
+              <li><strong>Keamanan Berlapis:</strong> Seluruh aktivitas perkuliahan tercatat secara aman dan akuntabel.</li>
             </ul>
           </div>
         </div>
@@ -659,21 +659,21 @@
       </div>
 
       <!-- SLIDE 5: DASHBOARD REKTOR BRIDGE -->
-      <div class="slide" data-category="super" data-note="Jelaskan bahwa pimpinan kampus (Rektor) bisa melihat keaktifan kuliah secara real-time tanpa harus membuka kelas satu per satu.">
+      <div class="slide" data-category="super" data-note="Jelaskan bahwa pimpinan kampus (Rektor) dapat melihat keaktifan kuliah secara waktu nyata tanpa harus membuka kelas satu per satu.">
         <div class="slide-header">
           <span class="slide-badge badge-purple">INTEGRASI EKSEKUTIF</span>
-          <h2 class="slide-title">Telemetri Real-Time ke Dashboard Rektor UAY</h2>
-          <p class="slide-desc">Jalur bridging aman menyediakan agregasi keaktifan perkuliahan dan kepatuhan mutu perkuliahan.</p>
+          <h2 class="slide-title">Pemantauan Real-Time di Dashboard Rektor UAY</h2>
+          <p class="slide-desc">Menyediakan ringkasan keaktifan perkuliahan dan kepatuhan mutu akademik bagi pimpinan universitas.</p>
         </div>
         <div class="grid-2">
           <div class="card">
             <div class="card-top-bar" style="background:var(--primary)"></div>
-            <div class="card-title">Spesifikasi Endpoint Telemetri</div>
+            <div class="card-title">Mekanisme Pemantauan Pimpinan</div>
             <ul>
-              <li><strong>URL:</strong> <code>GET /api/v1/integrations/rector/snapshot</code></li>
-              <li><strong>Autentikasi:</strong> Bearer Token <code>RECTOR_INTEGRATION_TOKEN</code></li>
-              <li><strong>Frekuensi:</strong> Real-time on-demand query dengan cached layer</li>
-              <li><strong>Privasi:</strong> Menyajikan angka agregat tanpa membocorkan konten kelas privat</li>
+              <li><strong>Sinkronisasi Otomatis:</strong> Terhubung langsung ke Dashboard Rektor UAY</li>
+              <li><strong>Akses Terlindungi:</strong> Khusus diperuntukkan bagi pejabat universitas</li>
+              <li><strong>Pembaruan Berkala:</strong> Diperbarui otomatis saat proses belajar mengajar berjalan</li>
+              <li><strong>Privasi Terjaga:</strong> Menyajikan angka ringkasan tanpa mengganggu ruang kelas</li>
             </ul>
           </div>
           <div class="card">
@@ -681,7 +681,7 @@
             <div class="card-title">Data yang Dipantau Pimpinan</div>
             <ul>
               <li>Total kelas aktif per fakultas dan prodi</li>
-              <li>Jumlah materi digital terbit (PDF, Slide, Video)</li>
+              <li>Jumlah materi kuliah terbit (PDF, Slide, Video)</li>
               <li>Volume pelaksanaan tugas dan kuis aktif</li>
               <li>Rata-rata persentase presensi kehadiran universitas</li>
               <li>Rasio mahasiswa yang memenuhi syarat kelayakan ujian</li>
@@ -1459,7 +1459,7 @@
           "<strong>Cakupan Akses:</strong> Melihat dan mengelola seluruh fakultas, program studi, kelas, dosen, dan mahasiswa.",
           "<strong>Kebijakan Akademik:</strong> Mengatur periode tahun ajaran aktif (misal 2026/2027 Ganjil) dan preset standar nilai huruf mutu.",
           "<strong>Master Kurikulum:</strong> Menambah dan memperbarui master mata kuliah resmi universitas pada menu Katalog (/catalog).",
-          "<strong>Integrasi Eksekutif:</strong> Menyediakan snapshot telemetri berkala untuk Dashboard Rektor UAY via token aman."
+          "<strong>Integrasi Eksekutif:</strong> Menyediakan ringkasan keaktifan perkuliahan berkala untuk Dashboard Rektor UAY."
         ]
       },
       prodi: {

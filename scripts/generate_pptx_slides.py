@@ -5,6 +5,7 @@ for E-Learning Universitas Achmad Yani (UAY) Socialization & Operational Guide.
 Covers all roles: Super Admin, Department Admin, Instructor, and Student.
 """
 from pathlib import Path
+import shutil
 import pptx
 from pptx import Presentation
 from pptx.util import Inches, Pt
@@ -14,6 +15,8 @@ from pptx.enum.shapes import MSO_SHAPE
 
 ROOT = Path(r"E:\UVAYA\Project\E - Learning UAY")
 DOCS_DIR = ROOT / "docs"
+PROJECT_ROOT = Path(r"E:\UVAYA\Project")
+PANDUAN_DIR = PROJECT_ROOT / "Panduan"
 OUT_PPTX = DOCS_DIR / "Sosialisasi dan Panduan Penggunaan E-Learning UAY.pptx"
 
 # Color Palette
@@ -156,10 +159,10 @@ def build_presentation():
     
     add_card(s2, Inches(0.8), Inches(1.8), Inches(3.6), Inches(5.0),
              "Satu Pintu Akses (SSO)",
-             ["Terintegrasi dengan Keycloak SSO resmi UAY",
-              "Zero-Password lokal di e-learning",
-              "Dukungan MFA / 2FA untuk pimpinan dan dosen",
-              "Keamanan akun terjamin dan tersinkronisasi"],
+             ["Terintegrasi dengan Akun Resmi Kampus (SSO UAY)",
+              "Satu akun terpadu untuk seluruh layanan kampus",
+              "Dukungan verifikasi dua faktor (MFA/2FA)",
+              "Keamanan akun terlindungi dan tersinkronisasi"],
              badge="Keamanan Terpusat", accent_color=C_PRIMARY)
 
     add_card(s2, Inches(4.8), Inches(1.8), Inches(3.6), Inches(5.0),
@@ -185,12 +188,12 @@ def build_presentation():
     add_header(s3, "Topologi Ekosistem Teknologi Informasi UAY", "Arsitektur Terintegrasi")
 
     add_card(s3, Inches(0.8), Inches(1.8), Inches(2.7), Inches(5.0),
-             "1. SSO Keycloak",
-             ["Gerbang identitas resmi kampus",
-              "Autentikasi akun mahasiswa & staf",
-              "Penetapan peran & token JWT",
-              "Single Sign-Out terpusat"],
-             badge="Identity Gateway", accent_color=C_BLUE)
+             "1. Akun Kampus Terpadu",
+             ["Gerbang masuk resmi universitas",
+              "Masuk menggunakan NIM atau Email UAY",
+              "Pengenalan peran Mahasiswa & Dosen otomatis",
+              "Keluar aman terpadu (Logout)"],
+             badge="Satu Pintu Akses", accent_color=C_BLUE)
 
     add_card(s3, Inches(3.8), Inches(1.8), Inches(2.7), Inches(5.0),
              "2. E-Learning Core",
@@ -258,26 +261,26 @@ def build_presentation():
     # SLIDE 5: SINGLE SIGN-ON (SSO) UAY
     # -------------------------------------------------------------
     s5 = prs.slides.add_slide(blank_layout)
-    add_header(s5, "Autentikasi Terpadu & Prosedur Masuk Pengguna", "Gerbang Masuk SSO")
+    add_header(s5, "Autentikasi Terpadu & Prosedur Masuk Pengguna", "Gerbang Masuk Akun Kampus")
 
     add_card(s5, Inches(0.8), Inches(1.8), Inches(5.6), Inches(5.0),
              "Langkah Masuk Pengguna (Semua Peran)",
-             ["1. Buka situs elearning.uay.ac.id",
-              "2. Klik tombol utama 'Masuk dengan SSO UAY'",
-              "3. Masukkan Email Kampus Resmi / NIM / NIDN",
-              "4. Masukkan Kata Sandi SSO Anda",
-              "5. Jika MFA aktif: input 6 digit TOTP aplikasi",
-              "6. Sistem otomatis mengarahkan ke Dashboard Anda",
-              "Catatan: Kata sandi TIDAK disimpan di server e-learning"],
-             badge="Alur Login", accent_color=C_PRIMARY)
+             ["1. Buka situs https://e-learning.uay.ac.id",
+              "2. Klik tombol utama 'Masuk dengan Akun Kampus (SSO UAY)'",
+              "3. Masukkan Email Kampus Resmi / NIM Anda",
+              "4. Masukkan Kata Sandi akun kampus Anda",
+              "5. Jika diminta: masukkan kode verifikasi SMS/Aplikasi",
+              "6. Sistem otomatis mengenali peran Anda dan membuka beranda",
+              "Catatan: Cukup satu akun kampus untuk seluruh layanan UAY"],
+             badge="Alur Masuk", accent_color=C_PRIMARY)
 
     add_card(s5, Inches(6.8), Inches(1.8), Inches(5.6), Inches(5.0),
              "Keamanan Akun & Tips Operasional",
-             ["Zero Local Password: Akun terpusat di server kampus",
-              "Logout Bersih: Selalu klik 'Keluar' pada komputer lab",
-              "Reset Kata Sandi: Dilakukan melalui sso.uay.ac.id",
-              "Session Guard: Sesi otomatis diperpanjang saat aktif",
-              "Audit Log: Setiap upaya login terekam untuk audit keamanan"],
+             ["Satu Akun Kampus: Terhubung langsung data induk universitas",
+              "Keluar Bersih (Logout): Selalu klik 'Keluar' pada komputer lab",
+              "Reset Kata Sandi: Klik 'Lupa Kata Sandi' atau hubungi TIK",
+              "Kenyamanan Sesi: Sesi tetap aktif selama Anda beraktivitas",
+              "Keamanan Berlapis: Aktivitas perkuliahan tercatat akuntabel"],
              badge="Protokol Keamanan", accent_color=C_AMBER)
 
     # -------------------------------------------------------------
@@ -338,25 +341,25 @@ def build_presentation():
     # SLIDE 8: INTEGRASI DASHBOARD REKTOR
     # -------------------------------------------------------------
     s8 = prs.slides.add_slide(blank_layout)
-    add_header(s8, "Jalur Telemetri Eksekutif untuk Pimpinan UAY", "Integrasi Dashboard Rektor")
+    add_header(s8, "Pemantauan Eksekutif untuk Pimpinan UAY", "Integrasi Dashboard Rektor")
 
     add_card(s8, Inches(0.8), Inches(1.8), Inches(5.6), Inches(5.0),
-             "Mekanisme Bridging Data",
-             ["Endpoint aman: GET /api/v1/integrations/rector/snapshot",
-              "Otorisasi: Bearer Token RECTOR_INTEGRATION_TOKEN",
-              "Agregasi data tanpa membuka privasi konten kelas",
-              "Penyegaran data real-time berkala",
+             "Konektivitas Pemantauan Kampus",
+             ["Sinkronisasi otomatis ke Dashboard Rektor UAY",
+              "Akses terlindungi khusus pimpinan universitas",
+              "Menyajikan ringkasan tanpa mengganggu perkuliahan",
+              "Pembaruan data keaktifan kuliah secara waktu nyata",
               "Digunakan oleh Rektorat & Penjaminan Mutu (BPM)"],
-             badge="Teknis Bridging", accent_color=C_BLUE)
+             badge="Pemantauan Pimpinan", accent_color=C_BLUE)
 
     add_card(s8, Inches(6.8), Inches(1.8), Inches(5.6), Inches(5.0),
              "Metrik yang Disajikan ke Rektor",
              ["• Total kelas perkuliahan aktif se-kampus",
-              "• Total materi digital terbit (PDF, Slide, Video)",
+              "• Total materi kuliah terbit (PDF, Slide, Video)",
               "• Jumlah tugas & kuis yang sedang berlangsung",
               "• Rata-rata persentase presensi kehadiran universitas",
               "• Persentase mahasiswa yang memenuhi syarat ujian"],
-             badge="Data Telemetri", accent_color=C_EMERALD)
+             badge="Ringkasan Eksekutif", accent_color=C_EMERALD)
 
     # -------------------------------------------------------------
     # SLIDE 9: ADMIN PRODI - ISOLASI DATA & PEMBUATAN KELAS
@@ -793,6 +796,12 @@ def build_presentation():
 
     prs.save(str(OUT_PPTX))
     print(f"PowerPoint Presentation generated: {OUT_PPTX} (24 slides)")
+    
+    # Copy to root Project and dedicated Panduan directory
+    PANDUAN_DIR.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(OUT_PPTX, PROJECT_ROOT / "Sosialisasi dan Panduan Penggunaan E-Learning UAY.pptx")
+    shutil.copy2(OUT_PPTX, PANDUAN_DIR / "Sosialisasi dan Panduan Penggunaan E-Learning UAY.pptx")
+    print(f"Copied PPTX to {PANDUAN_DIR} and {PROJECT_ROOT}")
 
 if __name__ == "__main__":
     build_presentation()

@@ -1,26 +1,28 @@
 # -*- coding: utf-8 -*-
 """
-Generate formatted DOCX document for Buku Panduan Penggunaan E-Learning UAY.
+Generate beautifully formatted DOCX user guide document for E-Learning UAY with embedded UI screenshots.
+Designed specifically for non-technical users (Lecturers, Students, Campus Admins, Leadership).
 """
 from pathlib import Path
+import re
+import shutil
 import docx
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.enum.table import WD_TABLE_ALIGNMENT, WD_ALIGN_VERTICAL
+from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
 ROOT = Path(r"E:\UVAYA\Project\E - Learning UAY")
 DOCS_DIR = ROOT / "docs"
+PROJECT_ROOT = Path(r"E:\UVAYA\Project")
 OUT_DOCX = DOCS_DIR / "Buku Panduan Penggunaan E-Learning UAY.docx"
-
-import re
+OUT_ROOT_DOCX = PROJECT_ROOT / "Buku Panduan Penggunaan E-Learning UAY.docx"
 
 def sanitize_xml(s):
     if not isinstance(s, str):
         return ""
-    # Remove null bytes and control chars except \t, \n, \r
     return re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', s)
 
 def set_cell_background(cell, fill_hex):
@@ -46,15 +48,15 @@ def create_guide_docx():
     
     # Page setup - Margins
     for section in doc.sections:
-        section.top_margin = Inches(1.0)
-        section.bottom_margin = Inches(1.0)
-        section.left_margin = Inches(1.0)
-        section.right_margin = Inches(1.0)
-        section.header_distance = Inches(0.5)
-        section.footer_distance = Inches(0.5)
+        section.top_margin = Inches(0.9)
+        section.bottom_margin = Inches(0.9)
+        section.left_margin = Inches(0.9)
+        section.right_margin = Inches(0.9)
+        section.header_distance = Inches(0.4)
+        section.footer_distance = Inches(0.4)
 
     # Color definitions
-    C_PRIMARY = RGBColor(22, 101, 52)      # Deep Emerald Green
+    C_PRIMARY = RGBColor(22, 101, 52)      # Deep Emerald Green (#166534)
     C_SECONDARY = RGBColor(15, 23, 42)     # Dark Slate
     C_MUTED = RGBColor(100, 116, 139)      # Muted Gray
     C_TEXT = RGBColor(30, 41, 59)          # Body Slate
@@ -68,7 +70,17 @@ def create_guide_docx():
     r_inst.font.bold = True
     r_inst.font.color.rgb = C_PRIMARY
 
-    doc.add_paragraph("\n" * 3)
+    doc.add_paragraph("\n" * 2)
+
+    # Official Logo on Cover
+    logo_path = DOCS_DIR / "images" / "uay-logo.png"
+    if logo_path.exists():
+        p_logo = doc.add_paragraph()
+        p_logo.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        r_logo = p_logo.add_run()
+        r_logo.add_picture(str(logo_path), width=Inches(2.0))
+
+    doc.add_paragraph("\n")
 
     p_title = doc.add_paragraph()
     p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -80,16 +92,16 @@ def create_guide_docx():
 
     p_sub = doc.add_paragraph()
     p_sub.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r_sub = p_sub.add_run("Pedoman Operasional Komprehensif Berbasis Peran:\nSuper Administrator · Admin Program Studi · Dosen Pengampu · Mahasiswa")
+    r_sub = p_sub.add_run("Pedoman Operasional Praktis Sistem Pembelajaran Digital Kampus Berbasis Peran\n(Dosen Pengampu · Mahasiswa · Admin Program Studi · Pimpinan)")
     r_sub.font.name = "Arial"
-    r_sub.font.size = Pt(13)
+    r_sub.font.size = Pt(12)
     r_sub.font.color.rgb = C_SECONDARY
 
-    doc.add_paragraph("\n" * 4)
+    doc.add_paragraph("\n" * 3)
 
     p_meta = doc.add_paragraph()
     p_meta.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r_meta = p_meta.add_run("Edisi Terpadu Versi 5.2 (Revisi Mutakhir)\nTahun Akademik 2026/2027\nBanjarmasin, Kalimantan Selatan")
+    r_meta = p_meta.add_run("Edisi Ramah Pengguna Non-Teknis · Terbit: Oktober 2026\nTahun Akademik 2026/2027 · Alamat Resmi: https://e-learning.uay.ac.id\nBanjarmasin, Kalimantan Selatan")
     r_meta.font.name = "Arial"
     r_meta.font.size = Pt(10)
     r_meta.font.italic = True
@@ -115,7 +127,6 @@ def create_guide_docx():
         cleaned = []
         for r in table_rows:
             cells = [c.strip() for c in r.strip().strip('|').split('|')]
-            # Skip separator line
             if cells and all(set(c).issubset({'-', ':', ' '}) for c in cells):
                 continue
             cleaned.append(cells)
@@ -163,13 +174,13 @@ def create_guide_docx():
     for line in lines:
         stripped = line.strip()
 
-        # Skip markdown cover header since we created a native cover page
+        # Skip markdown cover title line since we created a native cover page
         if stripped.startswith("# BUKU PANDUAN PENGGUNAAN RESMI"):
             skip_front = False
             continue
         if skip_front:
             continue
-        if stripped.startswith("**Pedoman Komprehensif") or stripped.startswith("*Edisi Terpadu"):
+        if stripped.startswith("**Pedoman Praktis") or stripped.startswith("*Edisi Ramah"):
             continue
         if stripped == "---":
             continue
@@ -181,6 +192,35 @@ def create_guide_docx():
             continue
         elif in_table:
             flush_table()
+
+        # Image embed: ![Alt](images/filename.png)
+        img_match = re.match(r'!\[(.*?)\]\((.*?)\)', stripped)
+        if img_match:
+            img_rel = img_match.group(2).strip()
+            img_file = DOCS_DIR / img_rel
+            if not img_file.exists():
+                # Try images/ direct
+                img_file = DOCS_DIR / "images" / Path(img_rel).name
+            if img_file.exists():
+                p_img = doc.add_paragraph()
+                p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                p_img.paragraph_format.space_before = Pt(8)
+                p_img.paragraph_format.space_after = Pt(4)
+                r_img = p_img.add_run()
+                r_img.add_picture(str(img_file), width=Inches(6.0))
+            continue
+
+        # Image caption: *Gambar X.X: ...*
+        if stripped.startswith("*Gambar ") and stripped.endswith("*"):
+            p_cap = doc.add_paragraph()
+            p_cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p_cap.paragraph_format.space_after = Pt(10)
+            r_cap = p_cap.add_run(sanitize_xml(stripped.strip("*")))
+            r_cap.font.name = "Arial"
+            r_cap.font.size = Pt(8.5)
+            r_cap.font.italic = True
+            r_cap.font.color.rgb = C_MUTED
+            continue
 
         # Headings
         if stripped.startswith("## "):
@@ -208,7 +248,6 @@ def create_guide_docx():
             h.paragraph_format.space_before = Pt(8)
             h.paragraph_format.space_after = Pt(2)
         elif stripped.startswith("```"):
-            # Code block placeholder / text
             continue
         elif stripped.startswith("> "):
             # Callout box
@@ -225,7 +264,7 @@ def create_guide_docx():
             if stripped.startswith("- ") or stripped.startswith("* "):
                 p.paragraph_format.left_indent = Inches(0.25)
                 raw_text = stripped[2:]
-            elif stripped[0].isdigit() and stripped[1:3] in (". ", ") "):
+            elif stripped[0].isdigit() and len(stripped) > 2 and stripped[1:3] in (". ", ") "):
                 p.paragraph_format.left_indent = Inches(0.25)
                 raw_text = stripped
             else:
@@ -242,7 +281,8 @@ def create_guide_docx():
         flush_table()
 
     doc.save(str(OUT_DOCX))
-    print(f"Formatted DOCX generated: {OUT_DOCX}")
+    shutil.copy2(OUT_DOCX, OUT_ROOT_DOCX)
+    print(f"Formatted DOCX generated: {OUT_DOCX} and copied to {OUT_ROOT_DOCX}")
 
 if __name__ == "__main__":
     create_guide_docx()
