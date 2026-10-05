@@ -19,6 +19,13 @@ function normalize(value: string): string {
     .toLowerCase();
 }
 
+const roleLabels: Record<HelpRole, string> = {
+  STUDENT: "Mahasiswa",
+  INSTRUCTOR: "Dosen Pengampu",
+  DEPARTMENT_ADMIN: "Admin Program Studi",
+  SUPER_ADMIN: "Super Admin",
+};
+
 function articleText(article: HelpArticle): string {
   return normalize(
     [
@@ -83,7 +90,7 @@ export function HelpPage({ user }: { user: any }) {
           </h1>
         </div>
         <p style={{ color: "var(--muted, #64748b)", marginTop: 6, fontSize: "0.95rem" }}>
-          Temukan panduan lengkap pengoperasian fitur E-Learning UAY, tutorial langkah demi langkah, dan solusi kendala teknis.
+          Temukan panduan lengkap pengoperasian fitur E-Learning UAY, tutorial langkah demi langkah, dan solusi kendala belajar.
         </p>
       </div>
 
@@ -210,7 +217,7 @@ export function HelpPage({ user }: { user: any }) {
               <Search size={20} style={{ color: "var(--muted, #94a3b8)", flexShrink: 0 }} />
               <input
                 type="text"
-                placeholder="Cari panduan (misal: presensi, clone kelas, tugas, kuis, video, isolasi prodi)..."
+                placeholder="Cari panduan (misal: presensi, duplikasi kelas, tugas, kuis, video, program studi)..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 style={{
@@ -269,7 +276,7 @@ export function HelpPage({ user }: { user: any }) {
             <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.8rem", color: "var(--muted, #64748b)" }}>
               <ShieldCheck size={16} style={{ color: "#10b981" }} />
               <span>
-                Menampilkan {filteredArticles.length} panduan yang relevan untuk peran akun: <strong>{userRole}</strong>.
+                Menampilkan {filteredArticles.length} panduan yang relevan untuk peran: <strong>{roleLabels[userRole] || userRole}</strong>.
               </span>
             </div>
           </div>
