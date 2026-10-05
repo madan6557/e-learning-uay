@@ -30,6 +30,11 @@ function accountManagementUrl() {
   } catch {}
   return "";
 }
+let _fileUrlOverride: string | null = null;
+let _fileKeyOverride: string | null = null;
+let _fileRepoIdOverride: string | null = null;
+let _fileClientIdOverride: string | null = null;
+
 export const config = {
   port: Number(process.env.PORT ?? 3000),
   // The browser application can live on Vercel while this API lives on Railway.
@@ -54,62 +59,106 @@ export const config = {
   clientSecret: process.env.SSO_CLIENT_SECRET ?? "",
   redirectUri:
     process.env.SSO_REDIRECT_URI ?? `${appOrigin}/api/v1/auth/callback`,
-  fileUrl:
-    process.env.UAY_FILE_SERVICE_URL?.trim() ||
-    process.env.FILE_SERVICE_URL?.trim() ||
-    process.env.FILE_SERVICE_API_URL?.trim() ||
-    "",
-  fileKey:
-    process.env.UAY_FILE_SERVICE_API_KEY?.trim() ||
-    process.env.FILE_SERVICE_API_KEY?.trim() ||
-    process.env.FILE_SERVICE_KEY?.trim() ||
-    "",
-  fileRepoId:
-    process.env.UAY_FILE_SERVICE_REPOSITORY_ID?.trim() ||
-    process.env.FILE_SERVICE_REPOSITORY_ID?.trim() ||
-    process.env.FILE_SERVICE_REPO_ID?.trim() ||
-    "00000000-0000-0000-0000-000000000001",
-  fileClientId:
-    process.env.UAY_FILE_SERVICE_CLIENT_ID?.trim() ||
-    process.env.FILE_SERVICE_CLIENT_ID?.trim() ||
-    process.env.SSO_CLIENT_ID?.trim() ||
-    "elearning-uay",
+  get fileUrl(): string {
+    if (_fileUrlOverride !== null) return _fileUrlOverride;
+    if (process.env.FILE_SERVICE_TYPE === "legacy") {
+      return (
+        process.env.FILE_SERVICE_URL?.trim() ||
+        process.env.FILE_SERVICE_API_URL?.trim() ||
+        ""
+      );
+    }
+    return (
+      process.env.UAY_FILE_SERVICE_URL?.trim() ||
+      process.env.FILE_SERVICE_URL?.trim() ||
+      process.env.FILE_SERVICE_API_URL?.trim() ||
+      ""
+    );
+  },
+  set fileUrl(val: string) {
+    _fileUrlOverride = val;
+  },
+  get fileKey(): string {
+    if (_fileKeyOverride !== null) return _fileKeyOverride;
+    if (process.env.FILE_SERVICE_TYPE === "legacy") {
+      return (
+        process.env.FILE_SERVICE_KEY?.trim() ||
+        process.env.FILE_SERVICE_API_KEY?.trim() ||
+        ""
+      );
+    }
+    return (
+      process.env.UAY_FILE_SERVICE_API_KEY?.trim() ||
+      process.env.FILE_SERVICE_API_KEY?.trim() ||
+      process.env.FILE_SERVICE_KEY?.trim() ||
+      ""
+    );
+  },
+  set fileKey(val: string) {
+    _fileKeyOverride = val;
+  },
+  get fileRepoId(): string {
+    if (_fileRepoIdOverride !== null) return _fileRepoIdOverride;
+    return (
+      process.env.UAY_FILE_SERVICE_REPOSITORY_ID?.trim() ||
+      process.env.FILE_SERVICE_REPOSITORY_ID?.trim() ||
+      process.env.FILE_SERVICE_REPO_ID?.trim() ||
+      "00000000-0000-0000-0000-000000000001"
+    );
+  },
+  set fileRepoId(val: string) {
+    _fileRepoIdOverride = val;
+  },
+  get fileClientId(): string {
+    if (_fileClientIdOverride !== null) return _fileClientIdOverride;
+    return (
+      process.env.UAY_FILE_SERVICE_CLIENT_ID?.trim() ||
+      process.env.FILE_SERVICE_CLIENT_ID?.trim() ||
+      process.env.SSO_CLIENT_ID?.trim() ||
+      "elearning-uay"
+    );
+  },
+  set fileClientId(val: string) {
+    _fileClientIdOverride = val;
+  },
   get fileMode(): "uay" | "legacy" | "local" {
+    if (process.env.FILE_SERVICE_TYPE === "legacy") return "legacy";
+    if (process.env.FILE_SERVICE_TYPE === "uay") return "uay";
     const url = this.fileUrl;
     const key = this.fileKey;
     if (!url || !key) return "local";
     const isUay = Boolean(
       process.env.UAY_FILE_SERVICE_URL ||
         process.env.UAY_FILE_SERVICE_API_KEY ||
-        process.env.FILE_SERVICE_TYPE === "uay" ||
         url.includes("/api/v1") ||
-        url.includes("file-service.uay.ac.id") ||
-        process.env.UAY_FILE_SERVICE_REPOSITORY_ID,
+        url.includes("file-service.uay.ac.id"),
     );
     return isUay ? "uay" : "legacy";
   },
-  fileOrigins: Array.from(
-    new Set([
-      ...(process.env.FILE_ALLOWED_ORIGINS ?? "")
-        .split(",")
-        .map((s) => s.trim().replace(/\/$/, ""))
-        .filter(Boolean),
-      ...(() => {
-        const u =
-          process.env.UAY_FILE_SERVICE_URL?.trim() ||
-          process.env.FILE_SERVICE_URL?.trim() ||
-          process.env.FILE_SERVICE_API_URL?.trim();
-        if (!u) return [];
-        try {
-          return [new URL(u).origin];
-        } catch {
-          return [];
-        }
-      })(),
-      apiOrigin,
-      appOrigin,
-    ]),
-  ),
+  get fileOrigins(): string[] {
+    return Array.from(
+      new Set([
+        ...(process.env.FILE_ALLOWED_ORIGINS ?? "")
+          .split(",")
+          .map((s) => s.trim().replace(/\/$/, ""))
+          .filter(Boolean),
+        ...(() => {
+          const u =
+            process.env.UAY_FILE_SERVICE_URL?.trim() ||
+            process.env.FILE_SERVICE_URL?.trim() ||
+            process.env.FILE_SERVICE_API_URL?.trim();
+          if (!u) return [];
+          try {
+            return [new URL(u).origin];
+          } catch {
+            return [];
+          }
+        })(),
+        apiOrigin,
+        appOrigin,
+      ]),
+    );
+  },
   embedOrigins: (
     process.env.EMBED_ALLOWED_ORIGINS ??
     "https://www.youtube.com,https://www.youtube-nocookie.com,https://drive.google.com,https://youtu.be"
@@ -118,57 +167,26 @@ export const config = {
     .map((s) => s.trim())
     .filter(Boolean),
 };
-export let systemAcademicSettings = {
-  academicYear: process.env.ACADEMIC_YEAR?.trim() || "2026/2027 Ganjil",
-  semesterLabel:
-    process.env.SEMESTER_LABEL?.trim() || "SEMESTER GANJIL 2026/2027",
-  academicYears: [
-    "2025/2026 Ganjil",
-    "2025/2026 Genap",
-    "2026/2027 Ganjil",
-    "2026/2027 Genap",
-    "2027/2028 Ganjil",
-    "2027/2028 Genap",
-  ],
+const initialAcademicYear = process.env.ACADEMIC_YEAR?.trim() || "2026/2027 Ganjil";
+const initialAcademicSettings = {
+  academicYear: initialAcademicYear,
+  semesterLabel: process.env.SEMESTER_LABEL?.trim() || "SEMESTER GANJIL 2026/2027",
+  academicYears: [...new Set([
+    "2025/2026 Ganjil", "2025/2026 Genap", "2026/2027 Ganjil",
+    "2026/2027 Genap", "2027/2028 Ganjil", "2027/2028 Genap", initialAcademicYear,
+  ])],
   defaultGradeScaleVersion: "2026.1",
   minAttendancePercentage: 75,
 };
 
-export function setSystemAcademicSettings(update: {
-  academicYear?: string;
-  semesterLabel?: string;
-  academicYears?: string[];
-  defaultGradeScaleVersion?: string;
-  minAttendancePercentage?: number;
-}) {
-  if (update.academicYear?.trim()) {
-    const ay = update.academicYear.trim();
-    systemAcademicSettings.academicYear = ay;
-    if (!systemAcademicSettings.academicYears.includes(ay)) {
-      systemAcademicSettings.academicYears.push(ay);
-    }
-  }
-  if (update.semesterLabel?.trim()) {
-    systemAcademicSettings.semesterLabel = update.semesterLabel.trim();
-  } else if (update.academicYear?.trim()) {
-    systemAcademicSettings.semesterLabel = `SEMESTER ${update.academicYear.trim().toUpperCase()}`;
-  }
-  if (Array.isArray(update.academicYears) && update.academicYears.length > 0) {
-    const list = update.academicYears.map((y) => y.trim()).filter(Boolean);
-    systemAcademicSettings.academicYears = Array.from(new Set(list));
-  }
-  if (update.defaultGradeScaleVersion?.trim()) {
-    systemAcademicSettings.defaultGradeScaleVersion =
-      update.defaultGradeScaleVersion.trim();
-  }
-  if (typeof update.minAttendancePercentage === "number") {
-    systemAcademicSettings.minAttendancePercentage = Math.max(
-      0,
-      Math.min(100, update.minAttendancePercentage),
-    );
-  }
-  return systemAcademicSettings;
+export async function getAcademicSettings(client: Prisma.TransactionClient = db) {
+  return client.academicSettings.upsert({
+    where: { id: "global" },
+    create: { id: "global", ...initialAcademicSettings },
+    update: {},
+  });
 }
+
 function productionConfigurationErrors() {
   const invalid: string[] = [];
 
@@ -179,14 +197,13 @@ function productionConfigurationErrors() {
   required("APP_ORIGIN", process.env.APP_ORIGIN);
   required("DATABASE_URL", process.env.DATABASE_URL);
 
-  // Demo mode boleh berjalan tanpa OIDC, Redis, SSO,
-  // File Service, dan HTTPS.
-  if (isDemo) {
-    return [...new Set(invalid)];
-  }
-
   if (config.authMode !== "oidc") {
     invalid.push("AUTH_MODE=oidc");
+  }
+
+  // Demo mode boleh berjalan tanpa Redis, SSO, File Service, dan HTTPS internal.
+  if (isDemo) {
+    return [...new Set(invalid)];
   }
 
   required("REDIS_URL", process.env.REDIS_URL);

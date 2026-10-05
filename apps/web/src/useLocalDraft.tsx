@@ -1,3 +1,4 @@
+import { formatDateTime } from "../../../packages/shared/src/time";
 import { confirmAction } from "./confirm";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { getDraft, removeDraft, saveDraft } from "./drafts";
@@ -252,7 +253,7 @@ export function SaveStatus({
         <div className="recovery-banner">
           <span>
             Draft ditemukan ·{" "}
-            {new Date(draft.recovery.updatedAt).toLocaleString("id-ID")}
+            {formatDateTime(draft.recovery.updatedAt)}
           </span>
           <button type="button" className="secondary" onClick={draft.restore}>
             Pulihkan draft

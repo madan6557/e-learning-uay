@@ -191,7 +191,7 @@ test("portal renders and records a manual result independently of automatic resu
   const root = createRoot(document.getElementById("root")!);
   try {
     await act(async () => root.render(createElement(App)));
-    assert.ok(document.body.textContent?.includes("317"));
+    assert.ok(document.body.textContent?.includes(String(cases.length)));
     const button = [...document.querySelectorAll("button")].find(
       (b) => b.textContent === "Mulai kasus pertama",
     )!;
@@ -209,7 +209,7 @@ test("portal renders and records a manual result independently of automatic resu
     const close =
       document.querySelector<HTMLButtonElement>(".dialog-top button")!;
     await act(async () => close.click());
-    assert.ok(document.body.textContent?.includes("1 / 317 selesai"));
+    assert.ok(document.body.textContent?.includes(`1 / ${cases.length} selesai`));
   } finally {
     await act(async () => root.unmount());
     dom.window.close();

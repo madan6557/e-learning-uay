@@ -1,21 +1,14 @@
 # Hasil otomatis QA v5
 
-Run: 0c471db0-148d-4a8d-b589-95188f6b0bd5
-Tanggal: 2026-09-29T03:46:39.708Z
-Commit: ba3fdd1c4f84f131dfc43142f7d7b94d8db5c2ac (working copy)
+Run: 09f05052-386e-4f46-bb8d-ce934a3f2671
+Tanggal: 2026-10-05T12:12:19.007Z
+Commit: 30a074527c3db3fe137700de048ed847fdaf29ee (working copy)
 Lingkungan: Lokal · PostgreSQL _test · fixture SSO & File Service
 
-317 kasus: 133 lulus, 2 gagal, 0 terblokir, 182 belum diuji otomatis.
+329 kasus: 143 lulus, 0 gagal, 0 terblokir, 186 belum diuji otomatis.
 
 ## Temuan
 
-- **TC-BVA-ATTEMPT-NULL — Batas attempt tidak terbatas (null)**: POST /sections/c8315f00-d3f2-4bee-8f3e-6d697a41bb28/quizzes: actual 400, expected 201; {"error":{"code":"VALIDATION_ERROR","details":[{"path":"attemptLimit","message":"Expected number, received null"}],"requestId":"f12fc80fa32bde92d03692404f910bc7"}}
-
-400 !== 201
-
-- **TC-RES-VIDEO-EMBED — Embed video eksternal sesuai v5**: POST /sections/c8315f00-d3f2-4bee-8f3e-6d697a41bb28/resources: actual 400, expected 201; {"error":{"code":"VIDEO_REQUIRED","requestId":"1263b5bf99ab89c2f0ed3cd10dc49233"}}
-
-400 !== 201
 
 
 ## Batas bukti

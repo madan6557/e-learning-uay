@@ -1,7 +1,8 @@
 import type { Express } from "express";
 import { z } from "zod";
-import { db, ensure, classAccess, mutate, audit } from "./core.js";
+import { db, ensure, classAccess, mutate, audit, getAcademicSettings } from "./core.js";
 import type { AttendanceStatus } from "@prisma/client";
+import { attendanceSummary, matchesAttendanceCode } from "../../../packages/shared/src/attendance.js";
 
 const statusSchema = z.enum(["PRESENT", "EXCUSED", "SICK", "ABSENT", "LATE"]);
 
@@ -97,7 +98,7 @@ export function registerAttendanceRoutes(app: Express) {
         isExpired,
         requiresCode: Boolean(s.checkInCode && s.checkInCode.trim().length > 0),
         // Sembunyikan kode jika mahasiswa dan sesi ditutup
-        checkInCode: cls.canManage || s.isOpen ? s.checkInCode : undefined,
+        checkInCode: cls.canManage ? s.checkInCode : undefined,
         allowSelfCheckIn: s.allowSelfCheckIn,
         createdAt: s.createdAt,
         updatedAt: s.updatedAt,
@@ -159,7 +160,7 @@ export function registerAttendanceRoutes(app: Express) {
             isOpen: z.boolean().optional(),
             allowSelfCheckIn: z.boolean().default(true),
             requireCode: z.boolean().default(false),
-            checkInCode: z.string().max(10).optional().nullable(),
+            checkInCode: z.string().trim().regex(/^[A-Za-z0-9]{6}$/).optional().nullable(),
           })
           .parse(req.body);
 
@@ -270,7 +271,7 @@ export function registerAttendanceRoutes(app: Express) {
             allowSelfCheckIn: z.boolean().optional(),
             requireCode: z.boolean().optional(),
             regenerateCode: z.boolean().optional(),
-            checkInCode: z.string().max(10).nullable().optional(),
+            checkInCode: z.string().trim().regex(/^[A-Za-z0-9]{6}$/).nullable().optional(),
           })
           .parse(req.body);
 
@@ -509,7 +510,7 @@ export function registerAttendanceRoutes(app: Express) {
   );
 
   // 7. POST /api/v1/attendance/:sessionId/check-in
-  // Presensi Mandiri oleh Mahasiswa dengan Kode 6 Digit
+  // Presensi Mandiri oleh Mahasiswa dengan Kode 6 Karakter
   app.post("/api/v1/attendance/:sessionId/check-in", async (req, res) =>
     res.json(
       await mutate(req, async (tx) => {
@@ -563,7 +564,7 @@ export function registerAttendanceRoutes(app: Express) {
         if (session.checkInCode && session.checkInCode.trim().length > 0) {
           ensure(code && code.trim().length > 0, 400, "CODE_REQUIRED");
           ensure(
-            session.checkInCode.trim().toUpperCase() === code.trim().toUpperCase(),
+            matchesAttendanceCode(session.checkInCode, code),
             400,
             "INVALID_CHECKIN_CODE",
           );
@@ -605,7 +606,7 @@ export function registerAttendanceRoutes(app: Express) {
   );
 
   // 8. GET /api/v1/course-classes/:id/attendance/recap
-  // Rekapitulasi Kehadiran & Ambang Batas Ujian (>= 75%)
+  // Rekapitulasi Kehadiran & Ambang Batas Ujian dari pengaturan akademik
   app.get("/api/v1/course-classes/:id/attendance/recap", async (req, res) => {
     const cls = await classAccess(db, req.context.user, String(req.params.id));
     ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
@@ -641,6 +642,7 @@ export function registerAttendanceRoutes(app: Express) {
       userSessionMap.set(`${r.userId}:${r.sessionId}`, r.status);
     }
 
+    const { minAttendancePercentage } = await getAcademicSettings();
     const totalSessions = sessions.length;
 
     const recap = enrollments.map((e) => {
@@ -663,9 +665,7 @@ export function registerAttendanceRoutes(app: Express) {
       }
 
       // Persentase kehadiran: (Hadir + Terlambat) / Total Sesi
-      const attendanceScore = totalSessions > 0 ? presentCount + lateCount : 0;
-      const percentage =
-        totalSessions > 0 ? (attendanceScore / totalSessions) * 100 : 100;
+      const summary = attendanceSummary(presentCount, lateCount, totalSessions, minAttendancePercentage);
 
       return {
         user: e.user,
@@ -674,13 +674,13 @@ export function registerAttendanceRoutes(app: Express) {
         excusedCount,
         sickCount,
         absentCount,
-        percentage: Number(percentage.toFixed(1)),
-        isEligibleForExam: percentage >= 75.0,
+        ...summary,
         perSessionStatus,
       };
     });
 
     res.json({
+      minAttendancePercentage,
       totalSessions,
       sessions,
       recap,

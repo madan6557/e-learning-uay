@@ -300,6 +300,12 @@ export const GRADE_SCALE_PRESETS: Record<string, GradeScalePolicy> = {
 
 export const DEFAULT_GRADE_SCALE = GRADE_SCALE_PRESETS["2026.1"]!;
 
+export function gradeScaleLabel(policy: GradeScalePolicy): string {
+  const thresholds = policy.bands.slice(0, 3)
+    .map(b => `${b.letter} ≥ ${b.minScore}`).join(", ");
+  return `${policy.version} - ${policy.name} (${thresholds}, dst.)`;
+}
+
 export const GRADE_SOURCE_TYPES = [
   "ASSIGNMENT",
   "QUIZ",

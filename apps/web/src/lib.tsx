@@ -1,3 +1,6 @@
+import { uploadLimit, validateUploadSize } from "../../../packages/shared/src/files";
+import { formatDateTime, formatClock } from "../../../packages/shared/src/time";
+export const clock = formatClock;
 import { confirmAction } from "./confirm";
 import { readCache, readTtl } from "./readCache";
 import { useId, isValidElement, cloneElement, type ReactElement } from "react";
@@ -24,12 +27,7 @@ import { navigate } from "./router";
 import labels from "../../../packages/shared/src/id.json";
 export const t = labels;
 export const date = (value: string | Date | null | undefined) =>
-  value
-    ? new Intl.DateTimeFormat("id-ID", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      }).format(new Date(value))
-    : "—";
+  value ? formatDateTime(value) : "—";
 export const day = (value: string) =>
   new Intl.DateTimeFormat("id-ID", {
     day: "2-digit",
@@ -672,6 +670,7 @@ export async function uploadFile(
   contextId: string | undefined,
   onProgress: (value: number) => void,
 ) {
+  try { validateUploadSize(file.size, purpose); } catch { throw new ApiError("FILE_TYPE_OR_SIZE"); }
   const buffer = await file.arrayBuffer();
   const digest = await crypto.subtle.digest("SHA-256", buffer);
   const checksum = [...new Uint8Array(digest)]
@@ -883,7 +882,7 @@ export function FileUpload({
                   <strong>Pilih berkas</strong> atau seret dan lepas ke sini
                 </p>
                 <p className="dropzone-hint">
-                  Format: {cleanAcceptText()} (Maks. 25 MB)
+                  Format: {cleanAcceptText()} (Maks. {uploadLimit(purpose) / 1024 / 1024} MB)
                 </p>
               </div>
               <button

@@ -16,7 +16,7 @@ import {
   Sliders,
   Calendar,
 } from "lucide-react";
-import { api, useApi, Loading, Notice, Modal, Field, Form, textValue, Pagination, usePagination } from "./lib";
+import { clock, api, useApi, Loading, Notice, Modal, Field, Form, textValue, Pagination, usePagination } from "./lib";
 
 type AttendanceStatus = "PRESENT" | "EXCUSED" | "SICK" | "ABSENT" | "LATE";
 
@@ -36,18 +36,18 @@ function formatSchedule(startTime?: string | null, endTime?: string | null) {
   const toTimeStr = (iso: string) => {
     try {
       const d = new Date(iso);
-      return d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+      return clock(d);
     } catch {
       return "";
     }
   };
   if (startTime && endTime) {
-    return `${toTimeStr(startTime)} – ${toTimeStr(endTime)} WIB`;
+    return `${toTimeStr(startTime)} – ${toTimeStr(endTime)}`;
   }
   if (startTime) {
-    return `Mulai ${toTimeStr(startTime)} WIB`;
+    return `Mulai ${toTimeStr(startTime)}`;
   }
-  return `Hingga ${toTimeStr(endTime!)} WIB`;
+  return `Hingga ${toTimeStr(endTime!)}`;
 }
 
 function AttendanceStatusBadge({
@@ -211,8 +211,8 @@ export function Attendance({
               {activeOpenSession.title}
             </h3>
             <p style={{ margin: 0, color: "rgba(255, 255, 255, 0.92)", fontSize: "0.88rem", lineHeight: 1.5 }}>
-              {activeOpenSession.checkInCode
-                ? "Dosen telah membuka sesi presensi dengan verifikasi PIN. Masukkan kode 6 digit dari layar proyektor kelas."
+              {activeOpenSession.requiresCode
+                ? "Dosen telah membuka sesi presensi dengan verifikasi PIN. Masukkan kode 6 karakter dari layar proyektor kelas."
                 : "Dosen telah membuka sesi presensi mandiri (bebas kode). Anda dapat langsung mengonfirmasi kehadiran dengan 1 klik."}
             </p>
           </div>
@@ -236,8 +236,8 @@ export function Attendance({
             }}
             onClick={() => setModal({ kind: "checkin", session: activeOpenSession })}
           >
-            {activeOpenSession.checkInCode ? <KeyRound size={16} /> : <CheckCircle2 size={16} />}
-            <span>{activeOpenSession.checkInCode ? "Isi Presensi (PIN)" : "Konfirmasi Hadir (1-Klik)"}</span>
+            {activeOpenSession.requiresCode ? <KeyRound size={16} /> : <CheckCircle2 size={16} />}
+            <span>{activeOpenSession.requiresCode ? "Isi Presensi (PIN)" : "Konfirmasi Hadir (1-Klik)"}</span>
           </button>
         </div>
       )}
@@ -415,7 +415,7 @@ export function Attendance({
                       )}
 
                       {/* Mode Presensi: Bebas Kode vs Perlu PIN */}
-                      {s.checkInCode ? (
+                      {s.requiresCode ? (
                         <span
                           style={{
                             background: "#fffbeb",
@@ -557,7 +557,7 @@ export function Attendance({
                         <AttendanceStatusBadge status={s.myRecord?.status} isOpen={s.isOpen} />
                         {s.myRecord?.checkedInAt && (
                           <span style={{ fontSize: "0.8rem", color: "var(--muted, #64748b)" }}>
-                            (Presensi pukul {new Date(s.myRecord.checkedInAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })})
+                            (Presensi pukul {clock(s.myRecord.checkedInAt)})
                           </span>
                         )}
                         {s.myRecord?.notes && (
@@ -676,8 +676,8 @@ export function Attendance({
                           }}
                           onClick={() => setModal({ kind: "checkin", session: s })}
                         >
-                          {s.checkInCode ? <KeyRound size={14} /> : <CheckCircle2 size={14} />}
-                          <span>{s.checkInCode ? "Isi Presensi (PIN)" : "Konfirmasi Hadir (1-Klik)"}</span>
+                          {s.requiresCode ? <KeyRound size={14} /> : <CheckCircle2 size={14} />}
+                          <span>{s.requiresCode ? "Isi Presensi (PIN)" : "Konfirmasi Hadir (1-Klik)"}</span>
                         </button>
                       )
                     )}
@@ -767,7 +767,7 @@ export function Attendance({
               }}
             >
               <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#0369a1", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
-                Kode Presensi 6-Digit
+                Kode Presensi 6 Karakter
               </div>
               <div
                 style={{
@@ -842,7 +842,7 @@ export function Attendance({
       {/* ================= MODAL SELF CHECK-IN MAHASISWA ================= */}
       {modal?.kind === "checkin" && (
         <Modal title="Presensi Mandiri Mahasiswa" onClose={() => setModal(null)}>
-          {modal.session.checkInCode ? (
+          {modal.session.requiresCode ? (
             <Form
               onSubmit={async (f) => {
                 const code = textValue(f, "code");
@@ -857,7 +857,7 @@ export function Attendance({
                   Anda melakukan presensi untuk: <strong>{modal.session.title}</strong>
                 </p>
                 <p style={{ margin: "4px 0 0 0", fontSize: "0.85rem", color: "var(--muted, #64748b)" }}>
-                  Masukkan kode akses 6 digit yang ditampilkan oleh dosen di ruang kelas.
+                  Masukkan kode akses 6 karakter yang ditampilkan oleh dosen di ruang kelas.
                 </p>
               </div>
 
@@ -1062,7 +1062,7 @@ function CreateSessionModal({
               checked={requireCode}
               onChange={(e) => setRequireCode(e.target.checked)}
             />
-            <span>Wajibkan Kode PIN 6-Digit (Proyektor)</span>
+            <span>Wajibkan Kode PIN 6 Karakter (Proyektor)</span>
           </label>
           <p style={{ margin: "4px 0 0 24px", fontSize: "0.8rem", color: "var(--muted, #64748b)" }}>
             <strong>Default tidak dicentang (Bebas Kode / 1-Klik)</strong>. Mahasiswa cukup klik tombol Hadir. Centang opsi ini jika Anda ingin mahasiswa wajib memasukkan PIN acak yang diproyeksikan di ruang kelas.
@@ -1303,11 +1303,11 @@ function ScheduleSessionModal({
               checked={requireCode}
               onChange={(e) => setRequireCode(e.target.checked)}
             />
-            <span>Wajibkan Kode PIN 6-Digit (Proyektor)</span>
+            <span>Wajibkan Kode PIN 6 Karakter (Proyektor)</span>
           </label>
           <p style={{ margin: "4px 0 8px 24px", fontSize: "0.8rem", color: "var(--muted, #64748b)" }}>
             {requireCode
-              ? "Mahasiswa wajib memasukkan kode acak 6 digit yang ditampilkan oleh dosen."
+              ? "Mahasiswa wajib memasukkan kode acak 6 karakter yang ditampilkan oleh dosen."
               : "Default aktif: Presensi bebas kode (1-klik). Mahasiswa cukup klik konfirmasi kehadiran."}
           </p>
 
@@ -1516,11 +1516,12 @@ function ManualAttendanceModal({
 }
 
 // ---------------------------------------------------------------------------
-// Rekapitulasi Kehadiran Kelas & Syarat Ujian (>= 75%)
+// Rekapitulasi Kehadiran Kelas & Syarat Ujian dari pengaturan akademik
 // ---------------------------------------------------------------------------
 function AttendanceRecapTable({ classId }: { classId: string }) {
   const recapApi = useApi<{
     totalSessions: number;
+    minAttendancePercentage: number;
     sessions: any[];
     recap: any[];
   }>(`/course-classes/${classId}/attendance/recap`);
@@ -1551,7 +1552,7 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
         <div>
           <span style={{ fontSize: "0.9rem", color: "var(--muted, #64748b)" }}>
-            Total Pertemuan Berlangsung: <strong>{data.totalSessions} Sesi</strong> | Ambang Batas Ujian: <strong>75%</strong>
+            Total Pertemuan Berlangsung: <strong>{data.totalSessions} Sesi</strong> | Ambang Batas Ujian: <strong>{data.minAttendancePercentage}%</strong>
           </span>
         </div>
         <button
@@ -1618,7 +1619,7 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
                           fontWeight: 700,
                         }}
                       >
-                        Terancam Gugur (&lt; 75%)
+                        Di bawah ambang (&lt; {data.minAttendancePercentage}%)
                       </span>
                     )}
                   </td>

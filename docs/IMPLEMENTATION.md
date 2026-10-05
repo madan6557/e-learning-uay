@@ -78,3 +78,13 @@ Tes integrasi memakai service fixture dan database `_test`. Keberhasilan tes ini
 P1/P2 yang ditetapkan sebagai pengembangan berikutnya dalam desain (misalnya forum, gamifikasi, SCORM/LTI, integrasi SIAKAD dan analitik lanjutan) tidak dinyatakan selesai. Clean clone dan ekspor rekap sudah tersedia untuk mendukung pilot.
 
 Panduan: [menjalankan aplikasi](../README.md), [kontrak adapter](contracts/IMPLEMENTED-ADAPTERS.md), [deployment/backup/restore](../deployment/README.md).
+
+## Koreksi kebijakan dan akses — 5 Oktober 2026
+
+Pengaturan akademik global disimpan pada PostgreSQL melalui migrasi `202610050007_academic_settings`. Super Admin mengubahnya melalui transaksi idempotensi dan audit before/after; Admin Prodi hanya membaca. Rekap memakai ambang tersimpan. Kelas baru dan hasil duplikasi memakai skala default tanpa mengubah nilai terbit.
+
+Kode presensi hanya diberikan kepada pengelola, dengan indikator `requiresCode` untuk mahasiswa. Metadata dan tiket unduhan memakai pemeriksaan akses yang sama; parameter `resourceId` memeriksa relasi materi, peserta aktif, visibilitas dan jadwal. Jawaban hanya dapat dibaca pemilik atau pengelola kelas.
+
+File Service diperiksa melalui adapter aktif. Kegagalan eksternal tidak beralih menjadi sukses lokal. Adapter legacy tidak mendukung daftar repositori dan mengembalikan 501. Mode lokal ditandai simulasi. Batas unggahan bersama: cover 5 MB, materi/tugas/jawaban kuis 50 MB, video 100 MB (1 MB = 1.048.576 byte). Frontend menolak ukuran berlebih sebelum membaca berkas; server memvalidasi tiket dan jumlah byte unggahan lokal/UAY.
+
+Tampilan waktu mengikuti perangkat dengan offset sebenarnya; input jadwal dikirim sebagai UTC. Router memakai path dan mendukung pengalihan hash lama. Login lokal menggunakan provider fixture SSO; landing tidak menyediakan pemilih akun. Kelas terarsip dapat dibuka kembali oleh pengelola yang berhak.

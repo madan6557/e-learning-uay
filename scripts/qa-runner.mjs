@@ -121,6 +121,9 @@ try {
     SSO_CLIENT_SECRET: "",
     FILE_SERVICE_URL: "",
     FILE_SERVICE_KEY: "",
+    UAY_FILE_SERVICE_URL: "",
+    UAY_FILE_SERVICE_API_KEY: "",
+    UAY_FILE_SERVICE_REPOSITORY_ID: "",
     SSO_WEBHOOK_SECRET: "qa-local-only-secret",
   };
   progress("domain");

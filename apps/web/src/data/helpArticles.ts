@@ -1,3 +1,6 @@
+import { uploadLimit } from "../../../../packages/shared/src/files";
+const uploadLimitsText = `Cover maksimum ${uploadLimit("COVER") / 1024 / 1024} MB; materi, tugas, dan jawaban kuis ${uploadLimit("RESOURCE") / 1024 / 1024} MB; video unggahan ${uploadLimit("VIDEO") / 1024 / 1024} MB.`;
+
 export type HelpRole = "SUPER_ADMIN" | "DEPARTMENT_ADMIN" | "INSTRUCTOR" | "STUDENT";
 
 export type HelpArticle = {
@@ -24,40 +27,29 @@ export const helpArticles: HelpArticle[] = [
     category: "Mulai Menggunakan Sistem",
     roles: all,
     keywords: ["masuk", "login", "keluar", "logout", "navigasi", "profil", "akun kampus"],
-    steps: [
-      "Buka peramban (browser) dan akses alamat resmi https://e-learning.uay.ac.id.",
-      "Klik tombol Masuk pada halaman utama E-Learning.",
-      "Ketikkan NIM (mahasiswa) atau NIDN (dosen) beserta kata sandi akun resmi kampus Anda.",
-      "Sistem memverifikasi akun dan otomatis mengarahkan Anda ke Beranda E-Learning sesuai peran akun Anda.",
-      "Klik foto profil di pojok kanan atas lalu pilih Keluar setelah selesai beraktivitas."
-    ],
+    steps: ["Buka alamat E-Learning yang diberikan kampus.","Klik Masuk dengan SSO UAY pada halaman utama.","Gunakan identitas dan kata sandi yang diminta halaman SSO kampus.","Setelah berhasil, Anda kembali ke beranda sesuai peran akun.","Buka menu Profil untuk melihat identitas. Gunakan tombol Keluar setelah selesai."],
     content: "E-Learning UAY dapat diakses menggunakan akun resmi kampus Universitas Achmad Yani. Anda tidak perlu mendaftar atau membuat akun baru; cukup gunakan akun kampus yang sudah aktif. Antarmuka dan menu yang tampil otomatis menyesuaikan peran akun Anda (Mahasiswa, Dosen, atau Administrator).",
     related: ["sso-login-flow", "roles"]
   },
   {
     id: "sso-login-flow",
     title: "Panduan Masuk Satu Pintu Menggunakan Akun Kampus",
-    summary: "Penjelasan alur masuk yang praktis dan aman menggunakan satu akun resmi untuk seluruh layanan perkuliahan.",
+    summary: "Alur masuk E-Learning melalui layanan SSO kampus.",
     category: "User & Akses",
     roles: all,
     keywords: ["masuk akun", "login", "kata sandi", "keamanan akun", "portal kampus"],
-    steps: [
-      "Klik tombol Masuk pada halaman utama E-Learning UAY.",
-      "Halaman verifikasi akun resmi kampus akan terbuka secara otomatis.",
-      "Ketikkan NIM bagi mahasiswa atau NIDN bagi dosen beserta kata sandi Anda.",
-      "Setelah verifikasi berhasil, sistem otomatis mengarahkan Anda kembali ke E-Learning dan siap belajar."
-    ],
-    content: "Untuk memudahkan sivitas akademika dan melindungi privasi akun, E-Learning UAY menggunakan sistem masuk satu pintu terpadu. Anda cukup mengingat satu akun resmi kampus (NIM/NIDN dan kata sandi) untuk mengakses seluruh layanan perkuliahan daring tanpa perlu membuat akun terpisah. Sistem menjaga kerahasiaan kata sandi Anda secara terpusat dan aman.",
+    steps: ["Klik Masuk dengan SSO UAY.","Isi identitas dan kata sandi pada halaman SSO kampus.","Setelah verifikasi berhasil, Anda kembali ke E-Learning."],
+    content: "E-Learning menggunakan layanan SSO kampus. Identitas masuk mengikuti akun yang diberikan kampus; tidak selalu NIM atau NIDN. Untuk kendala akun atau kata sandi, hubungi pengelola SSO kampus.",
     related: ["getting-started", "roles"]
   },
   {
     id: "roles",
     title: "Peran Pengguna & Hak Akses Fitur",
-    summary: "Hak akses bagi Mahasiswa, Dosen Pengampu, Pengelola Program Studi, dan Pimpinan.",
+    summary: "Hak akses Mahasiswa, Dosen, Admin Prodi, dan Super Admin.",
     category: "User & Akses",
     roles: all,
     keywords: ["peran", "hak akses", "dosen", "mahasiswa", "admin prodi", "pimpinan"],
-    content: "Hak akses di E-Learning UAY disesuaikan dengan peran masing-masing: Mahasiswa berhak mengakses materi pembelajaran, mengisi presensi kuliah, mengumpulkan tugas, dan mengerjakan evaluasi kuis pada kelas yang diikutinya. Dosen Pengampu mengelola silabus pertemuan, mengunggah bahan ajar, membuka sesi presensi, serta menilai tugas dan kuis. Pengelola Program Studi memantau aktivitas kelas pada prodinya dan mengelola penugasan dosen. Pimpinan Universitas dan Administrator mengelola konfigurasi umum serta memantau ringkasan keaktifan perkuliahan.",
+    content: "Mahasiswa mengakses aktivitas pada kelas dengan kepesertaan aktif. Dosen mengelola kelas yang diampu. Admin Prodi mengelola kelas dalam cakupan prodinya dan dapat membaca pengaturan akademik global. Hanya Super Admin dapat mengubah pengaturan global.",
     related: ["department-isolation", "multi-affiliation"]
   },
   {
@@ -67,7 +59,7 @@ export const helpArticles: HelpArticle[] = [
     category: "Tata Kelola Akademik",
     roles: staff,
     keywords: ["program studi", "prodi", "kelas", "fakultas", "daftar mahasiswa"],
-    content: "E-Learning UAY secara otomatis mengelompokkan tampilan kelas, mata kuliah, dan pencarian pengguna berdasarkan program studi. Pengelola Program Studi dan Dosen dapat fokus memantau dan mengelola perkuliahan di prodinya masing-masing dengan rapi, tertib, dan tidak tercampur antar program studi.",
+    content: "Admin Prodi melihat dan mengelola data dalam cakupan prodi yang diberikan kepada akunnya. Dosen mengelola kelas yang ditugaskan kepadanya, termasuk penugasan lintas prodi. Mahasiswa melihat kelas yang diikutinya.",
     related: ["multi-affiliation", "roles"]
   },
   {
@@ -93,11 +85,7 @@ export const helpArticles: HelpArticle[] = [
     category: "Mata Kuliah & Kelas",
     roles: all,
     keywords: ["kelas", "matkul", "silabus", "pertemuan", "jadwal"],
-    steps: [
-      "Buka menu Kelas Saya dari bilah navigasi utama.",
-      "Pilih kartu kelas yang ingin dibuka.",
-      "Lihat daftar pertemuan (Pertemuan 1 s/d 16) beserta materi, tugas, dan evaluasi aktif."
-    ],
+    steps: ["Buka Kelas Saya.","Pilih kelas yang ingin dibuka.","Lihat pertemuan, materi, tugas, kuis, dan presensi yang tersedia. Jumlah pertemuan mengikuti pengaturan kelas."],
     content: "Halaman kelas mengelompokkan aktivitas pembelajaran per pertemuan perkuliahan. Mahasiswa dapat melihat kelas yang telah terdaftar, sedangkan dosen dan pengelola program studi melihat kelas sesuai penugasan perkuliahan.",
     related: ["section-types", "attendance-student"]
   },
@@ -123,14 +111,8 @@ export const helpArticles: HelpArticle[] = [
     category: "Presensi Perkuliahan",
     roles: ["STUDENT"],
     keywords: ["presensi", "absensi", "check-in", "kode pin", "kehadiran", "mahasiswa"],
-    steps: [
-      "Buka kelas perkuliahan saat jam kuliah berlangsung.",
-      "Perhatikan banner Presensi Sedang Berlangsung di bagian atas halaman kelas.",
-      "Klik tombol Isi Presensi.",
-      "Masukkan Kode Presensi 6 Digit yang ditampilkan dosen di layar proyektor kelas (bila sesi menggunakan kode PIN).",
-      "Tekan Kirim Presensi. Status kehadiran Anda seketika tercatat sebagai Hadir (H)."
-    ],
-    content: "Presensi mandiri hanya dapat diisi selama sesi dibuka oleh dosen dan sebelum batas waktu berakhir. Penggunaan kode presensi memastikan mahasiswa hadir secara aktif pada jam perkuliahan.",
+    steps: ["Buka kelas dan tab Presensi saat sesi dibuka.","Klik Isi Presensi (PIN) jika sesi memakai kode, atau Konfirmasi Hadir (1-Klik) jika tanpa kode.","Untuk sesi berkode, masukkan kode 6 karakter yang diberikan dosen, lalu klik Simpan semua perubahan.","Pastikan status kehadiran tampil setelah server mengonfirmasi."],
+    content: "Presensi mandiri hanya tersedia jika dosen mengizinkannya dan sesi sedang terbuka dalam jadwalnya. Kode dapat berisi huruf dan angka. Mahasiswa memperoleh kode dari dosen; aplikasi tidak menampilkan kode pengelola kepada mahasiswa.",
     related: ["attendance-rules", "courses"]
   },
   {
@@ -140,31 +122,19 @@ export const helpArticles: HelpArticle[] = [
     category: "Presensi Perkuliahan",
     roles: staff,
     keywords: ["presensi manual", "buka presensi", "kode presensi", "tandai semua hadir", "dosen"],
-    steps: [
-      "Buka kelas dan pilih tab Presensi atau klik Presensi pada kartu pertemuan.",
-      "Klik Buka Presensi untuk mengaktifkan sesi dan menampilkan Kode 6 Digit di proyektor kelas.",
-      "Gunakan tombol Cepat 'Set Semua Hadir' jika mayoritas mahasiswa hadir.",
-      "Ubah status mahasiswa tertentu yang tidak hadir menjadi Izin (I), Sakit (S), Alpa (A), atau Terlambat (T).",
-      "Tambahkan catatan keterangan izin atau sakit bila mahasiswa menyerahkan surat izin resmi.",
-      "Tutup sesi presensi setelah jam perkuliahan selesai."
-    ],
-    content: "Dosen memiliki wewenang penuh untuk melakukan pengisian manual maupun mengoreksi kehadiran mahasiswa sewaktu-waktu jika mahasiswa menyerahkan surat dokter atau permohonan izin susulan.",
+    steps: ["Buka kelas dan tab Presensi.","Buat atau buka sesi. Aktifkan penggunaan kode bila diperlukan.","Gunakan Tampilan Proyektor untuk memperlihatkan kode 6 karakter kepada mahasiswa.","Buka presensi manual untuk mengatur Hadir, Izin, Sakit, Alpa, atau Terlambat dan catat keterangannya.","Simpan perubahan dan tutup sesi sesuai jadwal."],
+    content: "Pengelola kelas yang berhak dapat menampilkan kode serta memperbarui catatan presensi. Perubahan tetap mengikuti akses kelas dan status arsip.",
     related: ["attendance-recap", "attendance-rules"]
   },
   {
     id: "attendance-recap",
-    title: "Rekapitulasi Kehadiran & Syarat Ujian (Minimal 75%)",
+    title: "Rekapitulasi Kehadiran & Ambang Kelayakan Ujian",
     summary: "Memantau persentase kehadiran mahasiswa dan mengekspor lembar rekap presensi.",
     category: "Presensi Perkuliahan",
     roles: staff,
-    keywords: ["rekap presensi", "75 persen", "syarat ujian", "bap", "ekspor excel"],
-    steps: [
-      "Buka tab Presensi pada kelas terkait.",
-      "Pilih sub-tab Rekapitulasi Kehadiran.",
-      "Sistem menampilkan tabel persentase kehadiran seluruh mahasiswa dan indikator kelayakan mengikuti ujian.",
-      "Gunakan tombol Ekspor untuk mengunduh rekap dalam format Excel/CSV untuk kelengkapan berkas perkuliahan prodi."
-    ],
-    content: "Mahasiswa dengan persentase kehadiran di bawah 75% otomatis ditandai perhatian khusus sesuai peraturan akademik universitas, membantu dosen dan prodi melakukan evaluasi sebelum masa UTS/UAS tiba.",
+    keywords: ["rekap presensi","ambang kehadiran","syarat ujian","csv"],
+    steps: ["Buka tab Presensi.","Pilih Rekapitulasi Kehadiran.","Lihat ambang yang tercantum pada rekap dan indikator kelayakan mahasiswa.","Klik Ekspor CSV untuk mengunduh rekap."],
+    content: "Persentase adalah (Hadir + Terlambat) dibagi jumlah sesi. Izin, Sakit, dan Alpa tetap ditampilkan tetapi tidak menambah persentase. Kelayakan dibandingkan dengan ambang global tersimpan yang ditetapkan Super Admin; angka awalnya 75% dan dapat berubah. Tanpa sesi, persentase awal ditampilkan 100%.",
     related: ["attendance-lecturer", "grading"]
   },
   {
@@ -179,12 +149,12 @@ export const helpArticles: HelpArticle[] = [
   },
   {
     id: "progress-material",
-    title: "Perekaman Progres Belajar: Video, Dokumen PDF, dan Presentasi",
+    title: "Progres Modul PDF, Video Unggahan, dan Video Sematan",
     summary: "Cara sistem mendeteksi kemajuan membaca materi modul dan menyimak video perkuliahan.",
     category: "Materi & Media",
     roles: all,
     keywords: ["progress", "video", "pdf", "ppt", "slide", "selesai membaca"],
-    content: "Kemajuan belajar Anda tercatat secara otomatis saat Anda menonton video pembelajaran atau membaca dokumen modul perkuliahan lembar demi lembar. Pastikan Anda menyimak materi hingga tuntas agar indikator kelengkapan belajar terisi penuh.",
+    content: "Modul PDF mencatat halaman yang dibuka. Video yang diunggah mencatat durasi menonton melalui pemutar aplikasi. Video sematan dari layanan lain tidak mengirim progres menonton yang sama: gunakan tombol Tandai Selesai Menonton setelah menyimaknya. Indikator selesai mengikuti syarat materi yang ditetapkan dosen.",
     related: ["material-download", "manage-material"]
   },
   {
@@ -194,25 +164,18 @@ export const helpArticles: HelpArticle[] = [
     category: "Materi & Media",
     roles: all,
     keywords: ["unduh materi", "download", "baca tuntas", "persyaratan unduh"],
-    content: "Jika dosen mengaktifkan syarat 'Wajib Tuntas Sebelum Mengunduh', mahasiswa perlu menyimak video hingga selesai atau membuka seluruh halaman modul PDF/presentasi terlebih dahulu. Setelah selesai disimak, tombol unduh berkas akan otomatis aktif.",
+    content: "Akses berkas mengikuti kepesertaan aktif, visibilitas materi, dan jadwal pertemuan maupun materi. Pada modul PDF, dosen dapat menetapkan persentase halaman minimum sebelum unduhan. Periksa syarat yang tampil pada materi; berkas lampiran dapat diunduh melalui tombolnya saat akses tersedia.",
     related: ["progress-material"]
   },
   {
     id: "manage-material",
-    title: "Mengunggah & Mengelola Bahan Ajar (PDF, Presentasi, Video)",
+    title: "Mengunggah & Mengelola Bahan Ajar",
     summary: "Panduan dosen mengunggah modul kuliah, bahan tayang presentasi, dan tautan video materi.",
     category: "Materi & Media",
     roles: staff,
     keywords: ["unggah materi", "upload pdf", "upload video", "ppt", "bahan ajar"],
-    steps: [
-      "Buka kelas dan pilih pertemuan perkuliahan yang dituju.",
-      "Klik Tambah Materi.",
-      "Pilih tipe materi: Dokumen PDF, Slide Presentasi, atau Video Pembelajaran.",
-      "Unggah berkas bahan ajar atau masukkan tautan video pembelajaran.",
-      "Atur jadwal tayang atau simpan sebagai Draf.",
-      "Klik Publikasikan agar bahan ajar dapat dipelajari oleh mahasiswa."
-    ],
-    content: "Semua bahan ajar yang diunggah tersimpan aman di sistem E-Learning UAY. Mahasiswa dapat langsung membaca modul dan memutar video pembelajaran secara lancar dari peramban dengan hemat kuota tanpa harus mengunduh berkas berukuran besar terlebih dahulu.",
+    steps: ["Buka kelas dan pertemuan yang dituju.","Klik Tambah Materi.","Pilih jenis materi yang tersedia, misalnya Modul PDF, Video Pembelajaran, atau materi teks/praktikum.","Unggah berkas atau isi tautan sematan yang diizinkan. PPTX dapat digunakan sebagai lampiran.","Atur visibilitas dan jadwal materi, lalu simpan."],
+    content: "Modul PDF dan video unggahan dibuka melalui pemutar aplikasi. Video sematan menggunakan pemutar layanan asal. Penggunaan data dan kecepatan pemutaran bergantung pada ukuran berkas, koneksi, dan layanan yang digunakan.",
     related: ["progress-material", "class-cloning"]
   },
   {
@@ -222,15 +185,8 @@ export const helpArticles: HelpArticle[] = [
     category: "Siklus Kelas & Kloning",
     roles: staff,
     keywords: ["clone kelas", "duplikasi kelas", "semester baru", "tahun ajaran baru"],
-    steps: [
-      "Buka kelas yang ingin diduplikasi.",
-      "Klik tombol Titik Tiga / Menu Opsi di bagian atas kelas, lalu pilih Duplikasi Kelas.",
-      "Pilih Tahun Ajaran & Semester baru (misal: 2026/2027 Ganjil).",
-      "Ketikkan Nama Rombel Kelas baru (misal: Pemrograman Web - Kelas A).",
-      "Pilih opsi jadwal: Reset ke Draf Bersih (Direkomendasikan) atau Sesuaikan Tanggal.",
-      "Klik Konfirmasi Duplikasi."
-    ],
-    content: "Fitur duplikasi kelas menyalin silabus materi, tugas, dan kuis secara utuh. Jadwal lama otomatis disetel ke status Draf agar dosen dapat menyesuaikan kembali dengan kalender akademik yang baru. Data mahasiswa semester sebelumnya tidak diikutsertakan, sehingga kelas baru siap untuk diisi mahasiswa angkatan berjalan.",
+    steps: ["Buka kelas yang ingin diduplikasi.","Klik Duplikasi.","Isi nama kelas dan tahun akademik tujuan.","Konfirmasikan duplikasi, lalu sesuaikan materi dan jadwal kelas baru."],
+    content: "Duplikasi menyalin struktur pertemuan, materi, tugas, kuis, dan kategori penilaian ke kelas baru berstatus draf. Peserta, jawaban, dan nilai lama tidak disalin; jadwal aktivitas dikosongkan untuk diatur kembali. Skala nilai kelas baru memakai default global saat duplikasi dibuat.",
     related: ["courses", "manage-material"]
   },
   {
@@ -256,7 +212,7 @@ export const helpArticles: HelpArticle[] = [
     category: "Keamanan Sistem",
     roles: all,
     keywords: ["tipe berkas", "format file", "pdf", "zip", "ukuran berkas"],
-    content: "Sistem mendukung format dokumen umum seperti PDF, Word (DOCX), Presentasi (PPTX), Gambar (PNG, JPG), Arsip Tugas (ZIP), dan Video MP4. Berkas program (.exe, .bat) tidak diizinkan demi menjaga keamanan bersama. Batas ukuran maksimal pengunggahan berkas adalah 50 MB per berkas.",
+    content: "Format yang diizinkan mencakup PDF, DOCX, PPTX, gambar, ZIP, dan video MP4/WebM sesuai tujuan unggahan. Program seperti EXE dan BAT ditolak. " + uploadLimitsText + " Batas memakai 1 MB = 1.048.576 byte dan tetap diperiksa server.",
     related: ["assignments"]
   },
   {
@@ -273,7 +229,7 @@ export const helpArticles: HelpArticle[] = [
       "Jawab butir-butir soal (Pilihan Ganda, Benar/Salah, Menjodohkan, Mengurutkan, atau Uraian/Esai).",
       "Klik Kirim Jawaban sebelum waktu hitung mundur habis."
     ],
-    content: "Jawaban yang Anda pilih tersimpan secara bertahap saat Anda berpindah soal. Jika koneksi internet Anda sempat terputus sebentar, Anda dapat memuat ulang halaman dan melanjutkan pengerjaan selama durasi waktu kuis belum habis.",
+    content: "Aplikasi mengirim jawaban secara berkala sekitar setiap tiga detik. Perhatikan indikator tersimpan di server. Jika koneksi terputus, jawaban yang belum diterima server belum tersimpan. Anda dapat melanjutkan percobaan yang masih aktif selama batas waktu belum berakhir.",
     related: ["timer-modes", "quiz-results"]
   },
   {
@@ -309,17 +265,17 @@ export const helpArticles: HelpArticle[] = [
       "Buka lembar jawaban mahasiswa, masukkan nilai (skala 0-100), dan ketikkan masukan perbaikan.",
       "Klik Simpan Nilai."
     ],
-    content: "Buku Nilai menghitung nilai akhir mahasiswa secara otomatis berdasarkan persentase bobot yang telah ditetapkan dosen (misalnya Tugas 20%, Kuis 15%, UTS 30%, UAS 35%).",
+    content: "Buku Nilai menghitung draf berdasarkan bobot kategori dan sumber nilai yang diatur pada kelas. Total bobot harus 100%. Mahasiswa melihat nilai akhir setelah pengelola menerbitkannya. Skala konversi mengikuti kebijakan kelas; perubahan default global hanya digunakan pada kelas baru dan tidak menghitung ulang nilai terbit.",
     related: ["quiz-results", "assignments"]
   },
   {
     id: "rector-dashboard-bridging",
-    title: "Ringkasan Aktivitas Perkuliahan untuk Pimpinan Universitas",
-    summary: "Pemantauan ringkasan aktivitas akademik dan kelancaran perkuliahan oleh pimpinan universitas.",
+    title: "Ringkasan Aktivitas Perkuliahan untuk Administrator",
+    summary: "Membaca ringkasan kelas dan aktivitas dalam cakupan akses administrator.",
     category: "Integrasi Sistem",
     roles: admins,
     keywords: ["pimpinan", "ringkasan perkuliahan", "keaktifan dosen", "monitoring akademik"],
-    content: "Pimpinan universitas dapat memantau ringkasan statistik perkuliahan secara langsung, seperti jumlah kelas yang aktif berjalan, keaktifan pembelajaran dosen, dan tingkat penyelesaian perkuliahan, guna memastikan mutu proses akademik berjalan optimal di seluruh fakultas dan program studi.",
+    content: "Beranda administrator menampilkan ringkasan kelas, peserta, dan aktivitas sesuai cakupan akses. Statistik membantu pemeriksaan kegiatan yang tercatat di aplikasi; tindak lanjut akademik tetap dilakukan pengelola kampus.",
     related: ["roles", "security"]
   },
   {
@@ -329,12 +285,8 @@ export const helpArticles: HelpArticle[] = [
     category: "Keamanan Sistem",
     roles: all,
     keywords: ["keamanan akun", "kata sandi", "privasi", "tips aman", "logout"],
-    steps: [
-      "Jaga kerahasiaan kata sandi Anda dan jangan berikan kepada orang lain.",
-      "Biasakan mengklik tombol Keluar (Logout) setelah selesai menggunakan komputer di laboratorium atau perpustakaan.",
-      "Pastikan Anda selalu mengakses situs resmi universitas di https://e-learning.uay.ac.id."
-    ],
-    content: "E-Learning UAY dirancang dengan standar perlindungan akun untuk menjaga keamanan data seluruh sivitas akademika. Setiap pengguna hanya dapat mengakses kelas dan informasi akademik yang sesuai dengan haknya. Jagalah selalu kerahasiaan akun dan kata sandi Anda.",
+    steps: ["Jaga kerahasiaan akun dan kata sandi.","Klik Keluar setelah memakai komputer bersama.","Gunakan alamat E-Learning yang diberikan kampus."],
+    content: "Akses data mengikuti peran, penugasan kelas, dan kepesertaan. Laporkan masalah akses kepada pengelola kampus dengan menyertakan pesan yang ditampilkan aplikasi.",
     related: ["sso-login-flow"]
   },
   {
@@ -344,14 +296,8 @@ export const helpArticles: HelpArticle[] = [
     category: "Bantuan & FAQ",
     roles: all,
     keywords: ["kendala", "gagal masuk", "solusi", "troubleshooting", "bantuan"],
-    steps: [
-      "Periksa koneksi internet Anda dan pastikan peramban tidak dalam mode offline.",
-      "Jika mengalami kendala masuk, pastikan NIM/NIDN dan kata sandi yang Anda masukkan sudah benar.",
-      "Jika presensi mandiri belum bisa diisi, tanyakan kepada dosen pengampu apakah sesi sudah dibuka dan pastikan kode sudah sesuai.",
-      "Jika materi belum bisa diunduh, pastikan video telah ditonton tuntas atau modul dokumen telah dibaca hingga akhir.",
-      "Bila kendala belum terselesaikan, hubungi layanan bantuan kampus dengan melampirkan foto layar pesan yang muncul."
-    ],
-    content: "Sebagian besar kendala tampilan dapat diselesaikan dengan memuat ulang halaman (refresh browser) atau keluar lalu masuk kembali menggunakan akun resmi kampus Anda.",
+    steps: ["Periksa koneksi dan muat ulang halaman bila perlu.","Jika gagal masuk, periksa identitas yang diminta halaman SSO dan hubungi pengelola akun.","Jika presensi belum tersedia, periksa jadwal dan konfirmasikan kepada dosen bahwa sesi telah dibuka.","Jika unduhan ditolak, periksa status kepesertaan, jadwal, dan syarat progres yang ditampilkan materi.","Jika penyimpanan gagal, perhatikan pesan kegagalan dan coba lagi. Hubungi bantuan kampus dengan pesan yang muncul."],
+    content: "Indikator berhasil muncul setelah server menerima perubahan. Untuk kendala yang berulang, catat aktivitas, waktu, dan pesan kegagalan agar pengelola dapat memeriksanya.",
     related: ["getting-started", "attendance-student"]
   },
   {
@@ -361,7 +307,7 @@ export const helpArticles: HelpArticle[] = [
     category: "Bantuan & FAQ",
     roles: all,
     keywords: ["faq presensi", "tanya jawab presensi", "izin sakit", "lupa absen", "kuota kehadiran"],
-    content: "T: Bagaimana jika saya lupa memasukkan kode presensi saat kuliah? J: Segera lapor ke dosen pengampu agar dosen dapat menandai kehadiran Anda secara manual di lembar presensi kelas. T: Berapa batas minimal kehadiran untuk dapat mengikuti ujian? J: Minimal 75% dari total seluruh pertemuan kuliah. T: Apakah surat keterangan sakit dihitung alpa? J: Tidak, surat dokter dicatat sebagai Sakit (S) dan diperhitungkan secara sah dalam rekap kehadiran.",
+    content: "Jika lupa presensi, hubungi dosen untuk pemeriksaan dan pencatatan manual. Ambang kehadiran mengikuti pengaturan Super Admin dan tercantum pada rekap. Izin dan Sakit dicatat terpisah dari Alpa, tetapi persentase kehadiran dihitung dari Hadir dan Terlambat saja.",
     related: ["attendance-student", "attendance-lecturer", "attendance-rules"]
   }
 ];

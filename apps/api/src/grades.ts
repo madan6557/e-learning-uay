@@ -267,8 +267,8 @@ export async function calculateGradebook(
 
         if (
           !values.length &&
-          category.weightPercent > 0 &&
-          effectiveSource !== "MANUAL"
+          !override &&
+          category.weightPercent > 0
         ) {
           missing.push(category.name);
         }
@@ -852,7 +852,7 @@ export function registerGrades(app: Express) {
           const item = z.object({
             userId: z.string().uuid(),
             categoryId: z.string().uuid(),
-            score: z.number().transform((val) => clampGrade(val)),
+            score: z.number().min(0).max(100).transform((val) => clampGrade(val)),
             reason: z.string().trim().min(5).max(2000).optional(),
           });
           const batch = req.path.endsWith("/batch");

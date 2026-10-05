@@ -1,3 +1,4 @@
+import { formatClock, formatDateTime } from "../../../packages/shared/src/time";
 import { DraftRouteContext } from "./useLocalDraft";
 import { confirmAction } from "./confirm";
 import { PublishButton } from "./PublishButton";
@@ -1017,15 +1018,14 @@ function formatLastActive(isoString?: string | null, isOnline?: boolean) {
   if (diffSec < 172800) {
     return (
       <span>
-        Kemarin, {d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })} WIB
+        Kemarin, {formatClock(d)}
       </span>
     );
   }
 
   return (
-    <span title={d.toLocaleString("id-ID")}>
-      {d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })},{" "}
-      {d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })} WIB
+    <span title={formatDateTime(d)}>
+      {formatDateTime(d)}
     </span>
   );
 }

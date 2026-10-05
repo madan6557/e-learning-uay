@@ -61,7 +61,7 @@ Seluruh tahapan tutorial dalam buku ini dilengkapi dengan **tangkapan layar apli
 
 - **[S1] [Bagaimana Cara Super Admin Meninjau Administrasi Perkuliahan Seluruh Fakultas?](#tutorial-s1)**
 - **[S2] [Bagaimana Cara Super Admin Menetapkan Periode Tahun Ajaran Aktif dan Mengatur Banner Semester?](#tutorial-s2)**
-- **[S3] [Bagaimana Cara Super Admin Menetapkan Kebijakan Skala Huruf Mutu dan Ambang Batas Hadir 75%?](#tutorial-s3)**
+- **[S3] [Bagaimana Cara Super Admin Menetapkan Kebijakan Skala Huruf Mutu dan Ambang Batas Kehadiran?](#tutorial-s3)**
 
 ### LAMPIRAN & SOLUSI KENDALA
 
@@ -181,7 +181,7 @@ Seluruh tahapan tutorial dalam buku ini dilengkapi dengan **tangkapan layar apli
 | **Keluar** | Tombol | Mengakhiri sesi E-Learning. Menutup tab saja tidak sama dengan menekan Keluar. |
 
 ### 💡 Catatan Penting & Tips Operasional:
-- Tanggal dan jam umumnya mengikuti zona waktu perangkat. Gunakan zona waktu yang benar. Pada tampilan presensi tertentu terdapat label WIB, sehingga cocokkan jam dengan jadwal pengajar.
+- Tanggal dan jam mengikuti zona waktu perangkat dan menampilkan offset sebenarnya, misalnya GMT+7 atau GMT+8. Input jadwal memakai waktu perangkat; server menerima timestamp UTC. Pastikan zona perangkat sesuai lokasi Anda.
 
 
 ---
@@ -483,7 +483,7 @@ Seluruh tahapan tutorial dalam buku ini dilengkapi dengan **tangkapan layar apli
 |:---|:---|:---|
 | **Judul** | Teks wajib, contoh Modul Pertemuan 4 | Nama materi pada daftar kelas. |
 | **Materi** | Modul PDF atau Praktikum &amp; dataset | Modul PDF memakai pembaca halaman. Praktikum mendukung petunjuk dan berkas pendamping. |
-| **Cari berkas / seret berkas** | PDF untuk Modul PDF, maksimum yang ditampilkan saat ini 25 MB | Mengunggah berkas ke kelas. Tunggu proses selesai sebelum menyimpan. |
+| **Cari berkas / seret berkas** | PDF untuk Modul PDF, maksimum 50 MB | Mengunggah berkas ke kelas. Tunggu proses selesai sebelum menyimpan. |
 | **Jumlah halaman** | Bilangan 1 sampai 10000, contoh 12 | Dipakai sebagai metadata pembaca/progres. Samakan dengan PDF sebenarnya. |
 | **Dibuka pada / Ditutup pada** | Tanggal-jam opsional, akhir sesudah awal | Membatasi jadwal akses materi. |
 | **Simpan dan Publikasikan** | Tombol | Menerbitkan materi sesudah unggahan dan metadata lengkap. |
@@ -1333,7 +1333,7 @@ Seluruh tahapan tutorial dalam buku ini dilengkapi dengan **tangkapan layar apli
 ---
 
 <a id='tutorial-s3'></a>
-## [S3] Bagaimana Cara Super Admin Menetapkan Kebijakan Skala Huruf Mutu dan Ambang Batas Hadir 75%?
+## [S3] Bagaimana Cara Super Admin Menetapkan Kebijakan Skala Huruf Mutu dan Ambang Batas Kehadiran?
 
 **Kategori Peran:** Super Admin / Tutorial S3  
 **Tujuan Tutorial:** Menetapkan acuan perhitungan untuk periode yang berlaku.  
@@ -1343,12 +1343,12 @@ Seluruh tahapan tutorial dalam buku ini dilengkapi dengan **tangkapan layar apli
 ### Langkah-Langkah Tutorial:
 1. Buka tab Kebijakan Bobot Huruf Mutu. Pilih Kebijakan Konversi Huruf Mutu Aktif.
 2. Baca tabel konversi versi yang dipilih. Pastikan batas skor dan indeks mutu sesuai keputusan akademik.
-3. Isi Ambang Batas Kehadiran Mengikuti Ujian (%), misalnya 75. Rentang isian 50 sampai 100.
+3. Isi Ambang Batas Kehadiran Mengikuti Ujian (%), misalnya 75. Rentang isian 0 sampai 100. Ambang awal adalah 75%. Pengaturan ini hanya dapat diubah Super Admin; Admin Prodi dapat melihatnya.
 4. Klik Simpan Perubahan Kebijakan. Buka lagi untuk memastikan pengaturan tersimpan.
 5. Minta pengampu meninjau versi skala pada Bobot penilaian kelas sebelum penerbitan nilai. Periksa rekap kehadiran sebelum menggunakan hasil kelayakan sebagai dasar keputusan.
 
 > **✓ Periksa Hasil Pengerjaan:**  
-> **Periksa hasil:** Versi kebijakan dan ambang yang diisikan tersimpan.
+> **Periksa hasil:** Versi kebijakan dan ambang yang diisikan tersimpan setelah server mengonfirmasi. Pengaturan bertahan setelah restart dan perubahan tercatat di audit. Skala default digunakan kelas baru dan hasil duplikasi, tanpa menghitung ulang nilai terbit.
 
 ![Menetapkan kebijakan skala nilai dan ambang hadir dengan penanda merah](images/tutorial/72-kebijakan.png)
 *Gambar Tutorial S3: Menetapkan kebijakan skala nilai dan ambang hadir. **Penanda gambar:** 1 Versi; 2 Ambang*
@@ -1408,7 +1408,7 @@ Gunakan versi kebijakan skala nilai yang ditetapkan pada kelas. Nilai akhir dihi
 ### Q: Bagaimana jika materi sudah diterbitkan dosen tetapi mahasiswa belum bisa melihatnya?
 **Jawaban & Tindakan:** Periksa 3 tingkatan status: (1) Pastikan status Kelas berstatus Terbit (bukan Draft/Arsip), (2) Pastikan Section (pertemuan) berstatus Terbit, dan (3) Pastikan status Materi di dalam Section berstatus Terbit serta berada dalam rentang jadwal buka/tutup.
 
-### Q: Bagaimana jika kode 6-digit presensi ditolak saat mahasiswa memasukkannya?
+### Q: Bagaimana jika kode 6 karakter presensi ditolak saat mahasiswa memasukkannya?
 **Jawaban & Tindakan:** Ketikkan 6 karakter kode persis seperti yang tampil di layar proyektor dosen tanpa spasi. Kode dapat mengandung huruf kapital dan angka (misal AB7K92). Pastikan jam perangkat Anda otomatis dan sesi presensi belum ditutup oleh dosen.
 
 ### Q: Bagaimana jika sesi presensi terjadwal belum terbuka otomatis?

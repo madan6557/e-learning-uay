@@ -1,3 +1,4 @@
+import { GRADE_SCALE_PRESETS, gradeScaleLabel } from "../../../packages/shared/src/domain";
 import { confirmAction } from "./confirm";
 import { useEffect, useState } from "react";
 import {
@@ -741,10 +742,10 @@ function AdminOverview({
           <Sliders size={24} style={{ color: "var(--primary, #0284c7)" }} />
           <h3>Kebijakan &amp; Tahun Ajaran</h3>
           <p>
-            Atur tahun akademik aktif ({config?.academicYear || "2026/2027 Ganjil"}), daftar semester, dan standar kebijakan bobot huruf mutu.
+            Lihat tahun akademik aktif ({config?.academicYear || "2026/2027 Ganjil"}), daftar semester, dan standar kebijakan bobot huruf mutu.
           </p>
           <span className="text-link">
-            Kelola Kebijakan
+            {user.role === "SUPER_ADMIN" ? "Kelola Kebijakan" : "Lihat Kebijakan"}
             <ChevronRight size={16} />
           </span>
         </div>
@@ -791,6 +792,7 @@ function AdminOverview({
       {governanceModal && (
         <AcademicGovernanceModal
           config={config}
+          readOnly={user.role !== "SUPER_ADMIN"}
           onClose={() => setGovernanceModal(false)}
           onSaved={() => {
             onConfigChange?.();
@@ -1217,43 +1219,14 @@ export function ClassForm({
     </Modal>
   );
 }
-const ACADEMIC_GRADE_PRESETS = {
-  "2026.1": {
-    version: "2026.1",
-    name: "Standar Akademik UAY 2026/2027",
-    description: "Skala nilai terstandar UAY aktif (A >= 85, A- >= 80, B+ >= 75)",
-    bands: [
-      { minScore: 85, letter: "A", point: 4.0, predicate: "Sangat Memuaskan (Istimewa)" },
-      { minScore: 80, letter: "A-", point: 3.75, predicate: "Sangat Baik" },
-      { minScore: 75, letter: "B+", point: 3.5, predicate: "Lebih dari Baik" },
-      { minScore: 70, letter: "B", point: 3.0, predicate: "Baik" },
-      { minScore: 65, letter: "B-", point: 2.75, predicate: "Cukup Baik" },
-      { minScore: 60, letter: "C+", point: 2.5, predicate: "Lebih dari Cukup" },
-      { minScore: 55, letter: "C", point: 2.0, predicate: "Cukup (Batas Minimum Matakuliah Wajib)" },
-      { minScore: 45, letter: "D", point: 1.0, predicate: "Kurang (Wajib Remediasi)" },
-      { minScore: 0, letter: "E", point: 0.0, predicate: "Gagal (Wajib Mengulang Matakuliah)" },
-    ],
-  },
-  "2024.1": {
-    version: "2024.1",
-    name: "Standar Akademik Lama UAY (Sebelum 2026)",
-    description: "Skala historis kurikulum lama (A >= 80, B >= 70, C >= 60, D >= 50)",
-    bands: [
-      { minScore: 80, letter: "A", point: 4.0, predicate: "Sangat Memuaskan" },
-      { minScore: 70, letter: "B", point: 3.0, predicate: "Baik" },
-      { minScore: 60, letter: "C", point: 2.0, predicate: "Cukup" },
-      { minScore: 50, letter: "D", point: 1.0, predicate: "Kurang" },
-      { minScore: 0, letter: "E", point: 0.0, predicate: "Gagal" },
-    ],
-  },
-};
-
 export function AcademicGovernanceModal({
   config,
+  readOnly = true,
   onClose,
   onSaved,
 }: {
   config?: any;
+  readOnly?: boolean;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -1286,6 +1259,7 @@ export function AcademicGovernanceModal({
   );
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<Error | null>(null);
 
   const handleAddYear = () => {
     const val = newYearInput.trim();
@@ -1308,6 +1282,9 @@ export function AcademicGovernanceModal({
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (readOnly) return;
+    setSaveError(null);
+    setMessage(null);
     setSaving(true);
     try {
       await api("/system/settings", "PUT", {
@@ -1322,14 +1299,16 @@ export function AcademicGovernanceModal({
       setTimeout(() => {
         onClose();
       }, 500);
+    } catch (error) {
+      setSaveError(error as Error);
     } finally {
       setSaving(false);
     }
   };
 
   const currentScale =
-    ACADEMIC_GRADE_PRESETS[scaleVersion as keyof typeof ACADEMIC_GRADE_PRESETS] ||
-    ACADEMIC_GRADE_PRESETS["2026.1"];
+    GRADE_SCALE_PRESETS[scaleVersion as keyof typeof GRADE_SCALE_PRESETS] ||
+    GRADE_SCALE_PRESETS["2026.1"];
 
   return (
     <Modal title="Pengaturan & Tata Kelola Akademik" wide onClose={onClose}>
@@ -1379,6 +1358,9 @@ export function AcademicGovernanceModal({
           </div>
         )}
 
+        {readOnly && <p>Pengaturan global hanya dapat diubah oleh Super Admin.</p>}
+        {saveError && <Notice error={saveError} />}
+        <fieldset disabled={readOnly || saving} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         {tab === "YEAR" ? (
           <div>
             <div style={{ marginBottom: 18 }}>
@@ -1523,12 +1505,9 @@ export function AcademicGovernanceModal({
                   value={scaleVersion}
                   onChange={(e) => setScaleVersion(e.target.value)}
                 >
-                  <option value="2026.1">
-                    2026.1 - Standar Akademik Baru UAY 2026/2027 (A &ge; 85, A- &ge; 80, B+ &ge; 75, dst.)
-                  </option>
-                  <option value="2024.1">
-                    2024.1 - Standar Akademik Transisi (Sebelum 2026 - A &ge; 80, B &ge; 70, C &ge; 60, dst.)
-                  </option>
+                  {Object.values(GRADE_SCALE_PRESETS).map(policy => (
+                    <option key={policy.version} value={policy.version}>{gradeScaleLabel(policy)}</option>
+                  ))}
                 </select>
               </Field>
             </div>
@@ -1540,7 +1519,7 @@ export function AcademicGovernanceModal({
               >
                 <input
                   type="number"
-                  min={50}
+                  min={0}
                   max={100}
                   step={1}
                   required
@@ -1592,7 +1571,6 @@ export function AcademicGovernanceModal({
                     <th style={{ padding: "8px 12px" }}>Huruf Mutu</th>
                     <th style={{ padding: "8px 12px" }}>Batas Nilai Riil</th>
                     <th style={{ padding: "8px 12px" }}>Bobot IP</th>
-                    <th style={{ padding: "8px 12px" }}>Keterangan Akademik</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1606,9 +1584,6 @@ export function AcademicGovernanceModal({
                       </td>
                       <td style={{ padding: "8px 12px", fontWeight: 700, color: "#0284c7" }}>
                         {b.point.toFixed(2)}
-                      </td>
-                      <td style={{ padding: "8px 12px", color: "#64748b" }}>
-                        {b.predicate || (b.minScore >= 55 ? "Lulus" : "Tidak Lulus / Remedi")}
                       </td>
                     </tr>
                   ))}
@@ -1630,19 +1605,20 @@ export function AcademicGovernanceModal({
             >
               <strong>🛡️ Prinsip Imutabilitas Nilai Historis:</strong>
               <p style={{ margin: "4px 0 0 0" }}>
-                Pengaturan skala konversi nilai ini berlaku untuk perhitungan draf dan penerbitan nilai semester aktif. Nilai mahasiswa pada kelas semester lampau yang telah <strong>Diterbitkan (PUBLISHED)</strong> atau <strong>Dikunci (LOCKED)</strong> tidak akan pernah berubah secara retroaktif guna menjamin integritas rekam jejak akademik universitas.
+                Pengaturan skala ini menjadi default untuk kelas baru, termasuk hasil duplikasi. Skala kelas yang sudah ada dan nilai yang telah diterbitkan tidak dihitung ulang. Nilai mahasiswa pada kelas semester lampau yang telah <strong>Diterbitkan (PUBLISHED)</strong> atau <strong>Dikunci (LOCKED)</strong> tidak akan pernah berubah secara retroaktif guna menjamin integritas rekam jejak akademik universitas.
               </p>
             </div>
           </div>
         )}
 
+        </fieldset>
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, borderTop: "1px solid #e2e8f0", paddingTop: 16 }}>
           <button type="button" className="button secondary" onClick={onClose} disabled={saving}>
-            Batal
+            {readOnly ? "Tutup" : "Batal"}
           </button>
-          <button type="submit" className="button primary" disabled={saving}>
+          {!readOnly && <button type="submit" className="button primary" disabled={saving}>
             {saving ? "Menyimpan..." : "Simpan Perubahan Kebijakan"}
-          </button>
+          </button>}
         </div>
       </form>
     </Modal>
@@ -1807,6 +1783,7 @@ export function Catalog({
       {governanceModal && (
         <AcademicGovernanceModal
           config={config}
+          readOnly={user.role !== "SUPER_ADMIN"}
           onClose={() => setGovernanceModal(false)}
           onSaved={() => {
             onConfigChange?.();

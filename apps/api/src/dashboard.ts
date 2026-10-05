@@ -38,7 +38,7 @@ export async function dashboardClasses<T extends DashboardClass>(
       startDate: true,
       endDate: true,
       resources: {
-        orderBy: { contentOrder: "asc" },
+        orderBy: [{ contentOrder: "asc" }, { id: "asc" }],
         select: {
           id: true,
           resourceType: true,

@@ -29,7 +29,7 @@ import {
   usePagination,
 } from "./lib";
 import { confirmAction } from "./confirm";
-import { GRADE_SCALE_PRESETS } from "../../../packages/shared/src/domain";
+import { GRADE_SCALE_PRESETS, gradeScaleLabel } from "../../../packages/shared/src/domain";
 
 export function GradeScoreInput({
   value,

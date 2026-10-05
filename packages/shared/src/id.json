@@ -192,7 +192,7 @@
   "active": "Aktif",
   "archived": "Diarsipkan",
   "draft": "Draf",
-  "published": "Terbit",
+  "published": "Terpublikasi",
   "publishedAt": "Diterbitkan",
   "emptyClasses": "Belum ada kelas yang tersedia.",
   "emptyDescription": "Kelas yang Anda ampu atau ikuti akan muncul di sini.",
@@ -403,7 +403,6 @@
   "reasonHint": "Jelaskan alasan perubahan nilai (minimal 5 karakter).",
   "publishGrades": "Publikasikan nilai",
   "publishAllGrades": "Publikasikan semua nilai",
-  "published": "Terpublikasi",
   "unpublished": "Belum dipublikasikan",
   "gradingMode": "Mode koreksi:",
   "allQuestions": "Semua soal (per mahasiswa)",
@@ -494,7 +493,7 @@
   "noFiles": "Belum ada berkas. Unggah berkas melalui editor materi.",
   "fileRetention": "Berkas di tempat sampah dapat dipulihkan selama 7 hari.",
   "confirmTrash": "Pindahkan berkas ke sampah? Materi yang memakai berkas ini tidak dapat diunduh sampai dipulihkan.",
-  "confirmArchive": "Arsipkan kelas? Semua aktivitas dan perubahan nilai akan dikunci permanen.",
+  "confirmArchive": "Arsipkan kelas? Aktivitas dan perubahan nilai dikunci hingga kelas dibuka kembali.",
   "reopenClass": "Buka kembali kelas",
   "confirmReopenClass": "Buka kembali kelas ini? Status kelas akan diubah menjadi Terbit (aktif) sehingga perkuliahan dan aktivitas dapat dilanjutkan kembali.",
   "classArchivedNotice": "Kelas ini diarsipkan oleh dosen pengampu. Konten pembelajaran dan rekaman nilai dapat ditinjau dalam mode hanya-baca.",
@@ -609,7 +608,7 @@
     "GRADING_INCOMPLETE": "Masih ada jawaban atau tugas yang perlu dinilai.",
     "MISSING_SCORES": "Tinjau dan setujui nilai yang masih kosong sebelum publikasi.",
     "CORRECTION_REASON_REQUIRED": "Koreksi nilai wajib disertai alasan minimal 5 karakter.",
-    "FILE_SERVICE_UNAVAILABLE": "Layanan berkas sedang tidak tersedia. Pekerjaan Anda tetap tersimpan; silakan coba lagi.",
+    "FILE_SERVICE_UNAVAILABLE": "Layanan berkas sedang tidak tersedia. Permintaan belum berhasil; silakan coba lagi.",
     "FILE_NOT_READY": "Berkas belum selesai diverifikasi atau tidak dapat digunakan dalam aktivitas ini.",
     "FILE_TYPE_OR_SIZE": "Jenis atau ukuran berkas tidak sesuai ketentuan.",
     "FILE_ACCESS_DENIED": "Anda tidak memiliki akses ke berkas ini.",
@@ -649,6 +648,10 @@
     "ANSWER_TOO_LONG": "Jawaban melebihi batas kata atau panjang teks.",
     "DUPLICATE_GRADE": "Nilai yang sama tercantum lebih dari sekali. Periksa perubahan Anda.",
     "SEARCH_TOO_SHORT": "Masukkan minimal 2 karakter untuk melakukan pencarian.",
-    "INVALID_FILE_TICKET": "Tiket akses berkas tidak valid atau domain penyimpanan belum diizinkan."
+    "INVALID_FILE_TICKET": "Tiket akses berkas tidak valid atau domain penyimpanan belum diizinkan.",
+    "FILE_SERVICE_INVALID_RESPONSE": "Layanan berkas mengirim respons yang tidak valid. Silakan coba lagi.",
+    "FILE_SERVICE_OPERATION_UNSUPPORTED": "Operasi ini tidak didukung oleh layanan berkas yang digunakan.",
+    "FILE_SERVICE_REQUIRED": "Layanan berkas belum dikonfigurasi.",
+    "FILE_SERVICE_REJECTED": "Layanan berkas menolak permintaan. Silakan coba lagi."
   }
 }

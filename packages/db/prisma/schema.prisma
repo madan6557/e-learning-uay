@@ -20,6 +20,19 @@ generator client {
   provider = "prisma-client-js"
 }
 
+/// Global policy defaults. Published grade records keep their own snapshots.
+model AcademicSettings {
+  id                       String   @id @default("global") @map("academic_settings_id")
+  academicYear             String   @map("academic_year")
+  semesterLabel            String   @map("semester_label")
+  academicYears            String[] @map("academic_years")
+  defaultGradeScaleVersion String   @map("default_grade_scale_version")
+  minAttendancePercentage  Float    @map("min_attendance_percentage")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+
+  @@map("academic_settings")
+}
+
 // ---------------------------------------------------------------------------
 // Identity — projected from UAY SSO, never authored here
 // ---------------------------------------------------------------------------

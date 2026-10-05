@@ -1,4 +1,6 @@
-import type { Express } from "express";
+import type { Express, Request } from "express";
+import type { FileReference } from "@prisma/client";
+import { UPLOAD_LIMITS } from "../../../packages/shared/src/files.js";
 import { z } from "zod";
 import {
   existsSync,
@@ -8,6 +10,8 @@ import {
   createReadStream,
   readFileSync,
   writeFileSync,
+  accessSync,
+  constants,
 } from "node:fs";
 import { join, resolve } from "node:path";
 import { randomUUID, createHmac, timingSafeEqual } from "node:crypto";
@@ -26,6 +30,48 @@ import {
   cache,
   serviceFetch,
 } from "./core.js";
+
+async function serviceJson(response: Response): Promise<any> {
+  let body;
+  try { body = await response.json(); } catch { ensure(false, 502, "FILE_SERVICE_INVALID_RESPONSE"); }
+  ensure(body && typeof body === "object" && body.success !== false, 502, "FILE_SERVICE_INVALID_RESPONSE");
+  return body.data ?? body;
+}
+
+export async function checkFileService(options?: { timeoutMs?: number; requestId?: string }) {
+  const mode = config.fileMode;
+  if (mode === "local") {
+    ensure(!production || isDemo, 503, "FILE_SERVICE_REQUIRED");
+    if (!existsSync(uploadDir)) mkdirSync(uploadDir, { recursive: true });
+    accessSync(uploadDir, constants.R_OK | constants.W_OK);
+    return { status: "ok", mode, simulated: true, timestamp: new Date().toISOString() };
+  }
+  ensure(config.fileUrl && config.fileKey, 503, "FILE_SERVICE_REQUIRED");
+  const response = await serviceFetch("file_service",
+    mode === "uay" ? getUayEndpoint("/health") : `${config.fileUrl.replace(/\/+$/, "")}/health`,
+    { headers: mode === "uay" ? getUayHeaders(options) : { Authorization: `Bearer ${config.fileKey}` } },
+    { idempotent: true, attempts: 1, timeoutMs: options?.timeoutMs ?? 3000 });
+  ensure(response.ok, 503, "FILE_SERVICE_UNAVAILABLE");
+  const body = await serviceJson(response);
+  ensure(["ok", "healthy"].includes(body.status) && body.storage?.accessible !== false,
+    502, "FILE_SERVICE_INVALID_RESPONSE");
+  return { ...body, mode, simulated: false, timestamp: new Date().toISOString() };
+}
+
+async function authorizeFileAccess(req: Request, file: FileReference, resourceId?: string) {
+  if (resourceId && !["SUBMISSION", "QUIZ_ANSWER"].includes(file.purpose)) {
+    const resource = await db.resourceItem.findUnique({ where: { id: resourceId } });
+    ensure(resource, 404, "NOT_FOUND");
+    ensure(resourceFileIds(resource.dynamicPayload).includes(file.id), 403, "FILE_ACCESS_DENIED");
+    const cls = await itemAccess(db, req.context.user, resource.sectionId);
+    if (!cls.canManage) available(resource);
+    return cls;
+  }
+  const cls = await classAccess(db, req.context.user, file.classId);
+  ensure(!cls.isInactiveParticipant, 403, "PARTICIPATION_DISABLED");
+  ensure(cls.canManage || file.ownerId === req.context.user.id, 403, "FILE_ACCESS_DENIED");
+  return cls;
+}
 
 const uploadDir = process.env.UPLOAD_DIR || resolve(process.cwd(), "uploads");
 
@@ -168,8 +214,11 @@ export async function uayGetMetadata(
     { idempotent: true },
   );
   ensure(res.ok, res.status === 404 ? 404 : 502, "FILE_SERVICE_REJECTED");
-  const json = await res.json();
-  return json.data ?? json;
+  const meta = await serviceJson(res);
+  ensure(typeof meta.fileId === "string" && typeof meta.originalName === "string" &&
+    Number.isSafeInteger(meta.sizeBytes) && meta.sizeBytes > 0 && typeof meta.mimeType === "string" &&
+    typeof meta.status === "string", 502, "FILE_SERVICE_INVALID_RESPONSE");
+  return meta;
 }
 
 export async function uayStreamFile(
@@ -242,8 +291,10 @@ export async function uayGetRepositories(options?: {
     { idempotent: true },
   );
   ensure(res.ok, 502, "FILE_SERVICE_REJECTED");
-  const json = await res.json();
-  return json.data ?? json;
+  const repos = await serviceJson(res);
+  ensure(Array.isArray(repos) && repos.every(r => r && typeof r.id === "string" && typeof r.name === "string"),
+    502, "FILE_SERVICE_INVALID_RESPONSE");
+  return repos;
 }
 
 export function createSignedDownloadToken(
@@ -341,14 +392,6 @@ async function handleLocalFileRequest(
   return { status: "OK" };
 }
 
-const limits = {
-  COVER: 5 * 1024 * 1024,
-  RESOURCE: 50 * 1024 * 1024,
-  SUBMISSION: 50 * 1024 * 1024,
-  QUIZ_ANSWER: 50 * 1024 * 1024,
-  VIDEO: 100 * 1024 * 1024,
-};
-
 const allowedTypes = new Set([
   "application/pdf",
   "image/png",
@@ -376,7 +419,8 @@ export async function fileRequest(
   body?: unknown,
   key?: string,
 ): Promise<any> {
-  if (config.fileUrl && config.fileKey) {
+  if (config.fileMode !== "local") {
+    ensure(config.fileUrl && config.fileKey, 503, "FILE_SERVICE_REQUIRED");
     const response = await serviceFetch(
       "file_service",
       `${config.fileUrl}${path}`,
@@ -392,7 +436,7 @@ export async function fileRequest(
       { idempotent: method === "GET" || Boolean(key) },
     );
     ensure(response.ok, 502, "FILE_SERVICE_REJECTED");
-    return await response.json();
+    return await serviceJson(response);
   }
   return handleLocalFileRequest(path, method, body);
 }
@@ -495,13 +539,8 @@ async function serveFileStream(id: string, req: any, res: any) {
           return;
         }
       }
-    } catch (err) {
-      if (production && !isDemo) {
-        res.status(502).json({ error: "FILE_SERVICE_UNAVAILABLE" });
-        return;
-      }
-      console.warn("Remote stream failed, checking local backup file:", err);
-    }
+    } catch (err) { throw err; }
+    ensure(false, 502, "FILE_SERVICE_REJECTED");
   }
 
   if (production && !isDemo && config.fileMode !== "legacy") {
@@ -558,19 +597,25 @@ async function handleBinaryUpload(id: string, req: any, res: any) {
     res.status(503).json({ error: "FILE_SERVICE_REQUIRED" });
     return;
   }
+  const fileRef = await db.fileReference.findUnique({ where: { id } });
+  ensure(fileRef, 404, "NOT_FOUND");
+  ensure(fileRef.ownerId === req.context.user.id, 403, "FILE_ACCESS_DENIED");
+  const limit = UPLOAD_LIMITS[fileRef.purpose as keyof typeof UPLOAD_LIMITS];
+  ensure(limit && fileRef.sizeBytes <= limit, 400, "FILE_TYPE_OR_SIZE");
   const filePath = getLocalFilePath(id);
   const chunks: Buffer[] = [];
   let size = 0;
   for await (const chunk of req) {
     const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
     size += buf.length;
+    ensure(size <= fileRef.sizeBytes && size <= limit, 400, "FILE_TYPE_OR_SIZE");
     chunks.push(buf);
   }
+  ensure(size === fileRef.sizeBytes, 400, "FILE_TYPE_OR_SIZE");
   const binaryBuffer = Buffer.concat(chunks);
   writeFileSync(filePath, binaryBuffer);
 
-  const fileRef = await db.fileReference.findUnique({ where: { id } });
-  if (config.fileMode === "uay" && fileRef) {
+  if (config.fileMode === "uay") {
     try {
       const uayRes = await uayUpload({
         fileBuffer: binaryBuffer,
@@ -584,20 +629,10 @@ async function handleBinaryUpload(id: string, req: any, res: any) {
       });
       if (uayRes?.id) {
         await setRemoteFileId(id, uayRes.id);
-      } else if (production && !isDemo) {
-        res.status(502).json({ error: "FILE_SERVICE_REJECTED" });
-        return;
+      } else {
+        ensure(false, 502, "FILE_SERVICE_INVALID_RESPONSE");
       }
-    } catch (err) {
-      if (production && !isDemo) {
-        res.status(502).json({ error: "FILE_SERVICE_UNAVAILABLE" });
-        return;
-      }
-      console.warn(
-        "Failed to upload to remote UAY file service, local storage preserved:",
-        err,
-      );
-    }
+    } catch (err) { throw err; }
   } else if (production && !isDemo && config.fileMode !== "legacy") {
     res.status(503).json({ error: "FILE_SERVICE_REQUIRED" });
     return;
@@ -631,7 +666,7 @@ export function registerFiles(app: Express) {
           })
           .parse(req.body);
         ensure(
-          data.sizeBytes <= limits[data.purpose] &&
+          data.sizeBytes <= UPLOAD_LIMITS[data.purpose] &&
             allowedTypes.has(data.mimeType) &&
             !blockedExtensions.test(data.name),
           400,
@@ -737,7 +772,7 @@ export function registerFiles(app: Express) {
             id,
             classId: cls.id,
             ownerId: req.context.user.id,
-            purpose: data.purpose === "VIDEO" ? "RESOURCE" : data.purpose,
+            purpose: data.purpose,
             contextId: data.contextId,
             name: data.name,
             mimeType: data.mimeType,
@@ -787,25 +822,12 @@ export function registerFiles(app: Express) {
 
         if (config.fileMode === "uay") {
           const targetId = await getRemoteFileId(file.id);
-          try {
-            const metadata = await uayGetMetadata(targetId, {
-              actorId: req.context.user.id,
-              requestId: req.context.requestId,
-            });
-            const status = (metadata.status || "").toLowerCase();
-            ensure(
-              status === "active" || status === "ready",
-              409,
-              "FILE_NOT_READY",
-            );
-          } catch {
-            if (production && !isDemo) {
-              ensure(false, 502, "FILE_SERVICE_UNAVAILABLE");
-            }
-            // If remote check fails in development/demo, fallback to local verify
-            const filePath = getLocalFilePath(file.id);
-            ensure(existsSync(filePath), 409, "FILE_NOT_READY");
-          }
+          const metadata = await uayGetMetadata(targetId, {
+            actorId: req.context.user.id, requestId: req.context.requestId,
+          });
+          ensure(["active", "ready"].includes(metadata.status.toLowerCase()) &&
+            metadata.checksum === file.checksum && metadata.sizeBytes === file.sizeBytes &&
+            metadata.mimeType === file.mimeType, 409, "FILE_NOT_READY");
         } else if (config.fileMode === "legacy") {
           const metadata = await fileRequest(
             `/v1/files/${encodeURIComponent(file.id)}`,
@@ -850,24 +872,7 @@ export function registerFiles(app: Express) {
     });
     ensure(file && file.status === "READY", 404, "FILE_NOT_READY");
     const resourceId = z.string().uuid().optional().parse(req.body.resourceId);
-    let cls;
-    if (resourceId) {
-      const resource = await db.resourceItem.findUnique({
-        where: { id: resourceId },
-      });
-      ensure(resource, 404, "NOT_FOUND");
-      cls = await itemAccess(db, req.context.user, resource.sectionId);
-      if (!cls.canManage) available(resource);
-      const ids = resourceFileIds(resource.dynamicPayload);
-      ensure(ids.includes(file.id), 403, "FILE_ACCESS_DENIED");
-    } else {
-      cls = await classAccess(db, req.context.user, file.classId);
-      ensure(
-        cls.canManage || file.ownerId === req.context.user.id,
-        403,
-        "FILE_ACCESS_DENIED",
-      );
-    }
+    const cls = await authorizeFileAccess(req, file, resourceId);
 
     let url: string;
     let expiresAt: string;
@@ -985,7 +990,7 @@ export function registerFiles(app: Express) {
           ensure(file, 404, "NOT_FOUND");
           await classAccess(tx, req.context.user, file.classId, true);
           ensure(
-            file.purpose === "RESOURCE" || file.purpose === "COVER",
+            ["RESOURCE", "VIDEO", "COVER"].includes(file.purpose),
             403,
             "SUBMISSION_FILE_IMMUTABLE",
           );
@@ -1028,15 +1033,7 @@ export function registerFiles(app: Express) {
                   requestId: req.context.requestId,
                 });
               }
-            } catch (err) {
-              if (production && !isDemo) {
-                ensure(false, 502, "FILE_SERVICE_UNAVAILABLE");
-              }
-              console.warn(
-                `UAY File Service ${operation} failed, falling back:`,
-                err,
-              );
-            }
+            } catch (err) { throw err; }
           } else if (config.fileMode === "legacy") {
             await fileRequest(
               `/v1/files/${encodeURIComponent(file.id)}/${operation}`,
@@ -1079,7 +1076,7 @@ export function registerFiles(app: Express) {
       ensure(file, 404, "NOT_FOUND");
       await classAccess(db, req.context.user, file.classId, true);
       ensure(
-        file.purpose === "RESOURCE" || file.purpose === "COVER",
+        ["RESOURCE", "VIDEO", "COVER"].includes(file.purpose),
         403,
         "SUBMISSION_FILE_IMMUTABLE",
       );
@@ -1092,11 +1089,7 @@ export function registerFiles(app: Express) {
             actorId: req.context.user.id,
             requestId: req.context.requestId,
           });
-        } catch (err) {
-          if (production && !isDemo) {
-            ensure(false, 502, "FILE_SERVICE_UNAVAILABLE");
-          }
-        }
+        } catch (err) { throw err; }
       } else if (config.fileMode === "legacy") {
         await fileRequest(
           `/v1/files/${encodeURIComponent(file.id)}/trash`,
@@ -1146,7 +1139,7 @@ export function registerFiles(app: Express) {
     ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
     res.json(
       await db.fileReference.findMany({
-        where: { classId: cls.id, purpose: { in: ["RESOURCE", "COVER"] } },
+        where: { classId: cls.id, purpose: { in: ["RESOURCE", "VIDEO", "COVER"] } },
         orderBy: { createdAt: "desc" },
         take: 200,
       }),
@@ -1194,110 +1187,50 @@ export function registerFiles(app: Express) {
   });
   app.get("/api/v1/files/:id", streamHandler);
 
-  // Official metadata endpoint: GET /api/v1/files/:id/metadata
   app.get("/api/v1/files/:id/metadata", async (req, res) => {
-    const id = String(req.params.id);
-    const file = await db.fileReference.findUnique({ where: { id } });
-    if (!file) {
-      res.status(404).json({
-        statusCode: 404,
-        success: false,
-        error: "NOT_FOUND",
-        message: "File not found",
-        timestamp: new Date().toISOString(),
-        path: req.originalUrl,
-      });
-      return;
-    }
+    const file = await db.fileReference.findUnique({ where: { id: String(req.params.id) } });
+    ensure(file, 404, "NOT_FOUND");
+    const resourceId = z.string().uuid().optional().parse(req.query.resourceId);
+    await authorizeFileAccess(req, file, resourceId);
+    let data;
     if (config.fileMode === "uay") {
-      try {
-        const targetId = await getRemoteFileId(id);
-        const meta = await uayGetMetadata(targetId, {
-          actorId: req.context?.user?.id,
-          requestId: req.context?.requestId,
-        });
-        res.json({
-          statusCode: 200,
-          success: true,
-          data: meta,
-          message: "Metadata retrieved successfully",
-          timestamp: new Date().toISOString(),
-        });
-        return;
-      } catch {}
-    }
-    res.json({
-      statusCode: 200,
-      success: true,
-      data: {
-        fileId: file.id,
-        originalName: file.name,
-        sizeBytes: file.sizeBytes,
-        mimeType: file.mimeType,
-        checksum: file.checksum,
+      data = await uayGetMetadata(await getRemoteFileId(file.id), {
+        actorId: req.context.user.id, requestId: req.context.requestId,
+      });
+    } else if (config.fileMode === "legacy") {
+      data = await fileRequest("/v1/files/" + encodeURIComponent(file.id));
+      ensure(typeof data.status === "string" && Number.isSafeInteger(data.sizeBytes) &&
+        data.sizeBytes > 0 && typeof data.mimeType === "string", 502, "FILE_SERVICE_INVALID_RESPONSE");
+    } else {
+      ensure(!production || isDemo, 503, "FILE_SERVICE_REQUIRED");
+      data = {
+        fileId: file.id, originalName: file.name, sizeBytes: file.sizeBytes,
+        mimeType: file.mimeType, checksum: file.checksum,
         status: file.status === "READY" ? "active" : file.status.toLowerCase(),
-        visibility: "private",
-      },
-      message: "Metadata retrieved successfully",
-      timestamp: new Date().toISOString(),
-    });
+        visibility: "private", simulated: true,
+      };
+    }
+    res.json({ statusCode: 200, success: true, data,
+      message: "Metadata retrieved successfully", timestamp: new Date().toISOString() });
   });
 
-  // Repositories listing: GET /api/v1/repositories
   app.get("/api/v1/repositories", async (req, res) => {
+    ensure(config.fileMode !== "legacy", 501, "FILE_SERVICE_OPERATION_UNSUPPORTED");
+    let data;
     if (config.fileMode === "uay") {
-      try {
-        const repos = await uayGetRepositories({
-          actorId: req.context?.user?.id,
-          requestId: req.context?.requestId,
-        });
-        res.json({
-          statusCode: 200,
-          success: true,
-          data: repos,
-          message: "Repositories retrieved successfully",
-          timestamp: new Date().toISOString(),
-        });
-        return;
-      } catch {}
+      data = await uayGetRepositories({ actorId: req.context.user.id, requestId: req.context.requestId });
+    } else {
+      ensure(!production || isDemo, 503, "FILE_SERVICE_REQUIRED");
+      data = [{ id: config.fileRepoId, name: "Penyimpanan lokal (simulasi)", slug: "elearning",
+        status: "active", simulated: true }];
     }
-    if (production && !isDemo && config.fileMode === "local") {
-      res.status(503).json({
-        statusCode: 503,
-        success: false,
-        error: "FILE_SERVICE_REQUIRED",
-        message: "File service is required in production",
-        timestamp: new Date().toISOString(),
-      });
-      return;
-    }
-    res.json({
-      statusCode: 200,
-      success: true,
-      data: [
-        {
-          id: config.fileRepoId,
-          name: "E-Learning Materials",
-          slug: "elearning",
-          status: "active",
-        },
-      ],
-      message: "Repositories retrieved successfully",
-      timestamp: new Date().toISOString(),
-    });
+    res.json({ statusCode: 200, success: true, data,
+      message: "Repositories retrieved successfully", timestamp: new Date().toISOString() });
   });
 
-  // Health check: GET /api/v1/files/health
-  app.get("/api/v1/files/health", (req, res) => {
-    res.json({
-      statusCode: 200,
-      success: true,
-      data: {
-        status: "ok",
-        mode: config.fileMode,
-        timestamp: new Date().toISOString(),
-      },
-      message: "File service is healthy",
-    });
+  app.get("/api/v1/files/health", async (req, res) => {
+    const data = await checkFileService({ requestId: req.context.requestId });
+    res.json({ statusCode: 200, success: true, data,
+      message: data.simulated ? "Local storage simulation is available" : "File service is healthy" });
   });
 }

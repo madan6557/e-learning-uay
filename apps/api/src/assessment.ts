@@ -45,7 +45,14 @@ export const quizSchema = z
     timeLimitMinutes: z.number().int().min(1).max(300).default(30),
     timerMode: z.enum(["INDEPENDENT", "GLOBAL"]).default("INDEPENDENT"),
     passingScore: z.number().min(0).max(100).default(60),
-    attemptLimit: z.number().int().min(1).max(10).default(1),
+    attemptLimit: z
+      .number()
+      .int()
+      .min(1)
+      .max(10)
+      .nullish()
+      .transform((v) => (v === null || v === undefined ? 10 : v))
+      .default(1),
     randomizeQuestions: z.boolean().default(true),
     randomizeOptions: z.boolean().default(true),
     resultReleaseMode: z

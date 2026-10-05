@@ -31,7 +31,7 @@ const files = readdirSync("tests/integration")
   .map((f) => `tests/integration/${f}`);
 const tests = spawnSync(
   process.execPath,
-  ["--import", "tsx", "--test", ...files],
+  ["--import", "tsx", "--test", "--test-concurrency=1", ...files],
   { stdio: "inherit", env, windowsHide: true },
 );
 process.exit(tests.status ?? 1);

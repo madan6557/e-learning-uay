@@ -1,6 +1,6 @@
 # E-Learning UAY
 
-Aplikasi pembelajaran berdasarkan **Presentation – Technical Design E-Learning UAY v4.0**. React 19 + TypeScript, Express 5, Prisma, PostgreSQL 16, Redis 7. Antarmuka berbahasa Indonesia; jadwal ditampilkan dalam WIB.
+Aplikasi pembelajaran berdasarkan **Presentation – Technical Design E-Learning UAY v4.0**. React 19 + TypeScript, Express 5, Prisma, PostgreSQL 16, Redis 7. Antarmuka berbahasa Indonesia; jadwal mengikuti waktu perangkat dengan label offset zona sebenarnya (misalnya GMT+7 atau GMT+8).
 
 Implementasi lokal sudah tersedia: pengelolaan mata kuliah/kelas/peserta, editor 11 blok, materi dan progres belajar, kuis 8 tipe, tugas berversi, penilaian dan publikasi, impor dengan rekonsiliasi, pengumuman, notifikasi, serta audit. Rincian cakupan dan bukti verifikasi ada di [status implementasi](docs/IMPLEMENTATION.md).
 
@@ -16,7 +16,7 @@ npm run dev
 
 Perintah `dev` menyalin `.env.example` jika `.env` belum ada, menyalakan PostgreSQL lokal, menerapkan migrasi, mengisi data contoh satu kali, lalu menyalakan API, Vite, File Service, dan provider SSO lokal. Launcher menggunakan `AUTH_MODE=oidc`, termasuk jika `.env` lama masih menyebut `development`.
 
-Buka **http://127.0.0.1:5173/** untuk landing publik. Pilih **Masuk dengan SSO UAY** atau akun pada **Mode uji cepat**. Kedua cara melewati authorization code, PKCE, state/nonce, JWT/JWKS dan callback OIDC yang sama. Dashboard baru muncul setelah login berhasil. Kelas contoh adalah **IF2101 – Pemrograman Web / Kelas A**. Gunakan alamat `127.0.0.1` secara konsisten agar origin, cookie, dan upload cocok.
+Buka **http://127.0.0.1:5173/** untuk landing publik. Klik **Masuk dengan SSO UAY**, lalu pilih akun fixture pada provider SSO lokal. Alur ini melewati authorization code, PKCE, state/nonce, JWT/JWKS dan callback OIDC yang sama. Dashboard baru muncul setelah login berhasil. Kelas contoh adalah **IF2101 – Pemrograman Web / Kelas A**. Gunakan alamat `127.0.0.1` secara konsisten agar origin, cookie, dan upload cocok.
 
 | Layanan lokal            | Alamat / lokasi                             |
 | ------------------------ | ------------------------------------------- |
@@ -28,7 +28,7 @@ Buka **http://127.0.0.1:5173/** untuk landing publik. Pilih **Masuk dengan SSO U
 | Data persisten           | `.local/postgres`, `.local/file-service`    |
 | Konfigurasi lokal        | `.env` — jangan masukkan ke version control |
 
-`Ctrl+C` menghentikan launcher. Database yang sudah berjalan sebelum launcher tetap merupakan proses terpisah. Data tidak direset saat restart atau seed ulang. `DEMO_MODE=false` menyembunyikan pemilih akun pada landing. Pada Railway, `DEMO_MODE=true` secara eksplisit menyalakan fixture OIDC dan File Service untuk demonstrasi tanpa layanan kampus; mode ini tidak menggunakan kredensial kampus. Jika frontend staging memakai Vercel, gunakan gateway same-origin `/api/*` dan konfigurasi `APP_ORIGIN`, `API_ORIGIN`, serta `RAILWAY_API_ORIGIN` seperti di [panduan Railway](deployment/RAILWAY.md). Production VPS menggunakan satu domain dan gateway Nginx seperti di [panduan VPS](deployment/README.md). Saat `DEMO_MODE=false`, konfigurasi SSO, Redis, File Service, dan webhook production wajib diisi. Endpoint login development hanya tersedia pada mode pengujian backend yang secara eksplisit memakai `AUTH_MODE=development`; UI tidak menggunakannya.
+`Ctrl+C` menghentikan launcher. Database yang sudah berjalan sebelum launcher tetap merupakan proses terpisah. Data tidak direset saat restart atau seed ulang. Landing menggunakan tombol SSO tanpa pemilih akun. `DEMO_MODE` mengatur ketersediaan fixture demonstrasi. Pada Railway, `DEMO_MODE=true` secara eksplisit menyalakan fixture OIDC dan File Service untuk demonstrasi tanpa layanan kampus; mode ini tidak menggunakan kredensial kampus. Jika frontend staging memakai Vercel, gunakan gateway same-origin `/api/*` dan konfigurasi `APP_ORIGIN`, `API_ORIGIN`, serta `RAILWAY_API_ORIGIN` seperti di [panduan Railway](deployment/RAILWAY.md). Production VPS menggunakan satu domain dan gateway Nginx seperti di [panduan VPS](deployment/README.md). Saat `DEMO_MODE=false`, konfigurasi SSO, Redis, File Service, dan webhook production wajib diisi. Endpoint login development hanya tersedia pada mode pengujian backend yang secara eksplisit memakai `AUTH_MODE=development`; UI tidak menggunakannya.
 
 ## Pemeriksaan
 

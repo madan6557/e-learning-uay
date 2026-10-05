@@ -20,7 +20,7 @@ import {
   audit,
   transaction,
   HttpError,
-  systemAcademicSettings,
+  getAcademicSettings,
 } from "./core.js";
 
 const isSecure = Boolean(
@@ -224,10 +224,11 @@ async function authorizationUrl(res: Response, demoSubject?: string) {
   return url.href;
 }
 export function registerAuth(app: Express) {
-  app.get("/api/v1/auth/config", (_req, res) =>
+  app.get("/api/v1/auth/config", async (_req, res) => {
+    const systemAcademicSettings = await getAcademicSettings();
     res.json({
       mode: config.authMode,
-      demoEnabled: false,
+      demoEnabled: process.env.DEMO_MODE === "true" || isDemo,
       issuer: config.issuer,
       accountUrl: config.accountUrl || undefined,
       embedOrigins: config.embedOrigins,
@@ -236,8 +237,8 @@ export function registerAuth(app: Express) {
       academicYears: systemAcademicSettings.academicYears,
       defaultGradeScaleVersion: systemAcademicSettings.defaultGradeScaleVersion,
       minAttendancePercentage: systemAcademicSettings.minAttendancePercentage,
-    }),
-  );
+    });
+  });
   app.get("/api/v1/auth/development-users", async (_req, res) => {
     ensure(
       (!production && config.authMode === "development") || isDemo,
@@ -258,7 +259,7 @@ export function registerAuth(app: Express) {
   });
   app.post("/api/v1/auth/development-login", async (req, res) => {
     ensure(
-      isDemo || (!production && config.authMode === "development"),
+      !production && config.authMode === "development",
       404,
       "NOT_FOUND",
     );

@@ -17,10 +17,10 @@ import {
   hash,
   notify,
   config,
-  systemAcademicSettings,
-  setSystemAcademicSettings,
+  getAcademicSettings,
 } from "./core.js";
 import {
+  GRADE_SCALE_PRESETS,
   blockSchema,
   advanceVideo,
   webUrl,
@@ -150,7 +150,7 @@ export async function validateResource(raw: unknown, tx: any, classId: string) {
     ensure(
       file &&
         belongsToClass &&
-        file.purpose === "RESOURCE" &&
+        ["RESOURCE", "VIDEO"].includes(file.purpose) &&
         file.status === "READY",
       400,
       "FILE_NOT_READY",
@@ -361,8 +361,10 @@ export function registerLearning(app: Express) {
           400,
           "INVALID_INSTRUCTORS",
         );
+        const settings = await getAcademicSettings(tx);
         const after = await tx.courseClass.create({
           data: {
+            gradeScaleVersion: settings.defaultGradeScaleVersion,
             courseId: data.courseId,
             name: data.name,
             academicYear: data.academicYear,
@@ -455,7 +457,7 @@ export function registerLearning(app: Express) {
       where: { classId: cls.id },
       orderBy: { order: "asc" },
       include: {
-        resources: { orderBy: { contentOrder: "asc" } },
+        resources: { orderBy: [{ contentOrder: "asc" }, { id: "asc" }] },
         quizzes: {
           select: {
             id: true,
@@ -1524,8 +1526,10 @@ export function registerLearning(app: Express) {
         const data = z
           .object({ name: title, academicYear: title })
           .parse(req.body);
+        const settings = await getAcademicSettings(tx);
         const copy = await tx.courseClass.create({
           data: {
+            gradeScaleVersion: settings.defaultGradeScaleVersion,
             ...data,
             courseId: cls.courseId,
             status: "DRAFT",
@@ -1653,36 +1657,31 @@ export function registerLearning(app: Express) {
       }),
     ),
   );
-  app.get("/api/v1/system/settings", (_req, res) => {
-    res.json(systemAcademicSettings);
+  app.get("/api/v1/system/settings", async (_req, res) => {
+    res.json(await getAcademicSettings());
   });
   app.put("/api/v1/system/settings", async (req, res) => {
-    ensure(
-      ["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(req.context.user.role),
-      403,
-      "FORBIDDEN",
-    );
-    const data = z
-      .object({
-        academicYear: z.string().min(3).max(50),
-        semesterLabel: z.string().min(3).max(100).optional(),
-        academicYears: z.array(z.string().min(3).max(50)).optional(),
-        defaultGradeScaleVersion: z.string().optional(),
-        minAttendancePercentage: z.number().min(0).max(100).optional(),
-      })
-      .parse(req.body);
-    const updated = setSystemAcademicSettings(data);
-    await audit(
-      db,
-      req.context,
-      "UPDATE",
-      "SYSTEM",
-      "academic-settings",
-      "academic-settings",
-      null,
-      updated,
-      "Pembaruan tahun akademik & kebijakan tata kelola prodi",
-    );
-    res.json(updated);
+    ensure(req.context.user.role === "SUPER_ADMIN", 403, "FORBIDDEN");
+    const data = z.object({
+      academicYear: z.string().trim().min(3).max(50),
+      semesterLabel: z.string().trim().min(3).max(100).optional(),
+      academicYears: z.array(z.string().trim().min(3).max(50)).min(1).max(100).optional(),
+      defaultGradeScaleVersion: z.string().refine(v => Object.hasOwn(GRADE_SCALE_PRESETS, v)).optional(),
+      minAttendancePercentage: z.number().min(0).max(100).optional(),
+    }).parse(req.body);
+    res.json(await mutate(req, async (tx) => {
+      const before = await getAcademicSettings(tx);
+      const after = await tx.academicSettings.update({
+        where: { id: "global" },
+        data: {
+          ...data,
+          semesterLabel: data.semesterLabel ?? "SEMESTER " + data.academicYear.toUpperCase(),
+          academicYears: [...new Set([...(data.academicYears ?? before.academicYears), data.academicYear])],
+        },
+      });
+      await audit(tx, req.context, "UPDATE", "SYSTEM", "academic-settings", null,
+        before, after, "Pembaruan pengaturan akademik global");
+      return after;
+    }));
   });
 }

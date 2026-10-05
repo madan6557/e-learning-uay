@@ -289,7 +289,7 @@ export async function runScheduledWork(scanNotifications = true) {
           attempt.quiz.section.classId,
           "GRADE_PUBLISHED",
           `Nilai telah diterbitkan: ${attempt.quiz.title}`,
-          `quiz-grade:${attempt.quiz.id}:${attempt.userId}:${attempt.quiz.resultReleaseAt?.toISOString() ?? "scheduled"}`,
+          `quiz-grade:${attempt.id}`,
           attempt.userId,
           cls ? contentPath(cls, "quizzes", attempt.quiz, []) : undefined,
           `Nilai untuk kuis "${attempt.quiz.title}" telah diterbitkan.`,

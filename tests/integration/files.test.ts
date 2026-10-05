@@ -61,6 +61,11 @@ test("File Service tickets, scan verification, ownership and trash lifecycle", a
   service.listen(0, "127.0.0.1");
   await once(service, "listening");
   origin = `http://127.0.0.1:${(service.address() as any).port}`;
+  delete process.env.UAY_FILE_SERVICE_URL;
+  delete process.env.UAY_FILE_SERVICE_API_KEY;
+  delete process.env.UAY_FILE_SERVICE_REPOSITORY_ID;
+  delete process.env.UAY_FILE_SERVICE_CLIENT_ID;
+  process.env.FILE_SERVICE_TYPE = "legacy";
   process.env.FILE_SERVICE_URL = origin;
   process.env.FILE_SERVICE_KEY = "integration-file-key";
   process.env.FILE_ALLOWED_ORIGINS = origin;
