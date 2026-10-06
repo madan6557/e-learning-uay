@@ -222,13 +222,13 @@ function productionConfigurationErrors() {
     invalid.push("AUTH_MODE=oidc");
   }
 
-  required("REDIS_URL", resolvedRedisUrl);
+  // REDIS_URL bersifat opsional: jika tidak diisi, cache & rate limiter otomatis fallback ke in-memory
   required("SSO_ISSUER", process.env.SSO_ISSUER);
   required("SSO_CLIENT_ID", process.env.SSO_CLIENT_ID);
   // SSO_CLIENT_SECRET bersifat opsional (tidak diperlukan untuk Client bertipe Public dengan PKCE)
   required("SSO_AUDIENCE", process.env.SSO_AUDIENCE);
   required("SSO_REDIRECT_URI", process.env.SSO_REDIRECT_URI);
-  required("SSO_WEBHOOK_SECRET", process.env.SSO_WEBHOOK_SECRET);
+  // SSO_WEBHOOK_SECRET bersifat opsional (endpoint /api/v1/auth/revocations aman mengembalikan 503 jika belum diisi)
 
   const activeFileUrl =
     process.env.UAY_FILE_SERVICE_URL?.trim() ||
