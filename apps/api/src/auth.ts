@@ -474,6 +474,8 @@ export function registerAuth(app: Express) {
       mode: config.authMode,
       demoEnabled: process.env.DEMO_MODE === "true" || isDemo,
       issuer: config.issuer,
+      clientId: config.clientId,
+      redirectUri: `${config.origin}/auth/callback`,
       accountUrl: config.accountUrl || undefined,
       embedOrigins: config.embedOrigins,
       academicYear: systemAcademicSettings.academicYear,
@@ -527,6 +529,66 @@ export function registerAuth(app: Express) {
       req,
     );
     res.json({ ok: true });
+  });
+  app.post("/api/v1/auth/session", async (req, res) => {
+    ensure(config.authMode === "oidc" || isDemo, 503, "SSO_CONFIGURATION");
+    const { accessToken, idToken } = z
+      .object({
+        accessToken: z.string().min(1),
+        idToken: z.string().optional(),
+      })
+      .parse(req.body);
+
+    const access = await verifyAccess(accessToken);
+    let idClaims: any = {};
+    if (idToken) {
+      try {
+        await oidcMetadata();
+        const { payload } = await jwtVerify(idToken, jwks, {
+          issuer: config.issuer,
+          audience: config.clientId,
+          algorithms: ["RS256", "ES256"],
+        });
+        idClaims = payload;
+      } catch (e) {
+        console.warn("[Auth OIDC] id_token verification skipped or failed:", e);
+      }
+    }
+
+    const ssoMe = await fetchSsoMeProfile(accessToken);
+    if (ssoMe?.account_status) {
+      ensure(ssoMe.account_status === "ACTIVE", 403, "ACCOUNT_DISABLED");
+    }
+
+    const user = await syncUser(
+      { ...idClaims, ...access, ...(ssoMe ?? {}) },
+      true,
+    );
+
+    await issue(
+      res,
+      {
+        userId: user.id,
+        accessToken,
+        idToken,
+        expires: Number(access.exp) * 1000,
+        createdAt: Date.now(),
+      },
+      req,
+    );
+
+    res.json({
+      ok: true,
+      user: {
+        id: user.id,
+        ssoUserId: user.ssoUserId,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        userType: user.userType,
+        identifierValue: user.identifierValue,
+      },
+    });
   });
   app.post("/api/v1/auth/authorization", async (req, res) => {
     ensure(config.authMode === "oidc", 503, "SSO_CONFIGURATION");
@@ -752,6 +814,42 @@ export async function authenticate(
   next: NextFunction,
 ) {
   const authStarted = performance.now();
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    const token = authHeader.slice(7).trim();
+    if (token) {
+      try {
+        const claims = await verifyAccess(token);
+        let user = await db.user.findUnique({
+          where: { ssoUserId: claims.sub },
+        });
+        if (!user) {
+          const ssoMe = await fetchSsoMeProfile(token);
+          user = await syncUser({ ...claims, ...(ssoMe ?? {}) }, true);
+        }
+        ensure(user && user.status === "ACTIVE", 403, "ACCOUNT_DISABLED");
+        (req as any).user = user;
+        const now = new Date();
+        if (
+          !user.lastActiveAt ||
+          now.getTime() - user.lastActiveAt.getTime() > 60000
+        ) {
+          db.user
+            .update({
+              where: { id: user.id },
+              data: { lastActiveAt: now },
+            })
+            .catch(() => {});
+        }
+        return next();
+      } catch (err: any) {
+        if (err?.code === "ACCOUNT_DISABLED" || err?.status === 403) {
+          return next(err);
+        }
+      }
+    }
+  }
+
   const id = getSessionId(req);
   ensure(typeof id === "string", 401, "LOGIN_REQUIRED");
   const key = `session:${hash(id)}`;

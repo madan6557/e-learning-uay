@@ -65,6 +65,26 @@ const apiBase = ((import.meta as any).env?.VITE_API_URL ?? "").replace(
 );
 const isExternalApi = Boolean(apiBase);
 
+let currentAuthToken: string | null = null;
+
+export function setAuthToken(token: string | null) {
+  currentAuthToken = token;
+  if (typeof sessionStorage !== "undefined") {
+    if (token) {
+      sessionStorage.setItem("uay-access-token", token);
+    } else {
+      sessionStorage.removeItem("uay-access-token");
+    }
+  }
+}
+
+export function getAuthToken(): string | null {
+  if (!currentAuthToken && typeof sessionStorage !== "undefined") {
+    currentAuthToken = sessionStorage.getItem("uay-access-token");
+  }
+  return currentAuthToken;
+}
+
 export async function api<T = any>(
   path: string,
   method = "GET",
@@ -112,6 +132,7 @@ async function requestApi<T>(
   }
   for (let attempt = 0; ; attempt++) {
     let response;
+    const token = getAuthToken();
     try {
       response = await fetch(`${apiBase}/api/v1${path}`, {
         method,
@@ -119,6 +140,7 @@ async function requestApi<T>(
         headers: {
           ...(method !== "GET" ? { "Content-Type": "application/json" } : {}),
           ...(method !== "GET" ? { "Idempotency-Key": key } : {}),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: encoded,
       });
@@ -138,6 +160,7 @@ async function requestApi<T>(
       if (response.status === 401) {
         uncertainWrites.clear();
         readCache.clear();
+        setAuthToken(null);
         window.dispatchEvent(new Event("session-expired"));
       }
       throw new ApiError(

@@ -28,7 +28,9 @@ import {
   navigate,
   Action,
   Empty,
+  setAuthToken,
 } from "./lib";
+import { loginWithOidc, handleOidcCallback, logoutOidc } from "./oidc";
 import { readCache } from "./readCache";
 import { Dashboard, Catalog, Profile } from "./pages";
 import { Avatar, Breadcrumbs, IconButton, UserChip } from "./ui";
@@ -86,11 +88,13 @@ function LoginButton({
   className,
   demoUserId,
   label,
+  config,
 }: {
   children: ReactNode;
   className: string;
   demoUserId?: string;
   label: string;
+  config?: any;
 }) {
   return (
     <Action
@@ -110,19 +114,36 @@ function LoginButton({
           return;
         }
 
-        const { authorizationUrl } = await api<{ authorizationUrl: string }>(
-          "/auth/authorization",
-          "POST",
-        );
-
-        location.assign(authorizationUrl);
+        try {
+          await loginWithOidc({
+            issuer: config?.issuer,
+            clientId: config?.clientId,
+            redirectUri: config?.redirectUri,
+          });
+        } catch (e) {
+          console.warn(
+            "[Auth] Client OIDC signinRedirect failed, trying backend fallback:",
+            e,
+          );
+          const { authorizationUrl } = await api<{ authorizationUrl: string }>(
+            "/auth/authorization",
+            "POST",
+          );
+          location.assign(authorizationUrl);
+        }
       }}
     >
       {children}
     </Action>
   );
 }
-function PublicShell({ children }: { children: ReactNode }) {
+function PublicShell({
+  children,
+  config,
+}: {
+  children: ReactNode;
+  config?: any;
+}) {
   return (
     <div className="public-shell">
       <a className="skip-link" href="#main-content">
@@ -131,7 +152,11 @@ function PublicShell({ children }: { children: ReactNode }) {
       <header className="public-header">
         <Brand />
         <nav aria-label="Menu publik">
-          <LoginButton className="header-sso-btn" label="Masuk dengan SSO UAY">
+          <LoginButton
+            className="header-sso-btn"
+            label="Masuk dengan SSO UAY"
+            config={config}
+          >
             <span>Masuk SSO</span>
             <ArrowRight size={15} />
           </LoginButton>
@@ -149,7 +174,7 @@ function PublicShell({ children }: { children: ReactNode }) {
 }
 function Landing({ config, error }: { config: any; error?: Error | null }) {
   return (
-    <PublicShell>
+    <PublicShell config={config}>
       {error && <Notice error={error} />}
       <section className="landing-hero">
         <div className="hero-content">
@@ -166,6 +191,7 @@ function Landing({ config, error }: { config: any; error?: Error | null }) {
             <LoginButton
               className="button hero-cta"
               label="Masuk dengan SSO UAY"
+              config={config}
             >
               <span>Masuk dengan SSO UAY</span>
               <ArrowRight size={18} />
@@ -508,6 +534,114 @@ function AuthShell({
     </div>
   );
 }
+function AuthCallbackPage({
+  config,
+  onSuccess,
+}: {
+  config?: any;
+  onSuccess: () => void;
+}) {
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    async function processCallback() {
+      try {
+        const oidcUser = await handleOidcCallback({
+          issuer: config?.issuer,
+          clientId: config?.clientId,
+          redirectUri: config?.redirectUri,
+        });
+        if (!oidcUser || !oidcUser.access_token) {
+          throw new Error("Gagal memperoleh token autentikasi dari SSO.");
+        }
+        setAuthToken(oidcUser.access_token);
+        // Sync with backend session & user database
+        await api("/auth/session", "POST", {
+          accessToken: oidcUser.access_token,
+          idToken: oidcUser.id_token,
+        }).catch((err) => {
+          console.warn("[Auth] Session sync non-fatal error:", err);
+        });
+        if (active) {
+          readCache.clear();
+          onSuccess();
+        }
+      } catch (err: any) {
+        console.error("[Auth] OIDC callback error:", err);
+        if (active) {
+          setError(
+            err?.message ||
+              "Terjadi kesalahan saat memproses callback autentikasi SSO.",
+          );
+        }
+      }
+    }
+    processCallback();
+    return () => {
+      active = false;
+    };
+  }, [config]);
+
+  if (error) {
+    return (
+      <PublicShell config={config}>
+        <div
+          className="card"
+          style={{
+            maxWidth: 480,
+            margin: "60px auto",
+            padding: 28,
+            textAlign: "center",
+          }}
+        >
+          <h2
+            style={{
+              marginBottom: 12,
+              color: "var(--destructive, #ef4444)",
+            }}
+          >
+            Gagal Masuk SSO
+          </h2>
+          <p
+            style={{
+              color: "var(--muted-foreground, #6b7280)",
+              marginBottom: 24,
+              fontSize: "0.95rem",
+            }}
+          >
+            {error}
+          </p>
+          <a
+            href="/"
+            className="button hero-cta"
+            style={{ display: "inline-flex", textDecoration: "none" }}
+          >
+            Kembali ke Halaman Masuk
+          </a>
+        </div>
+      </PublicShell>
+    );
+  }
+
+  return (
+    <PublicShell config={config}>
+      <div style={{ padding: "100px 20px", textAlign: "center" }}>
+        <Loading />
+        <p
+          style={{
+            marginTop: 20,
+            color: "var(--muted-foreground, #6b7280)",
+            fontWeight: 500,
+          }}
+        >
+          Memverifikasi autentikasi SSO UAY...
+        </p>
+      </div>
+    </PublicShell>
+  );
+}
+
 function App() {
   const config = useApi("/auth/config"),
     identity = useApi("/me");
@@ -543,7 +677,7 @@ function App() {
       if (
         pending.startsWith("/") &&
         !pending.startsWith("//") &&
-        !["/", "/login", "/dashboard"].includes(pending)
+        !["/", "/login", "/dashboard", "/auth/callback"].includes(pending)
       ) {
         navigate(pending, true);
         return;
@@ -553,8 +687,13 @@ function App() {
   }, [user, route]);
   const logout = async () => {
     if (!(await confirmUnsaved())) return;
+    setAuthToken(null);
     const result = await api("/auth/logout", "POST", {}).catch(() => ({}));
     readCache.clear();
+    identity.setData(null);
+    try {
+      await logoutOidc();
+    } catch {}
     const isExternalIdp = (urlStr?: string | null) => {
       if (!urlStr) return false;
       try {
@@ -575,13 +714,34 @@ function App() {
     if (result?.logoutUrl && isExternalIdp(result.logoutUrl)) {
       location.assign(result.logoutUrl);
     } else {
-      identity.setData(null);
       navigate("/", true);
     }
   };
+  if (route.startsWith("/auth/callback")) {
+    return (
+      <AuthCallbackPage
+        config={config.data}
+        onSuccess={() => {
+          identity.reload();
+          const pending = sessionStorage.getItem("uay-return-path");
+          sessionStorage.removeItem("uay-return-path");
+          if (
+            pending &&
+            pending.startsWith("/") &&
+            !pending.startsWith("//") &&
+            !["/", "/login", "/auth/callback"].includes(pending)
+          ) {
+            navigate(pending, true);
+          } else {
+            navigate("/dashboard", true);
+          }
+        }}
+      />
+    );
+  }
   if (identity.loading && !user)
     return (
-      <PublicShell>
+      <PublicShell config={config.data}>
         <Loading />
       </PublicShell>
     );
