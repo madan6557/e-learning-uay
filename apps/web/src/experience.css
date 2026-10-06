@@ -3305,8 +3305,10 @@ table th {
 .instructor-result[aria-pressed="true"] .instructor-result-action { color: var(--success); }
 
 /* Compact, readable navigation shared by teaching and rector workspaces. */
+.sidebar { --sidebar-label-size: 0.875rem; }
+.sidebar .brand { font-size: var(--sidebar-label-size); }
 .sidebar nav { gap: 4px; }
-.sidebar nav a { font-size: 1rem; min-height: 44px; padding: 9px 12px; gap: 10px; color: var(--sidebar-foreground); white-space: normal; line-height: 1.4; }
+.sidebar nav a { font-size: var(--sidebar-label-size); min-height: 44px; padding: 9px 12px; gap: 10px; color: var(--sidebar-foreground); white-space: normal; line-height: 1.4; }
 .sidebar nav a svg { width: 20px; height: 20px; }
 .sidebar nav a .nav-label {white-space:normal;overflow:visible;text-overflow:clip;}
 .sidebar-collapse-btn { font-size: 0.875rem; min-height: 40px; }
@@ -3322,7 +3324,7 @@ table th {
 }
 @media(max-width:760px) {
   .sidebar {width:min(280px,calc(100vw - 48px));}
-  .sidebar nav a { font-size: 1rem; min-height: 48px; }
+  .sidebar nav a { min-height: 48px; }
 }
 .rector-workspace .topbar {min-height:72px;font-size:16px;}
 .rector-workspace .environment-badge {display:inline-flex;font-size:16px;text-transform:none;letter-spacing:0;padding:6px 10px;}
