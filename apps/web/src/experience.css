@@ -3304,25 +3304,25 @@ table th {
 .instructor-result-action { font-size: 0.8rem; color: var(--primary); }
 .instructor-result[aria-pressed="true"] .instructor-result-action { color: var(--success); }
 
-/* Larger academic navigation, shared by teaching and rector workspaces. */
-.sidebar nav { gap: 6px; }
-.sidebar nav a { font-size: 1.0625rem; min-height: 48px; padding: 12px 14px; gap: 12px; color: var(--sidebar-foreground); white-space: normal; line-height: 1.4; }
-.sidebar nav a svg { width: 22px; height: 22px; }
+/* Compact, readable navigation shared by teaching and rector workspaces. */
+.sidebar nav { gap: 4px; }
+.sidebar nav a { font-size: 1rem; min-height: 44px; padding: 9px 12px; gap: 10px; color: var(--sidebar-foreground); white-space: normal; line-height: 1.4; }
+.sidebar nav a svg { width: 20px; height: 20px; }
 .sidebar nav a .nav-label {white-space:normal;overflow:visible;text-overflow:clip;}
-.sidebar-collapse-btn { font-size: 1rem; min-height: 44px; }
-.nav-caption {font-size: 0.875rem;}
+.sidebar-collapse-btn { font-size: 0.875rem; min-height: 40px; }
+.nav-caption {font-size: 0.8125rem;}
 @media(min-width:761px) {
-  .sidebar { width: 288px; }
-  .workspace { margin-left: 288px; width: calc(100% - 288px); }
-  .nav-collapsed .sidebar {width:76px;}
-  .nav-collapsed .workspace {margin-left:76px;width:calc(100% - 76px);}
-  .nav-collapsed .sidebar-brand {width:76px;}
-  .nav-collapsed .sidebar nav a,.nav-collapsed .sidebar-collapse-btn {width:48px;height:48px;}
-  .nav-collapsed .sidebar nav a svg {width:22px;height:22px;}
+  .sidebar { width: 248px; }
+  .workspace { margin-left: 248px; width: calc(100% - 248px); }
+  .nav-collapsed .sidebar {width:64px;}
+  .nav-collapsed .workspace {margin-left:64px;width:calc(100% - 64px);}
+  .nav-collapsed .sidebar-brand {width:64px;}
+  .nav-collapsed .sidebar nav a,.nav-collapsed .sidebar-collapse-btn {width:44px;height:44px;}
+  .nav-collapsed .sidebar nav a svg {width:20px;height:20px;}
 }
 @media(max-width:760px) {
-  .sidebar {width:min(320px,calc(100vw - 48px));}
-  .sidebar nav a { font-size: 1.125rem; min-height: 52px; }
+  .sidebar {width:min(280px,calc(100vw - 48px));}
+  .sidebar nav a { font-size: 1rem; min-height: 48px; }
 }
 .rector-workspace .topbar {min-height:72px;font-size:16px;}
 .rector-workspace .environment-badge {display:inline-flex;font-size:16px;text-transform:none;letter-spacing:0;padding:6px 10px;}
