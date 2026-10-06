@@ -1226,6 +1226,12 @@ for (const [idx, cfg] of classConfigs.entries()) {
           gradeScaleVersion: '2026.1',
           isLocked: true,
           publishedAt: dateStr(90),
+          categoryScoresJson: categories.map((c) => ({
+            categoryId: c.id,
+            name: c.name,
+            weight: c.weightPercent,
+            score: 85,
+          })),
         },
         update: {},
       });
@@ -1243,6 +1249,12 @@ for (const [idx, cfg] of classConfigs.entries()) {
         gradeScaleVersion: '2026.1',
         isLocked: true,
         publishedAt: dateStr(1),
+        categoryScoresJson: categories.map((c, i) => ({
+          categoryId: c.id,
+          name: c.name,
+          weight: c.weightPercent,
+          score: [88, 80, 86, 88, 100][i] ?? 85,
+        })),
       },
       update: {},
     });
