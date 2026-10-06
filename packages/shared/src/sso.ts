@@ -37,6 +37,7 @@ export type IdentifierType = (typeof IDENTIFIER_TYPES)[number];
 export const APPLICATION_ROLES = [
   "SUPER_ADMIN",
   "DEPARTMENT_ADMIN",
+  "RECTOR",
   "INSTRUCTOR",
   "STUDENT",
 ] as const;
@@ -47,6 +48,7 @@ const ROLE_PRECEDENCE: readonly ApplicationRole[] = APPLICATION_ROLES;
 
 export function normalizeRole(raw: string): ApplicationRole | null {
   const upper = raw.trim().toUpperCase();
+  if (upper === "RECTOR" || upper === "REKTOR") return "RECTOR";
   if (upper === "MAHASISWA" || upper === "STUDENT") return "STUDENT";
   if (
     upper === "DOSEN" ||
@@ -90,6 +92,7 @@ export function defaultIdentifierType(userType: UserType): IdentifierType {
 
 /** Directory type implied by an application role, for the same reason. */
 export function defaultUserType(role: ApplicationRole): UserType {
+  if (role === "RECTOR") return "STAFF";
   if (role === "STUDENT") return "STUDENT";
   if (role === "INSTRUCTOR") return "LECTURER";
   if (role === "DEPARTMENT_ADMIN") return "STAFF";

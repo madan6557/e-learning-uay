@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { identityClaims } from "../packages/shared/src/sso.js";
+import { identityClaims, normalizeRole } from "../packages/shared/src/sso.js";
 
 const base = {
   sub: "00000000-0000-4000-8000-000000000001",
@@ -8,6 +8,14 @@ const base = {
   email: "contoh@example.test",
   identifier_value: "202600001",
 };
+
+test('rector identity is a separate read-only role, including Indonesian alias',()=>{
+  assert.equal(normalizeRole('rektor'),'RECTOR');
+  const rector=identityClaims.parse({...base,roles:['RECTOR']});
+  assert.equal(rector.role,'RECTOR');assert.equal(rector.userType,'STAFF');
+  assert.equal(identityClaims.parse({...base,roles:['INSTRUCTOR','RECTOR']}).role,'RECTOR');
+  assert.equal(identityClaims.parse({...base,roles:['RECTOR','SUPER_ADMIN']}).role,'SUPER_ADMIN');
+});
 
 test("SSO roles take precedence over the legacy role claim", () => {
   assert.equal(

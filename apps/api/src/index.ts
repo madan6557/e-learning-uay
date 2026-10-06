@@ -26,6 +26,9 @@ import { registerFiles } from "./files.js";
 import { registerImports } from "./imports.js";
 import { registerAttendanceRoutes } from "./attendance.js";
 import { registerRectorBridgeRoutes } from "./rector-bridge.js";
+import { rectorReporting } from "./rector/routes.js";
+import { FixtureDataSource } from "./rector/fixture.js";
+import { UniversityReportingDataSource } from "./rector/source.js";
 import { pathToFileURL } from "node:url";
 import { existsSync } from "node:fs";
 import { request as httpRequest } from "node:http";
@@ -169,7 +172,13 @@ export function createApp() {
   registerAuth(app);
   // This read-only integration accepts its dedicated token or a Super Admin session.
   registerRectorBridgeRoutes(app);
+  app.use(rectorReporting(isDemo ? new FixtureDataSource() : new UniversityReportingDataSource(), isDemo));
   app.use("/api/v1", authenticate);
+  app.use("/api/v1", (req, _res, next) => {
+    // Rector reporting is aggregate-only. Classroom and student endpoints stay closed.
+    ensure(req.context.user.role !== "RECTOR" || req.path === "/me", 403, "FORBIDDEN");
+    next();
+  });
   registerLearning(app);
   registerPublication(app);
   registerAssessment(app);

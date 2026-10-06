@@ -61,7 +61,7 @@ type UserSearchResult = {
   id: string;
   name: string;
   identifierValue: string | null;
-  role: "SUPER_ADMIN" | "DEPARTMENT_ADMIN" | "INSTRUCTOR" | "STUDENT";
+  role: "SUPER_ADMIN" | "DEPARTMENT_ADMIN" | "RECTOR" | "INSTRUCTOR" | "STUDENT";
 };
 type CourseOption = { id: string; code: string; title: string; status: string };
 export interface AcademicPolicySettings {

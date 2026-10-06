@@ -3303,3 +3303,34 @@ table th {
 .instructor-result small { color: var(--muted-foreground); }
 .instructor-result-action { font-size: 0.8rem; color: var(--primary); }
 .instructor-result[aria-pressed="true"] .instructor-result-action { color: var(--success); }
+
+/* Larger academic navigation, shared by teaching and rector workspaces. */
+.sidebar nav { gap: 6px; }
+.sidebar nav a { font-size: 1.0625rem; min-height: 48px; padding: 12px 14px; gap: 12px; color: var(--sidebar-foreground); white-space: normal; line-height: 1.4; }
+.sidebar nav a svg { width: 22px; height: 22px; }
+.sidebar nav a .nav-label {white-space:normal;overflow:visible;text-overflow:clip;}
+.sidebar-collapse-btn { font-size: 1rem; min-height: 44px; }
+.nav-caption {font-size: 0.875rem;}
+@media(min-width:761px) {
+  .sidebar { width: 288px; }
+  .workspace { margin-left: 288px; width: calc(100% - 288px); }
+  .nav-collapsed .sidebar {width:76px;}
+  .nav-collapsed .workspace {margin-left:76px;width:calc(100% - 76px);}
+  .nav-collapsed .sidebar-brand {width:76px;}
+  .nav-collapsed .sidebar nav a,.nav-collapsed .sidebar-collapse-btn {width:48px;height:48px;}
+  .nav-collapsed .sidebar nav a svg {width:22px;height:22px;}
+}
+@media(max-width:760px) {
+  .sidebar {width:min(320px,calc(100vw - 48px));}
+  .sidebar nav a { font-size: 1.125rem; min-height: 52px; }
+}
+.rector-workspace .topbar {min-height:72px;font-size:16px;}
+.rector-workspace .environment-badge {display:inline-flex;font-size:16px;text-transform:none;letter-spacing:0;padding:6px 10px;}
+.rector-workspace .breadcrumbs li {font-size:16px;}
+@media(max-width:760px) {
+ .rector-workspace .topbar .environment-badge {display:inline-flex;font-size:14px;}
+ .rector-workspace .topbar-mark,.rector-workspace .user-nav-group > a,.rector-workspace .topbar-divider {display:none;}
+ .rector-workspace .topbar {padding-inline:16px;gap:8px;}
+ .rector-workspace .topbar .breadcrumbs {display:none;}
+ .rector-workspace .topbar-right {flex-wrap:nowrap;}
+}

@@ -104,7 +104,9 @@ test("quick demo selection uses the real OIDC callback and rejects bypass", asyn
         env: {
           ...process.env,
           NODE_ENV: "production",
-          DEMO_MODE: "true",
+          // Hosted demo is explicitly supported; strict campus configuration
+          // must reject development authentication when demo mode is disabled.
+          DEMO_MODE: "false",
           AUTH_MODE: "development",
         },
         encoding: "utf8",

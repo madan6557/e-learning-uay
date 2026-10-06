@@ -4,6 +4,8 @@ Aplikasi pembelajaran berdasarkan **Presentation – Technical Design E-Learning
 
 Implementasi lokal sudah tersedia: pengelolaan mata kuliah/kelas/peserta, editor 11 blok, materi dan progres belajar, kuis 8 tipe, tugas berversi, penilaian dan publikasi, impor dengan rekonsiliasi, pengumuman, notifikasi, serta audit. Rincian cakupan dan bukti verifikasi ada di [status implementasi](docs/IMPLEMENTATION.md).
 
+**Pemantauan Akademik untuk rektor** tersedia di `/rector` melalui login e-learning yang sama. Akun `RECTOR` hanya membaca laporan dan mengunduh CSV/PDF. Petunjuk demo, aktivasi role kampus, sumber data, dan batas pencatatan ada di [panduan akses rektor](docs/RECTOR-INTEGRATION.md).
+
 ## Menjalankan di komputer ini
 
 Prasyarat: **Node.js 22.12 atau lebih baru**, npm, koneksi internet untuk instalasi awal. Docker tidak diperlukan untuk mode lokal.

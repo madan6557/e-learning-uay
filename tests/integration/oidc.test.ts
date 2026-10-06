@@ -164,6 +164,10 @@ test("OIDC authorization code with PKCE, JWT validation, refresh, logout and rev
       "refresh rotates server-side tokens and revalidates identity",
       async () => {
         tokenMode = "active";
+        const loginBefore = await db.user.findUniqueOrThrow({
+          where: { ssoUserId: subject },
+          select: { lastLoginAt: true },
+        });
         const raw = sessionCookie.split("=")[1];
         const key = `session:${hash(raw)}`;
         const stored = JSON.parse((await cache.get(key))!);
@@ -174,6 +178,15 @@ test("OIDC authorization code with PKCE, JWT validation, refresh, logout and rev
         });
         assert.equal(result.status, 200);
         assert.equal(refreshes, 1);
+        const loginAfter = await db.user.findUniqueOrThrow({
+          where: { ssoUserId: subject },
+          select: { lastLoginAt: true },
+        });
+        assert.equal(
+          loginAfter.lastLoginAt?.toISOString(),
+          loginBefore.lastLoginAt?.toISOString(),
+          "Pembaruan sesi bukan login baru",
+        );
       },
     );
     await suite.test(

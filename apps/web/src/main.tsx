@@ -41,6 +41,7 @@ import { routeFromLocation } from "./router";
 const ClassPage = lazy(() =>
   import("./ClassPage").then((m) => ({ default: m.ClassPage })),
 );
+const RectorDashboard = lazy(() => import('./rector/RectorDashboard').then(m=>({default:m.RectorDashboard})));
 const QuizPage = lazy(() =>
   import("./Assessment").then((m) => ({ default: m.QuizPage })),
 );
@@ -305,13 +306,14 @@ function AuthShell({
   useEffect(() => setMenuOpen(false), [pathname]);
   // Sidebar width preference is per-device, like the SSO console's.
   const [collapsed, setCollapsed] = useState(
-    () => localStorage.getItem("uay-nav-collapsed") === "1",
+    () => user.role !== 'RECTOR' && localStorage.getItem("uay-nav-collapsed") === "1",
   );
   useEffect(() => {
     localStorage.setItem("uay-nav-collapsed", collapsed ? "1" : "0");
   }, [collapsed]);
   const [unread, setUnread] = useState(0);
   useEffect(() => {
+    if (user.role === 'RECTOR') return;
     let active = true;
     const load = () =>
       api<{ count: number }>("/notifications/unread-count")
@@ -329,8 +331,14 @@ function AuthShell({
     };
   }, []);
   const admin = ["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(user.role);
-  const links = [
+  const rector = user.role === 'RECTOR';
+  const links = rector ? [
+    ['/rector', LayoutDashboard, 'Pemantauan Akademik'],
+    ['/profile', ShieldCheck, t.profile],
+    ['/help', CircleHelp, t.help],
+  ] : [
     ["/dashboard", LayoutDashboard, t.dashboard],
+    ...(user.role === 'SUPER_ADMIN' ? [['/rector', ClipboardCheck, 'Pemantauan Akademik']] : []),
     ...(admin ? [["/catalog", LibraryBig, t.catalog]] : []),
     ["/classes", BookOpen, admin ? t.manageClasses : t.myClasses],
     ["/agenda", CalendarDays, admin ? t.academicAgenda : t.agenda],
@@ -351,7 +359,7 @@ function AuthShell({
   );
   return (
     <div
-      className={`app-shell ${menuOpen ? "menu-open" : ""} ${
+      className={`app-shell ${pathname.startsWith('/rector') ? 'rector-workspace' : ''} ${menuOpen ? "menu-open" : ""} ${
         collapsed ? "nav-collapsed" : ""
       }`}
     >
@@ -371,7 +379,7 @@ function AuthShell({
         inert={mobile && !menuOpen}
       >
         <div className="sidebar-brand">
-          <Brand home="/dashboard" collapsed={collapsed} />
+        <Brand home={rector ? '/rector' : '/dashboard'} collapsed={collapsed} />
         </div>
         {!collapsed && <p className="nav-caption">MENU</p>}
         <nav aria-label="Navigasi utama">
@@ -386,7 +394,7 @@ function AuthShell({
                 aria-current={active ? "page" : undefined}
                 title={collapsed ? label : undefined}
               >
-                <Icon size={18} />
+                <Icon size={22} />
                 {!collapsed && <span className="nav-label">{label}</span>}
                 {badge > 0 && (
                   <span className="nav-badge">
@@ -434,7 +442,7 @@ function AuthShell({
             {/* The SSO console shows the same mark once its rail is hidden. */}
             <a
               className="brand-mark topbar-mark"
-              href="/dashboard"
+              href={rector ? '/rector' : '/dashboard'}
               aria-label="UAY E-Learning beranda"
             >
               <img
@@ -450,7 +458,7 @@ function AuthShell({
                 pathname === "/dashboard"
                   ? [{ label: "Beranda" }]
                   : [
-                      { label: "Beranda", href: "/dashboard" },
+                      { label: "Beranda", href: rector ? '/rector' : '/dashboard' },
                       { label: current },
                     ]
               }
@@ -460,7 +468,7 @@ function AuthShell({
             {demo && (
               <span className="environment-badge">
                 <span className="badge-dot" />
-                Mode Uji
+                {pathname.startsWith('/rector') ? 'Demo — data simulasi' : 'Mode Uji'}
               </span>
             )}
             <div className="user-nav-group">
@@ -511,6 +519,14 @@ function App() {
   }, []);
   useEffect(() => {
     if (!user) return;
+    if(user.role === 'RECTOR' && route.split('?')[0] === '/dashboard') {
+      navigate('/rector', true);
+      return;
+    }
+    if(user.role === 'RECTOR' && route.split('?')[0] === '/help') {
+      navigate('/rector?view=definitions', true);
+      return;
+    }
     const pending = sessionStorage.getItem("uay-return-path");
     if (pending) {
       sessionStorage.removeItem("uay-return-path");
@@ -523,7 +539,7 @@ function App() {
         return;
       }
     }
-    if (["/", "/login"].includes(route)) navigate("/dashboard", true);
+    if (["/", "/login"].includes(route)) navigate(user.role === 'RECTOR' ? '/rector' : '/dashboard', true);
   }, [user, route]);
   const logout = async () => {
     if (!(await confirmUnsaved())) return;
@@ -579,7 +595,11 @@ function App() {
   const params = parsedRoute.searchParams;
   const [, section, id, itemKind, itemSlug] = pathname.split("/");
   let page;
-  if (section === "classes" && id)
+  if (section === 'rector' && ['RECTOR','SUPER_ADMIN'].includes(user.role))
+    page = <RectorDashboard demo={!!config.data?.demoEnabled} />;
+  else if (user.role === 'RECTOR' && !['profile','help'].includes(section))
+    page = <Empty><h1>Pemantauan akademik</h1><p>Akun rektor dapat melihat laporan kegiatan dosen dan penyelesaian penilaian.</p><a className="button" href="/rector">Buka laporan akademik</a></Empty>;
+  else if (section === "classes" && id)
     page = (
       <ClassPage
         key={id}
@@ -626,7 +646,7 @@ function App() {
   else if (section === "profile")
     page = <Profile user={user} accountUrl={config.data?.accountUrl} />;
   else if (section === "help")
-    page = <HelpPage user={user} />;
+    page = user.role === 'RECTOR' ? <Loading /> : <HelpPage user={user} />;
   else if (
     ["", "dashboard", "classes", "agenda", "grades", "notifications"].includes(
       section,

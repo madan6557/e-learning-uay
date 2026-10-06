@@ -539,6 +539,7 @@
     "FILE_UPLOAD": "Unggah berkas"
   },
   "roles": {
+    "RECTOR": "Rektor",
     "SUPER_ADMIN": "Super admin",
     "DEPARTMENT_ADMIN": "Admin prodi",
     "INSTRUCTOR": "Dosen",

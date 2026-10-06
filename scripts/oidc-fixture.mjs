@@ -109,7 +109,7 @@ export async function startMockSso({
               .map((u) => {
                 const next = new URL(publicHref());
                 next.searchParams.set("login_hint", u.ssoUserId);
-                return `<a href="${escape(next.href)}"><strong>${escape(u.name)}</strong><small>${escape(u.identifierValue)} · ${escape({ SUPER_ADMIN: "Admin", DEPARTMENT_ADMIN: "Admin Prodi", INSTRUCTOR: "Dosen", STUDENT: "Mahasiswa" }[u.role])}</small></a>`;
+                return `<a href="${escape(next.href)}"><strong>${escape(u.name)}</strong><small>${escape(u.identifierValue)} · ${escape({ RECTOR: "Rektor", SUPER_ADMIN: "Admin", DEPARTMENT_ADMIN: "Admin Prodi", INSTRUCTOR: "Dosen", STUDENT: "Mahasiswa" }[u.role])}</small></a>`;
               })
               .join(
                 "",

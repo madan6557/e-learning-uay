@@ -13,6 +13,7 @@ export const ids={
   student2:'00000000-0000-4000-8000-000000000004',
   outsider:'00000000-0000-4000-8000-000000000005',
   department:'00000000-0000-4000-8000-000000000006',
+  rector:'00000000-0000-4000-8000-000000000007',
   course:'10000000-0000-4000-8000-000000000001',
   class:'20000000-0000-4000-8000-000000000001',
   section:'30000000-0000-4000-8000-000000000001',
@@ -60,6 +61,7 @@ const studentActiveOffsetsMs: (number | null)[] = [
 ];
 
 const users = [
+  { id: ids.rector, name: 'Rektor UAY (Akun Uji)', role: 'RECTOR' as const, userType: 'STAFF' as const, identifierType: 'NIP' as const, identifierValue: 'RKT001', status: 'ACTIVE' as const, lastLoginAt: null, lastActiveAt: null },
   { id: ids.admin, name: 'Admin UAY', role: 'SUPER_ADMIN' as const, userType: 'ADMIN' as const, identifierType: 'NIP' as const, identifierValue: 'ADM001', status: 'ACTIVE' as const, lastLoginAt: new Date(), lastActiveAt: new Date() },
   { id: ids.department, name: 'Admin Prodi Informatika', role: 'DEPARTMENT_ADMIN' as const, userType: 'STAFF' as const, identifierType: 'NIP' as const, identifierValue: 'ADMIF01', status: 'ACTIVE' as const, lastLoginAt: new Date(nowTime - 10 * 60000), lastActiveAt: new Date(nowTime - 10 * 60000) },
   { id: ids.instructor, name: 'Dosen, M.Kom.', role: 'INSTRUCTOR' as const, userType: 'LECTURER' as const, identifierType: 'NIDN' as const, identifierValue: '1112089001', status: 'ACTIVE' as const, lastLoginAt: new Date(), lastActiveAt: new Date() },

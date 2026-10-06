@@ -44,6 +44,7 @@ model AcademicSettings {
 enum GlobalRole {
   SUPER_ADMIN
   DEPARTMENT_ADMIN
+  RECTOR
   INSTRUCTOR
   STUDENT
 }

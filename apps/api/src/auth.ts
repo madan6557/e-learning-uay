@@ -126,7 +126,7 @@ async function verifyAccess(token: string) {
   ensure(!(await cache.get(`revoked:${payload.sub}`)), 403, "ACCOUNT_DISABLED");
   return payload;
 }
-async function syncUser(claims: JWTPayload) {
+async function syncUser(claims: JWTPayload, successfulLogin = false) {
   const parsed = identityClaims.safeParse(claims);
   ensure(parsed.success, 403, "INVALID_IDENTITY");
   const { ssoUserId, ...profile } = parsed.data;
@@ -135,7 +135,7 @@ async function syncUser(claims: JWTPayload) {
     // Tokens only reach this point once account_status is ACTIVE, so a
     // successful sync also re-activates a previously revoked cache row.
     status: "ACTIVE" as const,
-    lastLoginAt: new Date(),
+    ...(successfulLogin ? {lastLoginAt: new Date()} : {}),
     lastActiveAt: new Date(),
   };
   return transaction(async (tx) => {
@@ -339,7 +339,7 @@ export function registerAuth(app: Express) {
     ensure(access.sub === id.sub, 401, "INVALID_IDENTITY");
     if (demoSubject)
       ensure(access.sub === demoSubject, 401, "INVALID_IDENTITY");
-    const user = await syncUser({ ...id, ...access });
+    const user = await syncUser({ ...id, ...access }, true);
     await issue(res, {
       userId: user.id,
       accessToken: tokens.access_token,
@@ -348,7 +348,7 @@ export function registerAuth(app: Express) {
       expires: Number(access.exp) * 1000,
       createdAt: Date.now(),
     });
-    res.redirect("/dashboard");
+    res.redirect(user.role === 'RECTOR' ? '/rector' : '/dashboard');
   });
   app.post("/api/v1/auth/revocations", async (req, res) => {
     const secret = process.env.SSO_WEBHOOK_SECRET;
