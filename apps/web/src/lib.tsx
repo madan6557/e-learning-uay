@@ -161,6 +161,17 @@ async function requestApi<T>(
         uncertainWrites.clear();
         readCache.clear();
         setAuthToken(null);
+        if (typeof sessionStorage !== "undefined") {
+          sessionStorage.removeItem("uay-return-path");
+          try {
+            for (let i = sessionStorage.length - 1; i >= 0; i--) {
+              const k = sessionStorage.key(i);
+              if (k && (k.startsWith("oidc.") || k.startsWith("authority."))) {
+                sessionStorage.removeItem(k);
+              }
+            }
+          } catch {}
+        }
         window.dispatchEvent(new Event("session-expired"));
       }
       throw new ApiError(

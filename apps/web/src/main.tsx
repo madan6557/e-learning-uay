@@ -101,10 +101,18 @@ function LoginButton({
       className={className}
       label={label}
       run={async () => {
-        sessionStorage.setItem(
-          "uay-return-path",
-          location.pathname + location.search,
-        );
+        if (
+          !location.pathname.startsWith("/auth") &&
+          !location.pathname.startsWith("/api") &&
+          !["/", "/login"].includes(location.pathname)
+        ) {
+          sessionStorage.setItem(
+            "uay-return-path",
+            location.pathname + location.search,
+          );
+        } else {
+          sessionStorage.removeItem("uay-return-path");
+        }
 
         if (demoUserId) {
           await api("/auth/development-login", "POST", {
@@ -172,9 +180,90 @@ function PublicShell({
     </div>
   );
 }
-function Landing({ config, error }: { config: any; error?: Error | null }) {
+function getAuthErrorMessage(code: string): string {
+  switch (code) {
+    case "SESSION_EXPIRED":
+      return "Sesi login Anda telah berakhir atau kode otentikasi kedaluwarsa. Data login telah dibersihkan otomatis. Silakan klik tombol Masuk untuk memulai sesi baru.";
+    case "INVALID_STATE":
+      return "Verifikasi keamanan sesi tidak valid atau telah kedaluwarsa. Data login lama telah dibersihkan, silakan masuk kembali.";
+    case "ACCOUNT_DISABLED":
+      return "Akun akademik Anda sedang berstatus non-aktif. Silakan hubungi bagian akademik atau administrator prodi.";
+    case "INVALID_IDENTITY":
+      return "Identitas akun tidak ditemukan pada sistem SSO. Pastikan Anda menggunakan akun UAY yang terdaftar.";
+    case "access_denied":
+      return "Proses masuk SSO dibatalkan atau izin ditolak.";
+    default:
+      return "Terjadi kendala saat autentikasi SSO. Sesi login telah dibersihkan otomatis, silakan coba masuk kembali.";
+  }
+}
+
+function Landing({
+  config,
+  error,
+  authError,
+  onClearAuthError,
+}: {
+  config: any;
+  error?: Error | null;
+  authError?: string | null;
+  onClearAuthError?: () => void;
+}) {
   return (
     <PublicShell config={config}>
+      {authError && (
+        <div
+          role="alert"
+          style={{
+            maxWidth: 1040,
+            margin: "24px auto -8px auto",
+            padding: "14px 20px",
+            backgroundColor: "#fef2f2",
+            border: "1px solid #fecaca",
+            borderRadius: "10px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "16px",
+            color: "#991b1b",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <span style={{ fontSize: "1.25rem", lineHeight: 1 }} aria-hidden="true">
+              ⚠️
+            </span>
+            <div>
+              <strong style={{ fontSize: "0.95rem" }}>Pemberitahuan Masuk</strong>
+              <p
+                style={{
+                  margin: "3px 0 0 0",
+                  fontSize: "0.88rem",
+                  color: "#b91c1c",
+                }}
+              >
+                {getAuthErrorMessage(authError)}
+              </p>
+            </div>
+          </div>
+          {onClearAuthError && (
+            <button
+              type="button"
+              onClick={onClearAuthError}
+              aria-label="Tutup pemberitahuan"
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "#991b1b",
+                fontSize: "1.1rem",
+                cursor: "pointer",
+                padding: "4px 8px",
+                lineHeight: 1,
+              }}
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      )}
       {error && <Notice error={error} />}
       <section className="landing-hero">
         <div className="hero-content">
@@ -570,6 +659,16 @@ function AuthCallbackPage({
       } catch (err: any) {
         console.error("[Auth] OIDC callback error:", err);
         if (active) {
+          setAuthToken(null);
+          sessionStorage.removeItem("uay-return-path");
+          try {
+            for (let i = sessionStorage.length - 1; i >= 0; i--) {
+              const k = sessionStorage.key(i);
+              if (k && (k.startsWith("oidc.") || k.startsWith("authority."))) {
+                sessionStorage.removeItem(k);
+              }
+            }
+          } catch {}
           setError(
             err?.message ||
               "Terjadi kesalahan saat memproses callback autentikasi SSO.",
@@ -612,13 +711,17 @@ function AuthCallbackPage({
           >
             {error}
           </p>
-          <a
-            href="/"
+          <button
+            type="button"
             className="button hero-cta"
-            style={{ display: "inline-flex", textDecoration: "none" }}
+            onClick={() => {
+              setAuthToken(null);
+              sessionStorage.clear();
+              window.location.replace("/");
+            }}
           >
             Kembali ke Halaman Masuk
-          </a>
+          </button>
         </div>
       </PublicShell>
     );
@@ -648,10 +751,46 @@ function App() {
   const user = identity.data;
   const [route, setRoute] = useState(routeFromLocation);
   useNavigationGuard();
+
+  const [authErrorNotice, setAuthErrorNotice] = useState<string | null>(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const err = urlParams.get("auth_error");
+      if (err) {
+        urlParams.delete("auth_error");
+        const newSearch = urlParams.toString();
+        const newUrl =
+          window.location.pathname +
+          (newSearch ? `?${newSearch}` : "") +
+          window.location.hash;
+        window.history.replaceState({}, "", newUrl);
+        setAuthToken(null);
+        if (typeof sessionStorage !== "undefined") {
+          sessionStorage.removeItem("uay-return-path");
+          try {
+            for (let i = sessionStorage.length - 1; i >= 0; i--) {
+              const k = sessionStorage.key(i);
+              if (k && (k.startsWith("oidc.") || k.startsWith("authority."))) {
+                sessionStorage.removeItem(k);
+              }
+            }
+          } catch {}
+        }
+        return err;
+      }
+    } catch {}
+    return null;
+  });
+
   useEffect(() => {
     const change = () => setRoute(location.pathname + location.search || "/");
     const expired = () => {
+      setAuthToken(null);
+      if (typeof sessionStorage !== "undefined") {
+        sessionStorage.removeItem("uay-return-path");
+      }
       identity.setData(null);
+      setAuthErrorNotice("SESSION_EXPIRED");
       navigate("/");
     };
     window.addEventListener("routechange", change);
@@ -677,6 +816,8 @@ function App() {
       if (
         pending.startsWith("/") &&
         !pending.startsWith("//") &&
+        !pending.startsWith("/auth/") &&
+        !pending.startsWith("/api/") &&
         !["/", "/login", "/dashboard", "/auth/callback"].includes(pending)
       ) {
         navigate(pending, true);
@@ -729,6 +870,8 @@ function App() {
             pending &&
             pending.startsWith("/") &&
             !pending.startsWith("//") &&
+            !pending.startsWith("/auth/") &&
+            !pending.startsWith("/api/") &&
             !["/", "/login", "/auth/callback"].includes(pending)
           ) {
             navigate(pending, true);
@@ -749,6 +892,8 @@ function App() {
     return (
       <Landing
         config={config.data}
+        authError={authErrorNotice}
+        onClearAuthError={() => setAuthErrorNotice(null)}
         error={
           config.error ??
           (identity.error &&

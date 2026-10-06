@@ -68,6 +68,40 @@ export function getSessionId(req: Request): string | undefined {
   return req.cookies["__Host-uay-session"] ?? req.cookies["uay-session"];
 }
 
+export function clearAllAuthCookies(res: Response, req?: Request) {
+  const cookieOpts = getCookieOptions(req);
+  res.clearCookie("__Host-uay-session", cookieOpts);
+  res.clearCookie("uay-session", cookieOpts);
+  res.clearCookie("uay-oidc-state", cookieOpts);
+  res.clearCookie("uay-oidc-payload", cookieOpts);
+  if (process.env.COOKIE_NAME) {
+    res.clearCookie(process.env.COOKIE_NAME, cookieOpts);
+  }
+
+  // Also clear with default path "/" to clear any lingering cookies regardless of options
+  res.clearCookie("__Host-uay-session", { path: "/" });
+  res.clearCookie("uay-session", { path: "/" });
+  res.clearCookie("uay-oidc-state", { path: "/" });
+  res.clearCookie("uay-oidc-payload", { path: "/" });
+  if (process.env.COOKIE_NAME) {
+    res.clearCookie(process.env.COOKIE_NAME, { path: "/" });
+  }
+}
+
+export function getEffectiveRedirectUri(req?: Request): string {
+  if (req) {
+    const forwardedHost = (req.headers["x-forwarded-host"] as string)?.split(",")[0]?.trim();
+    const host = forwardedHost || req.headers.host;
+    const proto =
+      (req.headers["x-forwarded-proto"] as string)?.split(",")[0]?.trim() ||
+      (req.secure ? "https" : "http");
+    if (host) {
+      return `${proto}://${host}/api/v1/auth/callback`;
+    }
+  }
+  return config.redirectUri;
+}
+
 const oidcStateSecret =
   process.env.SSO_CLIENT_SECRET?.trim() ||
   process.env.SSO_WEBHOOK_SECRET?.trim() ||
@@ -82,6 +116,7 @@ type OidcStatePayload = {
   state: string;
   nonce: string;
   verifier: string;
+  redirectUri?: string;
   demoSubject?: string;
   exp: number;
 };
@@ -120,7 +155,14 @@ function verifyOidcPayload(raw: string | undefined): OidcStatePayload | null {
       });
       return null;
     }
-    return data;
+    return {
+      state: data.state,
+      nonce: data.nonce,
+      verifier: data.verifier,
+      redirectUri: data.redirectUri,
+      demoSubject: data.demoSubject,
+      exp: data.exp,
+    };
   } catch {
     return null;
   }
@@ -133,6 +175,7 @@ const oidcEncryptionKey = createHash("sha256")
 function encodeOidcState(payload: {
   nonce: string;
   verifier: string;
+  redirectUri?: string;
   demoSubject?: string;
   exp: number;
 }): string {
@@ -150,6 +193,7 @@ function encodeOidcState(payload: {
 function decodeOidcState(stateStr: string): {
   nonce: string;
   verifier: string;
+  redirectUri?: string;
   demoSubject?: string;
 } | null {
   try {
@@ -175,6 +219,7 @@ function decodeOidcState(stateStr: string): {
     return {
       nonce: data.nonce,
       verifier: data.verifier,
+      redirectUri: data.redirectUri,
       demoSubject: data.demoSubject,
     };
   } catch {
@@ -391,11 +436,10 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
 }
 async function tokenRequest(values: Record<string, string>) {
   const metadata = await oidcMetadata();
-  // An authorization code is single-use, so only attempts that never reached
-  // the provider are replayed.
+  const tokenEndpoint = oidcServerEndpoint(metadata.token_endpoint);
   const response = await serviceFetch(
     "sso",
-    oidcServerEndpoint(metadata.token_endpoint),
+    tokenEndpoint,
     {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -406,7 +450,18 @@ async function tokenRequest(values: Record<string, string>) {
       }),
     },
   );
-  ensure(response.ok, 401, "SESSION_EXPIRED");
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => "");
+    console.error("[Auth OIDC] Token request failed at token_endpoint:", {
+      status: response.status,
+      statusText: response.statusText,
+      errorBody,
+      sentRedirectUri: values.redirect_uri,
+      clientId: config.clientId,
+      hasClientSecret: Boolean(config.clientSecret),
+    });
+    ensure(false, 401, "SESSION_EXPIRED");
+  }
   const data: any = await response.json();
   ensure(typeof data.access_token === "string", 401, "INVALID_TOKEN");
   return data;
@@ -430,11 +485,23 @@ async function authorizationUrl(
   const nonce = randomBytes(32).toString("base64url");
   const verifier = randomBytes(48).toString("base64url");
   const exp = Date.now() + 15 * 60 * 1000;
-  const state = encodeOidcState({ nonce, verifier, demoSubject, exp });
+  const effectiveRedirectUri = getEffectiveRedirectUri(req);
+  const state = encodeOidcState({
+    nonce,
+    verifier,
+    redirectUri: effectiveRedirectUri,
+    demoSubject,
+    exp,
+  });
 
   await cache.set(
     `oidc:${hash(state)}`,
-    JSON.stringify({ nonce, verifier, demoSubject }),
+    JSON.stringify({
+      nonce,
+      verifier,
+      redirectUri: effectiveRedirectUri,
+      demoSubject,
+    }),
     900,
   );
 
@@ -445,6 +512,7 @@ async function authorizationUrl(
     state,
     nonce,
     verifier,
+    redirectUri: effectiveRedirectUri,
     demoSubject,
     exp,
   });
@@ -456,7 +524,7 @@ async function authorizationUrl(
   const url = new URL(metadata.authorization_endpoint);
   url.search = new URLSearchParams({
     client_id: config.clientId,
-    redirect_uri: config.redirectUri,
+    redirect_uri: effectiveRedirectUri,
     response_type: "code",
     scope: "openid profile email offline_access",
     state,
@@ -626,107 +694,134 @@ export function registerAuth(app: Express) {
     res.redirect(await authorizationUrl(res, demoSubject, req));
   });
   app.get("/api/v1/auth/callback", async (req, res) => {
-    const { state, code } = z
-      .object({ state: z.string().min(20), code: z.string().min(1) })
-      .parse(req.query);
-
-    const cookieState = req.cookies["uay-oidc-state"];
-    const payloadCookie = req.cookies["uay-oidc-payload"];
-    const verifiedPayload = verifyOidcPayload(payloadCookie);
-
-    let nonce: string | undefined;
-    let verifier: string | undefined;
-    let demoSubject: string | undefined;
-
-    // 1. Primary path: Self-contained AES-256-GCM encrypted state
-    const decodedState = decodeOidcState(state);
-    if (decodedState) {
-      nonce = decodedState.nonce;
-      verifier = decodedState.verifier;
-      demoSubject = decodedState.demoSubject;
-    }
-
-    // 2. Secondary path: Server cache (Redis or in-memory)
-    if (!verifier) {
-      const saved = await cache.take(`oidc:${hash(state)}`);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          nonce = parsed.nonce;
-          verifier = parsed.verifier;
-          demoSubject = parsed.demoSubject;
-        } catch {}
+    try {
+      if (req.query.error) {
+        console.warn("[Auth OIDC] Callback received error from SSO provider:", {
+          error: req.query.error,
+          error_description: req.query.error_description,
+        });
+        clearAllAuthCookies(res, req);
+        const errParam =
+          typeof req.query.error === "string" ? req.query.error : "SSO_ERROR";
+        return res.redirect(`/?auth_error=${encodeURIComponent(errParam)}`);
       }
-    }
 
-    // 3. Tertiary path: Signed companion cookie
-    if (!verifier && verifiedPayload && verifiedPayload.state === state) {
-      console.log(
-        "[Auth OIDC] Cache missed; successfully recovered OIDC verification from signed payload cookie.",
-      );
-      nonce = verifiedPayload.nonce;
-      verifier = verifiedPayload.verifier;
-      demoSubject = verifiedPayload.demoSubject;
-    }
+      const { state, code } = z
+        .object({ state: z.string().min(20), code: z.string().min(1) })
+        .parse(req.query);
 
-    const stateValid = Boolean(nonce && verifier);
+      const cookieState = req.cookies["uay-oidc-state"];
+      const payloadCookie = req.cookies["uay-oidc-payload"];
+      const verifiedPayload = verifyOidcPayload(payloadCookie);
 
-    if (!stateValid) {
-      console.error("[Auth OIDC] Callback state verification failed:", {
-        queryStatePrefix: state ? `${state.slice(0, 10)}...` : undefined,
-        cookieStatePrefix: cookieState
-          ? `${cookieState.slice(0, 10)}...`
-          : undefined,
-        hasCookieState: Boolean(cookieState),
-        hasPayloadCookie: Boolean(payloadCookie),
-        isDecodedState: Boolean(decodedState),
-        protocol: req.protocol,
-        secure: req.secure,
-        xForwardedProto: req.headers["x-forwarded-proto"],
+      let nonce: string | undefined;
+      let verifier: string | undefined;
+      let redirectUri: string | undefined;
+      let demoSubject: string | undefined;
+
+      // 1. Primary path: Self-contained AES-256-GCM encrypted state
+      const decodedState = decodeOidcState(state);
+      if (decodedState) {
+        nonce = decodedState.nonce;
+        verifier = decodedState.verifier;
+        redirectUri = decodedState.redirectUri;
+        demoSubject = decodedState.demoSubject;
+      }
+
+      // 2. Secondary path: Server cache (Redis or in-memory)
+      if (!verifier) {
+        const saved = await cache.take(`oidc:${hash(state)}`);
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            nonce = parsed.nonce;
+            verifier = parsed.verifier;
+            redirectUri = parsed.redirectUri;
+            demoSubject = parsed.demoSubject;
+          } catch {}
+        }
+      }
+
+      // 3. Tertiary path: Signed companion cookie
+      if (!verifier && verifiedPayload && verifiedPayload.state === state) {
+        console.log(
+          "[Auth OIDC] Cache missed; successfully recovered OIDC verification from signed payload cookie.",
+        );
+        nonce = verifiedPayload.nonce;
+        verifier = verifiedPayload.verifier;
+        redirectUri = verifiedPayload.redirectUri;
+        demoSubject = verifiedPayload.demoSubject;
+      }
+
+      const stateValid = Boolean(nonce && verifier);
+
+      if (!stateValid) {
+        console.error("[Auth OIDC] Callback state verification failed:", {
+          queryStatePrefix: state ? `${state.slice(0, 10)}...` : undefined,
+          cookieStatePrefix: cookieState
+            ? `${cookieState.slice(0, 10)}...`
+            : undefined,
+          hasCookieState: Boolean(cookieState),
+          hasPayloadCookie: Boolean(payloadCookie),
+          isDecodedState: Boolean(decodedState),
+          protocol: req.protocol,
+          secure: req.secure,
+          xForwardedProto: req.headers["x-forwarded-proto"],
+        });
+      }
+
+      const cookieOpts = getCookieOptions(req);
+      res.clearCookie("uay-oidc-state", cookieOpts);
+      res.clearCookie("uay-oidc-payload", cookieOpts);
+
+      ensure(stateValid && nonce && verifier, 401, "INVALID_STATE");
+
+      const effectiveRedirectUri =
+        redirectUri || getEffectiveRedirectUri(req);
+
+      const tokens = await tokenRequest({
+        grant_type: "authorization_code",
+        code,
+        code_verifier: verifier,
+        redirect_uri: effectiveRedirectUri,
       });
+      const { payload: id } = await jwtVerify(tokens.id_token, jwks, {
+        issuer: config.issuer,
+        audience: config.clientId,
+        algorithms: ["RS256", "ES256"],
+        requiredClaims: ["sub", "exp", "iat", "nonce"],
+      });
+      ensure(id.nonce === nonce, 401, "INVALID_NONCE");
+      const access = await verifyAccess(tokens.access_token);
+      ensure(access.sub === id.sub, 401, "INVALID_IDENTITY");
+      if (demoSubject)
+        ensure(access.sub === demoSubject, 401, "INVALID_IDENTITY");
+      const ssoMe = await fetchSsoMeProfile(tokens.access_token);
+      if (ssoMe?.account_status) {
+        ensure(ssoMe.account_status === "ACTIVE", 403, "ACCOUNT_DISABLED");
+      }
+      const user = await syncUser({ ...id, ...access, ...(ssoMe ?? {}) }, true);
+      await issue(
+        res,
+        {
+          userId: user.id,
+          accessToken: tokens.access_token,
+          refreshToken: tokens.refresh_token,
+          idToken: tokens.id_token,
+          expires: Number(access.exp) * 1000,
+          createdAt: Date.now(),
+        },
+        req,
+      );
+      res.redirect(user.role === "RECTOR" ? "/rector" : "/dashboard");
+    } catch (err: any) {
+      console.error("[Auth OIDC] Callback processing failed:", err);
+      clearAllAuthCookies(res, req);
+      const code =
+        err?.code ||
+        (err?.name === "ZodError" ? "INVALID_CALLBACK_PARAMS" : "SESSION_EXPIRED");
+      return res.redirect(`/?auth_error=${encodeURIComponent(code)}`);
     }
-
-    const cookieOpts = getCookieOptions(req);
-    res.clearCookie("uay-oidc-state", cookieOpts);
-    res.clearCookie("uay-oidc-payload", cookieOpts);
-
-    ensure(stateValid && nonce && verifier, 401, "INVALID_STATE");
-
-    const tokens = await tokenRequest({
-      grant_type: "authorization_code",
-      code,
-      code_verifier: verifier,
-      redirect_uri: config.redirectUri,
-    });
-    const { payload: id } = await jwtVerify(tokens.id_token, jwks, {
-      issuer: config.issuer,
-      audience: config.clientId,
-      algorithms: ["RS256", "ES256"],
-      requiredClaims: ["sub", "exp", "iat", "nonce"],
-    });
-    ensure(id.nonce === nonce, 401, "INVALID_NONCE");
-    const access = await verifyAccess(tokens.access_token);
-    ensure(access.sub === id.sub, 401, "INVALID_IDENTITY");
-    if (demoSubject)
-      ensure(access.sub === demoSubject, 401, "INVALID_IDENTITY");
-    const ssoMe = await fetchSsoMeProfile(tokens.access_token);
-    if (ssoMe?.account_status) {
-      ensure(ssoMe.account_status === "ACTIVE", 403, "ACCOUNT_DISABLED");
-    }
-    const user = await syncUser({ ...id, ...access, ...(ssoMe ?? {}) }, true);
-    await issue(
-      res,
-      {
-        userId: user.id,
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token,
-        idToken: tokens.id_token,
-        expires: Number(access.exp) * 1000,
-        createdAt: Date.now(),
-      },
-      req,
-    );
-    res.redirect(user.role === "RECTOR" ? "/rector" : "/dashboard");
   });
   app.post("/api/v1/auth/revocations", async (req, res) => {
     const secret = process.env.SSO_WEBHOOK_SECRET;
@@ -799,12 +894,7 @@ export function registerAuth(app: Express) {
         }
       }
     }
-    const cookieOpts = getCookieOptions(req);
-    res.clearCookie("__Host-uay-session", cookieOpts);
-    res.clearCookie("uay-session", cookieOpts);
-    if (process.env.COOKIE_NAME) {
-      res.clearCookie(process.env.COOKIE_NAME, cookieOpts);
-    }
+    clearAllAuthCookies(res, req);
     res.json({ logoutUrl });
   });
 }

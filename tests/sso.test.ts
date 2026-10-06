@@ -59,3 +59,36 @@ test("SSO identity resolves preferred_username as academic identifier when ident
   assert.equal(resolved.identifierType, "NIM");
 });
 
+test("clearAllAuthCookies clears all session and oidc cookies across paths", async () => {
+  const { clearAllAuthCookies } = await import("../apps/api/src/auth.js");
+  const cleared: { name: string; options: any }[] = [];
+  const mockRes: any = {
+    clearCookie(name: string, options: any) {
+      cleared.push({ name, options });
+    },
+  };
+  clearAllAuthCookies(mockRes);
+  const clearedNames = cleared.map((c) => c.name);
+  assert.ok(clearedNames.includes("__Host-uay-session"));
+  assert.ok(clearedNames.includes("uay-session"));
+  assert.ok(clearedNames.includes("uay-oidc-state"));
+  assert.ok(clearedNames.includes("uay-oidc-payload"));
+});
+
+test("getEffectiveRedirectUri extracts dynamic host or falls back", async () => {
+  const { getEffectiveRedirectUri } = await import("../apps/api/src/auth.js");
+  const mockReq: any = {
+    headers: {
+      "x-forwarded-host": "e-learning.uay.ac.id",
+      "x-forwarded-proto": "https",
+    },
+    secure: true,
+  };
+  const uri = getEffectiveRedirectUri(mockReq);
+  assert.equal(uri, "https://e-learning.uay.ac.id/api/v1/auth/callback");
+
+  const fallbackUri = getEffectiveRedirectUri();
+  assert.ok(fallbackUri.includes("/api/v1/auth/callback"));
+});
+
+

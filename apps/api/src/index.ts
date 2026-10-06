@@ -17,7 +17,7 @@ import {
   audit,
   systemContext,
 } from "./core.js";
-import { registerAuth, authenticate } from "./auth.js";
+import { registerAuth, authenticate, clearAllAuthCookies } from "./auth.js";
 import { registerLearning } from "./learning.js";
 import { registerPublication } from "./publication.js";
 import { registerAssessment, expireAttempts } from "./assessment.js";
@@ -266,6 +266,9 @@ export function createApp() {
             path: req.path,
           }),
         );
+      if (status === 401) {
+        clearAllAuthCookies(res, req);
+      }
       res.status(status).json({
         error: {
           code,
