@@ -221,7 +221,7 @@ function productionConfigurationErrors() {
   required("REDIS_URL", resolvedRedisUrl);
   required("SSO_ISSUER", process.env.SSO_ISSUER);
   required("SSO_CLIENT_ID", process.env.SSO_CLIENT_ID);
-  required("SSO_CLIENT_SECRET", process.env.SSO_CLIENT_SECRET);
+  // SSO_CLIENT_SECRET bersifat opsional (tidak diperlukan untuk Client bertipe Public dengan PKCE)
   required("SSO_AUDIENCE", process.env.SSO_AUDIENCE);
   required("SSO_REDIRECT_URI", process.env.SSO_REDIRECT_URI);
   required("SSO_WEBHOOK_SECRET", process.env.SSO_WEBHOOK_SECRET);
