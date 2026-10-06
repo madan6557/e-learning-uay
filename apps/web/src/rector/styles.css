@@ -697,11 +697,22 @@
   padding-left: 10px;
   color: #8a9cab;
   max-width: 330px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.rector-dashboard .search-box:focus-within {
+  border-color: #7f9bb9;
+  box-shadow: 0 0 0 3px rgba(127, 155, 185, 0.14);
 }
 .rector-dashboard .search-box input {
   border: 0;
   background: white;
   min-width: 150px;
+  outline: none;
+}
+.rector-dashboard .search-box input:focus,
+.rector-dashboard .search-box input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 .rector-dashboard .search-box button {
   font-size: 16px;
@@ -1800,6 +1811,11 @@
   border: 1px solid #dce5ed;
   border-radius: 7px;
   flex: 1;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.rector-dashboard .waterfall-search:focus-within {
+  border-color: #7f9bb9;
+  box-shadow: 0 0 0 3px rgba(127, 155, 185, 0.14);
 }
 .rector-dashboard .waterfall-search input {
   border: 0;
@@ -1807,6 +1823,11 @@
   flex: 1;
   min-width: 0;
   background: transparent;
+}
+.rector-dashboard .waterfall-search input:focus,
+.rector-dashboard .waterfall-search input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 .rector-dashboard .waterfall-toolbar > label:last-child {
   min-width: 180px;

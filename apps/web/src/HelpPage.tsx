@@ -297,6 +297,7 @@ export function HelpPage({ user }: { user: { role?: unknown } | null }) {
               <Search size={20} style={{ color: "var(--muted, #94a3b8)", flexShrink: 0 }} />
               <input
                 type="search"
+                className="help-search-input"
                 aria-label="Cari panduan"
                 placeholder="Cari panduan (misal: presensi, duplikasi kelas, tugas, kuis, video, program studi)..."
                 value={query}

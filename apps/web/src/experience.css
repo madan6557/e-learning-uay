@@ -1021,11 +1021,30 @@ main {
   box-shadow: 0 0 0 4px rgba(127, 155, 185, 0.14);
 }
 
+.search-field input:focus,
+.search-field input:focus-visible,
+.search-box input:focus,
+.search-box input:focus-visible,
+.waterfall-search input:focus,
+.waterfall-search input:focus-visible,
+.help-search-input:focus,
+.help-search-input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 input:focus,
 select:focus,
 textarea:focus {
   border-color: #7f9bb9;
   box-shadow: 0 0 0 4px rgba(127, 155, 185, 0.14);
+}
+
+.search-field input:focus,
+.search-box input:focus,
+.waterfall-search input:focus,
+.help-search-input:focus {
+  box-shadow: none !important;
 }
 
 .notice,
@@ -2828,7 +2847,7 @@ table th {
 }
 
 /* --- focus ring shared with the SSO console --- */
-:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+:where(a, button, input:not(.search-field input, .search-box input, .waterfall-search input, .help-search-input), select, textarea, summary, [tabindex]):focus-visible {
   outline: 2px solid color-mix(in oklab, var(--ring) 55%, transparent);
   outline-offset: 2px;
 }
