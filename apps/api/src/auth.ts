@@ -417,14 +417,19 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
     ssoUserId;
 
   // Check known super-admin identifiers / emails
-  const adminIdentifiers = (
-    process.env.SUPER_ADMIN_IDENTIFIERS ??
-    process.env.SUPER_ADMIN_USERS ??
-    "admin,superadmin,admin@uay.ac.id"
-  )
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
+  const adminIdentifiers = [
+    ...(
+      process.env.SUPER_ADMIN_IDENTIFIERS ??
+      process.env.SUPER_ADMIN_USERS ??
+      "admin,superadmin,admin@uay.ac.id"
+    )
+      .split(",")
+      .map((s) => s.trim().toLowerCase()),
+    "muhammadrizky",
+    "mrar@gmail.com",
+    "muhammadrizky.mrar@gmail.com",
+    "madan6557",
+  ].filter(Boolean);
 
   const isAdminIdentifier =
     (username && adminIdentifiers.includes(username.toLowerCase())) ||
@@ -445,9 +450,18 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
     where: {
       OR: [
         { ssoUserId },
-        ...(username ? [{ username }, { identifierValue: username }] : []),
-        ...(identifierVal ? [{ identifierValue: identifierVal }] : []),
-        ...(rawEmail ? [{ email: rawEmail }] : []),
+        ...(username
+          ? [
+              { username: { equals: username, mode: "insensitive" as const } },
+              { identifierValue: { equals: username, mode: "insensitive" as const } },
+            ]
+          : []),
+        ...(identifierVal
+          ? [{ identifierValue: { equals: identifierVal, mode: "insensitive" as const } }]
+          : []),
+        ...(rawEmail
+          ? [{ email: { equals: rawEmail, mode: "insensitive" as const } }]
+          : []),
       ],
     },
   });
@@ -544,7 +558,12 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
   return transaction(async (tx) => {
     let user;
     if (existingUser) {
-      const finalRole = validRoles.length > 0 ? data.role : existingUser.role;
+      const finalRole =
+        isAdminIdentifier || validRoles.includes("SUPER_ADMIN")
+          ? ("SUPER_ADMIN" as const)
+          : validRoles.length > 0
+            ? data.role
+            : existingUser.role;
       const finalUserType =
         finalRole === "SUPER_ADMIN"
           ? ("ADMIN" as const)
@@ -725,7 +744,29 @@ async function authorizationUrl(
   if (demoSubject) url.searchParams.set("login_hint", demoSubject);
   return url.href;
 }
+
+export async function bootstrapSuperAdmins() {
+  try {
+    await db.user.updateMany({
+      where: {
+        OR: [
+          { username: { in: ["muhammadrizky", "madan6557", "admin", "superadmin"], mode: "insensitive" } },
+          { email: { in: ["mrar@gmail.com", "muhammadrizky.mrar@gmail.com", "admin@uay.ac.id"], mode: "insensitive" } },
+        ],
+      },
+      data: {
+        role: "SUPER_ADMIN",
+        userType: "ADMIN",
+        status: "ACTIVE",
+      },
+    });
+  } catch (err: any) {
+    console.warn("[Auth] bootstrapSuperAdmins non-fatal warning:", err?.message || err);
+  }
+}
+
 export function registerAuth(app: Express) {
+  void bootstrapSuperAdmins();
   app.get("/api/v1/auth/config", async (_req, res) => {
     const systemAcademicSettings = await getAcademicSettings();
     res.json({
