@@ -192,6 +192,13 @@ export async function getAcademicSettings(client: Prisma.TransactionClient = db)
   });
 }
 
+export const resolvedRedisUrl =
+  process.env.REDIS_URL?.trim() ||
+  process.env.REDIS_PRIVATE_URL?.trim() ||
+  (process.env.REDISHOST
+    ? `redis://${process.env.REDISUSER ? `${encodeURIComponent(process.env.REDISUSER)}:${encodeURIComponent(process.env.REDISPASSWORD || "")}@` : process.env.REDISPASSWORD ? `:${encodeURIComponent(process.env.REDISPASSWORD)}@` : ""}${process.env.REDISHOST}:${process.env.REDISPORT || 6379}`
+    : undefined);
+
 function productionConfigurationErrors() {
   const invalid: string[] = [];
 
@@ -211,7 +218,7 @@ function productionConfigurationErrors() {
     invalid.push("AUTH_MODE=oidc");
   }
 
-  required("REDIS_URL", process.env.REDIS_URL);
+  required("REDIS_URL", resolvedRedisUrl);
   required("SSO_ISSUER", process.env.SSO_ISSUER);
   required("SSO_CLIENT_ID", process.env.SSO_CLIENT_ID);
   required("SSO_CLIENT_SECRET", process.env.SSO_CLIENT_SECRET);
@@ -287,19 +294,32 @@ if (production) {
   }
 }
 export const db = new PrismaClient();
-export const redis = process.env.REDIS_URL
-  ? new Redis(process.env.REDIS_URL, {
+export const redis = resolvedRedisUrl
+  ? new Redis(resolvedRedisUrl, {
       maxRetriesPerRequest: 1,
       connectTimeout: 3000,
       enableOfflineQueue: false,
     })
   : null;
-redis?.on("error", () => console.error("Redis connection unavailable"));
+
+if (redis) {
+  redis.on("connect", () => console.log("[Cache] Redis terhubung: menggunakan Redis cluster/server."));
+  redis.on("error", (err) => console.error("[Cache] Redis connection error (otomatis fallback ke in-memory):", err.message));
+} else {
+  console.log("[Cache] REDIS_URL tidak terdeteksi: otomatis menggunakan penyimpanan in-memory.");
+}
+
 const memory = new Map<string, { value: string; expires: number }>();
 // Local and explicitly enabled hosted demo can use memory. Production requires Redis.
 export const cache = {
   async get(key: string) {
-    if (redis) return redis.get(key);
+    if (redis) {
+      try {
+        return await redis.get(key);
+      } catch {
+        // Fallback ke in-memory saat terjadi transient network error
+      }
+    }
     const item = memory.get(key);
     if (item && item.expires > Date.now()) return item.value;
     memory.delete(key);
@@ -307,35 +327,57 @@ export const cache = {
   },
   async set(key: string, value: string, seconds: number) {
     if (redis) {
-      await redis.set(key, value, "EX", seconds);
-      return;
+      try {
+        await redis.set(key, value, "EX", seconds);
+        return;
+      } catch {
+        // Fallback ke in-memory saat terjadi transient network error
+      }
     }
     if (memory.size > 10000)
       for (const [k, v] of memory) if (v.expires < Date.now()) memory.delete(k);
     memory.set(key, { value, expires: Date.now() + seconds * 1000 });
   },
   async del(key: string) {
-    if (redis) await redis.del(key);
-    else memory.delete(key);
+    if (redis) {
+      try {
+        await redis.del(key);
+        return;
+      } catch {
+        // Fallback ke in-memory
+      }
+    }
+    memory.delete(key);
   },
   async take(key: string) {
-    if (redis) return redis.getdel(key);
+    if (redis) {
+      try {
+        return await redis.getdel(key);
+      } catch {
+        // Fallback ke in-memory
+      }
+    }
     const value = await this.get(key);
     memory.delete(key);
     return value;
   },
   async rate(key: string, limit: number, seconds: number) {
-    if (redis)
-      return (
-        Number(
-          await redis.eval(
-            "local n=redis.call('INCR',KEYS[1]); if n==1 then redis.call('EXPIRE',KEYS[1],ARGV[1]) end; return n",
-            1,
-            key,
-            seconds,
-          ),
-        ) <= limit
-      );
+    if (redis) {
+      try {
+        return (
+          Number(
+            await redis.eval(
+              "local n=redis.call('INCR',KEYS[1]); if n==1 then redis.call('EXPIRE',KEYS[1],ARGV[1]) end; return n",
+              1,
+              key,
+              seconds,
+            ),
+          ) <= limit
+        );
+      } catch {
+        // Fallback ke in-memory rate limiter
+      }
+    }
     const item = memory.get(key);
     const current =
       item && item.expires > Date.now()
