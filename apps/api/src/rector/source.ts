@@ -403,6 +403,8 @@ export function classify(
       category: "PUBLIKASI",
       label: "Membagikan nilai kepada mahasiswa",
     };
+  if (action === "ACCESS" || action === "VIEW")
+    return { category: "AKSES", label: "Membuka kelas perkuliahan" };
   if (/CORRECT|OVERRIDE|REOPEN|RESET/.test(action))
     return { category: "KOREKSI", label: "Mengoreksi catatan akademik" };
   if (/GRADE|GRADING/.test(action))

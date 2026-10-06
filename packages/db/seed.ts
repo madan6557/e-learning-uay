@@ -39,9 +39,19 @@ export const ids = {
   assignment: '60000000-0000-4000-8000-000000000001',
 };
 
-const nowTime = Date.now();
-const dateStr = (offsetDays: number, hour = 9, minute = 0) =>
-  new Date(nowTime - offsetDays * 86400000 + (hour - 9) * 3600000 + minute * 60000);
+const WIB_OFFSET = 7 * 3600 * 1000;
+const wibNow = new Date(Date.now() + WIB_OFFSET);
+const todayMidnightWibMs =
+  Date.UTC(wibNow.getUTCFullYear(), wibNow.getUTCMonth(), wibNow.getUTCDate()) -
+  WIB_OFFSET;
+
+export const dateStr = (offsetDays: number, hour = 9, minute = 0) =>
+  new Date(
+    todayMidnightWibMs -
+      offsetDays * 86400000 +
+      hour * 3600000 +
+      minute * 60000,
+  );
 
 // ===========================================================================
 // 1. DATA DEFINITIONS: 4 PROGRAM STUDI & USERS
@@ -65,7 +75,7 @@ const adminUsers = [
     status: 'ACTIVE' as const,
     departmentScopes: [] as string[],
     lastLoginAt: dateStr(0, 8, 15),
-    lastActiveAt: dateStr(0, 8, 30),
+    lastActiveAt: dateStr(0, 9, 30),
   },
   {
     id: ids.rector,
@@ -76,8 +86,8 @@ const adminUsers = [
     identifierValue: 'RKT001',
     status: 'ACTIVE' as const,
     departmentScopes: [] as string[],
-    lastLoginAt: dateStr(1, 10, 0),
-    lastActiveAt: dateStr(1, 10, 25),
+    lastLoginAt: dateStr(0, 10, 0),
+    lastActiveAt: dateStr(0, 10, 45),
   },
   {
     id: ids.department,
@@ -89,7 +99,7 @@ const adminUsers = [
     status: 'ACTIVE' as const,
     departmentScopes: ['Informatika', 'IF'],
     lastLoginAt: dateStr(0, 7, 45),
-    lastActiveAt: dateStr(0, 8, 10),
+    lastActiveAt: dateStr(0, 9, 15),
   },
   {
     id: '00000000-0000-4000-8000-000000000008',
@@ -100,8 +110,8 @@ const adminUsers = [
     identifierValue: 'ADMTS01',
     status: 'ACTIVE' as const,
     departmentScopes: ['Teknik Sipil', 'TS'],
-    lastLoginAt: dateStr(1, 8, 30),
-    lastActiveAt: dateStr(1, 9, 0),
+    lastLoginAt: dateStr(1, 14, 0),
+    lastActiveAt: dateStr(1, 15, 0),
   },
   {
     id: '00000000-0000-4000-8000-000000000009',
@@ -112,8 +122,8 @@ const adminUsers = [
     identifierValue: 'ADMAK01',
     status: 'ACTIVE' as const,
     departmentScopes: ['Akuntansi', 'AK'],
-    lastLoginAt: dateStr(2, 8, 15),
-    lastActiveAt: dateStr(2, 8, 45),
+    lastLoginAt: dateStr(0, 8, 0),
+    lastActiveAt: dateStr(0, 9, 30),
   },
   {
     id: '00000000-0000-4000-8000-000000000010',
@@ -124,8 +134,8 @@ const adminUsers = [
     identifierValue: 'ADMMN01',
     status: 'ACTIVE' as const,
     departmentScopes: ['Manajemen', 'MN'],
-    lastLoginAt: dateStr(3, 9, 0),
-    lastActiveAt: dateStr(3, 9, 30),
+    lastLoginAt: dateStr(1, 15, 0),
+    lastActiveAt: dateStr(1, 16, 15),
   },
 ];
 
@@ -136,21 +146,24 @@ export const lecturers = [
     name: 'Dr. Aruna Prameswari',
     identifierValue: '1112089001',
     department: 'Informatika',
-    lastLoginAt: dateStr(0, 8, 0),
+    lastLoginAt: dateStr(0, 13, 45),
+    lastActiveAt: dateStr(0, 15, 30),
   },
   {
     id: '00000000-0000-4000-8000-000000000011',
     name: 'Bagas Mahendra, M.Kom.',
     identifierValue: '1112089002',
     department: 'Informatika',
-    lastLoginAt: dateStr(1, 9, 30),
+    lastLoginAt: dateStr(0, 10, 0),
+    lastActiveAt: dateStr(0, 11, 45),
   },
   {
     id: '00000000-0000-4000-8000-000000000012',
     name: 'Citra Adinata, M.Kom.',
     identifierValue: '1112089003',
     department: 'Informatika',
-    lastLoginAt: dateStr(2, 10, 15),
+    lastLoginAt: dateStr(1, 20, 15),
+    lastActiveAt: dateStr(1, 22, 30),
   },
 
   // Teknik Sipil (3 dosen)
@@ -159,21 +172,24 @@ export const lecturers = [
     name: 'Dr. Damar Wicaksana',
     identifierValue: '1112089004',
     department: 'Teknik Sipil',
-    lastLoginAt: dateStr(1, 8, 20),
+    lastLoginAt: dateStr(1, 13, 30),
+    lastActiveAt: dateStr(1, 14, 45),
   },
   {
     id: '00000000-0000-4000-8000-000000000021',
     name: 'Elina Paramitha, M.T.',
     identifierValue: '1112089005',
     department: 'Teknik Sipil',
-    lastLoginAt: dateStr(2, 11, 0),
+    lastLoginAt: dateStr(0, 10, 15),
+    lastActiveAt: dateStr(0, 12, 30),
   },
   {
     id: '00000000-0000-4000-8000-000000000022',
     name: 'Farhan Kusuma, M.T.',
     identifierValue: '1112089006',
     department: 'Teknik Sipil',
-    lastLoginAt: dateStr(3, 13, 45),
+    lastLoginAt: dateStr(2, 14, 0),
+    lastActiveAt: dateStr(2, 15, 30),
   },
 
   // Akuntansi (3 dosen)
@@ -182,21 +198,24 @@ export const lecturers = [
     name: 'Dr. Gita Larasati',
     identifierValue: '1112089007',
     department: 'Akuntansi',
-    lastLoginAt: dateStr(0, 14, 10),
+    lastLoginAt: dateStr(0, 8, 30),
+    lastActiveAt: dateStr(0, 10, 45),
   },
   {
     id: '00000000-0000-4000-8000-000000000024',
     name: 'Hadi Suryatama, M.Ak.',
     identifierValue: '1112089008',
     department: 'Akuntansi',
-    lastLoginAt: dateStr(1, 15, 0),
+    lastLoginAt: dateStr(1, 14, 0),
+    lastActiveAt: dateStr(1, 15, 30),
   },
   {
     id: '00000000-0000-4000-8000-000000000025',
     name: 'Intan Kirana, M.Ak.',
     identifierValue: '1112089009',
     department: 'Akuntansi',
-    lastLoginAt: dateStr(2, 9, 0),
+    lastLoginAt: dateStr(0, 14, 0),
+    lastActiveAt: dateStr(0, 15, 45),
   },
 
   // Manajemen (3 dosen)
@@ -205,21 +224,24 @@ export const lecturers = [
     name: 'Dr. Jati Nugraha',
     identifierValue: '1112089010',
     department: 'Manajemen',
-    lastLoginAt: dateStr(1, 8, 45),
+    lastLoginAt: dateStr(1, 13, 30),
+    lastActiveAt: dateStr(1, 15, 0),
   },
   {
     id: '00000000-0000-4000-8000-000000000027',
     name: 'Kirana Wulandari, M.M.',
     identifierValue: '1112089011',
     department: 'Manajemen',
-    lastLoginAt: dateStr(2, 10, 30),
+    lastLoginAt: dateStr(0, 9, 30),
+    lastActiveAt: dateStr(0, 11, 45),
   },
   {
     id: '00000000-0000-4000-8000-000000000028',
     name: 'Laksana Pradipta, M.M.',
     identifierValue: '1112089012',
     department: 'Manajemen',
-    lastLoginAt: dateStr(4, 14, 0),
+    lastLoginAt: dateStr(3, 19, 30),
+    lastActiveAt: dateStr(3, 21, 0),
   },
 ].map((l) => ({
   ...l,
@@ -228,7 +250,6 @@ export const lecturers = [
   identifierType: 'NIDN' as const,
   status: 'ACTIVE' as const,
   departmentScopes: [l.department],
-  lastActiveAt: l.lastLoginAt,
 }));
 
 // 40 Mahasiswa: 10 per prodi
@@ -1291,20 +1312,71 @@ auditEntries.push({
 });
 
 // For each of the 4 department admins:
+// For each of the 4 department admins: realistic multi-day login sessions
+const adminSchedules: Record<string, Array<{ day: number; hour: number; minute: number; durationMin: number }>> = {
+  [ids.department]: [
+    { day: 0, hour: 7, minute: 45, durationMin: 90 },
+    { day: 1, hour: 7, minute: 30, durationMin: 90 },
+    { day: 1, hour: 13, minute: 0, durationMin: 75 },
+    { day: 3, hour: 8, minute: 0, durationMin: 90 },
+    { day: 6, hour: 7, minute: 45, durationMin: 90 },
+    { day: 10, hour: 8, minute: 15, durationMin: 90 },
+    { day: 15, hour: 7, minute: 30, durationMin: 90 },
+    { day: 20, hour: 8, minute: 0, durationMin: 90 },
+    { day: 26, hour: 7, minute: 45, durationMin: 90 },
+    { day: 32, hour: 8, minute: 0, durationMin: 90 },
+  ],
+  ['00000000-0000-4000-8000-000000000008']: [
+    { day: 1, hour: 8, minute: 0, durationMin: 90 },
+    { day: 1, hour: 14, minute: 0, durationMin: 60 },
+    { day: 2, hour: 8, minute: 30, durationMin: 75 },
+    { day: 5, hour: 8, minute: 0, durationMin: 90 },
+    { day: 8, hour: 8, minute: 15, durationMin: 75 },
+    { day: 12, hour: 8, minute: 0, durationMin: 90 },
+    { day: 18, hour: 8, minute: 30, durationMin: 75 },
+    { day: 24, hour: 8, minute: 0, durationMin: 90 },
+    { day: 30, hour: 8, minute: 15, durationMin: 75 },
+  ],
+  ['00000000-0000-4000-8000-000000000009']: [
+    { day: 0, hour: 8, minute: 0, durationMin: 90 },
+    { day: 2, hour: 7, minute: 45, durationMin: 90 },
+    { day: 2, hour: 13, minute: 30, durationMin: 75 },
+    { day: 4, hour: 8, minute: 15, durationMin: 90 },
+    { day: 7, hour: 8, minute: 0, durationMin: 75 },
+    { day: 11, hour: 8, minute: 30, durationMin: 90 },
+    { day: 16, hour: 8, minute: 0, durationMin: 75 },
+    { day: 22, hour: 8, minute: 15, durationMin: 90 },
+    { day: 28, hour: 8, minute: 0, durationMin: 90 },
+  ],
+  ['00000000-0000-4000-8000-000000000010']: [
+    { day: 1, hour: 8, minute: 15, durationMin: 90 },
+    { day: 1, hour: 15, minute: 0, durationMin: 75 },
+    { day: 3, hour: 8, minute: 0, durationMin: 90 },
+    { day: 5, hour: 8, minute: 30, durationMin: 75 },
+    { day: 9, hour: 8, minute: 0, durationMin: 90 },
+    { day: 14, hour: 8, minute: 15, durationMin: 75 },
+    { day: 19, hour: 8, minute: 0, durationMin: 90 },
+    { day: 25, hour: 8, minute: 30, durationMin: 75 },
+    { day: 31, hour: 8, minute: 0, durationMin: 90 },
+  ],
+};
+
 for (const [deptIdx, admin] of adminUsers.filter((u) => u.role === 'DEPARTMENT_ADMIN').entries()) {
-  const loginDays = [30, 24, 18, 12, 6, 1];
-  for (const day of loginDays) {
+  const specs = adminSchedules[admin.id] || [];
+  for (const s of specs) {
+    const loginTime = dateStr(s.day, s.hour, s.minute);
+    const logoutTime = dateStr(s.day, s.hour, s.minute + s.durationMin);
     auditEntries.push({
-      createdAt: dateStr(day + deptIdx, 7, 30),
+      createdAt: loginTime,
       actorId: admin.id,
       actorRole: 'DEPARTMENT_ADMIN',
       action: 'LOGIN',
       entity: 'SESSION',
-      entityId: `login-${admin.id}-${day}`,
+      entityId: `login-${admin.id}-${s.day}-${s.hour}`,
       classId: null,
     });
     auditEntries.push({
-      createdAt: dateStr(day + deptIdx, 8, 15),
+      createdAt: new Date(+loginTime + 25 * 60000),
       actorId: admin.id,
       actorRole: 'DEPARTMENT_ADMIN',
       action: 'UPDATE',
@@ -1313,29 +1385,348 @@ for (const [deptIdx, admin] of adminUsers.filter((u) => u.role === 'DEPARTMENT_A
       classId: classConfigs[deptIdx * 3].id,
     });
     auditEntries.push({
-      createdAt: dateStr(day + deptIdx, 8, 45),
+      createdAt: logoutTime,
       actorId: admin.id,
       actorRole: 'DEPARTMENT_ADMIN',
       action: 'LOGOUT',
       entity: 'SESSION',
-      entityId: `logout-${admin.id}-${day}`,
+      entityId: `logout-${admin.id}-${s.day}-${s.hour}`,
       classId: null,
     });
   }
 }
 
-// For each of the 12 lecturers: multi-day activity story
-for (const [lIdx, lec] of lecturers.entries()) {
+// Multi-session schedules for all 12 lecturers across 4 prodi
+interface SessionSpec {
+  day: number;
+  hour: number;
+  minute: number;
+  durationMin: number;
+  noLogout?: boolean;
+  actions: Array<'MATERI' | 'ASESMEN' | 'PENILAIAN' | 'PUBLIKASI' | 'KOREKSI' | 'PENGUMUMAN' | 'PRESENSI'>;
+}
+
+const lecturerSchedules: Record<string, SessionSpec[]> = {
+  // 1. Dr. Aruna Prameswari (Informatika - Koordinator & Super Aktif: 34 logins across 19 days)
+  [ids.instructor]: [
+    { day: 0, hour: 8, minute: 0, durationMin: 140, actions: ['PRESENSI', 'MATERI'] },
+    { day: 0, hour: 13, minute: 45, durationMin: 105, actions: ['PENILAIAN', 'PUBLIKASI'] },
+    { day: 1, hour: 8, minute: 15, durationMin: 150, actions: ['MATERI', 'ASESMEN'] },
+    { day: 1, hour: 14, minute: 0, durationMin: 135, actions: ['PENILAIAN'] },
+    { day: 1, hour: 19, minute: 30, durationMin: 90, actions: ['PENGUMUMAN'] },
+    { day: 2, hour: 8, minute: 30, durationMin: 135, actions: ['PRESENSI', 'MATERI'] },
+    { day: 2, hour: 15, minute: 0, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 3, hour: 8, minute: 0, durationMin: 135, actions: ['MATERI', 'ASESMEN'] },
+    { day: 3, hour: 20, minute: 0, durationMin: 90, noLogout: true, actions: ['PENGUMUMAN'] },
+    { day: 5, hour: 8, minute: 15, durationMin: 135, actions: ['PRESENSI', 'PENILAIAN'] },
+    { day: 5, hour: 13, minute: 30, durationMin: 105, actions: ['PUBLIKASI'] },
+    { day: 7, hour: 8, minute: 0, durationMin: 150, actions: ['MATERI'] },
+    { day: 7, hour: 14, minute: 0, durationMin: 120, actions: ['PENILAIAN', 'PUBLIKASI'] },
+    { day: 7, hour: 19, minute: 45, durationMin: 60, actions: ['PENGUMUMAN'] },
+    { day: 9, hour: 8, minute: 30, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 11, hour: 8, minute: 0, durationMin: 135, actions: ['MATERI'] },
+    { day: 11, hour: 13, minute: 45, durationMin: 105, actions: ['PENILAIAN'] },
+    { day: 13, hour: 9, minute: 0, durationMin: 135, actions: ['ASESMEN'] },
+    { day: 15, hour: 8, minute: 15, durationMin: 135, actions: ['PRESENSI', 'MATERI'] },
+    { day: 15, hour: 14, minute: 15, durationMin: 105, actions: ['PENILAIAN'] },
+    { day: 17, hour: 8, minute: 0, durationMin: 150, actions: ['MATERI'] },
+    { day: 17, hour: 20, minute: 15, durationMin: 90, actions: ['PENGUMUMAN'] },
+    { day: 19, hour: 8, minute: 30, durationMin: 150, actions: ['PRESENSI'] },
+    { day: 21, hour: 8, minute: 0, durationMin: 135, actions: ['MATERI', 'ASESMEN'] },
+    { day: 21, hour: 14, minute: 0, durationMin: 105, actions: ['PENILAIAN'] },
+    { day: 23, hour: 9, minute: 0, durationMin: 150, actions: ['PRESENSI'] },
+    { day: 25, hour: 8, minute: 15, durationMin: 135, actions: ['MATERI'] },
+    { day: 25, hour: 15, minute: 0, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 28, hour: 8, minute: 0, durationMin: 150, actions: ['ASESMEN', 'MATERI'] },
+    { day: 28, hour: 13, minute: 30, durationMin: 105, actions: ['PENILAIAN'] },
+    { day: 30, hour: 8, minute: 30, durationMin: 150, actions: ['PRESENSI'] },
+    { day: 32, hour: 8, minute: 0, durationMin: 135, actions: ['MATERI'] },
+    { day: 32, hour: 14, minute: 0, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 34, hour: 8, minute: 30, durationMin: 120, actions: ['MATERI'] },
+  ],
+
+  // 2. Bagas Mahendra, M.Kom. (Informatika - Dosen Menengah: 20 logins across 13 days)
+  ['00000000-0000-4000-8000-000000000011']: [
+    { day: 0, hour: 10, minute: 0, durationMin: 105, actions: ['PRESENSI'] },
+    { day: 1, hour: 9, minute: 30, durationMin: 150, actions: ['MATERI', 'ASESMEN'] },
+    { day: 1, hour: 13, minute: 45, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 3, hour: 9, minute: 15, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 3, hour: 14, minute: 0, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 5, hour: 10, minute: 0, durationMin: 135, actions: ['MATERI'] },
+    { day: 7, hour: 9, minute: 30, durationMin: 150, actions: ['ASESMEN'] },
+    { day: 7, hour: 15, minute: 0, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 10, hour: 9, minute: 0, durationMin: 150, actions: ['PRESENSI'] },
+    { day: 13, hour: 9, minute: 30, durationMin: 150, actions: ['MATERI'] },
+    { day: 13, hour: 14, minute: 15, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 16, hour: 10, minute: 0, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 19, hour: 9, minute: 15, durationMin: 150, actions: ['ASESMEN'] },
+    { day: 22, hour: 9, minute: 30, durationMin: 150, actions: ['MATERI'] },
+    { day: 22, hour: 13, minute: 30, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 26, hour: 10, minute: 0, durationMin: 120, actions: ['PRESENSI'] },
+    { day: 29, hour: 9, minute: 15, durationMin: 135, actions: ['MATERI'] },
+    { day: 29, hour: 14, minute: 0, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 33, hour: 9, minute: 30, durationMin: 135, actions: ['MATERI'] },
+    { day: 33, hour: 13, minute: 45, durationMin: 90, actions: ['PENILAIAN'] },
+  ],
+
+  // 3. Citra Adinata, M.Kom. (Informatika - Dosen Praktikum: 26 logins across 16 days)
+  ['00000000-0000-4000-8000-000000000012']: [
+    { day: 1, hour: 13, minute: 0, durationMin: 165, actions: ['MATERI', 'ASESMEN'] },
+    { day: 1, hour: 20, minute: 15, durationMin: 135, noLogout: true, actions: ['PENILAIAN'] },
+    { day: 2, hour: 13, minute: 30, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 2, hour: 20, minute: 0, durationMin: 105, actions: ['PENILAIAN', 'PUBLIKASI'] },
+    { day: 4, hour: 13, minute: 15, durationMin: 135, actions: ['MATERI'] },
+    { day: 6, hour: 13, minute: 0, durationMin: 150, actions: ['ASESMEN'] },
+    { day: 6, hour: 19, minute: 30, durationMin: 105, actions: ['PENILAIAN'] },
+    { day: 8, hour: 14, minute: 0, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 10, hour: 13, minute: 30, durationMin: 135, actions: ['MATERI'] },
+    { day: 10, hour: 20, minute: 0, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 12, hour: 13, minute: 0, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 14, hour: 13, minute: 45, durationMin: 135, actions: ['MATERI'] },
+    { day: 14, hour: 19, minute: 45, durationMin: 105, actions: ['PENILAIAN'] },
+    { day: 17, hour: 13, minute: 0, durationMin: 150, actions: ['ASESMEN'] },
+    { day: 19, hour: 13, minute: 30, durationMin: 150, actions: ['MATERI'] },
+    { day: 19, hour: 20, minute: 30, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 22, hour: 13, minute: 15, durationMin: 150, actions: ['PRESENSI'] },
+    { day: 22, hour: 19, minute: 45, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 25, hour: 14, minute: 0, durationMin: 135, actions: ['MATERI'] },
+    { day: 25, hour: 19, minute: 30, durationMin: 105, actions: ['PENILAIAN'] },
+    { day: 28, hour: 13, minute: 30, durationMin: 135, actions: ['ASESMEN'] },
+    { day: 28, hour: 20, minute: 0, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 31, hour: 13, minute: 0, durationMin: 150, actions: ['MATERI'] },
+    { day: 31, hour: 20, minute: 0, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 34, hour: 14, minute: 0, durationMin: 120, actions: ['PRESENSI'] },
+    { day: 34, hour: 19, minute: 30, durationMin: 90, actions: ['PENILAIAN'] },
+  ],
+
+  // 4. Dr. Damar Wicaksana (Teknik Sipil - Senior: 15 logins across 11 days)
+  ['00000000-0000-4000-8000-000000000013']: [
+    { day: 1, hour: 8, minute: 30, durationMin: 150, actions: ['MATERI', 'PRESENSI'] },
+    { day: 1, hour: 13, minute: 30, durationMin: 75, actions: ['PENILAIAN'] },
+    { day: 4, hour: 8, minute: 15, durationMin: 150, actions: ['ASESMEN'] },
+    { day: 7, hour: 8, minute: 30, durationMin: 165, actions: ['MATERI'] },
+    { day: 7, hour: 14, minute: 0, durationMin: 75, actions: ['PENILAIAN'] },
+    { day: 11, hour: 8, minute: 45, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 14, hour: 8, minute: 30, durationMin: 150, actions: ['MATERI'] },
+    { day: 14, hour: 13, minute: 45, durationMin: 75, actions: ['PENILAIAN'] },
+    { day: 18, hour: 8, minute: 15, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 21, hour: 8, minute: 30, durationMin: 150, actions: ['ASESMEN'] },
+    { day: 25, hour: 8, minute: 45, durationMin: 150, actions: ['MATERI'] },
+    { day: 25, hour: 14, minute: 0, durationMin: 75, actions: ['PENILAIAN'] },
+    { day: 28, hour: 8, minute: 30, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 32, hour: 8, minute: 15, durationMin: 135, actions: ['MATERI'] },
+    { day: 35, hour: 8, minute: 30, durationMin: 135, actions: ['PENILAIAN'] },
+  ],
+
+  // 5. Elina Paramitha, M.T. (Teknik Sipil - Rajin Menilai: 29 logins across 18 days)
+  ['00000000-0000-4000-8000-000000000021']: [
+    { day: 0, hour: 10, minute: 15, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 1, hour: 10, minute: 30, durationMin: 135, actions: ['MATERI', 'ASESMEN'] },
+    { day: 1, hour: 19, minute: 15, durationMin: 165, actions: ['PENILAIAN', 'PUBLIKASI'] },
+    { day: 2, hour: 10, minute: 0, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 2, hour: 19, minute: 30, durationMin: 135, noLogout: true, actions: ['PENILAIAN'] },
+    { day: 4, hour: 10, minute: 30, durationMin: 135, actions: ['MATERI'] },
+    { day: 4, hour: 19, minute: 0, durationMin: 150, actions: ['PENILAIAN'] },
+    { day: 6, hour: 10, minute: 15, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 8, hour: 10, minute: 30, durationMin: 150, actions: ['ASESMEN'] },
+    { day: 8, hour: 19, minute: 45, durationMin: 120, actions: ['PENILAIAN'] },
+    { day: 10, hour: 10, minute: 0, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 12, hour: 10, minute: 30, durationMin: 135, actions: ['MATERI'] },
+    { day: 12, hour: 19, minute: 15, durationMin: 135, actions: ['PENILAIAN'] },
+    { day: 14, hour: 10, minute: 15, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 16, hour: 10, minute: 30, durationMin: 135, actions: ['ASESMEN'] },
+    { day: 16, hour: 19, minute: 30, durationMin: 150, actions: ['PENILAIAN'] },
+    { day: 18, hour: 10, minute: 0, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 20, hour: 10, minute: 30, durationMin: 150, actions: ['MATERI'] },
+    { day: 20, hour: 19, minute: 0, durationMin: 135, actions: ['PENILAIAN'] },
+    { day: 22, hour: 10, minute: 15, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 22, hour: 19, minute: 30, durationMin: 120, actions: ['PENILAIAN'] },
+    { day: 24, hour: 10, minute: 30, durationMin: 135, actions: ['MATERI'] },
+    { day: 24, hour: 19, minute: 30, durationMin: 135, actions: ['PENILAIAN'] },
+    { day: 27, hour: 10, minute: 0, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 27, hour: 19, minute: 0, durationMin: 135, actions: ['PENILAIAN'] },
+    { day: 29, hour: 10, minute: 30, durationMin: 135, actions: ['ASESMEN'] },
+    { day: 29, hour: 19, minute: 15, durationMin: 135, actions: ['PENILAIAN'] },
+    { day: 32, hour: 10, minute: 15, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 34, hour: 10, minute: 30, durationMin: 135, actions: ['MATERI'] },
+  ],
+
+  // 6. Farhan Kusuma, M.T. (Teknik Sipil - Beban Minimal: 11 logins across 8 days)
+  ['00000000-0000-4000-8000-000000000022']: [
+    { day: 2, hour: 10, minute: 0, durationMin: 135, actions: ['MATERI', 'PRESENSI'] },
+    { day: 2, hour: 14, minute: 0, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 5, hour: 10, minute: 15, durationMin: 135, actions: ['ASESMEN'] },
+    { day: 5, hour: 14, minute: 30, durationMin: 75, actions: ['PENILAIAN'] },
+    { day: 10, hour: 10, minute: 0, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 15, hour: 10, minute: 30, durationMin: 135, actions: ['MATERI'] },
+    { day: 19, hour: 10, minute: 0, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 19, hour: 14, minute: 15, durationMin: 75, actions: ['PENILAIAN'] },
+    { day: 24, hour: 10, minute: 15, durationMin: 135, actions: ['ASESMEN'] },
+    { day: 29, hour: 10, minute: 0, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 33, hour: 10, minute: 30, durationMin: 120, actions: ['MATERI'] },
+  ],
+
+  // 7. Dr. Gita Larasati (Akuntansi - Kaprodi & Aktif: 27 logins across 17 days)
+  ['00000000-0000-4000-8000-000000000023']: [
+    { day: 0, hour: 8, minute: 30, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 1, hour: 7, minute: 45, durationMin: 150, actions: ['MATERI', 'ASESMEN'] },
+    { day: 1, hour: 15, minute: 30, durationMin: 105, actions: ['PENILAIAN', 'PUBLIKASI'] },
+    { day: 2, hour: 8, minute: 0, durationMin: 150, actions: ['PRESENSI'] },
+    { day: 2, hour: 14, minute: 0, durationMin: 105, actions: ['PENILAIAN'] },
+    { day: 3, hour: 8, minute: 15, durationMin: 135, actions: ['MATERI'] },
+    { day: 5, hour: 7, minute: 45, durationMin: 150, actions: ['ASESMEN'] },
+    { day: 5, hour: 15, minute: 0, durationMin: 105, actions: ['PENILAIAN'] },
+    { day: 7, hour: 8, minute: 0, durationMin: 150, actions: ['PRESENSI'] },
+    { day: 7, hour: 14, minute: 30, durationMin: 105, actions: ['PENILAIAN'] },
+    { day: 9, hour: 8, minute: 15, durationMin: 150, actions: ['MATERI'] },
+    { day: 12, hour: 7, minute: 45, durationMin: 150, actions: ['PRESENSI'] },
+    { day: 12, hour: 15, minute: 15, durationMin: 105, actions: ['PENILAIAN'] },
+    { day: 14, hour: 8, minute: 0, durationMin: 150, actions: ['ASESMEN'] },
+    { day: 16, hour: 8, minute: 30, durationMin: 150, actions: ['MATERI'] },
+    { day: 16, hour: 14, minute: 15, durationMin: 105, actions: ['PENILAIAN'] },
+    { day: 18, hour: 7, minute: 45, durationMin: 150, actions: ['PRESENSI'] },
+    { day: 21, hour: 8, minute: 0, durationMin: 150, actions: ['MATERI'] },
+    { day: 21, hour: 15, minute: 0, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 24, hour: 8, minute: 15, durationMin: 150, actions: ['ASESMEN'] },
+    { day: 24, hour: 14, minute: 30, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 27, hour: 7, minute: 45, durationMin: 150, actions: ['PRESENSI'] },
+    { day: 27, hour: 14, minute: 30, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 30, hour: 8, minute: 0, durationMin: 150, actions: ['MATERI'] },
+    { day: 30, hour: 15, minute: 0, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 33, hour: 8, minute: 15, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 35, hour: 8, minute: 0, durationMin: 135, actions: ['MATERI'] },
+  ],
+
+  // 8. Hadi Suryatama, M.Ak. (Akuntansi - Standar: 17 logins across 12 days)
+  ['00000000-0000-4000-8000-000000000024']: [
+    { day: 1, hour: 9, minute: 15, durationMin: 135, actions: ['MATERI', 'PRESENSI'] },
+    { day: 1, hour: 14, minute: 0, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 4, hour: 9, minute: 30, durationMin: 150, actions: ['ASESMEN'] },
+    { day: 4, hour: 14, minute: 15, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 6, hour: 9, minute: 0, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 9, hour: 9, minute: 30, durationMin: 135, actions: ['MATERI'] },
+    { day: 9, hour: 13, minute: 45, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 12, hour: 9, minute: 15, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 15, hour: 9, minute: 0, durationMin: 150, actions: ['ASESMEN'] },
+    { day: 15, hour: 14, minute: 0, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 18, hour: 9, minute: 30, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 22, hour: 9, minute: 15, durationMin: 135, actions: ['MATERI'] },
+    { day: 22, hour: 14, minute: 15, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 25, hour: 9, minute: 0, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 28, hour: 9, minute: 30, durationMin: 135, actions: ['ASESMEN'] },
+    { day: 32, hour: 9, minute: 15, durationMin: 135, actions: ['MATERI'] },
+    { day: 35, hour: 9, minute: 0, durationMin: 135, actions: ['PENILAIAN'] },
+  ],
+
+  // 9. Intan Kirana, M.Ak. (Akuntansi - Teraktif Kampus: 35 logins across 20 days)
+  ['00000000-0000-4000-8000-000000000025']: [
+    { day: 0, hour: 9, minute: 0, durationMin: 150, actions: ['PRESENSI'] },
+    { day: 0, hour: 14, minute: 0, durationMin: 105, actions: ['PENILAIAN', 'PUBLIKASI'] },
+    { day: 1, hour: 8, minute: 15, durationMin: 105, actions: ['MATERI'] },
+    { day: 1, hour: 13, minute: 15, durationMin: 105, actions: ['ASESMEN'] },
+    { day: 1, hour: 20, minute: 30, durationMin: 105, actions: ['PENILAIAN'] },
+    { day: 2, hour: 8, minute: 30, durationMin: 105, actions: ['PRESENSI'] },
+    { day: 2, hour: 14, minute: 0, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 3, hour: 8, minute: 0, durationMin: 120, actions: ['MATERI'] },
+    { day: 3, hour: 20, minute: 15, durationMin: 105, noLogout: true, actions: ['PENGUMUMAN'] },
+    { day: 4, hour: 8, minute: 30, durationMin: 120, actions: ['PRESENSI'] },
+    { day: 6, hour: 8, minute: 15, durationMin: 105, actions: ['MATERI'] },
+    { day: 6, hour: 13, minute: 30, durationMin: 105, actions: ['ASESMEN'] },
+    { day: 6, hour: 19, minute: 45, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 8, hour: 8, minute: 0, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 8, hour: 14, minute: 15, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 10, hour: 8, minute: 30, durationMin: 120, actions: ['MATERI'] },
+    { day: 12, hour: 8, minute: 15, durationMin: 105, actions: ['PRESENSI'] },
+    { day: 12, hour: 13, minute: 45, durationMin: 105, actions: ['PENILAIAN'] },
+    { day: 14, hour: 8, minute: 0, durationMin: 135, actions: ['ASESMEN'] },
+    { day: 16, hour: 8, minute: 30, durationMin: 120, actions: ['MATERI'] },
+    { day: 16, hour: 14, minute: 0, durationMin: 105, actions: ['PENILAIAN'] },
+    { day: 18, hour: 8, minute: 15, durationMin: 105, actions: ['PRESENSI'] },
+    { day: 20, hour: 8, minute: 0, durationMin: 135, actions: ['MATERI'] },
+    { day: 20, hour: 13, minute: 30, durationMin: 105, actions: ['PENILAIAN'] },
+    { day: 22, hour: 8, minute: 30, durationMin: 120, actions: ['PRESENSI'] },
+    { day: 24, hour: 8, minute: 15, durationMin: 105, actions: ['ASESMEN'] },
+    { day: 24, hour: 14, minute: 15, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 26, hour: 8, minute: 0, durationMin: 135, actions: ['MATERI'] },
+    { day: 29, hour: 8, minute: 30, durationMin: 120, actions: ['PRESENSI'] },
+    { day: 29, hour: 13, minute: 45, durationMin: 105, actions: ['PENILAIAN'] },
+    { day: 31, hour: 8, minute: 15, durationMin: 105, actions: ['MATERI'] },
+    { day: 33, hour: 8, minute: 0, durationMin: 135, actions: ['ASESMEN'] },
+    { day: 33, hour: 14, minute: 0, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 35, hour: 8, minute: 30, durationMin: 105, actions: ['PRESENSI'] },
+  ],
+
+  // 10. Dr. Jati Nugraha (Manajemen - Teratur: 16 logins across 11 days)
+  ['00000000-0000-4000-8000-000000000026']: [
+    { day: 1, hour: 8, minute: 45, durationMin: 150, actions: ['MATERI', 'PRESENSI'] },
+    { day: 1, hour: 13, minute: 30, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 2, hour: 9, minute: 0, durationMin: 150, actions: ['PRESENSI'] },
+    { day: 5, hour: 8, minute: 45, durationMin: 150, actions: ['ASESMEN'] },
+    { day: 5, hour: 14, minute: 0, durationMin: 75, actions: ['PENILAIAN'] },
+    { day: 8, hour: 9, minute: 0, durationMin: 150, actions: ['PRESENSI'] },
+    { day: 12, hour: 8, minute: 45, durationMin: 150, actions: ['MATERI'] },
+    { day: 12, hour: 13, minute: 45, durationMin: 75, actions: ['PENILAIAN'] },
+    { day: 15, hour: 9, minute: 0, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 19, hour: 8, minute: 45, durationMin: 150, actions: ['ASESMEN'] },
+    { day: 19, hour: 14, minute: 0, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 22, hour: 9, minute: 0, durationMin: 150, actions: ['PRESENSI'] },
+    { day: 26, hour: 8, minute: 45, durationMin: 150, actions: ['MATERI'] },
+    { day: 26, hour: 13, minute: 30, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 29, hour: 9, minute: 0, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 33, hour: 8, minute: 45, durationMin: 135, actions: ['MATERI'] },
+  ],
+
+  // 11. Kirana Wulandari, M.M. (Manajemen - Aktif: 23 logins across 15 days)
+  ['00000000-0000-4000-8000-000000000027']: [
+    { day: 0, hour: 9, minute: 30, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 1, hour: 10, minute: 0, durationMin: 135, actions: ['MATERI', 'ASESMEN'] },
+    { day: 1, hour: 16, minute: 0, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 2, hour: 10, minute: 15, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 4, hour: 10, minute: 0, durationMin: 135, actions: ['MATERI'] },
+    { day: 4, hour: 15, minute: 30, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 6, hour: 10, minute: 30, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 8, hour: 10, minute: 0, durationMin: 135, actions: ['ASESMEN'] },
+    { day: 8, hour: 16, minute: 0, durationMin: 75, actions: ['PENILAIAN'] },
+    { day: 10, hour: 10, minute: 15, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 12, hour: 10, minute: 0, durationMin: 135, actions: ['MATERI'] },
+    { day: 12, hour: 15, minute: 45, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 15, hour: 10, minute: 30, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 18, hour: 10, minute: 0, durationMin: 135, actions: ['ASESMEN'] },
+    { day: 18, hour: 16, minute: 0, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 21, hour: 10, minute: 15, durationMin: 135, actions: ['MATERI'] },
+    { day: 21, hour: 15, minute: 30, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 25, hour: 10, minute: 0, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 25, hour: 15, minute: 30, durationMin: 90, actions: ['PENILAIAN'] },
+    { day: 28, hour: 10, minute: 30, durationMin: 135, actions: ['MATERI'] },
+    { day: 28, hour: 16, minute: 0, durationMin: 75, actions: ['PENILAIAN'] },
+    { day: 31, hour: 10, minute: 0, durationMin: 135, actions: ['PRESENSI'] },
+    { day: 34, hour: 10, minute: 15, durationMin: 120, actions: ['MATERI'] },
+  ],
+
+  // 12. Laksana Pradipta, M.M. (Manajemen - Minimal / Santai: 9 logins across 7 days)
+  ['00000000-0000-4000-8000-000000000028']: [
+    { day: 3, hour: 13, minute: 30, durationMin: 105, actions: ['MATERI', 'PRESENSI'] },
+    { day: 3, hour: 19, minute: 30, durationMin: 90, noLogout: true, actions: ['PENGUMUMAN'] },
+    { day: 6, hour: 13, minute: 45, durationMin: 105, actions: ['PRESENSI'] },
+    { day: 11, hour: 13, minute: 30, durationMin: 105, actions: ['ASESMEN'] },
+    { day: 11, hour: 16, minute: 0, durationMin: 60, actions: ['PENILAIAN'] },
+    { day: 16, hour: 13, minute: 15, durationMin: 105, actions: ['PRESENSI'] },
+    { day: 21, hour: 13, minute: 30, durationMin: 105, actions: ['MATERI'] },
+    { day: 27, hour: 13, minute: 45, durationMin: 105, actions: ['PRESENSI'] },
+    { day: 32, hour: 13, minute: 30, durationMin: 105, actions: ['PENILAIAN'] },
+  ],
+};
+
+// For each of the 12 lecturers: execute their multi-session story
+for (const lec of lecturers) {
+  const specs = lecturerSchedules[lec.id] || [];
   const lecturerClasses = classConfigs.filter((c) => c.instructors.includes(lec.id) && c.status === 'PUBLISHED');
   const targetClass = lecturerClasses[0] || classConfigs[0];
 
-  // Distinct active days across September and October
-  const activeDays = [32, 28, 22, 17, 12, 7, 3, 1];
-
-  for (const [dIdx, day] of activeDays.entries()) {
-    const baseHour = 8 + (lIdx % 4);
-    const loginTime = dateStr(day, baseHour, 10 + (lIdx * 3) % 40);
-    const logoutTime = dateStr(day, baseHour + 2, 30);
+  for (let sIdx = 0; sIdx < specs.length; sIdx++) {
+    const spec = specs[sIdx];
+    const loginTime = dateStr(spec.day, spec.hour, spec.minute);
+    const logoutTime = dateStr(spec.day, spec.hour, spec.minute + spec.durationMin);
 
     // 1. LOGIN
     auditEntries.push({
@@ -1344,141 +1735,121 @@ for (const [lIdx, lec] of lecturers.entries()) {
       actorRole: 'INSTRUCTOR',
       action: 'LOGIN',
       entity: 'SESSION',
-      entityId: `login-${lec.id}-${day}`,
+      entityId: `login-${lec.id}-${spec.day}-${spec.hour}`,
       classId: null,
     });
 
-    // 2. Academic actions depending on day in semester
-    if (dIdx === 0) {
-      // Early day: create sections and upload course materials
-      auditEntries.push({
-        createdAt: new Date(+loginTime + 15 * 60000),
-        actorId: lec.id,
-        actorRole: 'INSTRUCTOR',
-        action: 'CREATE',
-        entity: 'SECTION',
-        entityId: targetClass.id,
-        classId: targetClass.id,
-      });
-      auditEntries.push({
-        createdAt: new Date(+loginTime + 30 * 60000),
-        actorId: lec.id,
-        actorRole: 'INSTRUCTOR',
-        action: 'CREATE',
-        entity: 'RESOURCE',
-        entityId: `res-${targetClass.id}-1`,
-        classId: targetClass.id,
-      });
-      auditEntries.push({
-        createdAt: new Date(+loginTime + 45 * 60000),
-        actorId: lec.id,
-        actorRole: 'INSTRUCTOR',
-        action: 'PUBLISH',
-        entity: 'RESOURCE',
-        entityId: `res-${targetClass.id}-1`,
-        classId: targetClass.id,
-      });
-    } else if (dIdx === 1) {
-      // Post announcement and create Assignment 1
-      auditEntries.push({
-        createdAt: new Date(+loginTime + 20 * 60000),
-        actorId: lec.id,
-        actorRole: 'INSTRUCTOR',
-        action: 'CREATE',
-        entity: 'ANNOUNCEMENT',
-        entityId: `ann-${targetClass.id}`,
-        classId: targetClass.id,
-      });
-      auditEntries.push({
-        createdAt: new Date(+loginTime + 40 * 60000),
-        actorId: lec.id,
-        actorRole: 'INSTRUCTOR',
-        action: 'CREATE',
-        entity: 'ASSIGNMENT',
-        entityId: `asg-${targetClass.id}`,
-        classId: targetClass.id,
-      });
-    } else if (dIdx === 2) {
-      // Create quiz and publish
-      auditEntries.push({
-        createdAt: new Date(+loginTime + 25 * 60000),
-        actorId: lec.id,
-        actorRole: 'INSTRUCTOR',
-        action: 'CREATE',
-        entity: 'QUIZ',
-        entityId: `quiz-${targetClass.id}`,
-        classId: targetClass.id,
-      });
-      auditEntries.push({
-        createdAt: new Date(+loginTime + 50 * 60000),
-        actorId: lec.id,
-        actorRole: 'INSTRUCTOR',
-        action: 'PUBLISH',
-        entity: 'QUIZ',
-        entityId: `quiz-${targetClass.id}`,
-        classId: targetClass.id,
-      });
-    } else if (dIdx >= 3 && dIdx <= 5) {
-      // Mid-semester: grading student submissions & quiz attempts
-      auditEntries.push({
-        createdAt: new Date(+loginTime + 20 * 60000),
-        actorId: lec.id,
-        actorRole: 'INSTRUCTOR',
-        action: 'GRADE_SUBMISSION',
-        entity: 'SUBMISSION',
-        entityId: `sub-${targetClass.id}-${dIdx}`,
-        classId: targetClass.id,
-      });
-      auditEntries.push({
-        createdAt: new Date(+loginTime + 45 * 60000),
-        actorId: lec.id,
-        actorRole: 'INSTRUCTOR',
-        action: 'GRADE_ATTEMPT',
-        entity: 'QUIZ_ATTEMPT',
-        entityId: `qa-${targetClass.id}-${dIdx}`,
-        classId: targetClass.id,
-      });
-      auditEntries.push({
-        createdAt: new Date(+loginTime + 70 * 60000),
-        actorId: lec.id,
-        actorRole: 'INSTRUCTOR',
-        action: 'PUBLISH_GRADES',
-        entity: 'GRADE',
-        entityId: `pub-${targetClass.id}-${dIdx}`,
-        classId: targetClass.id,
-      });
-    } else {
-      // Recent days: attendance checking and review
-      auditEntries.push({
-        createdAt: new Date(+loginTime + 20 * 60000),
-        actorId: lec.id,
-        actorRole: 'INSTRUCTOR',
-        action: 'UPDATE',
-        entity: 'ATTENDANCE_RECORD',
-        entityId: `att-${targetClass.id}`,
-        classId: targetClass.id,
-      });
-      auditEntries.push({
-        createdAt: new Date(+loginTime + 50 * 60000),
-        actorId: lec.id,
-        actorRole: 'INSTRUCTOR',
-        action: 'GRADE_SUBMISSION',
-        entity: 'SUBMISSION',
-        entityId: `sub-${targetClass.id}-rec`,
-        classId: targetClass.id,
-      });
-    }
-
-    // 3. LOGOUT
+    // 2. Open class (ACCESS)
     auditEntries.push({
-      createdAt: logoutTime,
+      createdAt: new Date(+loginTime + 3 * 60000),
       actorId: lec.id,
       actorRole: 'INSTRUCTOR',
-      action: 'LOGOUT',
-      entity: 'SESSION',
-      entityId: `logout-${lec.id}-${day}`,
-      classId: null,
+      action: 'ACCESS',
+      entity: 'CLASS',
+      entityId: targetClass.id,
+      classId: targetClass.id,
     });
+
+    // 3. Academic actions in this session
+    let offsetMin = 8;
+    for (const act of spec.actions) {
+      const actTime = new Date(+loginTime + offsetMin * 60000);
+      offsetMin += 14;
+
+      if (act === 'MATERI') {
+        auditEntries.push({
+          createdAt: actTime,
+          actorId: lec.id,
+          actorRole: 'INSTRUCTOR',
+          action: 'CREATE',
+          entity: 'RESOURCE',
+          entityId: `res-${targetClass.id}-${spec.day}-${spec.hour}`,
+          classId: targetClass.id,
+        });
+        auditEntries.push({
+          createdAt: new Date(+actTime + 5 * 60000),
+          actorId: lec.id,
+          actorRole: 'INSTRUCTOR',
+          action: 'PUBLISH',
+          entity: 'RESOURCE',
+          entityId: `res-${targetClass.id}-${spec.day}-${spec.hour}`,
+          classId: targetClass.id,
+        });
+      } else if (act === 'ASESMEN') {
+        auditEntries.push({
+          createdAt: actTime,
+          actorId: lec.id,
+          actorRole: 'INSTRUCTOR',
+          action: 'CREATE',
+          entity: 'ASSIGNMENT',
+          entityId: `asg-${targetClass.id}-${spec.day}-${spec.hour}`,
+          classId: targetClass.id,
+        });
+      } else if (act === 'PENILAIAN') {
+        auditEntries.push({
+          createdAt: actTime,
+          actorId: lec.id,
+          actorRole: 'INSTRUCTOR',
+          action: 'GRADE_SUBMISSION',
+          entity: 'SUBMISSION',
+          entityId: `sub-${targetClass.id}-${spec.day}-${spec.hour}`,
+          classId: targetClass.id,
+        });
+      } else if (act === 'PUBLIKASI') {
+        auditEntries.push({
+          createdAt: actTime,
+          actorId: lec.id,
+          actorRole: 'INSTRUCTOR',
+          action: 'PUBLISH_GRADES',
+          entity: 'GRADE',
+          entityId: `pub-${targetClass.id}-${spec.day}-${spec.hour}`,
+          classId: targetClass.id,
+        });
+      } else if (act === 'KOREKSI') {
+        auditEntries.push({
+          createdAt: actTime,
+          actorId: lec.id,
+          actorRole: 'INSTRUCTOR',
+          action: 'CORRECT',
+          entity: 'GRADE',
+          entityId: `cor-${targetClass.id}-${spec.day}-${spec.hour}`,
+          classId: targetClass.id,
+        });
+      } else if (act === 'PENGUMUMAN') {
+        auditEntries.push({
+          createdAt: actTime,
+          actorId: lec.id,
+          actorRole: 'INSTRUCTOR',
+          action: 'CREATE',
+          entity: 'ANNOUNCEMENT',
+          entityId: `ann-${targetClass.id}-${spec.day}-${spec.hour}`,
+          classId: targetClass.id,
+        });
+      } else if (act === 'PRESENSI') {
+        auditEntries.push({
+          createdAt: actTime,
+          actorId: lec.id,
+          actorRole: 'INSTRUCTOR',
+          action: 'UPDATE',
+          entity: 'ATTENDANCE_RECORD',
+          entityId: `att-${targetClass.id}-${spec.day}-${spec.hour}`,
+          classId: targetClass.id,
+        });
+      }
+    }
+
+    // 4. LOGOUT (omitted if noLogout is true for unclosed session demonstration)
+    if (!spec.noLogout) {
+      auditEntries.push({
+        createdAt: logoutTime,
+        actorId: lec.id,
+        actorRole: 'INSTRUCTOR',
+        action: 'LOGOUT',
+        entity: 'SESSION',
+        entityId: `logout-${lec.id}-${spec.day}-${spec.hour}`,
+        classId: null,
+      });
+    }
   }
 }
 
