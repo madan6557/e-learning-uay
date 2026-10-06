@@ -15,7 +15,7 @@ const originFrom = (value: string | undefined, fallback: string) =>
   (value ?? fallback).split(",")[0].trim().replace(/\/$/, "");
 const appOrigin = originFrom(
   process.env.APP_ORIGIN,
-  production ? "https://e-learning.uay.ac.id" : "http://127.0.0.1:5173",
+  production ? "https://elearning.uay.ac.id" : "http://127.0.0.1:5173",
 );
 const apiOrigin = originFrom(process.env.API_ORIGIN, appOrigin);
 const accountUrlFromEnv = process.env.SSO_ACCOUNT_URL?.trim() ?? "";

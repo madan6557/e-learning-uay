@@ -649,6 +649,7 @@ function AuthCallbackPage({
         await api("/auth/session", "POST", {
           accessToken: oidcUser.access_token,
           idToken: oidcUser.id_token,
+          refreshToken: oidcUser.refresh_token,
         }).catch((err) => {
           console.warn("[Auth] Session sync non-fatal error:", err);
         });

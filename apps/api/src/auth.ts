@@ -102,6 +102,24 @@ export function getEffectiveRedirectUri(req?: Request): string {
   return config.redirectUri;
 }
 
+export function getEffectiveOrigin(req?: Request): string {
+  if (req) {
+    const originHeader = req.headers.origin;
+    if (typeof originHeader === "string" && originHeader.trim().length > 0) {
+      return originHeader.trim().replace(/\/$/, "");
+    }
+    const forwardedHost = (req.headers["x-forwarded-host"] as string)?.split(",")[0]?.trim();
+    const host = forwardedHost || req.headers.host;
+    const proto =
+      (req.headers["x-forwarded-proto"] as string)?.split(",")[0]?.trim() ||
+      (req.secure ? "https" : "http");
+    if (host) {
+      return `${proto}://${host}`;
+    }
+  }
+  return config.origin;
+}
+
 const oidcStateSecret =
   process.env.SSO_CLIENT_SECRET?.trim() ||
   process.env.SSO_WEBHOOK_SECRET?.trim() ||
@@ -715,10 +733,11 @@ export function registerAuth(app: Express) {
   });
   app.post("/api/v1/auth/session", async (req, res) => {
     ensure(config.authMode === "oidc" || isDemo, 503, "SSO_CONFIGURATION");
-    const { accessToken, idToken } = z
+    const { accessToken, idToken, refreshToken } = z
       .object({
         accessToken: z.string().min(1),
         idToken: z.string().optional(),
+        refreshToken: z.string().optional(),
       })
       .parse(req.body);
 
@@ -754,6 +773,7 @@ export function registerAuth(app: Express) {
         userId: user.id,
         accessToken,
         idToken,
+        refreshToken,
         expires: Number(access.exp) * 1000,
         createdAt: Date.now(),
       },
@@ -993,24 +1013,53 @@ export function registerAuth(app: Express) {
   app.post("/api/v1/auth/logout", async (req, res) => {
     const id = getSessionId(req);
     let logoutUrl: string | null = null;
+    let backchannelLoggedOut = false;
     if (id) {
       const stored = await cache.take(`session:${hash(id)}`);
       if (stored && config.authMode === "oidc") {
         const session: Session = JSON.parse(stored);
         const metadata = await oidcMetadata().catch(() => null);
         if (metadata?.end_session_endpoint) {
-          const url = new URL(metadata.end_session_endpoint);
-          url.search = new URLSearchParams({
-            id_token_hint: session.idToken ?? "",
-            post_logout_redirect_uri: config.origin,
-            client_id: config.clientId,
-          }).toString();
-          logoutUrl = url.href;
+          // 1. Attempt backchannel logout using refresh_token if available
+          if (session.refreshToken) {
+            try {
+              const bcRes = await fetch(metadata.end_session_endpoint, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: new URLSearchParams({
+                  client_id: config.clientId,
+                  refresh_token: session.refreshToken,
+                  ...(config.clientSecret
+                    ? { client_secret: config.clientSecret }
+                    : {}),
+                }),
+              });
+              if (bcRes.ok) {
+                backchannelLoggedOut = true;
+              }
+            } catch (err) {
+              console.warn("[Auth OIDC] Backchannel logout request failed:", err);
+            }
+          }
+
+          // 2. If backchannel logout didn't succeed, fallback to RP-initiated frontchannel redirect
+          if (!backchannelLoggedOut) {
+            const url = new URL(metadata.end_session_endpoint);
+            const effectiveOrigin = getEffectiveOrigin(req);
+            url.search = new URLSearchParams({
+              id_token_hint: session.idToken ?? "",
+              post_logout_redirect_uri: effectiveOrigin,
+              client_id: config.clientId,
+            }).toString();
+            logoutUrl = url.href;
+          }
         }
       }
     }
     clearAllAuthCookies(res, req);
-    res.json({ logoutUrl });
+    res.json({ ok: true, logoutUrl, backchannel: backchannelLoggedOut });
   });
 }
 export async function authenticate(

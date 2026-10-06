@@ -65,9 +65,7 @@ export async function handleOidcCallback(authConfig?: {
 export async function logoutOidc(): Promise<void> {
   if (userManagerInstance) {
     try {
-      await userManagerInstance.signoutRedirect();
-    } catch {
       await userManagerInstance.removeUser();
-    }
+    } catch {}
   }
 }
