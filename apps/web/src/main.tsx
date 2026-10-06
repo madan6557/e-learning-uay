@@ -455,10 +455,10 @@ function AuthShell({
             </a>
             <Breadcrumbs
               items={
-                pathname === "/dashboard"
-                  ? [{ label: "Beranda" }]
+                pathname === "/dashboard" || pathname === "/rector"
+                  ? [{ label: pathname === "/rector" ? "Pemantauan Akademik" : "Beranda" }]
                   : [
-                      { label: "Beranda", href: rector ? '/rector' : '/dashboard' },
+                      { label: rector ? "Pemantauan Akademik" : "Beranda", href: rector ? '/rector' : '/dashboard' },
                       { label: current },
                     ]
               }

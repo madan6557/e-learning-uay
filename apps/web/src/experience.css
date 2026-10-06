@@ -4,6 +4,11 @@
   --line: #dce3eb;
   --shadow: 0 4px 20px #1a558a06;
 }
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
 body {
   line-height: 1.5;
 }
@@ -615,7 +620,7 @@ input.score-input.changed {
   margin-bottom: 0;
 }
 @media (max-width: 1100px) {
-  .breadcrumbs li:first-child {
+  .breadcrumbs li:not(:last-child) {
     display: none;
   }
   .profile-layout {
@@ -1937,6 +1942,9 @@ textarea:focus {
   align-items: center;
   gap: 12px;
   min-width: 0;
+  flex-shrink: 1;
+  flex-wrap: nowrap;
+  overflow: hidden;
 }
 
 .topbar-right {
@@ -1944,10 +1952,14 @@ textarea:focus {
   align-items: center;
   gap: 10px;
   min-width: 0;
+  flex-shrink: 0;
+  flex-wrap: nowrap;
 }
 
 .topbar .breadcrumbs {
   font-size: 0.82rem;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .topbar .breadcrumbs ol {
@@ -1957,6 +1969,8 @@ textarea:focus {
   margin: 0;
   padding: 0;
   list-style: none;
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
 .topbar .breadcrumbs li {
@@ -1965,6 +1979,8 @@ textarea:focus {
   gap: 6px;
   color: var(--muted-foreground);
   font-size: 0.82rem;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .topbar .breadcrumbs li a {
@@ -1972,6 +1988,7 @@ textarea:focus {
   text-decoration: none;
   font-weight: 500;
   transition: color 140ms ease;
+  white-space: nowrap;
 }
 
 .topbar .breadcrumbs li a:hover {
@@ -1981,6 +1998,10 @@ textarea:focus {
 .topbar .breadcrumbs li:last-child {
   font-weight: 700;
   color: #22384e;
+  flex-shrink: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Environment / Demo Badge Minimal */
@@ -2119,6 +2140,41 @@ textarea:focus {
 
 .minimal-logout-btn:active {
   transform: scale(0.97);
+}
+
+@media (max-width: 1100px) {
+  .topbar .breadcrumbs li:not(:last-child) {
+    display: none;
+  }
+  .user-chip-name {
+    max-width: 115px;
+  }
+}
+
+@media (max-width: 960px) {
+  .topbar {
+    padding: 0 16px;
+    gap: 10px;
+  }
+  .topbar .environment-badge {
+    padding: 2px 7px;
+    font-size: 0.65rem;
+  }
+  .user-chip-name {
+    max-width: 95px;
+  }
+  .minimal-logout-btn .logout-text {
+    display: none;
+  }
+  .minimal-logout-btn {
+    padding: 6px 8px;
+  }
+}
+
+@media (max-width: 860px) {
+  .topbar .environment-badge {
+    display: none;
+  }
 }
 
 /* ==========================================================================
@@ -2594,10 +2650,13 @@ textarea:focus {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: nowrap;
   gap: 16px;
   font-size: 0.83rem;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
+  min-width: 0;
+  box-sizing: border-box;
 }
 @media (max-width: 760px) {
   .topbar {
@@ -3316,11 +3375,17 @@ table th {
 .sidebar nav a .nav-label {white-space:normal;overflow:visible;text-overflow:clip;}
 .sidebar-collapse-btn { font-size: 0.875rem; min-height: 40px; }
 .nav-caption {font-size: 0.8125rem;}
+.workspace,
+main {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
 @media(min-width:761px) {
   .sidebar { width: 248px; }
-  .workspace { margin-left: 248px; width: calc(100% - 248px); }
+  .workspace { margin-left: 248px; width: calc(100% - 248px); min-width: 0; max-width: 100%; }
   .nav-collapsed .sidebar {width:64px;}
-  .nav-collapsed .workspace {margin-left:64px;width:calc(100% - 64px);}
+  .nav-collapsed .workspace {margin-left:64px;width:calc(100% - 64px); min-width: 0; max-width: 100%;}
   .nav-collapsed .sidebar-brand {width:64px;}
   .nav-collapsed .sidebar nav a,.nav-collapsed .sidebar-collapse-btn {width:44px;height:44px;}
   .nav-collapsed .sidebar nav a svg {width:20px;height:20px;}

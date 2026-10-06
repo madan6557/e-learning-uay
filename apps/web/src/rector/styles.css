@@ -8,6 +8,11 @@
   --muted: #728093;
   --border: #e6eaf0;
   --teal: #368a87;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  overflow-x: clip;
+  box-sizing: border-box;
 }
 .rector-dashboard * {
   box-sizing: border-box;
@@ -1568,19 +1573,31 @@
 }
 .rector-dashboard .rector-metrics {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
   margin-bottom: 25px;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
 }
 .rector-dashboard .metric {
   padding: 24px;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 .rector-dashboard .metric-top {
   font-size: 16px;
   color: #466075;
+  min-width: 0;
 }
 .rector-dashboard .metric > strong {
   font-size: 37px;
   line-height: 1.5;
   margin: 12px 0 4px;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  min-width: 0;
 }
 .rector-dashboard .metric em {
   font:
@@ -1588,12 +1605,12 @@
     Arial,
     sans-serif;
   color: #698096;
-  white-space: nowrap;
 }
 .rector-dashboard .metric small {
   font-size: 16px;
   line-height: 1.6;
   color: #617689;
+  overflow-wrap: break-word;
 }
 .rector-dashboard .rector-metrics .metric:nth-child(2) {
   border-top: 3px solid #d6a64b;
@@ -2127,10 +2144,11 @@
     grid-template-columns: 1fr;
   }
   .rector-dashboard .rector-metrics {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 12px;
   }
   .rector-dashboard .rector-metrics .metric {
-    padding: 19px;
+    padding: 18px;
   }
   .rector-dashboard .metric em {
     display: block;
@@ -2401,13 +2419,21 @@
 }
 .rector-dashboard .rector-content {
   padding: 12px 0 0;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
 }
 .rector-dashboard .page-heading {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
+  flex-wrap: wrap;
   min-height: 0;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   margin-bottom: 14px;
 }
 .rector-dashboard .page-heading h1 {
@@ -2493,6 +2519,10 @@
   border-bottom: 1px solid var(--border);
   padding-bottom: 12px;
   margin-bottom: 16px;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
 }
 .rector-dashboard .rector-tabs::-webkit-scrollbar {
   display: none;
@@ -2532,6 +2562,9 @@
 .rector-dashboard .filter-panel {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-panel);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .rector-dashboard .daily-bar .bar-label {
   font-size: 12px;
