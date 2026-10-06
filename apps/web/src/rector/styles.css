@@ -2136,13 +2136,7 @@
     display: block;
   }
 }
-@media (max-width: 900px) {
-  .rector-dashboard .rector-metrics {
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 12px;
-  }
-}
-@media (max-width: 640px) {
+@media (max-width: 760px) {
   .rector-dashboard .rector-metrics {
     grid-template-columns: 1fr;
   }
@@ -2163,8 +2157,6 @@
   .rector-dashboard .rector-metrics .metric-top svg {
     display: none;
   }
-}
-@media (max-width: 768px) {
   .rector-dashboard .table-wrap:has(.rector-lecturer-table) {
     display: none;
   }
@@ -2438,7 +2430,7 @@
   font-size: 14px;
   white-space: nowrap;
 }
-@media (max-width: 768px) {
+@media (max-width: 760px) {
   .rector-dashboard .page-heading {
     flex-direction: column;
     align-items: stretch;
@@ -2568,7 +2560,7 @@
 .rector-dashboard .definition p {
   max-width: 75ch;
 }
-@media (max-width: 768px) {
+@media (max-width: 760px) {
   .rector-dashboard {
     font-size: 14px;
   }

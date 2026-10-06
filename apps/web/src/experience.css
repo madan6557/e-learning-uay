@@ -628,7 +628,7 @@ input.score-input.changed {
     gap: 30px;
   }
 }
-@media (max-width: 1024px) {
+@media (max-width: 760px) {
   .app-shell {
     display: block;
   }
@@ -3316,7 +3316,7 @@ table th {
 .sidebar nav a .nav-label {white-space:normal;overflow:visible;text-overflow:clip;}
 .sidebar-collapse-btn { font-size: 0.875rem; min-height: 40px; }
 .nav-caption {font-size: 0.8125rem;}
-@media(min-width:1025px) {
+@media(min-width:761px) {
   .sidebar { width: 248px; }
   .workspace { margin-left: 248px; width: calc(100% - 248px); }
   .nav-collapsed .sidebar {width:64px;}
@@ -3325,23 +3325,8 @@ table th {
   .nav-collapsed .sidebar nav a,.nav-collapsed .sidebar-collapse-btn {width:44px;height:44px;}
   .nav-collapsed .sidebar nav a svg {width:20px;height:20px;}
 }
-@media(max-width:1024px) {
+@media(max-width:760px) {
   .sidebar {width:min(280px,calc(100vw - 48px));}
   .sidebar nav a { min-height: 48px; }
   .sidebar-collapse-section { display: none; }
-}
-.rector-workspace .topbar {min-height:64px;}
-.rector-workspace .environment-badge {display:inline-flex;font-size:0.75rem;text-transform:none;letter-spacing:0;padding:4px 8px;}
-.rector-workspace .breadcrumbs li {font-size:0.875rem;}
-@media(max-width:1024px) {
-  .rector-workspace .topbar {min-height:58px;padding-inline:16px;gap:8px;}
-  .rector-workspace .topbar .environment-badge {display:inline-flex;font-size:0.72rem;padding:3px 7px;}
-  .rector-workspace .topbar-mark,.rector-workspace .user-nav-group > a,.rector-workspace .topbar-divider {display:none;}
-  .rector-workspace .topbar .breadcrumbs {display:none;}
-  .rector-workspace .topbar-right {flex-wrap:nowrap;gap:8px;}
-}
-@media(max-width:640px) {
-  .rector-workspace .user-chip-role {display:none;}
-  .rector-workspace .logout-text {display:none;}
-  .rector-workspace .minimal-logout-btn {padding:6px 8px;}
 }

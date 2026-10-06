@@ -254,10 +254,10 @@ function AuthShell({
 }) {
   const [menuOpen, setMenuOpen] = useState(false),
     [mobile, setMobile] = useState(
-      () => matchMedia("(max-width:1024px)").matches,
+      () => matchMedia("(max-width:760px)").matches,
     );
   useEffect(() => {
-    const media = matchMedia("(max-width:1024px)");
+    const media = matchMedia("(max-width:760px)");
     const update = () => {
       setMobile(media.matches);
       if (!media.matches) setMenuOpen(false);
@@ -359,7 +359,7 @@ function AuthShell({
   );
   return (
     <div
-      className={`app-shell ${pathname.startsWith('/rector') ? 'rector-workspace' : ''} ${menuOpen ? "menu-open" : ""} ${
+      className={`app-shell ${menuOpen ? "menu-open" : ""} ${
         collapsed ? "nav-collapsed" : ""
       }`}
     >
