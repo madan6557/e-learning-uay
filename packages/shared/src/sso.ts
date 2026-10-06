@@ -142,7 +142,9 @@ export const identityClaims = z
       return z.NEVER;
     }
     const identifierValue =
-      claims.identifier_value ?? claims.student_staff_number;
+      claims.identifier_value ??
+      claims.student_staff_number ??
+      claims.preferred_username;
     if (!identifierValue) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

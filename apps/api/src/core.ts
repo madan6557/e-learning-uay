@@ -58,6 +58,10 @@ export const config = {
     .filter(Boolean),
   authMode: process.env.AUTH_MODE ?? (isDemo ? "development" : "oidc"),
   issuer: process.env.SSO_ISSUER ?? "",
+  ssoApiBaseUrl:
+    process.env.SSO_API_BASE_URL?.trim() ||
+    process.env.SSO_BACKEND_URL?.trim() ||
+    "",
   accountUrl: accountManagementUrl(),
   clientId: process.env.SSO_CLIENT_ID ?? "elearning-uay",
   audience: process.env.SSO_AUDIENCE ?? "elearning-uay",

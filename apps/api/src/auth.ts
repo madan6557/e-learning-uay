@@ -102,7 +102,7 @@ async function verifyAccess(token: string) {
   await oidcMetadata();
   const { payload } = await jwtVerify(token, jwks, {
     issuer: config.issuer,
-    audience: config.audience,
+    ...(config.audience ? { audience: config.audience } : {}),
     algorithms: ["RS256", "ES256"],
     requiredClaims: ["sub", "exp", "iat"],
     maxTokenAge: "15m",
@@ -110,7 +110,9 @@ async function verifyAccess(token: string) {
   });
   const accountStatus = (payload.account_status ?? payload.status) as
     string | undefined;
-  ensure(accountStatus === "ACTIVE", 403, "ACCOUNT_DISABLED");
+  if (accountStatus) {
+    ensure(accountStatus === "ACTIVE", 403, "ACCOUNT_DISABLED");
+  }
   ensure(
     z.string().uuid().safeParse(payload.sub).success,
     403,
@@ -125,6 +127,40 @@ async function verifyAccess(token: string) {
   );
   ensure(!(await cache.get(`revoked:${payload.sub}`)), 403, "ACCOUNT_DISABLED");
   return payload;
+}
+export async function fetchSsoMeProfile(
+  accessToken: string,
+): Promise<Record<string, any> | null> {
+  if (!config.ssoApiBaseUrl) return null;
+  try {
+    const url = `${config.ssoApiBaseUrl.replace(/\/+$/, "")}/auth/me`;
+    const res = await serviceFetch(
+      "sso-api",
+      url,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+      { idempotent: true, attempts: 2, timeoutMs: 3500 },
+    );
+    if (!res.ok) return null;
+    const body: any = await res.json();
+    const data = body?.data ?? body;
+    if (!data || typeof data !== "object") return null;
+    return {
+      ...(Array.isArray(data.roles) && data.roles.length > 0
+        ? { roles: data.roles }
+        : {}),
+      ...(data.user_type ? { user_type: data.user_type } : {}),
+      ...(data.status ? { account_status: data.status } : {}),
+      ...(data.username
+        ? { preferred_username: data.username, identifier_value: data.username }
+        : {}),
+    };
+  } catch {
+    return null;
+  }
 }
 async function syncUser(claims: JWTPayload, successfulLogin = false) {
   const parsed = identityClaims.safeParse(claims);
@@ -339,7 +375,11 @@ export function registerAuth(app: Express) {
     ensure(access.sub === id.sub, 401, "INVALID_IDENTITY");
     if (demoSubject)
       ensure(access.sub === demoSubject, 401, "INVALID_IDENTITY");
-    const user = await syncUser({ ...id, ...access }, true);
+    const ssoMe = await fetchSsoMeProfile(tokens.access_token);
+    if (ssoMe?.account_status) {
+      ensure(ssoMe.account_status === "ACTIVE", 403, "ACCOUNT_DISABLED");
+    }
+    const user = await syncUser({ ...id, ...access, ...(ssoMe ?? {}) }, true);
     await issue(res, {
       userId: user.id,
       accessToken: tokens.access_token,
@@ -454,7 +494,23 @@ export async function authenticate(
           where: { id: session.userId },
         });
         ensure(existing?.ssoUserId === claims.sub, 401, "INVALID_IDENTITY");
-        await syncUser(claims);
+        const ssoMe = await fetchSsoMeProfile(tokens.access_token);
+        if (ssoMe?.account_status) {
+          ensure(ssoMe.account_status === "ACTIVE", 403, "ACCOUNT_DISABLED");
+        }
+        await syncUser({
+          ...(existing
+            ? {
+                name: existing.name,
+                email: existing.email,
+                role: existing.role,
+                identifier_value: existing.identifierValue,
+                user_type: existing.userType,
+              }
+            : {}),
+          ...claims,
+          ...(ssoMe ?? {}),
+        });
         session = {
           ...session,
           accessToken: tokens.access_token,

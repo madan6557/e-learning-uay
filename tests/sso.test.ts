@@ -44,3 +44,18 @@ test("SSO roles take precedence over the legacy role claim", () => {
     "STUDENT",
   );
 });
+
+test("SSO identity resolves preferred_username as academic identifier when identifier_value is absent", () => {
+  const withoutIdentifier = {
+    sub: "00000000-0000-4000-8000-000000000002",
+    name: "Mahasiswa UAY",
+    email: "mahasiswa@uay.ac.id",
+    preferred_username: "231001001",
+    roles: ["STUDENT"],
+  };
+  const resolved = identityClaims.parse(withoutIdentifier);
+  assert.equal(resolved.identifierValue, "231001001");
+  assert.equal(resolved.role, "STUDENT");
+  assert.equal(resolved.identifierType, "NIM");
+});
+
