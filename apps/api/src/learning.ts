@@ -168,6 +168,96 @@ export async function validateResource(raw: unknown, tx: any, classId: string) {
   }
   return { ...data, dynamicPayload: json(p) };
 }
+const courseBatchSchema = z.object({
+  rows: z
+    .array(
+      z.object({
+        values: z.record(z.unknown()),
+        exclude: z.boolean().default(false),
+        override: z.boolean().default(false),
+      }),
+    )
+    .min(1)
+    .max(500),
+  reason: z.string().trim().min(5).optional(),
+});
+async function reviewCourseBatch(
+  tx: any,
+  user: any,
+  batch: z.infer<typeof courseBatchSchema>,
+) {
+  const codes = batch.rows.map((r) => String(r.values.code ?? "").trim());
+  const output = [];
+  for (let index = 0; index < batch.rows.length; index++) {
+    const row = batch.rows[index];
+    const code = codes[index];
+    const titleVal = String(row.values.title ?? "").trim();
+    const deptCode = String(
+      row.values.departmentCode ??
+        row.values.prodi ??
+        row.values.department ??
+        user.departmentScopes?.[0] ??
+        "",
+    ).trim();
+    const rawCredits = row.values.credits ?? row.values.sks ?? 3;
+    const creditsNum = Number(rawCredits);
+    const issues: string[] = [];
+
+    if (!code) issues.push("MISSING_CODE");
+    if (!titleVal) issues.push("MISSING_TITLE");
+    if (!deptCode) issues.push("MISSING_DEPARTMENT");
+
+    if (deptCode && !canManageDepartment(user, deptCode)) {
+      issues.push("WRITE_ACCESS_DENIED");
+    }
+
+    if (isNaN(creditsNum) || creditsNum < 1 || creditsNum > 12) {
+      issues.push("INVALID_CREDITS");
+    }
+
+    if (
+      code &&
+      batch.rows.some((r, i) => i !== index && !r.exclude && codes[i] === code)
+    ) {
+      issues.push("DUPLICATE_FILE");
+    }
+
+    let existing: any = null;
+    if (code) {
+      existing = await tx.course.findUnique({ where: { code } });
+    }
+
+    if (existing && !row.override) {
+      issues.push("DATABASE_CONFLICT");
+    }
+
+    const rawStatus = String(row.values.status ?? "").trim().toUpperCase();
+    const resolvedStatus = ["DRAFT", "PUBLISHED", "ARCHIVED"].includes(rawStatus)
+      ? rawStatus
+      : "PUBLISHED";
+
+    output.push({
+      ...row,
+      rowNumber: index + 2,
+      key: code,
+      values: {
+        ...row.values,
+        code,
+        title: titleVal,
+        credits: isNaN(creditsNum) ? 3 : creditsNum,
+        departmentCode: deptCode,
+        description: String(
+          row.values.description ?? row.values.deskripsi ?? "",
+        ).trim(),
+        status: resolvedStatus,
+      },
+      issues: row.exclude ? [] : [...new Set(issues)],
+      status: row.exclude ? "EXCLUDED" : issues.length ? "ISSUE" : "READY",
+      existing,
+    });
+  }
+  return output;
+}
 export function registerLearning(app: Express) {
   app.get("/api/v1/me", (req, res) => res.json(req.context.user));
   app.get("/api/v1/courses", async (req, res) => {
@@ -249,6 +339,79 @@ export function registerLearning(app: Express) {
           after,
         );
         return after;
+      }),
+    ),
+  );
+  app.post("/api/v1/courses/imports/preview", async (req, res) => {
+    ensure(
+      ["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(req.context.user.role),
+      403,
+      "WRITE_ACCESS_DENIED",
+    );
+    const batch = courseBatchSchema.parse(req.body);
+    const rows = await reviewCourseBatch(db, req.context.user, batch);
+    res.json({
+      rows: rows.map(({ existing, ...r }) => ({
+        ...r,
+        existingId: existing?.id,
+      })),
+      ready: rows.filter((r) => r.status === "READY").length,
+      issues: rows.filter((r) => r.status === "ISSUE").length,
+    });
+  });
+  app.post("/api/v1/courses/imports/commit", async (req, res) =>
+    res.json(
+      await mutate(req, async (tx) => {
+        ensure(
+          ["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(req.context.user.role),
+          403,
+          "WRITE_ACCESS_DENIED",
+        );
+        const batch = courseBatchSchema.parse(req.body);
+        const rows = await reviewCourseBatch(tx, req.context.user, batch);
+        ensure(
+          rows.every((r) => r.status !== "ISSUE"),
+          409,
+          "IMPORT_REVIEW_REQUIRED",
+        );
+        const selected = rows.filter((r) => r.status === "READY");
+        ensure(selected.length, 400, "IMPORT_EMPTY");
+        let createdCount = 0;
+        let updatedCount = 0;
+        for (const row of selected) {
+          const data = {
+            code: String(row.values.code),
+            title: String(row.values.title),
+            credits: Number(row.values.credits),
+            departmentCode: String(row.values.departmentCode),
+            description: String(row.values.description ?? ""),
+            status: row.values.status as "DRAFT" | "PUBLISHED" | "ARCHIVED",
+          };
+          const course = await tx.course.upsert({
+            where: { code: row.values.code },
+            create: data,
+            update: data,
+          });
+          if (row.existing) updatedCount++;
+          else createdCount++;
+          await audit(
+            tx,
+            req.context,
+            "BULK_IMPORT_RECONCILED",
+            "COURSE",
+            course.id,
+            null,
+            row.existing,
+            course,
+            batch.reason,
+          );
+        }
+        return {
+          imported: selected.length,
+          created: createdCount,
+          updated: updatedCount,
+          excluded: rows.length - selected.length,
+        };
       }),
     ),
   );

@@ -17,6 +17,10 @@ import {
   Sliders,
   Scale,
   GraduationCap,
+  UploadCloud,
+  Download,
+  AlertTriangle,
+  CheckCircle,
 } from "lucide-react";
 
 function getTimeGreeting(): string {
@@ -45,6 +49,7 @@ import {
 import { countDrafts, removeDraft } from "./drafts";
 import { Avatar, Tabs } from "./ui";
 import { classPath, contentPath } from "./router";
+import { parseCsv } from "./Gradebook";
 export interface ClassCardData {
   id: string;
   slug?: string;
@@ -1634,7 +1639,8 @@ export function Catalog({
   const courses = useApi<any[]>("/courses");
   const [editing, setEditing] = useState<any>(null),
     [classModal, setClassModal] = useState(false),
-    [governanceModal, setGovernanceModal] = useState(false);
+    [governanceModal, setGovernanceModal] = useState(false),
+    [importModal, setImportModal] = useState(false);
   return (
     <>
       <div className="page-heading heading-with-action">
@@ -1647,6 +1653,12 @@ export function Catalog({
             <button className="secondary" onClick={() => setGovernanceModal(true)}>
               <CalendarDays size={16} />
               Tahun Ajaran: {config?.academicYear || "2026/2027 Ganjil"}
+            </button>
+          )}
+          {["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(user.role) && (
+            <button className="secondary" onClick={() => setImportModal(true)}>
+              <UploadCloud size={16} />
+              Impor Katalog
             </button>
           )}
           <button className="secondary" onClick={() => setClassModal(true)}>
@@ -1788,7 +1800,366 @@ export function Catalog({
           }}
         />
       )}
+      {importModal && (
+        <CourseImportModal
+          user={user}
+          onClose={() => setImportModal(false)}
+          onSuccess={() => {
+            courses.reload();
+          }}
+        />
+      )}
     </>
+  );
+}
+export function CourseImportModal({
+  user,
+  onClose,
+  onSuccess,
+}: {
+  user: any;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [csvText, setCsvText] = useState("");
+  const [overrideAll, setOverrideAll] = useState(false);
+  const [rows, setRows] = useState<any[]>([]);
+  const [review, setReview] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [successInfo, setSuccessInfo] = useState<any>(null);
+
+  const defaultDept = user.departmentScopes?.[0] || "IF";
+
+  const handleParse = (text: string, forceOverride = overrideAll) => {
+    try {
+      if (!text.trim()) {
+        setRows([]);
+        setReview(null);
+        setError(null);
+        return;
+      }
+      const parsed = parseCsv(text.trim());
+      if (parsed.length < 2) {
+        setRows([]);
+        setReview(null);
+        setError("Format CSV minimal harus memiliki 1 baris judul kolom (header) dan 1 baris data.");
+        return;
+      }
+      const headerRow = parsed[0].map((h) => h.trim().toLowerCase());
+      const codeIdx = headerRow.findIndex((h) => ["code", "kode", "kodemk", "kode_mk"].includes(h));
+      const titleIdx = headerRow.findIndex((h) => ["title", "nama", "namamk", "nama_mk", "matakuliah", "mata_kuliah"].includes(h));
+      const creditsIdx = headerRow.findIndex((h) => ["credits", "sks", "bobot"].includes(h));
+      const deptIdx = headerRow.findIndex((h) => ["departmentcode", "department", "prodi", "jurusan", "dept"].includes(h));
+      const descIdx = headerRow.findIndex((h) => ["description", "deskripsi", "keterangan"].includes(h));
+      const statusIdx = headerRow.findIndex((h) => ["status"].includes(h));
+
+      if (codeIdx === -1 || titleIdx === -1) {
+        setError("Kolom header 'kode' (atau 'code') dan 'nama' (atau 'title') wajib ada pada baris pertama CSV.");
+        return;
+      }
+
+      const parsedRows = parsed.slice(1).map((r) => {
+        const code = codeIdx !== -1 ? String(r[codeIdx] ?? "").trim() : "";
+        const title = titleIdx !== -1 ? String(r[titleIdx] ?? "").trim() : "";
+        const credits = creditsIdx !== -1 ? Number(r[creditsIdx] || 3) : 3;
+        const departmentCode = deptIdx !== -1 && r[deptIdx] ? String(r[deptIdx]).trim().toUpperCase() : defaultDept;
+        const description = descIdx !== -1 ? String(r[descIdx] ?? "").trim() : "";
+        const status = statusIdx !== -1 && r[statusIdx] ? String(r[statusIdx]).trim().toUpperCase() : "PUBLISHED";
+
+        return {
+          values: {
+            code,
+            title,
+            credits: isNaN(credits) ? 3 : credits,
+            departmentCode,
+            description,
+            status: ["DRAFT", "PUBLISHED", "ARCHIVED"].includes(status) ? status : "PUBLISHED",
+          },
+          exclude: false,
+          override: forceOverride,
+        };
+      });
+
+      setRows(parsedRows);
+      setError(null);
+    } catch (e: any) {
+      setError(e.message || "Gagal memproses berkas/format CSV.");
+    }
+  };
+
+  useEffect(() => {
+    if (!rows.length) {
+      setReview(null);
+      return;
+    }
+    let active = true;
+    setLoading(true);
+    const timer = setTimeout(() => {
+      api("/courses/imports/preview", "POST", { rows })
+        .then((res: any) => {
+          if (active) {
+            setReview(res);
+            setError(null);
+          }
+        })
+        .catch((e: any) => {
+          if (active) setError(e.message || "Gagal memvalidasi data impor.");
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }, 400);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [rows]);
+
+  const toggleExclude = (index: number) => {
+    setRows((prev) =>
+      prev.map((r, i) => (i === index ? { ...r, exclude: !r.exclude } : r)),
+    );
+  };
+
+  const handleOverrideToggle = (checked: boolean) => {
+    setOverrideAll(checked);
+    setRows((prev) =>
+      prev.map((r) => ({ ...r, override: checked })),
+    );
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = String(event.target?.result ?? "");
+      setCsvText(content);
+      handleParse(content, overrideAll);
+    };
+    reader.readAsText(file);
+  };
+
+  const handleLoadSample = () => {
+    const sample = `kode,nama,sks,prodi,deskripsi,status\nIF101,Algoritma dan Pemrograman I,3,${defaultDept},Konsep dasar pemrograman dan algoritma komputasi,PUBLISHED\nIF102,Struktur Data,3,${defaultDept},Array linked-list stack queue tree dan graf,PUBLISHED\nIF201,Basis Data,3,${defaultDept},Perancangan sistem basis data relasional dan SQL,PUBLISHED\nIF202,Pemrograman Berorientasi Objek,3,${defaultDept},Konsep OOP pewarisan polimorfisme dan enkapsulasi,PUBLISHED\nIF301,Jaringan Komputer,3,${defaultDept},Arsitektur protokol jaringan TCP/IP dan keamanan,PUBLISHED`;
+    setCsvText(sample);
+    handleParse(sample, overrideAll);
+  };
+
+  const handleDownloadTemplate = () => {
+    const template = `kode,nama,sks,prodi,deskripsi,status\nIF101,Nama Mata Kuliah Contoh,3,${defaultDept},Deskripsi ringkas mata kuliah,PUBLISHED`;
+    const blob = new Blob([template], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "template-katalog-matakuliah.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCommit = async () => {
+    if (!review || review.ready === 0) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res: any = await api("/courses/imports/commit", "POST", { rows });
+      setSuccessInfo(res);
+      onSuccess();
+    } catch (e: any) {
+      setError(e.message || "Gagal menyimpan data impor.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal title="Impor Massal Katalog Mata Kuliah" wide onClose={onClose}>
+      <p style={{ marginTop: 0, color: "var(--muted-foreground)" }}>
+        Tambahkan banyak mata kuliah sekaligus ke kurikulum program studi menggunakan format CSV.
+        Sistem memverifikasi kode mata kuliah unik, kewenangan prodi, dan bobot SKS.
+      </p>
+
+      {successInfo ? (
+        <div style={{ padding: "24px 0", textAlign: "center" }}>
+          <div style={{ display: "inline-flex", padding: 12, borderRadius: "50%", background: "rgba(34, 197, 94, 0.1)", color: "#16a34a", marginBottom: 12 }}>
+            <CheckCircle size={36} />
+          </div>
+          <h3 style={{ margin: "0 0 8px" }}>Impor Katalog Berhasil!</h3>
+          <p style={{ color: "var(--muted-foreground)", margin: "0 0 20px" }}>
+            Total <strong>{successInfo.imported}</strong> mata kuliah diproses ({successInfo.created} dibuat baru, {successInfo.updated} diperbarui).
+          </p>
+          <button className="primary" onClick={onClose}>
+            Selesai
+          </button>
+        </div>
+      ) : (
+        <>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
+            <label className="button secondary" style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, margin: 0 }}>
+              <UploadCloud size={15} />
+              Pilih Berkas CSV
+              <input
+                type="file"
+                accept=".csv,text/csv,text/plain"
+                onChange={handleFileUpload}
+                style={{ display: "none" }}
+              />
+            </label>
+            <button type="button" className="secondary" onClick={handleDownloadTemplate}>
+              <Download size={15} />
+              Unduh Template CSV
+            </button>
+            <button type="button" className="secondary" onClick={handleLoadSample}>
+              Isi Contoh Data
+            </button>
+          </div>
+
+          <Field label="Data CSV (atau tempel teks di sini)">
+            <textarea
+              rows={4}
+              value={csvText}
+              onChange={(e) => {
+                setCsvText(e.target.value);
+                handleParse(e.target.value);
+              }}
+              placeholder={"kode,nama,sks,prodi,deskripsi,status\nIF101,Algoritma dan Pemrograman I,3,IF,Dasar pemrograman,PUBLISHED\n..."}
+              style={{ fontFamily: "monospace", fontSize: "0.82rem" }}
+            />
+          </Field>
+
+          {rows.length > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "10px 0 16px" }}>
+              <input
+                type="checkbox"
+                id="override-all"
+                checked={overrideAll}
+                onChange={(e) => handleOverrideToggle(e.target.checked)}
+              />
+              <label htmlFor="override-all" style={{ fontSize: "0.88rem", cursor: "pointer" }}>
+                Perbarui (timpa) data jika kode mata kuliah sudah terdaftar di database
+              </label>
+            </div>
+          )}
+
+          {error && <Notice error={error} />}
+
+          {loading && <Loading />}
+
+          {review && !loading && (
+            <div style={{ marginTop: 14 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                <div style={{ fontSize: "0.88rem", fontWeight: 600 }}>
+                  Pratinjau Impor:{" "}
+                  <span style={{ color: "#16a34a" }}>{review.ready} Siap</span>
+                  {review.issues > 0 && (
+                    <span style={{ color: "#dc2626", marginLeft: 8 }}>
+                      • {review.issues} Perlu Diperiksa
+                    </span>
+                  )}
+                  {" "}dari {review.rows.length} Baris
+                </div>
+              </div>
+
+              <div className="table-wrap card" style={{ maxHeight: 280, overflowY: "auto" }}>
+                <table>
+                  <thead>
+                    <tr>
+                      <th style={{ width: 45 }}>No</th>
+                      <th>Kode</th>
+                      <th>Nama Mata Kuliah</th>
+                      <th style={{ width: 60 }}>SKS</th>
+                      <th style={{ width: 70 }}>Prodi</th>
+                      <th>Status / Catatan</th>
+                      <th style={{ width: 80 }}>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {review.rows.map((row: any, idx: number) => {
+                      const isReady = row.status === "READY";
+                      const isExcluded = row.status === "EXCLUDED";
+                      const hasConflict = row.issues?.includes("DATABASE_CONFLICT");
+                      const issuesList = row.issues ?? [];
+
+                      return (
+                        <tr
+                          key={idx}
+                          style={{
+                            opacity: isExcluded ? 0.45 : 1,
+                            background: isExcluded
+                              ? "var(--muted-soft)"
+                              : !isReady && !hasConflict
+                                ? "rgba(239, 68, 68, 0.05)"
+                                : hasConflict
+                                  ? "rgba(245, 158, 11, 0.05)"
+                                  : undefined,
+                          }}
+                        >
+                          <td>{row.rowNumber}</td>
+                          <td>
+                            <strong>{row.values?.code || "—"}</strong>
+                          </td>
+                          <td>{row.values?.title || "—"}</td>
+                          <td>{row.values?.credits}</td>
+                          <td>{row.values?.departmentCode}</td>
+                          <td>
+                            {isExcluded ? (
+                              <span style={{ color: "var(--muted-foreground)" }}>Diabaikan</span>
+                            ) : isReady ? (
+                              <span style={{ color: "#16a34a", fontWeight: 600 }}>
+                                {row.existingId ? "Siap Ditimpa" : "Siap Dibuat"}
+                              </span>
+                            ) : (
+                              <span style={{ color: "#dc2626", fontSize: "0.8rem" }}>
+                                {issuesList.map((issue: string) => {
+                                  if (issue === "DATABASE_CONFLICT") return "Sudah terdaftar di DB (centang timpa untuk update)";
+                                  if (issue === "DUPLICATE_FILE") return "Duplikat di berkas";
+                                  if (issue === "WRITE_ACCESS_DENIED") return "Bukan prodi wewenang Anda";
+                                  if (issue === "INVALID_CREDITS") return "SKS tidak valid (1-12)";
+                                  if (issue === "MISSING_CODE") return "Kode wajib diisi";
+                                  if (issue === "MISSING_TITLE") return "Nama MK wajib diisi";
+                                  return issue;
+                                }).join("; ")}
+                              </span>
+                            )}
+                          </td>
+                          <td>
+                            <button
+                              type="button"
+                              className="secondary"
+                              style={{ padding: "3px 8px", fontSize: "0.78rem" }}
+                              onClick={() => toggleExclude(idx)}
+                            >
+                              {isExcluded ? "Sertakan" : "Abaikan"}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 20 }}>
+            <button type="button" className="secondary" onClick={onClose} disabled={submitting}>
+              Batal
+            </button>
+            <button
+              type="button"
+              className="primary"
+              disabled={!review || review.ready === 0 || review.issues > 0 || submitting}
+              onClick={handleCommit}
+            >
+              {submitting ? "Menyimpan..." : `Impor ${review?.ready ?? 0} Mata Kuliah`}
+            </button>
+          </div>
+        </>
+      )}
+    </Modal>
   );
 }
 export function Profile({
