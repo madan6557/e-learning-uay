@@ -7,6 +7,24 @@ import type {
   ReportingDataSource,
   ReportingSnapshot,
 } from "../../../../packages/shared/src/rector.js";
+import { FixtureDataSource } from "./fixture.js";
+
+const DEPT_MAP: Record<string, string> = {
+  IF: "Informatika",
+  TS: "Teknik Sipil",
+  AK: "Akuntansi",
+  MN: "Manajemen",
+  Informatika: "Informatika",
+  "Teknik Sipil": "Teknik Sipil",
+  Akuntansi: "Akuntansi",
+  Manajemen: "Manajemen",
+};
+
+export function normalizeDept(codeOrName?: string | null): string {
+  if (!codeOrName) return "Belum ditetapkan";
+  return DEPT_MAP[codeOrName] ?? codeOrName;
+}
+
 const iso = (d: Date | null | undefined) => d?.toISOString() ?? null;
 const earliest = (dates: (Date | null)[]) =>
   dates.filter((d): d is Date => !!d).sort((a, b) => +a - +b)[0] ?? null;
@@ -210,7 +228,7 @@ export class UniversityReportingDataSource implements ReportingDataSource {
             id: c.id,
             title: `${c.course.title} (${c.name})`,
             courseCode: c.course.code,
-            department: c.course.departmentCode,
+            department: normalizeDept(c.course.departmentCode),
             semester: c.academicYear,
             status: c.status === "ARCHIVED" ? "ARSIP" : "AKTIF",
             instructorIds: c.instructors.map((i) => i.userId),
@@ -245,11 +263,13 @@ export class UniversityReportingDataSource implements ReportingDataSource {
           orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         });
         const activities: Activity[] = [];
+        const lecturerMap = new Map(lecturers.map((l) => [l.id, l]));
         for (const log of logs) {
           // Student events are outside lecturer contribution and are never sent to reporting.
           if (log.actorRole === "STUDENT" || log.actorRole === "RECTOR")
             continue;
           const cls = log.classId ? classMap.get(log.classId) : undefined;
+          const lecturer = log.actorId ? lecturerMap.get(log.actorId) : undefined;
           const classification = classify(log.action, log.entity);
           if (!classification) continue;
           activities.push({
@@ -258,7 +278,7 @@ export class UniversityReportingDataSource implements ReportingDataSource {
             completedAt: null,
             sessionId: null,
             actorId: log.actorId ?? "system",
-            actorName: log.user?.name ?? "Proses otomatis",
+            actorName: log.user?.name ?? lecturer?.name ?? "Proses otomatis",
             actorKind:
               log.actorRole === "INSTRUCTOR"
                 ? "DOSEN"
@@ -272,23 +292,51 @@ export class UniversityReportingDataSource implements ReportingDataSource {
               objects.get(log.entityId) ?? cls?.title ?? classification.label,
             classId: cls?.id ?? null,
             semester: cls?.semester ?? null,
-            department: cls?.department ?? null,
+            department:
+              cls?.department ??
+              (lecturer ? normalizeDept(lecturer.departmentScopes[0]) : null),
           });
         }
-        // Older installs only retain the latest successful login. No logout is inferred.
-        const sessions: ReportingSnapshot["sessions"] = lecturers
-          .filter((l) => l.lastLoginAt)
-          .map((l) => {
-            const loginAt = l.lastLoginAt!.toISOString();
-            const sessionId = `session-${l.id}-${+l.lastLoginAt!}`;
-            const events = activities.filter(
-              (a) => a.actorId === l.id && a.at >= loginAt,
+
+        const sessions: ReportingSnapshot["sessions"] = [];
+        for (const l of lecturers) {
+          const dept = normalizeDept(l.departmentScopes[0]);
+          const semester =
+            mapped.find((c) => c.instructorIds.includes(l.id))?.semester ?? "";
+          const lecturerActivities = activities.filter((a) => a.actorId === l.id);
+
+          const loginTimestamps = new Set<string>();
+          for (const a of lecturerActivities) {
+            if (a.category === "LOGIN") loginTimestamps.add(a.at);
+          }
+          if (l.lastLoginAt) {
+            loginTimestamps.add(l.lastLoginAt.toISOString());
+          }
+
+          const sortedLogins = [...loginTimestamps].sort();
+          if (sortedLogins.length === 0 && lecturerActivities.length > 0) {
+            sortedLogins.push(lecturerActivities[0].at);
+          }
+
+          for (let i = 0; i < sortedLogins.length; i++) {
+            const loginAt = sortedLogins[i];
+            const nextLoginAt = sortedLogins[i + 1] ?? null;
+            const sessionId = `session-${l.id}-${Date.parse(loginAt)}`;
+
+            const sessionEvents = lecturerActivities.filter(
+              (a) => a.at >= loginAt && (!nextLoginAt || a.at < nextLoginAt),
             );
-            const logout = events.find((a) => a.category === "LOGOUT");
-            const end = logout?.at ?? events.at(-1)?.at ?? loginAt;
-            for (const event of events.filter((a) => a.at <= end))
-              event.sessionId = sessionId;
-            if (!events.some((a) => a.category === "LOGIN" && a.at === loginAt))
+
+            const logout = sessionEvents.find((a) => a.category === "LOGOUT");
+            const end = logout?.at ?? sessionEvents.at(-1)?.at ?? loginAt;
+
+            for (const event of sessionEvents.filter((a) => a.at <= end)) {
+              if (!event.sessionId) {
+                event.sessionId = sessionId;
+              }
+            }
+
+            if (!lecturerActivities.some((a) => a.category === "LOGIN" && a.at === loginAt)) {
               activities.push({
                 id: `login-${sessionId}`,
                 at: loginAt,
@@ -303,29 +351,31 @@ export class UniversityReportingDataSource implements ReportingDataSource {
                 objectName: "E-learning UAY",
                 classId: null,
                 semester: null,
-                department: l.departmentScopes[0] ?? null,
+                department: dept,
               });
-            return {
+            }
+
+            sessions.push({
               id: sessionId,
               lecturerId: l.id,
               lecturerName: l.name,
-              department: l.departmentScopes[0] ?? "Belum ditetapkan",
-              semester:
-                mapped.find((c) => c.instructorIds.includes(l.id))?.semester ??
-                "",
+              department: dept,
+              semester,
               loginAt,
               logoutAt: logout?.at ?? null,
               lastObservedAt: end,
               endReason: logout ? "LOGOUT" : "UNKNOWN",
-            };
-          });
+            });
+          }
+        }
+
         return {
           snapshotAt: now.toISOString(),
           lecturers: lecturers.map((l) => ({
             id: l.id,
             name: l.name,
             identifier: l.identifierValue,
-            department: l.departmentScopes[0] ?? "Belum ditetapkan",
+            department: normalizeDept(l.departmentScopes[0]),
           })),
           classes: mapped,
           activities,
@@ -336,6 +386,7 @@ export class UniversityReportingDataSource implements ReportingDataSource {
     );
   }
 }
+
 export function classify(
   action: string,
   entity: string,
@@ -382,5 +433,24 @@ export function classify(
     /CREATE|UPDATE|CLONE|PUBLISH|ASSIGN/.test(action)
   )
     return { category: "KELAS", label: "Memperbarui pengelolaan kelas" };
+  if (entity.startsWith("ATTENDANCE"))
+    return { category: "KELAS", label: "Mengelola presensi perkuliahan" };
   return null;
+}
+
+export class DynamicReportingDataSource implements ReportingDataSource {
+  private universitySource = new UniversityReportingDataSource();
+  private fixtureSource = new FixtureDataSource();
+
+  async readSnapshot(): Promise<ReportingSnapshot> {
+    try {
+      const snapshot = await this.universitySource.readSnapshot();
+      if (snapshot.lecturers.length > 0 || snapshot.classes.length > 0) {
+        return snapshot;
+      }
+    } catch (err) {
+      console.warn("[rector] UniversityReportingDataSource failed, fallback to fixture:", err);
+    }
+    return this.fixtureSource.readSnapshot();
+  }
 }
