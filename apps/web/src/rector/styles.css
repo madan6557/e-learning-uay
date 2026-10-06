@@ -2138,6 +2138,12 @@
 }
 @media (max-width: 900px) {
   .rector-dashboard .rector-metrics {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+}
+@media (max-width: 640px) {
+  .rector-dashboard .rector-metrics {
     grid-template-columns: 1fr;
   }
   .rector-dashboard .rector-metrics .metric {
@@ -2147,7 +2153,7 @@
   }
   .rector-dashboard .rector-metrics .metric > strong {
     margin: 0;
-    font-size: 32px;
+    font-size: 30px;
     grid-column: 2;
     grid-row: 1 / span 2;
   }
@@ -2158,7 +2164,7 @@
     display: none;
   }
 }
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .rector-dashboard .table-wrap:has(.rector-lecturer-table) {
     display: none;
   }
@@ -2383,54 +2389,135 @@
   --teal: var(--success);
   --muted: var(--muted-foreground);
   --border: var(--line);
-  font-size: 18px;
+  font-size: 15px;
   color: var(--foreground);
   background: transparent;
-  line-height: 1.65;
+  line-height: 1.6;
 }
 .rector-dashboard p,
 .rector-dashboard small {
   color: oklch(0.4 0.022 254);
 }
 .rector-dashboard h1 {
-  font-size: 32px;
+  font-size: 1.65rem;
 }
 .rector-dashboard h2 {
-  font-size: 26px;
+  font-size: 1.35rem;
 }
 .rector-dashboard h3 {
-  font-size: 22px;
+  font-size: 1.15rem;
 }
 .rector-dashboard .rector-content {
-  padding: 16px 0 0;
+  padding: 12px 0 0;
 }
-.rector-dashboard .page-heading {min-height:0;margin-bottom:12px;}
-.rector-dashboard .page-heading h1 {margin:0 0 8px;}
-.rector-dashboard .page-heading p {margin:0;}
-.rector-dashboard .filter-panel {padding:12px 18px;margin-bottom:16px;}
-.rector-dashboard .filter-top {margin-bottom:0;}
-.rector-dashboard .filter-fields {margin-top:12px;}
+.rector-dashboard .page-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  min-height: 0;
+  margin-bottom: 14px;
+}
+.rector-dashboard .page-heading h1 {
+  margin: 0 0 6px;
+}
+.rector-dashboard .page-heading p {
+  margin: 0;
+  font-size: 14px;
+  color: #64748b;
+}
+.rector-dashboard .export-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  align-items: center;
+}
+.rector-dashboard .export-actions button {
+  min-height: 40px;
+  padding: 8px 14px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+@media (max-width: 768px) {
+  .rector-dashboard .page-heading {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .rector-dashboard .page-heading h1 {
+    font-size: 1.4rem;
+  }
+  .rector-dashboard .export-actions {
+    width: 100%;
+  }
+  .rector-dashboard .export-actions button {
+    flex: 1;
+    justify-content: center;
+  }
+}
+.rector-dashboard .filter-panel {
+  padding: 14px 18px;
+  margin-bottom: 18px;
+}
+.rector-dashboard .filter-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 14px;
+  margin-bottom: 0;
+}
+.rector-dashboard .filter-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.rector-dashboard .filter-summary {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 8px;
+  margin-bottom: 0;
+  word-break: break-word;
+}
 .rector-dashboard .rector-access-note {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 .rector-dashboard .rector-access-note > span {
   margin-left: auto;
 }
 .rector-dashboard .rector-tabs {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
   border-bottom: 1px solid var(--border);
-  padding-bottom: 16px;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+.rector-dashboard .rector-tabs::-webkit-scrollbar {
+  display: none;
 }
 .rector-dashboard .rector-tabs button {
-  min-height: 48px;
-  padding: 10px 18px;
-  font-size: 18px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-height: 40px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--foreground);
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 .rector-dashboard .rector-tabs button[aria-current="page"] {
   background: var(--sidebar-accent);
@@ -2441,10 +2528,11 @@
 .rector-dashboard button,
 .rector-dashboard input,
 .rector-dashboard select {
-  min-height: 44px;
+  min-height: 40px;
+  font-size: 14px;
 }
 .rector-dashboard .filter-fields label {
-  font-size: 16px;
+  font-size: 14px;
 }
 .rector-dashboard .panel,
 .rector-dashboard .metric,
@@ -2455,10 +2543,10 @@
 }
 .rector-dashboard .daily-bar .bar-label {
   font-size: 12px;
-} /* dense axis uses the accompanying day table/text */
+}
 .rector-dashboard .session-plot-header,
 .rector-dashboard .session-plot-row {
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 240px 1fr;
 }
 .rector-dashboard .time-ruler {
   height: 30px;
@@ -2467,30 +2555,29 @@
   min-width: 0;
 }
 .rector-dashboard .data-status {
-  font-size: 16px;
-  line-height: 1.7;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 4px 0 16px;
 }
 .rector-dashboard .definition p {
   max-width: 75ch;
 }
-@media (max-width: 760px) {
+@media (max-width: 768px) {
   .rector-dashboard {
-    font-size: 18px;
-  }
-  .rector-dashboard .rector-tabs {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
-  .rector-dashboard .rector-tabs button {
-    font-size: 16px;
-    padding: 10px;
+    font-size: 14px;
   }
   .rector-dashboard .session-plot-header,
   .rector-dashboard .session-plot-row {
-    grid-template-columns: 145px 1fr;
+    grid-template-columns: 140px 1fr;
   }
   .rector-dashboard .time-ruler {
-    font-size: 14px;
+    font-size: 13px;
   }
   .rector-dashboard .rector-access-note > span {
     margin-left: 0;
@@ -2499,6 +2586,24 @@
     grid-template-columns: 1fr;
   }
   .rector-dashboard .rector-content {
-    padding-top: 20px;
+    padding-top: 14px;
+  }
+  .rector-dashboard .data-status {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+@media (max-width: 520px) {
+  .rector-dashboard .rector-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .rector-dashboard .rector-tabs button {
+    font-size: 13px;
+    padding: 8px 10px;
+    text-align: center;
+    justify-content: center;
   }
 }

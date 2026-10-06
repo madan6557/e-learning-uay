@@ -136,7 +136,7 @@ function PublicShell({ children }: { children: ReactNode }) {
         <ErrorBoundary>{children}</ErrorBoundary>
       </main>
       <footer>
-        <span>© 2026 {t.university}</span>
+        <span>© {new Date().getFullYear()} {t.university}</span>
         <span>{t.timeZone}</span>
       </footer>
     </div>
@@ -254,10 +254,10 @@ function AuthShell({
 }) {
   const [menuOpen, setMenuOpen] = useState(false),
     [mobile, setMobile] = useState(
-      () => matchMedia("(max-width:760px)").matches,
+      () => matchMedia("(max-width:1024px)").matches,
     );
   useEffect(() => {
-    const media = matchMedia("(max-width:760px)");
+    const media = matchMedia("(max-width:1024px)");
     const update = () => {
       setMobile(media.matches);
       if (!media.matches) setMenuOpen(false);
@@ -491,7 +491,7 @@ function AuthShell({
           </ErrorBoundary>
         </main>
         <footer>
-          <span>© 2026 {t.university}</span>
+          <span>© {new Date().getFullYear()} {t.university}</span>
           <a href="/help">{t.help}</a>
         </footer>
       </div>
