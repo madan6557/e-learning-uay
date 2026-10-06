@@ -2548,6 +2548,9 @@ textarea:focus {
   letter-spacing: -0.02em;
   box-shadow: none;
 }
+.brand-mark picture {
+  display: contents;
+}
 .brand-logo-img {
   width: 28px;
   height: 28px;

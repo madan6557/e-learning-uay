@@ -64,13 +64,18 @@ function Brand({
   return (
     <a className="brand" href={home} aria-label="UAY E-Learning beranda">
       <span className="brand-mark" aria-hidden="true">
-        <img
-          src="/uay-logo.png"
-          alt="Logo UAY"
-          className="brand-logo-img"
-          width="26"
-          height="26"
-        />
+        <picture>
+          <source srcSet="/uay-logo.webp" type="image/webp" />
+          <img
+            src="/uay-logo.png"
+            alt="Logo UAY"
+            className="brand-logo-img"
+            width="26"
+            height="26"
+            loading="eager"
+            decoding="async"
+          />
+        </picture>
       </span>
       {!collapsed && <span className="brand-name">E-Learning UAY</span>}
     </a>
@@ -445,13 +450,18 @@ function AuthShell({
               href={rector ? '/rector' : '/dashboard'}
               aria-label="UAY E-Learning beranda"
             >
-              <img
-                src="/uay-logo.png"
-                alt="Logo UAY"
-                className="brand-logo-img"
-                width="24"
-                height="24"
-              />
+              <picture>
+                <source srcSet="/uay-logo.webp" type="image/webp" />
+                <img
+                  src="/uay-logo.png"
+                  alt="Logo UAY"
+                  className="brand-logo-img"
+                  width="24"
+                  height="24"
+                  loading="eager"
+                  decoding="async"
+                />
+              </picture>
             </a>
             <Breadcrumbs
               items={
