@@ -91,4 +91,19 @@ test("getEffectiveRedirectUri extracts dynamic host or falls back", async () => 
   assert.ok(fallbackUri.includes("/api/v1/auth/callback"));
 });
 
+test("SSO identity accepts non-UUID sub and synthesizes fallback email", () => {
+  const minimalClaims = {
+    sub: "uay-sub-12345",
+    preferred_username: "user_test",
+    roles: ["STUDENT"],
+  };
+  const resolved = identityClaims.parse(minimalClaims);
+  assert.equal(resolved.ssoUserId, "uay-sub-12345");
+  assert.equal(resolved.email, "user_test@uay.ac.id");
+  assert.equal(resolved.name, "user_test");
+  assert.equal(resolved.identifierValue, "user_test");
+  assert.equal(resolved.role, "STUDENT");
+});
+
+
 

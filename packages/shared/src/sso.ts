@@ -112,9 +112,9 @@ const applicationRole = z.enum(APPLICATION_ROLES);
  */
 export const identityClaims = z
   .object({
-    sub: z.string().uuid(),
-    name: z.string().min(1),
-    email: z.string().email(),
+    sub: z.string().min(1),
+    name: z.string().min(1).optional(),
+    email: z.string().optional(),
     preferred_username: z.string().min(1).optional(),
     user_type: userType.optional(),
     identifier_type: identifierType.optional(),
@@ -128,11 +128,12 @@ export const identityClaims = z
     // The legacy scalar is only a fallback for issuers that do not send the
     // application-specific roles claim. An explicit (even empty) roles list
     // must never be overridden by a conflicting legacy role.
-    const role = claims.roles !== undefined
-      ? highestRole(claims.roles)
-      : claims.role
-        ? normalizeRole(claims.role)
-        : null;
+    const role =
+      claims.roles !== undefined
+        ? highestRole(claims.roles)
+        : claims.role
+          ? normalizeRole(claims.role)
+          : null;
     if (!role) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -141,23 +142,29 @@ export const identityClaims = z
       });
       return z.NEVER;
     }
+
     const identifierValue =
       claims.identifier_value ??
       claims.student_staff_number ??
-      claims.preferred_username;
-    if (!identifierValue) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "No academic identifier on this account",
-        path: ["identifier_value"],
-      });
-      return z.NEVER;
-    }
+      claims.preferred_username ??
+      claims.sub;
+
     const resolvedUserType = claims.user_type ?? defaultUserType(role);
+
+    const name =
+      claims.name && claims.name.trim().length > 0
+        ? claims.name.trim()
+        : claims.preferred_username ?? "Pengguna UAY";
+
+    let email =
+      claims.email && claims.email.includes("@")
+        ? claims.email.trim().toLowerCase()
+        : `${String(claims.preferred_username ?? claims.sub).replace(/[^a-zA-Z0-9._-]/g, "")}@uay.ac.id`;
+
     return {
       ssoUserId: claims.sub,
-      name: claims.name,
-      email: claims.email,
+      name,
+      email,
       username: claims.preferred_username ?? null,
       userType: resolvedUserType,
       identifierType:

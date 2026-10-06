@@ -789,9 +789,11 @@ function App() {
       if (typeof sessionStorage !== "undefined") {
         sessionStorage.removeItem("uay-return-path");
       }
-      identity.setData(null);
-      setAuthErrorNotice("SESSION_EXPIRED");
-      navigate("/");
+      if (identity.data) {
+        identity.setData(null);
+        setAuthErrorNotice("SESSION_EXPIRED");
+        navigate("/");
+      }
     };
     window.addEventListener("routechange", change);
     window.addEventListener("session-expired", expired);

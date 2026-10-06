@@ -9,7 +9,7 @@ import {
   timingSafeEqual,
 } from "node:crypto";
 import { z } from "zod";
-import { identityClaims } from "../../../packages/shared/src/sso.js";
+import { identityClaims, normalizeRole } from "../../../packages/shared/src/sso.js";
 import {
   db,
   cache,
@@ -305,7 +305,7 @@ async function verifyAccess(token: string) {
     ensure(accountStatus === "ACTIVE", 403, "ACCOUNT_DISABLED");
   }
   ensure(
-    z.string().uuid().safeParse(payload.sub).success,
+    typeof payload.sub === "string" && payload.sub.trim().length > 0,
     403,
     "INVALID_IDENTITY",
   );
@@ -355,17 +355,63 @@ export async function fetchSsoMeProfile(
 }
 async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
   const claims: any = { ...rawClaims };
-  if (!claims.roles && Array.isArray((rawClaims as any).realm_access?.roles)) {
-    claims.roles = (rawClaims as any).realm_access.roles;
-  }
-  if (
-    !claims.roles &&
-    Array.isArray(
+
+  // 1. Gather all possible role strings from token
+  const candidateRoles = [
+    ...(Array.isArray(claims.roles) ? claims.roles : []),
+    ...(Array.isArray((rawClaims as any).realm_access?.roles)
+      ? (rawClaims as any).realm_access.roles
+      : []),
+    ...(Array.isArray(
       (rawClaims as any).resource_access?.[config.clientId]?.roles,
     )
-  ) {
-    claims.roles = (rawClaims as any).resource_access[config.clientId].roles;
+      ? (rawClaims as any).resource_access[config.clientId].roles
+      : []),
+  ];
+  const validRoles = candidateRoles
+    .map((r) => String(r))
+    .filter((r) => normalizeRole(r) !== null);
+
+  // 2. Identify candidate keys for finding the user in db.user
+  const ssoUserId = String(rawClaims.sub || "");
+  const username =
+    (rawClaims.preferred_username as string) ||
+    (rawClaims.username as string) ||
+    null;
+  const rawEmail = (rawClaims.email as string) || null;
+  const identifierVal =
+    (rawClaims.identifier_value as string) ||
+    (rawClaims.student_staff_number as string) ||
+    username ||
+    ssoUserId;
+
+  const existingUser = await db.user.findFirst({
+    where: {
+      OR: [
+        { ssoUserId },
+        ...(username ? [{ username }, { identifierValue: username }] : []),
+        ...(identifierVal ? [{ identifierValue: identifierVal }] : []),
+        ...(rawEmail ? [{ email: rawEmail }] : []),
+      ],
+    },
+  });
+
+  // 3. Populate missing/fallback claims
+  if (validRoles.length > 0) {
+    claims.roles = validRoles;
+  } else if (existingUser) {
+    claims.roles = [existingUser.role];
+    claims.role = existingUser.role;
+    if (!claims.user_type) claims.user_type = existingUser.userType;
+    if (!claims.name) claims.name = existingUser.name;
+    if (!claims.email) claims.email = existingUser.email;
+    if (!claims.identifier_value) claims.identifier_value = existingUser.identifierValue;
+    if (!claims.department_scopes) claims.department_scopes = existingUser.departmentScopes;
+  } else {
+    claims.roles = ["STUDENT"];
+    claims.role = "STUDENT";
   }
+
   if (
     !claims.name &&
     ((rawClaims as any).given_name || (rawClaims as any).family_name)
@@ -380,9 +426,31 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
   if (!claims.name && claims.preferred_username) {
     claims.name = claims.preferred_username;
   }
-  if (!claims.department_scopes) {
-    claims.department_scopes = [];
+  if (!claims.name && existingUser?.name) {
+    claims.name = existingUser.name;
   }
+  if (!claims.name) {
+    claims.name = "Pengguna UAY";
+  }
+
+  if (!claims.email || !claims.email.includes("@")) {
+    claims.email =
+      existingUser?.email ||
+      `${String(username || ssoUserId).replace(/[^a-zA-Z0-9._-]/g, "")}@uay.ac.id`;
+  }
+
+  if (!claims.identifier_value) {
+    claims.identifier_value =
+      existingUser?.identifierValue ||
+      claims.student_staff_number ||
+      username ||
+      ssoUserId;
+  }
+
+  if (!claims.department_scopes) {
+    claims.department_scopes = existingUser?.departmentScopes || [];
+  }
+
   const parsed = identityClaims.safeParse(claims);
   if (!parsed.success) {
     console.error("[Auth OIDC] Identity claims validation failed:", {
@@ -392,7 +460,8 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
     });
   }
   ensure(parsed.success, 403, "INVALID_IDENTITY");
-  const { ssoUserId, ...profile } = parsed.data;
+  const { ssoUserId: _ignoredSsoUserId, ...profile } = parsed.data;
+
   const data = {
     ...profile,
     // Tokens only reach this point once account_status is ACTIVE, so a
@@ -401,21 +470,66 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
     ...(successfulLogin ? { lastLoginAt: new Date() } : {}),
     lastActiveAt: new Date(),
   };
+
   return transaction(async (tx) => {
-    const before = await tx.user.findUnique({ where: { ssoUserId } });
-    const user = await tx.user.upsert({
-      where: { ssoUserId },
-      create: { ssoUserId, ...data },
-      update: data,
-    });
-    if (
-      !before ||
-      before.role !== user.role ||
-      before.userType !== user.userType ||
-      JSON.stringify(before.departmentScopes) !==
-        JSON.stringify(user.departmentScopes) ||
-      before.status !== "ACTIVE"
-    )
+    let user;
+    if (existingUser) {
+      const finalRole = validRoles.length > 0 ? data.role : existingUser.role;
+      const finalUserType = rawClaims.user_type ? data.userType : existingUser.userType;
+      const finalDeptScopes =
+        Array.isArray(data.departmentScopes) && data.departmentScopes.length > 0
+          ? data.departmentScopes
+          : existingUser.departmentScopes;
+
+      user = await tx.user.update({
+        where: { id: existingUser.id },
+        data: {
+          ssoUserId,
+          name: data.name || existingUser.name,
+          username: data.username || existingUser.username,
+          email: existingUser.email || data.email,
+          role: finalRole,
+          userType: finalUserType,
+          departmentScopes: finalDeptScopes,
+          status: "ACTIVE",
+          ...(successfulLogin ? { lastLoginAt: new Date() } : {}),
+          lastActiveAt: new Date(),
+        },
+      });
+
+      if (
+        existingUser.role !== user.role ||
+        existingUser.userType !== user.userType ||
+        JSON.stringify(existingUser.departmentScopes) !==
+          JSON.stringify(user.departmentScopes) ||
+        existingUser.status !== "ACTIVE"
+      ) {
+        await audit(
+          tx,
+          {
+            user,
+            requestId: randomBytes(16).toString("hex"),
+            ip: "sso",
+            userAgent: "oidc",
+          },
+          "SYNC_IDENTITY",
+          "USER",
+          user.id,
+          null,
+          existingUser,
+          user,
+        );
+      }
+    } else {
+      user = await tx.user.create({
+        data: {
+          ssoUserId,
+          ...data,
+          status: "ACTIVE",
+          ...(successfulLogin ? { lastLoginAt: new Date() } : {}),
+          lastActiveAt: new Date(),
+        },
+      });
       await audit(
         tx,
         {
@@ -428,9 +542,10 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
         "USER",
         user.id,
         null,
-        before,
+        null,
         user,
       );
+    }
     return user;
   });
 }
