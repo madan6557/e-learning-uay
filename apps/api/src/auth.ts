@@ -4,6 +4,8 @@ import {
   randomBytes,
   createHash,
   createHmac,
+  createCipheriv,
+  createDecipheriv,
   timingSafeEqual,
 } from "node:crypto";
 import { z } from "zod";
@@ -119,6 +121,62 @@ function verifyOidcPayload(raw: string | undefined): OidcStatePayload | null {
       return null;
     }
     return data;
+  } catch {
+    return null;
+  }
+}
+
+const oidcEncryptionKey = createHash("sha256")
+  .update(oidcStateSecret + ":uay-oidc-encryption-key")
+  .digest();
+
+function encodeOidcState(payload: {
+  nonce: string;
+  verifier: string;
+  demoSubject?: string;
+  exp: number;
+}): string {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv("aes-256-gcm", oidcEncryptionKey, iv);
+  const plaintext = JSON.stringify(payload);
+  const encrypted = Buffer.concat([
+    cipher.update(plaintext, "utf8"),
+    cipher.final(),
+  ]);
+  const tag = cipher.getAuthTag();
+  return Buffer.concat([iv, tag, encrypted]).toString("base64url");
+}
+
+function decodeOidcState(stateStr: string): {
+  nonce: string;
+  verifier: string;
+  demoSubject?: string;
+} | null {
+  try {
+    const raw = Buffer.from(stateStr, "base64url");
+    if (raw.length < 28) return null;
+    const iv = raw.subarray(0, 12);
+    const tag = raw.subarray(12, 28);
+    const ciphertext = raw.subarray(28);
+    const decipher = createDecipheriv("aes-256-gcm", oidcEncryptionKey, iv);
+    decipher.setAuthTag(tag);
+    const decrypted = Buffer.concat([
+      decipher.update(ciphertext),
+      decipher.final(),
+    ]).toString("utf8");
+    const data = JSON.parse(decrypted);
+    if (typeof data.exp !== "number" || Date.now() > data.exp) {
+      console.warn("[Auth OIDC] Encrypted state expired:", {
+        exp: data.exp,
+        now: Date.now(),
+      });
+      return null;
+    }
+    return {
+      nonce: data.nonce,
+      verifier: data.verifier,
+      demoSubject: data.demoSubject,
+    };
   } catch {
     return null;
   }
@@ -250,8 +308,44 @@ export async function fetchSsoMeProfile(
     return null;
   }
 }
-async function syncUser(claims: JWTPayload, successfulLogin = false) {
+async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
+  const claims: any = { ...rawClaims };
+  if (!claims.roles && Array.isArray((rawClaims as any).realm_access?.roles)) {
+    claims.roles = (rawClaims as any).realm_access.roles;
+  }
+  if (
+    !claims.roles &&
+    Array.isArray(
+      (rawClaims as any).resource_access?.[config.clientId]?.roles,
+    )
+  ) {
+    claims.roles = (rawClaims as any).resource_access[config.clientId].roles;
+  }
+  if (
+    !claims.name &&
+    ((rawClaims as any).given_name || (rawClaims as any).family_name)
+  ) {
+    claims.name = [
+      (rawClaims as any).given_name,
+      (rawClaims as any).family_name,
+    ]
+      .filter(Boolean)
+      .join(" ");
+  }
+  if (!claims.name && claims.preferred_username) {
+    claims.name = claims.preferred_username;
+  }
+  if (!claims.department_scopes) {
+    claims.department_scopes = [];
+  }
   const parsed = identityClaims.safeParse(claims);
+  if (!parsed.success) {
+    console.error("[Auth OIDC] Identity claims validation failed:", {
+      issues: parsed.error.issues,
+      claimKeys: Object.keys(rawClaims),
+      sub: rawClaims.sub,
+    });
+  }
   ensure(parsed.success, 403, "INVALID_IDENTITY");
   const { ssoUserId, ...profile } = parsed.data;
   const data = {
@@ -259,7 +353,7 @@ async function syncUser(claims: JWTPayload, successfulLogin = false) {
     // Tokens only reach this point once account_status is ACTIVE, so a
     // successful sync also re-activates a previously revoked cache row.
     status: "ACTIVE" as const,
-    ...(successfulLogin ? {lastLoginAt: new Date()} : {}),
+    ...(successfulLogin ? { lastLoginAt: new Date() } : {}),
     lastActiveAt: new Date(),
   };
   return transaction(async (tx) => {
@@ -333,19 +427,19 @@ async function authorizationUrl(
   req?: Request,
 ) {
   const metadata = await oidcMetadata();
-  const state = randomBytes(32).toString("base64url");
   const nonce = randomBytes(32).toString("base64url");
   const verifier = randomBytes(48).toString("base64url");
-  const exp = Date.now() + 10 * 60 * 1000;
+  const exp = Date.now() + 15 * 60 * 1000;
+  const state = encodeOidcState({ nonce, verifier, demoSubject, exp });
 
   await cache.set(
     `oidc:${hash(state)}`,
     JSON.stringify({ nonce, verifier, demoSubject }),
-    600,
+    900,
   );
 
   const cookieOpts = getCookieOptions(req);
-  res.cookie("uay-oidc-state", state, { ...cookieOpts, maxAge: 600000 });
+  res.cookie("uay-oidc-state", state, { ...cookieOpts, maxAge: 900000 });
 
   const signedPayload = signOidcPayload({
     state,
@@ -356,7 +450,7 @@ async function authorizationUrl(
   });
   res.cookie("uay-oidc-payload", signedPayload, {
     ...cookieOpts,
-    maxAge: 600000,
+    maxAge: 900000,
   });
 
   const url = new URL(metadata.authorization_endpoint);
@@ -482,16 +576,28 @@ export function registerAuth(app: Express) {
     let verifier: string | undefined;
     let demoSubject: string | undefined;
 
-    const saved = await cache.take(`oidc:${hash(state)}`);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        nonce = parsed.nonce;
-        verifier = parsed.verifier;
-        demoSubject = parsed.demoSubject;
-      } catch {}
+    // 1. Primary path: Self-contained AES-256-GCM encrypted state
+    const decodedState = decodeOidcState(state);
+    if (decodedState) {
+      nonce = decodedState.nonce;
+      verifier = decodedState.verifier;
+      demoSubject = decodedState.demoSubject;
     }
 
+    // 2. Secondary path: Server cache (Redis or in-memory)
+    if (!verifier) {
+      const saved = await cache.take(`oidc:${hash(state)}`);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          nonce = parsed.nonce;
+          verifier = parsed.verifier;
+          demoSubject = parsed.demoSubject;
+        } catch {}
+      }
+    }
+
+    // 3. Tertiary path: Signed companion cookie
     if (!verifier && verifiedPayload && verifiedPayload.state === state) {
       console.log(
         "[Auth OIDC] Cache missed; successfully recovered OIDC verification from signed payload cookie.",
@@ -501,29 +607,17 @@ export function registerAuth(app: Express) {
       demoSubject = verifiedPayload.demoSubject;
     }
 
-    const cookieMismatch =
-      typeof cookieState === "string" && cookieState !== state;
-    const payloadMatches =
-      verifiedPayload !== null && verifiedPayload.state === state;
-    const cookieMatches = cookieState === state;
-    const cacheMatches = Boolean(verifier);
-
-    const stateValid =
-      !cookieMismatch &&
-      (cookieMatches || payloadMatches || (!cookieState && cacheMatches)) &&
-      Boolean(verifier);
+    const stateValid = Boolean(nonce && verifier);
 
     if (!stateValid) {
       console.error("[Auth OIDC] Callback state verification failed:", {
-        queryStatePrefix: state ? `${state.slice(0, 8)}...` : undefined,
+        queryStatePrefix: state ? `${state.slice(0, 10)}...` : undefined,
         cookieStatePrefix: cookieState
-          ? `${cookieState.slice(0, 8)}...`
+          ? `${cookieState.slice(0, 10)}...`
           : undefined,
         hasCookieState: Boolean(cookieState),
         hasPayloadCookie: Boolean(payloadCookie),
-        payloadMatches,
-        cacheMatches,
-        cookieMismatch,
+        isDecodedState: Boolean(decodedState),
         protocol: req.protocol,
         secure: req.secure,
         xForwardedProto: req.headers["x-forwarded-proto"],
