@@ -375,20 +375,33 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
   const claims: any = { ...rawClaims };
 
   // 1. Gather all possible role strings from token
-  const candidateRoles = [
+  const candidateRoles: string[] = [
     ...(Array.isArray(claims.roles) ? claims.roles : []),
+    ...(typeof claims.roles === "string" ? claims.roles.split(/[,\s]+/) : []),
+    ...(typeof claims.role === "string" ? [claims.role] : []),
     ...(Array.isArray((rawClaims as any).realm_access?.roles)
       ? (rawClaims as any).realm_access.roles
       : []),
-    ...(Array.isArray(
-      (rawClaims as any).resource_access?.[config.clientId]?.roles,
-    )
-      ? (rawClaims as any).resource_access[config.clientId].roles
+    ...Object.values((rawClaims as any).resource_access ?? {}).flatMap(
+      (client: any) => (Array.isArray(client?.roles) ? client.roles : []),
+    ),
+    ...(Array.isArray((rawClaims as any).groups)
+      ? (rawClaims as any).groups
+      : []),
+    ...(rawClaims.user_type === "ADMIN"
+      ? ["SUPER_ADMIN"]
+      : rawClaims.user_type === "LECTURER"
+        ? ["INSTRUCTOR"]
+        : rawClaims.user_type === "STAFF"
+          ? ["DEPARTMENT_ADMIN"]
+          : []),
+    ...(Array.isArray((rawClaims as any).attributes?.roles)
+      ? (rawClaims as any).attributes.roles
+      : []),
+    ...(typeof (rawClaims as any).attributes?.role === "string"
+      ? [(rawClaims as any).attributes.role]
       : []),
   ];
-  const validRoles = candidateRoles
-    .map((r) => String(r))
-    .filter((r) => normalizeRole(r) !== null);
 
   // 2. Identify candidate keys for finding the user in db.user
   const ssoUserId = String(rawClaims.sub || "");
@@ -403,6 +416,31 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
     username ||
     ssoUserId;
 
+  // Check known super-admin identifiers / emails
+  const adminIdentifiers = (
+    process.env.SUPER_ADMIN_IDENTIFIERS ??
+    process.env.SUPER_ADMIN_USERS ??
+    "admin,superadmin,admin@uay.ac.id"
+  )
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+
+  const isAdminIdentifier =
+    (username && adminIdentifiers.includes(username.toLowerCase())) ||
+    (rawEmail && adminIdentifiers.includes(rawEmail.toLowerCase())) ||
+    (ssoUserId && adminIdentifiers.includes(ssoUserId.toLowerCase())) ||
+    (username && ["admin", "superadmin", "administrator"].includes(username.toLowerCase())) ||
+    (rawEmail && ["admin@uay.ac.id", "superadmin@uay.ac.id"].includes(rawEmail.toLowerCase()));
+
+  if (isAdminIdentifier) {
+    candidateRoles.push("SUPER_ADMIN");
+  }
+
+  const validRoles = candidateRoles
+    .map((r) => normalizeRole(String(r)))
+    .filter((r): r is NonNullable<typeof r> => r !== null);
+
   const existingUser = await db.user.findFirst({
     where: {
       OR: [
@@ -414,9 +452,23 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
     },
   });
 
+  console.log("[Auth OIDC] syncUser identity details:", {
+    ssoUserId,
+    username,
+    email: rawEmail,
+    candidateCount: candidateRoles.length,
+    validRoles,
+    existingUserFound: !!existingUser,
+    existingUserRole: existingUser?.role,
+    realmRoles: (rawClaims as any).realm_access?.roles,
+    groups: (rawClaims as any).groups,
+    userType: rawClaims.user_type,
+  });
+
   // 3. Populate missing/fallback claims
   if (validRoles.length > 0) {
     claims.roles = validRoles;
+    claims.role = validRoles[0];
   } else if (existingUser) {
     claims.roles = [existingUser.role];
     claims.role = existingUser.role;
@@ -493,7 +545,12 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
     let user;
     if (existingUser) {
       const finalRole = validRoles.length > 0 ? data.role : existingUser.role;
-      const finalUserType = rawClaims.user_type ? data.userType : existingUser.userType;
+      const finalUserType =
+        finalRole === "SUPER_ADMIN"
+          ? ("ADMIN" as const)
+          : rawClaims.user_type
+            ? data.userType
+            : existingUser.userType;
       const finalDeptScopes =
         Array.isArray(data.departmentScopes) && data.departmentScopes.length > 0
           ? data.departmentScopes

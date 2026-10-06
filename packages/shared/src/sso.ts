@@ -47,29 +47,61 @@ export type ApplicationRole = (typeof APPLICATION_ROLES)[number];
 const ROLE_PRECEDENCE: readonly ApplicationRole[] = APPLICATION_ROLES;
 
 export function normalizeRole(raw: string): ApplicationRole | null {
-  const upper = raw.trim().toUpperCase();
-  if (upper === "RECTOR" || upper === "REKTOR") return "RECTOR";
-  if (upper === "MAHASISWA" || upper === "STUDENT") return "STUDENT";
+  if (typeof raw !== "string") return null;
+  const clean = raw
+    .trim()
+    .toUpperCase()
+    .replace(/^\/+/, "") // strip leading / from Keycloak group paths like /Super Admin
+    .replace(/[-_\s]+/g, "_"); // normalize hyphens, underscores, spaces to single underscore
+
+  if (clean === "RECTOR" || clean === "REKTOR") return "RECTOR";
+
   if (
-    upper === "DOSEN" ||
-    upper === "LECTURER" ||
-    upper === "INSTRUCTOR" ||
-    upper === "PENGAJAR"
-  )
-    return "INSTRUCTOR";
-  if (
-    upper === "ADMIN_PRODI" ||
-    upper === "STAFF" ||
-    upper === "DEPARTMENT_ADMIN"
-  )
-    return "DEPARTMENT_ADMIN";
-  if (
-    upper === "SUPER_ADMIN" ||
-    upper === "ADMIN" ||
-    upper === "ADMIN_PUSAT" ||
-    upper === "ADMIN_IT"
-  )
+    clean === "SUPER_ADMIN" ||
+    clean === "SUPERADMIN" ||
+    clean === "ADMIN" ||
+    clean === "ADMINISTRATOR" ||
+    clean === "ADMIN_PUSAT" ||
+    clean === "ADMIN_IT" ||
+    clean === "REALM_ADMIN" ||
+    clean === "ADMIN_ELEARNING" ||
+    clean === "ELEARNING_ADMIN" ||
+    clean === "ADMIN_LMS" ||
+    clean === "LMS_ADMIN" ||
+    clean === "APP_ADMIN" ||
+    clean === "SYSADMIN" ||
+    clean === "SYSTEM_ADMIN" ||
+    clean === "SUPER_USER" ||
+    clean === "SUPERUSER" ||
+    clean === "MANAGE_USERS" ||
+    clean === "MANAGE_REALM"
+  ) {
     return "SUPER_ADMIN";
+  }
+
+  if (
+    clean === "DEPARTMENT_ADMIN" ||
+    clean === "DEPARTMENTADMIN" ||
+    clean === "ADMIN_PRODI" ||
+    clean === "ADMINPRODI" ||
+    clean === "STAFF"
+  ) {
+    return "DEPARTMENT_ADMIN";
+  }
+
+  if (
+    clean === "DOSEN" ||
+    clean === "LECTURER" ||
+    clean === "INSTRUCTOR" ||
+    clean === "PENGAJAR"
+  ) {
+    return "INSTRUCTOR";
+  }
+
+  if (clean === "MAHASISWA" || clean === "STUDENT") {
+    return "STUDENT";
+  }
+
   return null;
 }
 

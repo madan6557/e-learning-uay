@@ -105,5 +105,27 @@ test("SSO identity accepts non-UUID sub and synthesizes fallback email", () => {
   assert.equal(resolved.role, "STUDENT");
 });
 
+test("normalizeRole recognizes various Keycloak super admin aliases and group formats", () => {
+  const adminAliases = [
+    "super_admin",
+    "Super Admin",
+    "/Super Admin",
+    "superadmin",
+    "super-admin",
+    "admin",
+    "Admin",
+    "/admin",
+    "administrator",
+    "realm-admin",
+    "admin-elearning",
+    "elearning-admin",
+    "sysadmin",
+  ];
+  for (const alias of adminAliases) {
+    assert.equal(normalizeRole(alias), "SUPER_ADMIN", `Failed for alias: ${alias}`);
+  }
+});
+
+
 
 
