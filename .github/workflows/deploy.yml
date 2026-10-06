@@ -146,7 +146,23 @@ jobs:
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
             uay-deploy@${{ secrets.UAY_VPS_HOST }} \
-            'cd /opt/uay/e-learning/application && npm run build'
+            '
+            cd /opt/uay/e-learning/application && npm run build
+
+            echo "=== Pre-flight: checking core config on VPS ==="
+            set -a
+            source /etc/uay-elearning-api
+            set +a
+            node --input-type=module -e '\''
+              try {
+                const core = await import("./apps/api/dist/apps/api/src/core.js");
+                console.log("[PRE-FLIGHT] core.js loaded successfully. Config port:", core.config.port);
+              } catch (err) {
+                console.error("[PRE-FLIGHT] FATAL CONFIG ERROR:", err.message);
+                process.exit(1);
+              }
+            '\''
+            '
 
       - name: Restart API service
         run: |
@@ -174,9 +190,9 @@ jobs:
             done
 
             echo "=== systemctl status uay-elearning-api.service ==="
-            sudo systemctl status uay-elearning-api.service --no-pager || true
+            systemctl status uay-elearning-api.service --no-pager -l || true
             echo "=== journalctl -u uay-elearning-api.service -n 50 ==="
-            sudo journalctl -u uay-elearning-api.service -n 50 --no-pager || true
+            journalctl -u uay-elearning-api.service -n 50 --no-pager || true
             echo "E-Learning API failed to become active."
             exit 1
             '
@@ -200,8 +216,7 @@ jobs:
 
             for i in $(seq 1 30); do
               if curl --fail --silent --show-error "http://127.0.0.1:${HEALTH_PORT}/api/health" || \
-                 curl --fail --silent --show-error "http://127.0.0.1:3001/api/health" || \
-                 curl --fail --silent --show-error "http://127.0.0.1:3000/api/health"; then
+                 curl --fail --silent --show-error "http://127.0.0.1:3001/api/health"; then
 
                 echo
                 echo "E-Learning API health check passed."
@@ -213,9 +228,9 @@ jobs:
             done
 
             echo "=== systemctl status uay-elearning-api.service ==="
-            sudo systemctl status uay-elearning-api.service --no-pager || true
+            systemctl status uay-elearning-api.service --no-pager -l || true
             echo "=== journalctl -u uay-elearning-api.service -n 60 ==="
-            sudo journalctl -u uay-elearning-api.service -n 60 --no-pager || true
+            journalctl -u uay-elearning-api.service -n 60 --no-pager || true
             echo "E-Learning API health check failed."
             exit 1
             '

@@ -39,7 +39,7 @@ let _fileRepoIdOverride: string | null = null;
 let _fileClientIdOverride: string | null = null;
 
 export const config = {
-  port: Number(process.env.PORT ?? 3000),
+  port: Number(process.env.PORT ?? 3001),
   // The browser application can live on Vercel while this API lives on Railway.
   // API_ORIGIN falls back to APP_ORIGIN for local and single-origin deployments.
   origin: appOrigin,

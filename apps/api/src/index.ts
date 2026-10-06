@@ -146,9 +146,18 @@ export function createApp() {
     process.env.DEMO_INTERNAL_FILE_URL,
   );
   app.get("/api/health", async (_req, res) => {
-    await db.$queryRaw`SELECT 1`;
-    if (redis) await redis.ping();
-    res.json({ status: "ok", service: "elearning-uay", version: "0.1.0" });
+    try {
+      await db.$queryRaw`SELECT 1`;
+      if (redis) {
+        await redis.ping().catch((err: any) => {
+          console.warn("[Health] Redis ping warning (fallback active):", err?.message);
+        });
+      }
+      res.json({ status: "ok", service: "elearning-uay", version: "0.1.0" });
+    } catch (err: any) {
+      console.error("[Health] Health check failed:", err);
+      res.status(503).json({ status: "error", error: "DATABASE_UNAVAILABLE" });
+    }
   });
   app.use("/api", async (req, res, next) => {
     res.setHeader("Cache-Control", "no-store");

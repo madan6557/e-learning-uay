@@ -20,13 +20,13 @@ module.exports = {
       env: {
         NODE_ENV: "production",
         API_HOST: process.env.API_HOST || "0.0.0.0",
-        PORT: Number(process.env.PORT || 3000),
+        PORT: Number(process.env.PORT || 3001),
         TRUST_PROXY: "1",
       },
       env_production: {
         NODE_ENV: "production",
         API_HOST: process.env.API_HOST || "0.0.0.0",
-        PORT: Number(process.env.PORT || 3000),
+        PORT: Number(process.env.PORT || 3001),
         TRUST_PROXY: "1",
       },
       time: true,
