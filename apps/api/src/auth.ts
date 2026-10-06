@@ -23,19 +23,107 @@ import {
   getAcademicSettings,
 } from "./core.js";
 
-const isSecure = Boolean(
-  process.env.COOKIE_SECURE === "true" ||
-  (process.env.NODE_ENV === "production" && !process.env.COOKIE_SECURE_DISABLE),
-);
-const cookieName =
-  process.env.COOKIE_NAME ??
-  (production ? "__Host-uay-session" : "uay-session");
-const cookie = {
-  httpOnly: true,
-  secure: isSecure,
-  sameSite: (process.env.COOKIE_SAMESITE as any) ?? "lax",
-  path: "/",
+export function isRequestSecure(req?: Request): boolean {
+  if (process.env.COOKIE_SECURE === "true") return true;
+  if (
+    process.env.COOKIE_SECURE === "false" ||
+    process.env.COOKIE_SECURE_DISABLE === "true"
+  )
+    return false;
+  if (req) {
+    if (req.secure) return true;
+    const proto = req.headers["x-forwarded-proto"];
+    if (typeof proto === "string" && proto.split(",")[0].trim() === "https")
+      return true;
+    const ssl = req.headers["x-forwarded-ssl"];
+    if (typeof ssl === "string" && ssl === "on") return true;
+    return req.protocol === "https";
+  }
+  return (
+    config.apiOrigin.startsWith("https://") ||
+    config.origin.startsWith("https://")
+  );
+}
+
+export function getCookieOptions(req?: Request) {
+  return {
+    httpOnly: true,
+    secure: isRequestSecure(req),
+    sameSite: (process.env.COOKIE_SAMESITE as any) ?? "lax",
+    path: "/",
+  };
+}
+
+export function getSessionCookieName(req?: Request) {
+  if (process.env.COOKIE_NAME) return process.env.COOKIE_NAME;
+  return isRequestSecure(req) ? "__Host-uay-session" : "uay-session";
+}
+
+export function getSessionId(req: Request): string | undefined {
+  if (process.env.COOKIE_NAME && req.cookies[process.env.COOKIE_NAME]) {
+    return req.cookies[process.env.COOKIE_NAME];
+  }
+  return req.cookies["__Host-uay-session"] ?? req.cookies["uay-session"];
+}
+
+const oidcStateSecret =
+  process.env.SSO_CLIENT_SECRET?.trim() ||
+  process.env.SSO_WEBHOOK_SECRET?.trim() ||
+  process.env.SESSION_SECRET?.trim() ||
+  createHash("sha256")
+    .update(
+      config.clientId + ":" + (process.env.DATABASE_URL ?? "uay-oidc-fallback"),
+    )
+    .digest("hex");
+
+type OidcStatePayload = {
+  state: string;
+  nonce: string;
+  verifier: string;
+  demoSubject?: string;
+  exp: number;
 };
+
+function signOidcPayload(data: OidcStatePayload): string {
+  const jsonStr = JSON.stringify(data);
+  const b64 = Buffer.from(jsonStr, "utf8").toString("base64url");
+  const sig = createHmac("sha256", oidcStateSecret)
+    .update(b64)
+    .digest("base64url");
+  return `${b64}.${sig}`;
+}
+
+function verifyOidcPayload(raw: string | undefined): OidcStatePayload | null {
+  if (!raw || typeof raw !== "string") return null;
+  const parts = raw.split(".");
+  if (parts.length !== 2) return null;
+  const [b64, sig] = parts;
+  const expected = createHmac("sha256", oidcStateSecret)
+    .update(b64)
+    .digest("base64url");
+  if (
+    sig.length !== expected.length ||
+    !timingSafeEqual(Buffer.from(sig), Buffer.from(expected))
+  ) {
+    return null;
+  }
+  try {
+    const data: OidcStatePayload = JSON.parse(
+      Buffer.from(b64, "base64url").toString("utf8"),
+    );
+    if (typeof data.exp !== "number" || Date.now() > data.exp) {
+      console.warn("[Auth OIDC] State payload expired:", {
+        exp: data.exp,
+        now: Date.now(),
+      });
+      return null;
+    }
+    return data;
+  } catch {
+    return null;
+  }
+}
+
 type Session = {
   userId: string;
   accessToken?: string;
@@ -229,22 +317,48 @@ async function tokenRequest(values: Record<string, string>) {
   ensure(typeof data.access_token === "string", 401, "INVALID_TOKEN");
   return data;
 }
-async function issue(res: Response, session: Session) {
+async function issue(res: Response, session: Session, req?: Request) {
   const id = randomBytes(32).toString("base64url");
   await cache.set(`session:${hash(id)}`, JSON.stringify(session), 8 * 3600);
-  res.cookie(cookieName, id, { ...cookie, maxAge: 8 * 3600000 });
+  const cookieOpts = getCookieOptions(req);
+  const primaryName = getSessionCookieName(req);
+  res.cookie(primaryName, id, { ...cookieOpts, maxAge: 8 * 3600000 });
+  if (primaryName === "__Host-uay-session") {
+    res.cookie("uay-session", id, { ...cookieOpts, maxAge: 8 * 3600000 });
+  }
 }
-async function authorizationUrl(res: Response, demoSubject?: string) {
+async function authorizationUrl(
+  res: Response,
+  demoSubject?: string,
+  req?: Request,
+) {
   const metadata = await oidcMetadata();
   const state = randomBytes(32).toString("base64url");
   const nonce = randomBytes(32).toString("base64url");
   const verifier = randomBytes(48).toString("base64url");
+  const exp = Date.now() + 10 * 60 * 1000;
+
   await cache.set(
     `oidc:${hash(state)}`,
     JSON.stringify({ nonce, verifier, demoSubject }),
-    300,
+    600,
   );
-  res.cookie("uay-oidc-state", state, { ...cookie, maxAge: 300000 });
+
+  const cookieOpts = getCookieOptions(req);
+  res.cookie("uay-oidc-state", state, { ...cookieOpts, maxAge: 600000 });
+
+  const signedPayload = signOidcPayload({
+    state,
+    nonce,
+    verifier,
+    demoSubject,
+    exp,
+  });
+  res.cookie("uay-oidc-payload", signedPayload, {
+    ...cookieOpts,
+    maxAge: 600000,
+  });
+
   const url = new URL(metadata.authorization_endpoint);
   url.search = new URLSearchParams({
     client_id: config.clientId,
@@ -309,11 +423,15 @@ export function registerAuth(app: Express) {
         data: { lastLoginAt: now, lastActiveAt: now },
       })
       .catch(() => {});
-    await issue(res, {
-      userId,
-      expires: Date.now() + 900000,
-      createdAt: Date.now(),
-    });
+    await issue(
+      res,
+      {
+        userId,
+        expires: Date.now() + 900000,
+        createdAt: Date.now(),
+      },
+      req,
+    );
     res.json({ ok: true });
   });
   app.post("/api/v1/auth/authorization", async (req, res) => {
@@ -330,7 +448,9 @@ export function registerAuth(app: Express) {
       ensure(user?.status === "ACTIVE", 403, "ACCOUNT_DISABLED");
       demoSubject = user.ssoUserId;
     }
-    res.json({ authorizationUrl: await authorizationUrl(res, demoSubject) });
+    res.json({
+      authorizationUrl: await authorizationUrl(res, demoSubject, req),
+    });
   });
   // Direct navigation remains available for non-JavaScript clients and legacy
   // links. The React UI uses the authorization endpoint above, so this path is
@@ -347,17 +467,75 @@ export function registerAuth(app: Express) {
       ensure(user?.status === "ACTIVE", 403, "ACCOUNT_DISABLED");
       demoSubject = user.ssoUserId;
     }
-    res.redirect(await authorizationUrl(res, demoSubject));
+    res.redirect(await authorizationUrl(res, demoSubject, req));
   });
   app.get("/api/v1/auth/callback", async (req, res) => {
     const { state, code } = z
       .object({ state: z.string().min(20), code: z.string().min(1) })
       .parse(req.query);
-    ensure(req.cookies["uay-oidc-state"] === state, 401, "INVALID_STATE");
+
+    const cookieState = req.cookies["uay-oidc-state"];
+    const payloadCookie = req.cookies["uay-oidc-payload"];
+    const verifiedPayload = verifyOidcPayload(payloadCookie);
+
+    let nonce: string | undefined;
+    let verifier: string | undefined;
+    let demoSubject: string | undefined;
+
     const saved = await cache.take(`oidc:${hash(state)}`);
-    res.clearCookie("uay-oidc-state", cookie);
-    ensure(saved, 401, "INVALID_STATE");
-    const { nonce, verifier, demoSubject } = JSON.parse(saved);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        nonce = parsed.nonce;
+        verifier = parsed.verifier;
+        demoSubject = parsed.demoSubject;
+      } catch {}
+    }
+
+    if (!verifier && verifiedPayload && verifiedPayload.state === state) {
+      console.log(
+        "[Auth OIDC] Cache missed; successfully recovered OIDC verification from signed payload cookie.",
+      );
+      nonce = verifiedPayload.nonce;
+      verifier = verifiedPayload.verifier;
+      demoSubject = verifiedPayload.demoSubject;
+    }
+
+    const cookieMismatch =
+      typeof cookieState === "string" && cookieState !== state;
+    const payloadMatches =
+      verifiedPayload !== null && verifiedPayload.state === state;
+    const cookieMatches = cookieState === state;
+    const cacheMatches = Boolean(verifier);
+
+    const stateValid =
+      !cookieMismatch &&
+      (cookieMatches || payloadMatches || (!cookieState && cacheMatches)) &&
+      Boolean(verifier);
+
+    if (!stateValid) {
+      console.error("[Auth OIDC] Callback state verification failed:", {
+        queryStatePrefix: state ? `${state.slice(0, 8)}...` : undefined,
+        cookieStatePrefix: cookieState
+          ? `${cookieState.slice(0, 8)}...`
+          : undefined,
+        hasCookieState: Boolean(cookieState),
+        hasPayloadCookie: Boolean(payloadCookie),
+        payloadMatches,
+        cacheMatches,
+        cookieMismatch,
+        protocol: req.protocol,
+        secure: req.secure,
+        xForwardedProto: req.headers["x-forwarded-proto"],
+      });
+    }
+
+    const cookieOpts = getCookieOptions(req);
+    res.clearCookie("uay-oidc-state", cookieOpts);
+    res.clearCookie("uay-oidc-payload", cookieOpts);
+
+    ensure(stateValid && nonce && verifier, 401, "INVALID_STATE");
+
     const tokens = await tokenRequest({
       grant_type: "authorization_code",
       code,
@@ -380,15 +558,19 @@ export function registerAuth(app: Express) {
       ensure(ssoMe.account_status === "ACTIVE", 403, "ACCOUNT_DISABLED");
     }
     const user = await syncUser({ ...id, ...access, ...(ssoMe ?? {}) }, true);
-    await issue(res, {
-      userId: user.id,
-      accessToken: tokens.access_token,
-      refreshToken: tokens.refresh_token,
-      idToken: tokens.id_token,
-      expires: Number(access.exp) * 1000,
-      createdAt: Date.now(),
-    });
-    res.redirect(user.role === 'RECTOR' ? '/rector' : '/dashboard');
+    await issue(
+      res,
+      {
+        userId: user.id,
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        idToken: tokens.id_token,
+        expires: Number(access.exp) * 1000,
+        createdAt: Date.now(),
+      },
+      req,
+    );
+    res.redirect(user.role === "RECTOR" ? "/rector" : "/dashboard");
   });
   app.post("/api/v1/auth/revocations", async (req, res) => {
     const secret = process.env.SSO_WEBHOOK_SECRET;
@@ -443,7 +625,7 @@ export function registerAuth(app: Express) {
     res.json({ ok: true });
   });
   app.post("/api/v1/auth/logout", async (req, res) => {
-    const id = req.cookies[cookieName];
+    const id = getSessionId(req);
     let logoutUrl: string | null = null;
     if (id) {
       const stored = await cache.take(`session:${hash(id)}`);
@@ -461,7 +643,12 @@ export function registerAuth(app: Express) {
         }
       }
     }
-    res.clearCookie(cookieName, cookie);
+    const cookieOpts = getCookieOptions(req);
+    res.clearCookie("__Host-uay-session", cookieOpts);
+    res.clearCookie("uay-session", cookieOpts);
+    if (process.env.COOKIE_NAME) {
+      res.clearCookie(process.env.COOKIE_NAME, cookieOpts);
+    }
     res.json({ logoutUrl });
   });
 }
@@ -471,7 +658,7 @@ export async function authenticate(
   next: NextFunction,
 ) {
   const authStarted = performance.now();
-  const id = req.cookies[cookieName];
+  const id = getSessionId(req);
   ensure(typeof id === "string", 401, "LOGIN_REQUIRED");
   const key = `session:${hash(id)}`;
   const stored = await cache.get(key);
