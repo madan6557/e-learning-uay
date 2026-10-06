@@ -11,9 +11,7 @@ import {
   Plus,
   ChevronRight,
   Bell,
-  Code2,
   Database,
-  Terminal,
   FileText,
   CheckCheck,
   Sliders,
@@ -47,12 +45,36 @@ import {
 import { countDrafts, removeDraft } from "./drafts";
 import { Avatar, Tabs } from "./ui";
 import { classPath, contentPath } from "./router";
-export function ClassCard({ item, index = 0 }: { item: any; index?: number }) {
-  const icons = [Code2, Database, Terminal];
-  const Icon = icons[index % 3];
+export interface ClassCardData {
+  id: string;
+  slug?: string;
+  name: string;
+  academicYear: string;
+  status: string;
+  isInactiveParticipant?: boolean;
+  course: { code: string; title: string; credits: number };
+  enrollments?: { isActive: boolean }[];
+  instructors: { user?: { name: string } | null }[];
+  _count: { enrollments: number; sections: number };
+}
+type UserSearchResult = {
+  id: string;
+  name: string;
+  identifierValue: string | null;
+  role: "SUPER_ADMIN" | "DEPARTMENT_ADMIN" | "INSTRUCTOR" | "STUDENT";
+};
+type CourseOption = { id: string; code: string; title: string; status: string };
+export interface AcademicPolicySettings {
+  academicYear: string;
+  academicYears: string[];
+  semesterLabel: string;
+  defaultGradeScaleVersion: string;
+  minAttendancePercentage: number;
+}
+export function ClassCard({ item, index = 0 }: { item: ClassCardData; index?: number }) {
   const isInactive =
     Boolean(item.isInactiveParticipant) ||
-    (item.enrollments?.length > 0 && !item.enrollments[0].isActive);
+    item.enrollments?.[0]?.isActive === false;
   const isArchived = item.status === "ARCHIVED";
   return (
     <a
@@ -61,7 +83,7 @@ export function ClassCard({ item, index = 0 }: { item: any; index?: number }) {
     >
       <div className="course-top">
         <span className="course-icon">
-          <Icon size={27} />
+          <BookOpen size={27} aria-hidden="true" />
         </span>
         <span className="course-code">{item.course.code}</span>
         <ArrowUpRight size={18} />
@@ -88,7 +110,7 @@ export function ClassCard({ item, index = 0 }: { item: any; index?: number }) {
             {item.instructors[0]?.user?.name?.[0] ?? "U"}
           </span>
           {item.instructors
-            .map((i: any) => i.user?.name?.split(",")[0] ?? "—")
+            .map((i) => i.user?.name?.split(",")[0] ?? "—")
             .join(", ")}
         </div>
         <div className="course-footer">
@@ -734,12 +756,12 @@ function AdminOverview({
             </span>
           </a>
         ))}
-        <div
-          className="card"
-          style={{ cursor: "pointer" }}
+        <button
+          type="button"
+          className="card governance-card"
           onClick={() => setGovernanceModal(true)}
         >
-          <Sliders size={24} style={{ color: "var(--primary, #0284c7)" }} />
+          <Sliders size={24} aria-hidden="true" />
           <h3>Kebijakan &amp; Tahun Ajaran</h3>
           <p>
             Lihat tahun akademik aktif ({config?.academicYear || "2026/2027 Ganjil"}), daftar semester, dan standar kebijakan bobot huruf mutu.
@@ -748,7 +770,7 @@ function AdminOverview({
             {user.role === "SUPER_ADMIN" ? "Kelola Kebijakan" : "Lihat Kebijakan"}
             <ChevronRight size={16} />
           </span>
-        </div>
+        </button>
       </div>
       <div className="section-heading">
         <h2>
@@ -946,11 +968,11 @@ export function ClassForm({
   onSaved: () => void;
   defaultAcademicYear?: string;
 }) {
-  const courses = useApi<any[]>("/courses");
+  const courses = useApi<CourseOption[]>("/courses");
   const [search, setSearch] = useState(""),
-    [users, setUsers] = useState<any[]>([]),
+    [users, setUsers] = useState<UserSearchResult[]>([]),
     [selected, setSelected] = useState<string[]>([]),
-    [selectedUsers, setSelectedUsers] = useState<any[]>([]),
+    [selectedUsers, setSelectedUsers] = useState<UserSearchResult[]>([]),
     [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
@@ -961,7 +983,7 @@ export function ClassForm({
     }
     const timer = setTimeout(async () => {
       try {
-        const results = await api(`/users?q=${encodeURIComponent(trimmed)}`);
+        const results = await api<UserSearchResult[]>(`/users?q=${encodeURIComponent(trimmed)}`);
         setUsers(results);
         setError(null);
       } catch (e) {
@@ -1043,10 +1065,11 @@ export function ClassForm({
           />
         </Field>
         <Field label={t.instructors}>
-          <div style={{ position: "relative" }}>
+          <div className="instructor-picker">
             <div className="inline-form">
               <input
                 value={search}
+                aria-label={t.instructors}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Ketik nama atau NIDN dosen..."
               />
@@ -1073,29 +1096,17 @@ export function ClassForm({
               </small>
             )}
             {search.trim().length >= 2 && users.filter((u) => u.role !== "STUDENT").length > 0 && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "100%",
-                  left: 0,
-                  right: 0,
-                  zIndex: 20,
-                  background: "#fff",
-                  border: "1px solid #cbd5e1",
-                  borderRadius: 6,
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                  maxHeight: 200,
-                  overflowY: "auto",
-                  marginTop: 4,
-                }}
-              >
+              <div className="instructor-results" aria-label="Hasil pencarian dosen">
                 {users
                   .filter((u) => u.role !== "STUDENT")
                   .map((u) => {
                     const isPicked = selected.includes(u.id);
                     return (
-                      <div
+                      <button
+                        type="button"
+                        className="instructor-result"
                         key={u.id}
+                        aria-pressed={isPicked}
                         onClick={() => {
                           if (!isPicked) {
                             setSelected((prev) => [...prev, u.id]);
@@ -1111,33 +1122,19 @@ export function ClassForm({
                           }
                           setSearch("");
                         }}
-                        style={{
-                          padding: "8px 12px",
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          cursor: "pointer",
-                          borderBottom: "1px solid #f1f5f9",
-                          backgroundColor: isPicked ? "#f0fdf4" : "transparent",
-                        }}
                       >
-                        <div>
-                          <strong style={{ display: "block", fontSize: "0.88rem" }}>
+                        <span>
+                          <strong>
                             {u.name}
                           </strong>
-                          <small style={{ color: "#64748b" }}>
+                          <small>
                             {u.identifierValue ?? "Dosen"}
                           </small>
-                        </div>
-                        <span
-                          style={{
-                            fontSize: "0.8rem",
-                            color: isPicked ? "#15803d" : "#0284c7",
-                          }}
-                        >
+                        </span>
+                        <span className="instructor-result-action">
                           {isPicked ? "Terpilih ✓" : "+ Tambah"}
                         </span>
-                      </div>
+                      </button>
                     );
                   })}
               </div>
@@ -1225,7 +1222,7 @@ export function AcademicGovernanceModal({
   onClose,
   onSaved,
 }: {
-  config?: any;
+  config?: AcademicPolicySettings;
   readOnly?: boolean;
   onClose: () => void;
   onSaved: () => void;

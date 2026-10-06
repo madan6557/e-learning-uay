@@ -1,8 +1,8 @@
 # Hasil otomatis QA v5
 
-Run: acf490fb-c86a-4e0a-896c-1bbd0f4fcf37
-Tanggal: 2026-10-05T12:23:12.888Z
-Commit: 9c9c68bba489d4427cd0cbd12eac81f773bef2e4 (working copy)
+Run: bfe21569-f47e-4981-9c31-cf402afc62c2
+Tanggal: 2026-10-06T03:06:05.116Z
+Commit: 46485551585e8996e9de0b6202c3e29a93a87054 (working copy)
 Lingkungan: Lokal · PostgreSQL _test · fixture SSO & File Service
 
 329 kasus: 143 lulus, 0 gagal, 0 terblokir, 186 belum diuji otomatis.

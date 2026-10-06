@@ -2466,9 +2466,9 @@ add(
   "Hanya pengguna yang memiliki kesamaan prodi yang muncul dalam hasil pencarian.",
   {
     automation: existing(
-      "tests/department-isolation.test.ts",
+      "tests/integration/department-isolation.test.ts",
       "Department Isolation: Department Admin only sees users within their department scope",
-      "unit",
+      "api",
     ),
   },
 );
@@ -2482,9 +2482,9 @@ add(
   "Dosen dapat melihat dan mengelola pengguna pada kedua program studi terafiliasi.",
   {
     automation: existing(
-      "tests/department-isolation.test.ts",
+      "tests/integration/department-isolation.test.ts",
       "Department Isolation: Multi-affiliation lecturer accesses multiple scoped departments",
-      "unit",
+      "api",
     ),
   },
 );
@@ -2498,9 +2498,9 @@ add(
   "Semua pengguna dan mata kuliah dari seluruh fakultas/prodi dapat diakses.",
   {
     automation: existing(
-      "tests/department-isolation.test.ts",
+      "tests/integration/department-isolation.test.ts",
       "Department Isolation: Super Admin has university-wide scope",
-      "unit",
+      "api",
     ),
   },
 );
@@ -2513,10 +2513,10 @@ add(
   "Kontrak skema ReportingSnapshot sesuai spesifikasi Dashboard Rektor",
   "Klien Dashboard Rektor UAY memanggil endpoint snapshot.",
   "Periksa payload JSON terhadap definisi antarmuka ReportingSnapshot.",
-  "Format telemetry memuat id, generatedAt, summary, departments, dan classes secara presisi.",
+  "Snapshot memuat snapshotAt, lecturers, classes, activities, dan sessions; identitas serta data kelas cocok dengan PostgreSQL.",
   {
     automation: existing(
-      "tests/rector-bridging.test.ts",
+      "tests/integration/rector-bridging.test.ts",
       "Rector Bridging: ReportingSnapshot schema conforms to Dashboard Rektor contract",
       "api",
     ),
@@ -2532,7 +2532,7 @@ add(
   "Request ditolak HTTP 401 Unauthorized; token valid diterima HTTP 200.",
   {
     automation: existing(
-      "tests/rector-bridging.test.ts",
+      "tests/integration/rector-bridging.test.ts",
       "Rector Bridging: token authorization gate rejects invalid credentials",
       "api",
     ),

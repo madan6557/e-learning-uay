@@ -360,11 +360,6 @@ input.score-input.changed {
 .sidebar-bottom small {
   font-size: 0.7rem;
 }
-.topbar {
-  height: 80px;
-  padding: 0 32px;
-  gap: 16px;
-}
 .topbar-left,
 .topbar-right {
   display: flex;
@@ -439,10 +434,10 @@ input.score-input.changed {
 }
 .mobile-menu,
 .nav-scrim {
-  display: none !important;
+  display: none;
 }
 .topbar .mobile-menu {
-  display: none !important;
+  display: none;
   align-items: center;
   justify-content: center;
   width: 36px;
@@ -619,48 +614,7 @@ input.score-input.changed {
   font-size: 0.88rem;
   margin-bottom: 0;
 }
-.demo-section {
-  padding-top: 28px;
-}
-.demo-section h2 {
-  margin-top: 14px;
-}
-.demo-section .section-heading {
-  margin-bottom: 20px;
-}
-.demo-section p {
-  font-size: 0.9rem;
-  margin: 6px 0 0;
-}
-.demo-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-.demo-card {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 14px;
-  background: white;
-  border: 1px solid var(--line);
-  padding: 20px;
-  border-radius: 12px;
-}
-.demo-card strong {
-  font-size: 0.9rem;
-}
-.demo-card small {
-  display: block;
-  margin-top: 3px;
-}
-.demo-card a {
-  font-size: 0.78rem;
-}
 @media (max-width: 1100px) {
-  .topbar {
-    padding: 0 24px;
-  }
   .breadcrumbs li:first-child {
     display: none;
   }
@@ -669,12 +623,6 @@ input.score-input.changed {
   }
   .profile-side {
     grid-template-columns: 1fr 1fr;
-  }
-  .demo-card {
-    grid-template-columns: auto 1fr;
-  }
-  .demo-card a {
-    grid-column: 1/-1;
   }
   .landing-hero {
     gap: 30px;
@@ -717,7 +665,7 @@ input.score-input.changed {
   }
   .mobile-menu,
   .topbar .mobile-menu {
-    display: inline-flex !important;
+    display: inline-flex;
   }
   .nav-scrim {
     display: block;
@@ -728,10 +676,6 @@ input.score-input.changed {
     border: 0;
     width: 100%;
     height: 100%;
-  }
-  .topbar {
-    padding: 0 16px;
-    height: 72px;
   }
   .topbar-left,
   .topbar-right {
@@ -828,13 +772,6 @@ input.score-input.changed {
     grid-column: 2;
     margin: 6px 0 0;
   }
-  .demo-grid {
-    grid-template-columns: 1fr;
-  }
-  .demo-card {
-    grid-template-columns: auto minmax(0, 1fr);
-    padding: 16px;
-  }
   .public-shell footer {
     padding: 20px 24px;
   }
@@ -913,12 +850,6 @@ body {
   width: 3px;
   border-radius: 0 4px 4px 0;
   background: var(--green);
-}
-
-.topbar {
-  background: rgba(255, 255, 255, 0.88);
-  box-shadow: 0 1px 0 rgba(26, 85, 138, 0.02);
-  backdrop-filter: blur(14px);
 }
 
 .breadcrumbs li:last-child {
@@ -1007,8 +938,7 @@ main {
 
 .card,
 .course-card,
-.meeting-card,
-.demo-card {
+.meeting-card {
   box-shadow: var(--shadow-sm);
 }
 
@@ -1152,16 +1082,6 @@ textarea:focus {
   box-shadow: 0 12px 28px rgba(38, 71, 104, 0.14);
 }
 
-.demo-card {
-  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
-}
-
-.demo-card:hover {
-  border-color: #bfd0e3;
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
-}
-
 @media (max-width: 1100px) {
   main {
     padding-top: 32px;
@@ -1175,13 +1095,6 @@ textarea:focus {
 @media (max-width: 760px) {
   main {
     padding: 24px 16px 40px;
-  }
-
-  .topbar {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    background: rgba(255, 255, 255, 0.94);
   }
 
   .page-heading {
@@ -1263,10 +1176,6 @@ textarea:focus {
   .landing-hero .button {
     width: 100%;
   }
-
-  .demo-card {
-    gap: 12px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1285,7 +1194,7 @@ textarea:focus {
 }
 
 .eyebrow-row .eyebrow {
-  margin-bottom: 0 !important;
+  margin-bottom: 0;
   line-height: 1;
 }
 
@@ -2020,19 +1929,6 @@ textarea:focus {
    MODERN MINIMALIST TOPBAR & USER CAPSULE
    ========================================================================== */
 
-.topbar {
-  height: 56px !important;
-  padding: 0 24px !important;
-  background: rgba(255, 255, 255, 0.94) !important;
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(26, 85, 138, 0.08);
-  box-shadow: 0 1px 3px rgba(26, 85, 138, 0.03);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
 .topbar-left {
   display: flex;
   align-items: center;
@@ -2508,37 +2404,7 @@ textarea:focus {
   margin: 0;
 }
 
-/* Demo Section */
-.demo-section {
-  padding-top: 36px;
-}
-
-.demo-login-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 8px;
-  background: #e9f1f9;
-  color: #1a558a;
-  font-size: 0.8rem;
-  font-weight: 600;
-  border: 1px solid #d2e0f0;
-  cursor: pointer;
-  transition: all 140ms ease;
-}
-
-.demo-login-btn:hover {
-  background: #1a558a;
-  color: #ffffff;
-  border-color: #1a558a;
-}
-
 @media (max-width: 760px) {
-  .topbar {
-    padding: 0 16px !important;
-    height: 56px !important;
-  }
 
   .user-chip-name,
   .user-chip-role {
@@ -2720,15 +2586,24 @@ textarea:focus {
 
 /* --- top bar --- */
 .topbar {
-  background: var(--surface) !important;
-  backdrop-filter: none;
+  height: 56px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 0.83rem;
+  background: var(--surface);
   border-bottom: 1px solid var(--border);
-  box-shadow: none;
 }
 @media (max-width: 760px) {
   .topbar {
-    height: 60px !important;
-    padding: 0 16px !important;
+    height: 60px;
+    padding: 0 16px;
+    font-size: 0.75rem;
+    position: sticky;
+    top: 0;
+    z-index: 20;
   }
 }
 .topbar .breadcrumbs li:last-child,
@@ -3129,14 +3004,6 @@ table th {
   color: var(--neutral-on-soft);
 }
 
-/* `Action` renders its error as a sibling of the button, so inside a grid card
-   the notice becomes a fourth item and stretches the first column, squeezing
-   the name and pushing the button over it. Span the row instead. */
-.demo-card .notice {
-  grid-column: 1 / -1;
-  margin-top: 4px;
-}
-
 /* Standalone links were 20px tall, under the 24px minimum pointer target.
    `.back-link` is also full width, so only its height needed correcting;
    `align-self: flex-start` keeps its hit area to the text it labels. */
@@ -3152,33 +3019,33 @@ table th {
 }
 
 /* Activity list & rows (Perlu dinilai & agenda lists) */
-.activity-list {
-  display: flex !important;
-  flex-direction: column !important;
-  padding: 0 !important;
+.card.activity-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
   overflow: hidden;
 }
 .activity-row {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-  gap: 16px !important;
-  padding: 14px 20px !important;
-  border-bottom: 1px solid var(--border) !important;
-  text-decoration: none !important;
-  color: inherit !important;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  color: inherit;
   transition: background-color 140ms ease, transform 140ms ease;
-  width: 100% !important;
-  box-sizing: border-box !important;
+  width: 100%;
+  box-sizing: border-box;
 }
 .activity-row:last-child {
-  border-bottom: 0 !important;
+  border-bottom: 0;
 }
 .activity-row:hover {
-  background: #f8fafc !important;
+  background: var(--accent-surface);
 }
 .activity-row:hover h3 {
-  color: var(--primary, #0284c7) !important;
+  color: var(--primary);
 }
 .activity-row .activity-icon {
   display: flex;
@@ -3287,11 +3154,11 @@ table th {
   font-size: 0.75rem;
   color: var(--muted-foreground);
 }
-.dropzone-btn {
+.button.dropzone-btn {
   margin-top: 6px;
-  min-height: 32px !important;
-  font-size: 0.8125rem !important;
-  padding: 0 14px !important;
+  min-height: 32px;
+  font-size: 0.8125rem;
+  padding: 0 14px;
 }
 .uploading-state {
   display: flex;
@@ -3384,11 +3251,55 @@ table th {
   color: var(--success);
   flex-shrink: 0;
 }
-.upload-change-btn {
-  min-height: 32px !important;
-  font-size: 0.75rem !important;
-  padding: 0 10px !important;
+.button.upload-change-btn {
+  min-height: 32px;
+  font-size: 0.75rem;
+  padding: 0 10px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
+
+/* Buttons preserve the card and picker presentation while providing native keyboard access. */
+.governance-card {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+.governance-card > svg { color: var(--primary); }
+.instructor-picker { position: relative; }
+.instructor-results {
+  position: absolute;
+  inset: 100% 0 auto;
+  z-index: 20;
+  margin-top: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+}
+.instructor-result {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.instructor-result[aria-pressed="true"] { background: var(--success-soft); }
+.instructor-result strong { display: block; font-size: 0.88rem; }
+.instructor-result small { color: var(--muted-foreground); }
+.instructor-result-action { font-size: 0.8rem; color: var(--primary); }
+.instructor-result[aria-pressed="true"] .instructor-result-action { color: var(--success); }

@@ -42,7 +42,9 @@ npm audit
 
 Untuk pengujian manual, [panduan pengujian](docs/PANDUAN-PENGUJIAN.md) memuat daftar periksa langkah demi langkah per modul beserta hasil yang diharapkan.
 
-**Portal pengujian interaktif v5:** jalankan `npm run qa`, lalu buka **http://127.0.0.1:5174/**. Katalog 317 kasus disusun **P0/P1/P2 → Role**, dengan langkah, hasil manual, bukti otomatis, ringkasan progres, serta perbandingan hasil. Jalankan `npm run qa:run` atau tombol **Jalankan otomatis** untuk memperbarui bukti. Lihat [panduan portal QA](docs/qa/README.md).
+**Portal pengujian interaktif v5:** jalankan `npm run qa`, lalu buka **http://127.0.0.1:5174/**. Katalog 329 kasus disusun **P0/P1/P2 → Role**, dengan langkah, hasil manual, bukti otomatis, ringkasan progres, serta perbandingan hasil. Jalankan `npm run qa:run` atau tombol **Jalankan otomatis** untuk memperbarui bukti. Lihat [panduan portal QA](docs/qa/README.md).
+
+Menu **Bantuan** memuat tutorial, gambar, dan solusi kendala sesuai role akun, tanpa checklist. [Panduan penggunaan utama](docs/BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md) diekspor dari konten Bantuan dan definisi skala nilai yang sama. Jalankan `npm run docs:guide` setelah memperbarui konten, lalu `npm run docs:guide:check` untuk memastikan dokumen masih sesuai.
 
 Panduan 11 blok dan tag teks, prompt AI, serta contoh JSON artikel tersedia pada
 **Panduan & artikel AI** di editor Materi teks/Praktikum. Berkas sumber yang bisa
@@ -72,6 +74,8 @@ Pada Windows, hentikan proses API sebelum menjalankan `db:generate`/`build` apab
 - `tests`: pengujian domain, akses lintas pengguna, akademik, OIDC dan berkas.
 
 SSO memiliki identitas dan kredensial. E-Learning menyimpan referensi identitas dan sesi opaque; password pengguna tidak disimpan. File Service memiliki seluruh binary; API E-Learning menyimpan ID dan metadata terverifikasi. Fixture lokal menyimpan file di direktorinya sendiri dan **tidak melakukan antivirus nyata**.
+
+Endpoint baca `/api/v1/integrations/rector/snapshot` menerima sesi Super Admin atau token khusus yang dikonfigurasi melalui `RECTOR_BRIDGE_TOKEN`, pada header `Authorization: Bearer ...` atau `X-Rector-Bridge-Token`. Tanpa konfigurasi token tersebut, hanya sesi Super Admin yang diterima. Token tidak memakai secret SSO atau nilai bawaan.
 
 ## Menghubungkan layanan kampus dan VPS
 

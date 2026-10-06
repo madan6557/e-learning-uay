@@ -167,6 +167,8 @@ export function createApp() {
     next();
   });
   registerAuth(app);
+  // This read-only integration accepts its dedicated token or a Super Admin session.
+  registerRectorBridgeRoutes(app);
   app.use("/api/v1", authenticate);
   registerLearning(app);
   registerPublication(app);
@@ -175,7 +177,6 @@ export function createApp() {
   registerFiles(app);
   registerImports(app);
   registerAttendanceRoutes(app);
-  registerRectorBridgeRoutes(app);
   app.use("/api", (_req, res) =>
     res.status(404).json({ error: { code: "NOT_FOUND" } }),
   );

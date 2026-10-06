@@ -413,6 +413,10 @@ export function registerLearning(app: Express) {
     ensure(u.role !== "STUDENT", 403, "WRITE_ACCESS_DENIED");
     const search = String(req.query.q ?? "").slice(0, 100);
     ensure(search.length >= 2, 400, "SEARCH_TOO_SHORT");
+    if (u.role === "DEPARTMENT_ADMIN" && !u.departmentScopes.length) {
+      res.json([]);
+      return;
+    }
     const scopeFilter =
       u.role === "SUPER_ADMIN"
         ? {}

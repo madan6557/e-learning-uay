@@ -26,6 +26,8 @@
     "build:api": "npm run db:generate && tsc -p apps/api/tsconfig.json",
     "test": "tsx --test tests/*.test.ts",
     "test:integration": "node scripts/test-integration.mjs",
+    "docs:guide": "node --import tsx scripts/export-help-guide.mjs",
+    "docs:guide:check": "node --import tsx scripts/export-help-guide.mjs --check",
     "check": "npm run build && npm test",
     "qa": "node scripts/qa-dev.mjs",
     "qa:catalog": "node scripts/qa-catalog.mjs",

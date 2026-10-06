@@ -98,3 +98,21 @@ API presensi mewajibkan timestamp dengan `Z` atau offset, memvalidasi urutan jad
 Migrasi `202610060008_utc_timestamp_defaults` membuat 25 default DateTime menghasilkan `CURRENT_TIMESTAMP AT TIME ZONE 'UTC'`. Kolom tetap memakai `TIMESTAMP(3)` sesuai konvensi proyek; default tidak lagi bergantung pada zona sesi PostgreSQL. Migrasi hanya mengubah default dan tidak menebak atau menggeser timestamp lama.
 
 Build, 49 tes utama, dan 45 tes integrasi lulus. Form produksi diuji melalui React/JSDOM pada UTC+7 dan UTC+8, termasuk pergantian tahun, jadwal lintas hari, serta payload UTC saat simpan ulang. Default SQL diuji pada sesi UTC, UTC+7 dan UTC+8. Rincian: [TIME-CONSISTENCY-VERIFICATION.md](qa/TIME-CONSISTENCY-VERIFICATION.md).
+
+## Integrasi panduan Bantuan — 6 Oktober 2026
+
+Halaman `/help` memakai 33 tutorial (171 langkah), 14 solusi kendala, dan 33 gambar dari `E:/UVAYA/Project/Panduan/panduan.html`. Langkah tampil sebagai daftar bernomor tanpa checkbox atau penyimpanan progres checklist. Pencarian, kategori, detail, dan pembesaran gambar mengikuti role akun; tidak ada pemilih role manual. Tabel konversi nilai memakai definisi skala produksi bersama.
+
+Panduan umum tersedia bagi semua role. Mahasiswa menerima U1–U3 dan M1–M6; dosen U1–U3, D1–D16, A3–A4; Admin Prodi U1–U3 dan A1–A5; Super Admin U1–U3, A2–A5, S1–S3. A3–A4 merupakan alur pengelolaan peserta/impor yang dibagikan kepada dosen sesuai panduan sumber. Solusi kendala juga dibatasi menurut role. Role yang tidak dikenali tidak menerima artikel.
+
+Importer `scripts/import-help-guide.mjs` hanya mengurai HTML dan menyalin gambar lokal; skrip, CSS, kontrol checklist, dan toolbar sumber tidak dijalankan atau disisipkan. Berkas sumber tetap utuh. Untuk memperbarui konten, jalankan `node scripts/import-help-guide.mjs "E:/UVAYA/Project/Panduan/panduan.html"`, tinjau perubahan data/gambar, lalu jalankan tes dan build. Importer menyelaraskan teks lama tentang zona waktu, batas PDF, jadwal presensi, kode 6 karakter, dan kebijakan akademik dengan implementasi sekarang. Gambar tetap berasal dari panduan sumber dan diberi keterangan bahwa nama, angka, serta tanggal merupakan contoh.
+
+Build penuh, pemeriksaan TypeScript web, build web terakhir, dan 52 tes utama lulus. Tiga tes panduan memverifikasi daftar tutorial untuk empat role, penolakan role tidak dikenal, gambar PNG, konten tanpa kontrol checklist, pencarian lintas role, dan penutupan detail/gambar saat role berubah. Browser lokal dengan fixture Mahasiswa dan Super Admin memverifikasi kategori sesuai role, pencarian S3 yang kosong bagi mahasiswa, detail M2, gambar termuat, dan dialog pembesaran. Bukti viewport: `.local/verification/help-guide-student-viewport.jpg`.
+
+## Penyelesaian temuan 9–14 — 6 Oktober 2026
+
+Kartu Bantuan/kebijakan dan pilihan dosen memakai tombol dengan akses keyboard. Detail Bantuan memfokuskan judul dan mengembalikan fokus ke kartu asal. Header memiliki satu definisi dasar dengan penyesuaian seluler; CSS demo tanpa pemakai dihapus. Override `!important` tersisa untuk pengurangan animasi dan cetak. Kartu kelas memakai ikon buku yang netral. Komponen SVG logo yang tidak diimpor dihapus dan DTO pada alur yang diubah diberi tipe.
+
+Tes isolasi prodi dan rector bridge kini menjalankan endpoint produksi serta PostgreSQL `_test`. Tes mengungkap dan mengamankan pencarian identitas Admin Prodi tanpa cakupan, autentikasi token khusus snapshot, serta urutan sesi dosen terbaru sebelum batas 50 baris. Pemetaan QA mengikuti tes integrasi tersebut.
+
+Panduan Markdown utama diekspor dari data Bantuan serta skala produksi melalui `npm run docs:guide`; `npm run docs:guide:check` memeriksa kesesuaiannya. Dokumen operasional mengarah ke panduan utama. Istilah presensi menjadi kode 6 karakter pada aplikasi dan panduan. Build, 47 tes utama, 53 tes integrasi, 8 tes portal, serta 143 kasus otomatis QA lulus. Sebanyak 186 kasus katalog belum diuji otomatis. Pemeriksaan UI mencakup empat role dan breakpoint desktop/seluler. Rincian: [AI-SLOP-9-14-VERIFICATION.md](qa/AI-SLOP-9-14-VERIFICATION.md).

@@ -13,7 +13,10 @@ export const production = process.env.NODE_ENV === "production";
 export const isDemo = process.env.DEMO_MODE === "true";
 const originFrom = (value: string | undefined, fallback: string) =>
   (value ?? fallback).split(",")[0].trim().replace(/\/$/, "");
-const appOrigin = originFrom(process.env.APP_ORIGIN, "http://127.0.0.1:5173");
+const appOrigin = originFrom(
+  process.env.APP_ORIGIN,
+  production ? "https://e-learning.uay.ac.id" : "http://127.0.0.1:5173",
+);
 const apiOrigin = originFrom(process.env.API_ORIGIN, appOrigin);
 const accountUrlFromEnv = process.env.SSO_ACCOUNT_URL?.trim() ?? "";
 function accountManagementUrl() {
@@ -48,6 +51,8 @@ export const config = {
     ...(process.env.ALLOWED_ORIGINS
       ? process.env.ALLOWED_ORIGINS.split(",")
       : []),
+    "https://e-learning.uay.ac.id",
+    "https://elearning.uay.ac.id",
   ]
     .map((s) => s.trim().replace(/\/$/, ""))
     .filter(Boolean),
@@ -197,13 +202,13 @@ function productionConfigurationErrors() {
   required("APP_ORIGIN", process.env.APP_ORIGIN);
   required("DATABASE_URL", process.env.DATABASE_URL);
 
-  if (config.authMode !== "oidc") {
-    invalid.push("AUTH_MODE=oidc");
-  }
-
-  // Demo mode boleh berjalan tanpa Redis, SSO, File Service, dan HTTPS internal.
+  // Demo mode boleh berjalan tanpa OIDC, Redis, SSO, File Service, dan HTTPS internal.
   if (isDemo) {
     return [...new Set(invalid)];
+  }
+
+  if (config.authMode !== "oidc") {
+    invalid.push("AUTH_MODE=oidc");
   }
 
   required("REDIS_URL", process.env.REDIS_URL);
@@ -261,7 +266,9 @@ function productionConfigurationErrors() {
 
   if (
     !config.fileOrigins.length ||
-    config.fileOrigins.some((value) => !value.startsWith("https://"))
+    config.fileOrigins.some(
+      (value) => !value.startsWith("https://") && !isIntranetOrLocal(value),
+    )
   ) {
     invalid.push("HTTPS FILE_ALLOWED_ORIGINS");
   }
@@ -270,10 +277,14 @@ function productionConfigurationErrors() {
 }
 if (production) {
   const invalid = productionConfigurationErrors();
-  if (invalid.length)
+  if (invalid.length) {
+    console.error(
+      `[FATAL CONFIG ERROR] Production configuration check failed: ${invalid.join(", ")}`,
+    );
     throw new Error(
       `Production requires OIDC and valid configuration. Set or correct: ${invalid.join(", ")}.`,
     );
+  }
 }
 export const db = new PrismaClient();
 export const redis = process.env.REDIS_URL

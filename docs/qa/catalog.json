@@ -15286,8 +15286,8 @@
       "expected": "Hanya pengguna yang memiliki kesamaan prodi yang muncul dalam hasil pencarian.",
       "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
       "automation": {
-        "kind": "unit",
-        "file": "tests/department-isolation.test.ts",
+        "kind": "api",
+        "file": "tests/integration/department-isolation.test.ts",
         "title": "Department Isolation: Department Admin only sees users within their department scope",
         "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
       },
@@ -15335,8 +15335,8 @@
       "expected": "Dosen dapat melihat dan mengelola pengguna pada kedua program studi terafiliasi.",
       "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
       "automation": {
-        "kind": "unit",
-        "file": "tests/department-isolation.test.ts",
+        "kind": "api",
+        "file": "tests/integration/department-isolation.test.ts",
         "title": "Department Isolation: Multi-affiliation lecturer accesses multiple scoped departments",
         "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
       },
@@ -15384,8 +15384,8 @@
       "expected": "Semua pengguna dan mata kuliah dari seluruh fakultas/prodi dapat diakses.",
       "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
       "automation": {
-        "kind": "unit",
-        "file": "tests/department-isolation.test.ts",
+        "kind": "api",
+        "file": "tests/integration/department-isolation.test.ts",
         "title": "Department Isolation: Super Admin has university-wide scope",
         "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
       },
@@ -15423,18 +15423,18 @@
         },
         {
           "action": "Periksa payload JSON terhadap definisi antarmuka ReportingSnapshot.",
-          "expected": "Format telemetry memuat id, generatedAt, summary, departments, dan classes secara presisi."
+          "expected": "Snapshot memuat snapshotAt, lecturers, classes, activities, dan sessions; identitas serta data kelas cocok dengan PostgreSQL."
         },
         {
           "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
-          "expected": "Format telemetry memuat id, generatedAt, summary, departments, dan classes secara presisi."
+          "expected": "Snapshot memuat snapshotAt, lecturers, classes, activities, dan sessions; identitas serta data kelas cocok dengan PostgreSQL."
         }
       ],
-      "expected": "Format telemetry memuat id, generatedAt, summary, departments, dan classes secara presisi.",
+      "expected": "Snapshot memuat snapshotAt, lecturers, classes, activities, dan sessions; identitas serta data kelas cocok dengan PostgreSQL.",
       "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
       "automation": {
         "kind": "api",
-        "file": "tests/rector-bridging.test.ts",
+        "file": "tests/integration/rector-bridging.test.ts",
         "title": "Rector Bridging: ReportingSnapshot schema conforms to Dashboard Rektor contract",
         "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
       },
@@ -15483,7 +15483,7 @@
       "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
       "automation": {
         "kind": "api",
-        "file": "tests/rector-bridging.test.ts",
+        "file": "tests/integration/rector-bridging.test.ts",
         "title": "Rector Bridging: token authorization gate rejects invalid credentials",
         "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
       },

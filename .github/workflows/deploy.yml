@@ -44,6 +44,7 @@ jobs:
     name: Deploy to UAY VPS
     needs: test-and-build
     runs-on: ubuntu-latest
+    if: github.repository == 'UAY-System/e-learning'
 
     steps:
       - name: Checkout
@@ -172,6 +173,10 @@ jobs:
               sleep 1
             done
 
+            echo "=== systemctl status uay-elearning-api.service ==="
+            sudo systemctl status uay-elearning-api.service --no-pager || true
+            echo "=== journalctl -u uay-elearning-api.service -n 50 ==="
+            sudo journalctl -u uay-elearning-api.service -n 50 --no-pager || true
             echo "E-Learning API failed to become active."
             exit 1
             '
@@ -183,12 +188,20 @@ jobs:
             -o StrictHostKeyChecking=yes \
             uay-deploy@${{ secrets.UAY_VPS_HOST }} \
             '
+            HEALTH_PORT="3001"
+            if [ -f /etc/uay-elearning-api ]; then
+              set -a
+              source /etc/uay-elearning-api
+              set +a
+              if [ -n "$PORT" ]; then
+                HEALTH_PORT="$PORT"
+              fi
+            fi
+
             for i in $(seq 1 30); do
-              if curl \
-                --fail \
-                --silent \
-                --show-error \
-                http://127.0.0.1:3001/api/health; then
+              if curl --fail --silent --show-error "http://127.0.0.1:${HEALTH_PORT}/api/health" || \
+                 curl --fail --silent --show-error "http://127.0.0.1:3001/api/health" || \
+                 curl --fail --silent --show-error "http://127.0.0.1:3000/api/health"; then
 
                 echo
                 echo "E-Learning API health check passed."
@@ -199,6 +212,10 @@ jobs:
               sleep 1
             done
 
+            echo "=== systemctl status uay-elearning-api.service ==="
+            sudo systemctl status uay-elearning-api.service --no-pager || true
+            echo "=== journalctl -u uay-elearning-api.service -n 60 ==="
+            sudo journalctl -u uay-elearning-api.service -n 60 --no-pager || true
             echo "E-Learning API health check failed."
             exit 1
             '

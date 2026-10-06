@@ -1,0 +1,2552 @@
+{
+  "source": {
+    "name": "panduan.html",
+    "sha256": "f5c01b61cc12f52a24f5ca79119cb22f7594bde2a6e8622763d05a748ffb2b10",
+    "tutorialCount": 33
+  },
+  "tutorials": [
+    {
+      "id": "U1",
+      "title": "Masuk dengan akun kampus",
+      "summary": "Membuka ruang belajar dengan role yang diberikan kampus.",
+      "category": "Mulai Menggunakan Sistem",
+      "roles": [
+        "SUPER_ADMIN",
+        "DEPARTMENT_ADMIN",
+        "INSTRUCTOR",
+        "STUDENT"
+      ],
+      "keywords": [
+        "U1"
+      ],
+      "location": "Portal E-Learning kemudian Masuk dengan SSO UAY",
+      "preparation": "Siapkan identitas dan kata sandi akun SSO kampus. Gunakan alamat portal yang diberikan kampus.",
+      "steps": [
+        "Buka portal E-Learning UAY. Klik Masuk SSO di header atau Masuk dengan SSO UAY pada halaman utama.",
+        "Pada halaman SSO kampus, isi identitas akun dan kata sandi. Ikuti verifikasi tambahan jika diminta oleh SSO.",
+        "Setelah berhasil, tunggu sampai browser kembali ke Beranda E-Learning. Periksa nama dan role di kanan atas.",
+        "Klik Kelas saya atau Kelola kelas sesuai role Anda. Bila kelas kosong, hubungi bagian akademik prodi untuk memeriksa kepesertaan atau penugasan."
+      ],
+      "result": "Beranda tampil dengan identitas yang benar. Menu sesuai kewenangan akun.",
+      "controls": [
+        {
+          "label": "Masuk dengan SSO UAY",
+          "value": "Tombol, tanpa input di E-Learning",
+          "effect": "Mengalihkan browser ke layanan SSO kampus."
+        },
+        {
+          "label": "Identitas SSO",
+          "value": "Gunakan identitas yang ditetapkan kampus, misalnya NIM atau NIDN",
+          "effect": "Diisi di halaman SSO, bukan di formulir E-Learning."
+        },
+        {
+          "label": "Kata sandi SSO",
+          "value": "Kata sandi milik akun kampus",
+          "effect": "Diproses oleh SSO. Pemulihan mengikuti fasilitas dan petugas SSO kampus."
+        },
+        {
+          "label": "Role pada profil",
+          "value": "Mahasiswa, Dosen, Admin prodi, atau Super admin",
+          "effect": "Ditetapkan SSO. Pengguna tidak memilih atau mengganti role melalui menu E-Learning."
+        }
+      ],
+      "notes": [
+        "Tangkapan layar tutorial menggunakan aplikasi lokal dengan data demo. Halaman pemilih akun uji pada SSO lokal bukan formulir login pengguna kampus.",
+        "Bila login gagal, periksa identitas di SSO dan gunakan layanan bantuan akun kampus. Jangan menggunakan akun demo sebagai akun perkuliahan."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/01-masuk.png",
+        "alt": "Masuk dengan akun kampus dengan penanda merah",
+        "caption": "Penanda gambar: 1 Masuk SSO"
+      }
+    },
+    {
+      "id": "U2",
+      "title": "Navigasi menu dan pemulihan draf",
+      "summary": "Menemukan fitur yang dibutuhkan dan melanjutkan isian yang belum terkirim.",
+      "category": "Mulai Menggunakan Sistem",
+      "roles": [
+        "SUPER_ADMIN",
+        "DEPARTMENT_ADMIN",
+        "INSTRUCTOR",
+        "STUDENT"
+      ],
+      "keywords": [
+        "U2"
+      ],
+      "location": "Bilah menu di kiri dan tab di dalam kelas",
+      "preparation": "Sudah masuk. Pada ponsel, buka tombol menu untuk melihat navigasi.",
+      "steps": [
+        "Klik Kelas saya untuk dosen/mahasiswa, atau Kelola kelas untuk admin. Cari kelas, lalu klik kartu kelas yang sesuai.",
+        "Di dalam kelas, pilih Materi & aktivitas, Presensi, Rekap nilai, atau Pengumuman. Pengelola juga melihat Peserta, Bank soal, Berkas, dan Jejak audit.",
+        "Saat mengisi editor, perhatikan status draf. Klik Simpan atau tombol publikasi agar perubahan terkirim ke server.",
+        "Jika muncul Ditemukan draf lokal yang lebih baru, pilih Pulihkan draf untuk melanjutkan atau Abaikan draf untuk memakai data server. Periksa kembali isian sebelum menyimpan."
+      ],
+      "result": "Halaman yang dibuka sesuai kebutuhan. Perubahan penting memiliki pesan berhasil tersimpan.",
+      "controls": [
+        {
+          "label": "Beranda",
+          "value": "Menu",
+          "effect": "Ringkasan kelas, agenda, progres, atau pekerjaan yang perlu dinilai."
+        },
+        {
+          "label": "Agenda",
+          "value": "Menu",
+          "effect": "Daftar tugas dan kuis berdasarkan jadwal yang ditetapkan pengajar."
+        },
+        {
+          "label": "Nilai / Rekap nilai",
+          "value": "Menu dan tab kelas",
+          "effect": "Membuka nilai sesuai kelas dan hak akses akun."
+        },
+        {
+          "label": "Cari kelas",
+          "value": "Teks, misalnya IF2101",
+          "effect": "Menyaring nama, kode mata kuliah, atau nama kelas."
+        },
+        {
+          "label": "Filter status",
+          "value": "Semua, Draf, Terbit, Diarsipkan sesuai tampilan",
+          "effect": "Membatasi daftar kelas pada status yang dipilih."
+        },
+        {
+          "label": "Pulihkan draf",
+          "value": "Tombol saat pemulihan tersedia",
+          "effect": "Memasukkan draf lokal kembali ke editor. Belum mengirimkannya ke server."
+        },
+        {
+          "label": "Abaikan draf",
+          "value": "Tombol saat pemulihan tersedia",
+          "effect": "Mengabaikan draf pemulihan dan kembali memakai data server."
+        },
+        {
+          "label": "Batal / Tutup",
+          "value": "Tombol",
+          "effect": "Menutup editor. Jika ada perubahan, baca konfirmasi draf lokal yang muncul."
+        },
+        {
+          "label": "Simpan Sebagai Draf",
+          "value": "Tombol pada editor konten",
+          "effect": "Menyimpan konten ke server tanpa menerbitkannya kepada mahasiswa."
+        },
+        {
+          "label": "Simpan dan Publikasikan",
+          "value": "Tombol pada editor konten",
+          "effect": "Menyimpan dan menerbitkan konten. Akses tetap mengikuti status kelas, Section, dan jadwal."
+        },
+        {
+          "label": "Publikasikan / Tarik Publikasi",
+          "value": "Tombol di daftar konten",
+          "effect": "Menampilkan konten atau menariknya kembali dari tampilan mahasiswa."
+        },
+        {
+          "label": "Baris per halaman dan Berikutnya",
+          "value": "Pilihan jumlah baris / tombol navigasi",
+          "effect": "Mengubah tampilan daftar. Pilihan jumlah berbeda menurut halaman dan tidak menambah data."
+        }
+      ],
+      "notes": [
+        "Draf lokal hanya tersedia pada perangkat dan browser yang menyimpannya. Pesan draf lokal bukan bukti pekerjaan sudah diterima server."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/11-dosen-kelas.png",
+        "alt": "Navigasi menu dan pemulihan draf dengan penanda merah",
+        "caption": "Penanda gambar: 1 Pengaturan kelas; 2 Tambah pertemuan; 3 Tab presensi"
+      }
+    },
+    {
+      "id": "U3",
+      "title": "Profil notifikasi bantuan dan keluar",
+      "summary": "Memeriksa identitas, membaca pemberitahuan, dan mengakhiri sesi.",
+      "category": "Mulai Menggunakan Sistem",
+      "roles": [
+        "SUPER_ADMIN",
+        "DEPARTMENT_ADMIN",
+        "INSTRUCTOR",
+        "STUDENT"
+      ],
+      "keywords": [
+        "U3"
+      ],
+      "location": "Profil, Notifikasi, Bantuan, kemudian Keluar",
+      "preparation": "Sudah masuk dengan akun sendiri.",
+      "steps": [
+        "Buka Profil. Periksa nama, nomor identitas, role, dan afiliasi program studi. Jika tidak sesuai, hubungi bagian akademik/SSO.",
+        "Buka Notifikasi. Klik pemberitahuan yang relevan untuk membuka kelas atau aktivitas. Gunakan Tandai dibaca atau Tandai semua dibaca bila tersedia.",
+        "Buka Bantuan, ketik kata kunci seperti presensi atau tugas. Pilih artikel sesuai role dan ikuti langkahnya.",
+        "Jika kendala berlanjut, catat nama kelas, aktivitas, waktu kejadian, pesan kesalahan, dan Nomor permintaan yang tampil. Sampaikan kepada petugas akademik prodi.",
+        "Klik Keluar pada bagian kanan atas setelah selesai. Pastikan halaman publik muncul kembali, terutama pada komputer bersama."
+      ],
+      "result": "Identitas dikenali, notifikasi sudah ditinjau, dan sesi berakhir.",
+      "controls": [
+        {
+          "label": "Buka pengelolaan akun SSO",
+          "value": "Tautan pada Profil bila tersedia",
+          "effect": "Membuka layanan akun kampus. Perubahan identitas dan akses mengikuti pengelola SSO."
+        },
+        {
+          "label": "Hapus semua draf lokal",
+          "value": "Tombol pada Profil",
+          "effect": "Menghapus draf lokal akun dari browser ini. Pastikan pekerjaan yang dibutuhkan sudah disimpan terlebih dahulu."
+        },
+        {
+          "label": "Pencarian Bantuan",
+          "value": "Teks, misalnya kode presensi",
+          "effect": "Mencari artikel bantuan yang tersedia untuk role Anda."
+        },
+        {
+          "label": "Tandai semua dibaca",
+          "value": "Tombol pada Notifikasi",
+          "effect": "Mengubah status semua notifikasi menjadi dibaca, bukan menghapus isi aktivitas."
+        },
+        {
+          "label": "Keluar",
+          "value": "Tombol",
+          "effect": "Mengakhiri sesi E-Learning. Menutup tab saja tidak sama dengan menekan Keluar."
+        }
+      ],
+      "notes": [
+        "Tanggal dan jam mengikuti zona perangkat dengan offset sebenarnya, misalnya GMT+7 atau GMT+8. Input jadwal memakai waktu perangkat dan dikirim ke server sebagai UTC. Pastikan zona perangkat sesuai lokasi Anda."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/51-profil.png",
+        "alt": "Profil notifikasi bantuan dan keluar dengan penanda merah",
+        "caption": "Penanda gambar: 1 Keluar"
+      }
+    },
+    {
+      "id": "M1",
+      "title": "Menemukan dan bergabung ke kelas",
+      "summary": "Membuka kelas semester yang benar atau mendaftar dengan kunci dari pengajar.",
+      "category": "Panduan Mahasiswa",
+      "roles": [
+        "STUDENT"
+      ],
+      "keywords": [
+        "M1"
+      ],
+      "location": "Kelas saya kemudian kartu kelas atau Gabung kelas",
+      "preparation": "Akun mahasiswa aktif. Untuk pendaftaran mandiri, kelas harus menerima pendaftaran dan Anda memiliki kuncinya.",
+      "steps": [
+        "Klik Kelas saya. Ketik kode atau nama mata kuliah pada pencarian. Periksa nama rombel dan tahun akademik pada kartu.",
+        "Klik kartu kelas jika sudah terdaftar. Jika belum terdaftar dan pengajar memberikan kunci, klik Gabung kelas.",
+        "Pilih kelas dari daftar, atau gunakan Kode / ID Kelas bila pilihan tersebut ditampilkan. Salin ID/kode rujukan yang diberikan pengajar secara tepat.",
+        "Masukkan Kunci pendaftaran mandiri yang diberikan pengajar, lalu klik Gabung kelas pada dialog.",
+        "Periksa kelas sudah muncul dalam daftar Anda. Buka Materi & aktivitas. Bila tetap kosong, minta pengajar memeriksa status publikasi."
+      ],
+      "result": "Kartu kelas tersedia pada Kelas saya dan dapat dibuka.",
+      "controls": [
+        {
+          "label": "Pilih kelas",
+          "value": "Pilihan kelas yang tersedia",
+          "effect": "Menentukan kelas tujuan. Periksa mata kuliah, rombel, dan semester."
+        },
+        {
+          "label": "Kode / ID Kelas",
+          "value": "Identitas kelas yang diberikan pengajar",
+          "effect": "Dipakai bila kelas dicari lewat identitas langsung. Jangan mengisi NIM atau menebak ID."
+        },
+        {
+          "label": "Kunci pendaftaran mandiri",
+          "value": "Teks sesuai kunci pengajar, contoh latihan UAY2026",
+          "effect": "Membuktikan izin pendaftaran mandiri. Kunci berbeda dari kode presensi."
+        },
+        {
+          "label": "Gabung kelas",
+          "value": "Tombol setelah isian valid",
+          "effect": "Mendaftarkan akun Anda ke kelas tujuan."
+        },
+        {
+          "label": "Partisipasi dinonaktifkan",
+          "value": "Status pada kartu/halaman kelas",
+          "effect": "Akses materi, tugas, dan kuis dibatasi sampai pengelola mengaktifkan kembali kepesertaan."
+        }
+      ],
+      "notes": [
+        "Kelas yang tidak menerima pendaftaran mandiri perlu didaftarkan oleh dosen/admin. Kepesertaan kelas tidak menggantikan prosedur KRS kampus."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/41-gabung-kelas.png",
+        "alt": "Menemukan dan bergabung ke kelas dengan penanda merah",
+        "caption": "Penanda gambar: 2 Kunci; 3 Gabung"
+      }
+    },
+    {
+      "id": "M2",
+      "title": "Mengisi presensi satu klik atau kode",
+      "summary": "Mencatat kehadiran pada sesi kuliah yang benar.",
+      "category": "Panduan Mahasiswa",
+      "roles": [
+        "STUDENT"
+      ],
+      "keywords": [
+        "M2"
+      ],
+      "location": "Kelas saya kemudian kelas kemudian Presensi",
+      "preparation": "Terdaftar aktif pada kelas terbit dan sesi presensi sudah dibuka pengajar.",
+      "steps": [
+        "Buka tab Presensi. Cocokkan judul sesi dan tanggal perkuliahan dengan kelas yang sedang diikuti.",
+        "Untuk sesi tanpa kode, klik Konfirmasi Hadir (1-Klik). Pada dialog, periksa sesi lalu klik Konfirmasi Hadir Saya (1-Klik).",
+        "Untuk sesi dengan kode, klik Isi Presensi (Kode). Masukkan enam karakter kode dari layar pengajar, misalnya AB7K92. Kode 6 karakter dapat berisi huruf dan angka.",
+        "Pada dialog kode, klik Simpan semua perubahan untuk mengirim presensi. Tunggu respons sebelum menutup dialog.",
+        "Periksa status sesi berubah menjadi Hadir dan waktu pengisian tercatat. Jika sesi tertutup atau kode salah, hubungi pengajar."
+      ],
+      "result": "Status Hadir tampil pada sesi yang dipilih.",
+      "controls": [
+        {
+          "label": "Kode Presensi (6 Karakter)",
+          "value": "Enam karakter tanpa spasi, contoh AB7K92",
+          "effect": "Diisi hanya jika sesi memerlukan kode. Gunakan kode yang sedang berlaku, bukan kunci pendaftaran kelas."
+        },
+        {
+          "label": "Konfirmasi Hadir (1-Klik)",
+          "value": "Tombol pada sesi tanpa kode",
+          "effect": "Membuka konfirmasi presensi tanpa memasukkan kode."
+        },
+        {
+          "label": "Isi Presensi (Kode)",
+          "value": "Tombol pada sesi dengan kode",
+          "effect": "Membuka isian kode untuk sesi aktif."
+        },
+        {
+          "label": "Simpan semua perubahan pada dialog kode",
+          "value": "Tombol setelah kode/konfirmasi valid",
+          "effect": "Mencatat kehadiran di server. Periksa status sesudah respons diterima."
+        },
+        {
+          "label": "Belum Presensi",
+          "value": "Status ketika sesi masih terbuka",
+          "effect": "Pengisian Anda belum tercatat Hadir untuk sesi ini."
+        },
+        {
+          "label": "Hadir / Izin / Sakit / Tidak Hadir (Alpa) / Terlambat",
+          "value": "Status kehadiran",
+          "effect": "Izin, sakit, atau koreksi manual ditetapkan pengajar melalui lembar presensi."
+        },
+        {
+          "label": "Konfirmasi Hadir Saya (1-Klik)",
+          "value": "Tombol dialog sesi tanpa kode",
+          "effect": "Mengirim konfirmasi kehadiran langsung tanpa isian kode."
+        }
+      ],
+      "notes": [
+        "Sesi dapat dibuka sepanjang hari sampai ditutup pengajar atau dibatasi jam mulai/selesai. Tidak semua sesi memiliki durasi 15 menit.",
+        "Gunakan isian kode yang tersedia. Tampilan Kode Proyektor pada versi ini tidak menyediakan alur pemindaian QR bagi mahasiswa."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/44-mahasiswa-pin.png",
+        "alt": "Mengisi presensi satu klik atau kode dengan penanda merah",
+        "caption": "Penanda gambar: 1 Kode; 2 Kirim"
+      }
+    },
+    {
+      "id": "M3",
+      "title": "Mempelajari materi teks PDF dan video",
+      "summary": "Menyelesaikan bahan belajar dan memeriksa progresnya.",
+      "category": "Panduan Mahasiswa",
+      "roles": [
+        "STUDENT"
+      ],
+      "keywords": [
+        "M3"
+      ],
+      "location": "Kelas kemudian Materi & aktivitas kemudian judul materi",
+      "preparation": "Section dan materi sudah terbit serta berada dalam jadwal akses.",
+      "steps": [
+        "Klik judul materi pada Section yang sesuai. Untuk materi teks, baca seluruh bagian dan centang daftar langkah yang diminta.",
+        "Klik Tandai selesai setelah materi teks/praktikum tanpa berkas selesai dipelajari. Periksa tanda Selesai saat kembali ke daftar.",
+        "Untuk Modul PDF, gunakan Sebelumnya, Berikutnya, atau nomor Halaman untuk membaca halaman. Progres mengikuti halaman yang dibaca dan disimpan.",
+        "Untuk video unggahan, tekan Play dan tonton secara normal. Perhatikan Ditonton dan persentase progres. Video sematan menyediakan Tandai Selesai Menonton setelah Anda selesai menonton.",
+        "Jika materi memiliki berkas, klik Unduh sesuai aturan yang berlaku. Bila tombol terkunci, selesaikan syarat membaca/menonton dahulu, lalu coba lagi."
+      ],
+      "result": "Progres materi tersimpan dan status selesai/unduhan sesuai syarat tampil.",
+      "controls": [
+        {
+          "label": "Daftar langkah",
+          "value": "Checkbox pada materi teks",
+          "effect": "Centang langkah yang benar-benar selesai. Dapat menjadi syarat saat menandai materi selesai."
+        },
+        {
+          "label": "Tandai selesai",
+          "value": "Tombol materi yang mendukung",
+          "effect": "Mencatat penyelesaian materi teks dan beberapa jenis materi tautan/praktikum."
+        },
+        {
+          "label": "Halaman",
+          "value": "Bilangan halaman 1 sampai jumlah halaman",
+          "effect": "Menampilkan halaman PDF yang dipilih."
+        },
+        {
+          "label": "Sebelumnya / Berikutnya",
+          "value": "Tombol pembaca PDF",
+          "effect": "Berpindah halaman. Baca semua halaman yang diwajibkan."
+        },
+        {
+          "label": "Play / Pause / posisi pemutaran",
+          "value": "Kontrol pemutar video",
+          "effect": "Memulai atau menjeda video. Pada video unggahan, lompatan melewati tontonan yang tercatat dan kecepatan di atas 1x dibatasi."
+        },
+        {
+          "label": "Tandai Selesai Menonton",
+          "value": "Tombol video sematan",
+          "effect": "Mencatat penyelesaian video sematan setelah ditonton. Perilakunya berbeda dari pelacakan video unggahan."
+        },
+        {
+          "label": "Unduh",
+          "value": "Tombol jika berkas tersedia",
+          "effect": "Mengambil berkas. Ketersediaannya mengikuti izin kelas, jadwal, status berkas, dan syarat progres."
+        }
+      ],
+      "notes": [
+        "Modul yang ditampilkan pada pembaca dokumen adalah PDF. Ubah bahan Word atau PowerPoint ke PDF jika pengajar ingin menampilkannya sebagai Modul PDF."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/46-materi-pdf.png",
+        "alt": "Mempelajari materi teks PDF dan video dengan penanda merah",
+        "caption": "Penanda gambar: 1 Nomor halaman; 2 Berikutnya"
+      }
+    },
+    {
+      "id": "M4",
+      "title": "Mengumpulkan tugas dan memeriksa versi",
+      "summary": "Mengirim jawaban dalam format yang diterima sebelum batas pengumpulan.",
+      "category": "Panduan Mahasiswa",
+      "roles": [
+        "STUDENT"
+      ],
+      "keywords": [
+        "M4"
+      ],
+      "location": "Kelas kemudian Materi & aktivitas kemudian judul tugas",
+      "preparation": "Tugas terbit dan dibuka. Siapkan jawaban dengan format yang diizinkan.",
+      "steps": [
+        "Buka tugas. Baca Petunjuk tugas, Nilai maksimum, Format yang diterima, Tenggat, Batas akhir toleransi, dan Batas versi pengumpulan.",
+        "Jika TEXT diizinkan, isi Jawaban atau catatan. Jika LINK diizinkan, isi Tautan hasil pekerjaan. Untuk berkas, klik Cari berkas atau seret berkas ke area unggah.",
+        "Tunggu unggahan selesai dan nama berkas tampil. Periksa berkas yang dipilih dan pastikan pengajar dapat membuka tautan Anda.",
+        "Klik Kumpulkan tugas. Tunggu pesan Tugas berhasil dikumpulkan.",
+        "Periksa Riwayat pengumpulan: nomor Versi, waktu Dikumpulkan, status Tepat waktu/Terlambat, dan berkas atau jawaban. Untuk revisi, kirim versi baru selama batas versi dan jadwal masih mengizinkan."
+      ],
+      "result": "Versi baru tercatat pada Riwayat pengumpulan. Bukti unggah saja belum berarti tugas dikumpulkan.",
+      "controls": [
+        {
+          "label": "Jawaban atau catatan",
+          "value": "Teks bila TEXT diterima, contoh Ringkasan hasil praktikum",
+          "effect": "Mengirim jawaban/catatan sebagai bagian pengumpulan."
+        },
+        {
+          "label": "Tautan hasil pekerjaan",
+          "value": "URL lengkap bila LINK diterima, contoh https://contoh.invalid/hasil",
+          "effect": "Mengirim lokasi pekerjaan. Gunakan tautan pekerjaan Anda yang dapat diakses pengajar."
+        },
+        {
+          "label": "Cari berkas / area seret berkas",
+          "value": "Berkas sesuai Format yang diterima, ikuti batas ukuran pada layar",
+          "effect": "Mengunggah berkas sebelum pengumpulan. Berkas harus selesai diproses sebelum dikirim."
+        },
+        {
+          "label": "Kumpulkan tugas",
+          "value": "Tombol",
+          "effect": "Membuat satu versi pengumpulan di server."
+        },
+        {
+          "label": "Tenggat",
+          "value": "Tanggal dan jam pada tugas",
+          "effect": "Batas pengumpulan tepat waktu. Sesudahnya dapat ditandai terlambat jika diizinkan."
+        },
+        {
+          "label": "Batas akhir toleransi",
+          "value": "Tanggal dan jam jika ditetapkan",
+          "effect": "Batas terakhir penerimaan, termasuk pengumpulan terlambat."
+        },
+        {
+          "label": "Batas versi pengumpulan",
+          "value": "Jumlah kesempatan, misalnya 3",
+          "effect": "Membatasi banyaknya versi. Versi yang sudah dikirim tidak diganti melalui perubahan draf."
+        }
+      ],
+      "notes": [
+        "Jika tombol pengumpulan ditutup, periksa tenggat, toleransi, jumlah versi, status kelas, dan penguncian nilai akhir. Mintalah arahan pengajar bila perlu."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/47-kumpulkan-tugas.png",
+        "alt": "Mengumpulkan tugas dan memeriksa versi dengan penanda merah",
+        "caption": "Penanda gambar: 1 Jawaban"
+      }
+    },
+    {
+      "id": "M5",
+      "title": "Mengerjakan kuis sampai terkumpul",
+      "summary": "Memulai atau melanjutkan kuis serta memastikan jawaban diterima.",
+      "category": "Panduan Mahasiswa",
+      "roles": [
+        "STUDENT"
+      ],
+      "keywords": [
+        "M5"
+      ],
+      "location": "Kelas kemudian judul kuis",
+      "preparation": "Kuis terbit, jadwal dibuka, kesempatan masih tersedia, koneksi stabil.",
+      "steps": [
+        "Buka kuis. Periksa waktu pengerjaan, waktu tutup, kesempatan pengerjaan, dan petunjuknya.",
+        "Klik Mulai kuis. Jika sudah ada pengerjaan aktif, klik Lanjutkan pengerjaan untuk melanjutkan jawaban yang tersimpan.",
+        "Jawab soal sesuai jenisnya. Pilihan tunggal/benar-salah memakai satu pilihan. Pilihan jamak memakai checkbox. Menjodohkan memakai pasangan, mengurutkan memakai urutan, dan uraian/isian memakai teks.",
+        "Perhatikan pesan Jawaban tersimpan di server. Jika muncul Jawaban belum tersimpan, periksa koneksi dan ulangi penyimpanan sebelum lanjut.",
+        "Sebelum waktu habis, tinjau jawaban lalu klik Kumpulkan kuis. Baca dialog konfirmasi dan setujui bila jawaban sudah selesai.",
+        "Periksa Riwayat pengerjaan. Jawaban yang terkumpul tidak dapat diubah. Jika waktu habis, server mengumpulkan jawaban yang sudah tersimpan."
+      ],
+      "result": "Pengerjaan berstatus selesai/terkumpul pada riwayat. Nilai terlihat sesuai kebijakan publikasi hasil.",
+      "controls": [
+        {
+          "label": "Mulai kuis",
+          "value": "Tombol ketika akses dibuka",
+          "effect": "Membuat pengerjaan baru dan mulai menghitung waktu sesuai mode kuis."
+        },
+        {
+          "label": "Lanjutkan pengerjaan",
+          "value": "Tombol ketika ada pengerjaan aktif",
+          "effect": "Membuka pengerjaan yang sama. Bukan menambah durasi."
+        },
+        {
+          "label": "Sisa waktu",
+          "value": "Penghitung waktu",
+          "effect": "Mengikuti mode durasi sejak mulai atau akhir serentak yang ditetapkan pengajar."
+        },
+        {
+          "label": "Pilihan jawaban",
+          "value": "Radio/checkbox/dropdown sesuai soal",
+          "effect": "Radio memilih satu, checkbox dapat memilih beberapa. Ikuti instruksi soal."
+        },
+        {
+          "label": "Jawaban uraian / isian",
+          "value": "Teks sesuai soal dan batas kata",
+          "effect": "Isian singkat diperiksa dengan kunci, uraian menunggu penilaian pengajar."
+        },
+        {
+          "label": "Unggah berkas",
+          "value": "Berkas pada soal tipe unggah",
+          "effect": "Pilih file sesuai instruksi lalu tunggu selesai unggah agar tercatat sebagai jawaban."
+        },
+        {
+          "label": "Kumpulkan kuis",
+          "value": "Tombol dan konfirmasi",
+          "effect": "Mengakhiri pengerjaan. Jawaban tidak bisa diedit setelah terkumpul."
+        }
+      ],
+      "notes": [
+        "Nilai yang belum terlihat tidak selalu berarti jawaban hilang. Jawaban uraian/berkas mungkin menunggu koreksi dan hasil mungkin belum dipublikasikan."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/48-kerjakan-kuis.png",
+        "alt": "Mengerjakan kuis sampai terkumpul dengan penanda merah",
+        "caption": "Penanda gambar: 1 Mulai"
+      }
+    },
+    {
+      "id": "M6",
+      "title": "Memeriksa nilai dan kehadiran",
+      "summary": "Membaca hasil belajar serta mengajukan koreksi dengan bukti yang jelas.",
+      "category": "Panduan Mahasiswa",
+      "roles": [
+        "STUDENT"
+      ],
+      "keywords": [
+        "M6"
+      ],
+      "location": "Kelas kemudian Rekap nilai dan Presensi",
+      "preparation": "Pengajar sudah menerbitkan hasil yang hendak Anda lihat.",
+      "steps": [
+        "Buka Rekap nilai pada kelas. Baca nilai kategori, bobot, Nilai akhir, Huruf, dan Indeks mutu yang tersedia.",
+        "Untuk umpan balik tugas, buka tugas dan lihat versi yang sudah dinilai. Untuk hasil kuis, buka kuis dan Riwayat pengerjaan.",
+        "Jika tertulis Nilai akhir belum diterbitkan atau nilai akan terlihat setelah dipublikasikan, tunggu publikasi pengajar.",
+        "Buka Presensi dan cocokkan status setiap sesi. Jika ada kekeliruan, catat tanggal, judul sesi, dan bukti kehadiran untuk pengajar.",
+        "Jika hasil tidak sesuai, sampaikan kelas, aktivitas, versi/pengerjaan, dan bagian nilai yang dipersoalkan kepada pengajar."
+      ],
+      "result": "Anda mengetahui status nilai dan sesi kehadiran yang perlu diklarifikasi.",
+      "controls": [
+        {
+          "label": "Nilai akhir",
+          "value": "Skor skala 0 sampai 100",
+          "effect": "Hasil kategori dikalikan bobotnya. Terlihat setelah penerbitan sesuai kebijakan."
+        },
+        {
+          "label": "Bobot kategori",
+          "value": "Persentase tiap kategori",
+          "effect": "Besarnya kontribusi komponen terhadap nilai akhir."
+        },
+        {
+          "label": "Huruf / Indeks mutu",
+          "value": "Misalnya A- / 3,75 pada skala 2026.1",
+          "effect": "Konversi berdasarkan versi skala kelas. Nilai historis memakai skala yang berlaku saat diterbitkan."
+        },
+        {
+          "label": "Umpan balik",
+          "value": "Catatan pengajar",
+          "effect": "Masukan untuk jawaban tugas atau soal yang sudah dipublikasikan."
+        },
+        {
+          "label": "Persentase kehadiran",
+          "value": "Hadir dan Terlambat dibanding total sesi pada rekap",
+          "effect": "Izin dan Sakit dicatat terpisah. Mintalah penjelasan pengajar untuk kelayakan ujian pada kelas."
+        }
+      ],
+      "notes": [
+        "Jangan menyimpulkan kelayakan hanya dari warna lencana. Periksa data sesi dan keputusan akademik pengajar."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/49-mahasiswa-nilai.png",
+        "alt": "Memeriksa nilai dan kehadiran dengan penanda merah",
+        "caption": "Penanda gambar: 1 Status publikasi"
+      }
+    },
+    {
+      "id": "D1",
+      "title": "Menyiapkan kelas dan Section",
+      "summary": "Menyusun pertemuan agar mahasiswa dapat mengikuti urutan belajar.",
+      "category": "Panduan Dosen",
+      "roles": [
+        "INSTRUCTOR"
+      ],
+      "keywords": [
+        "D1"
+      ],
+      "location": "Kelas saya kemudian kelas kemudian Materi & aktivitas",
+      "preparation": "Ditugaskan sebagai pengampu. Kelas/mata kuliah belum diarsipkan.",
+      "steps": [
+        "Buka kartu kelas. Pastikan nama rombel dan tahun akademik benar. Klik Tambah Section.",
+        "Isi Judul Section, misalnya Pertemuan 4 Pengolahan Formulir. Tulis tujuan belajar pada Deskripsi dan pilih Jenis Section.",
+        "Isi Dibuka pada dan Ditutup pada bila akses pertemuan harus dijadwalkan. Biarkan kosong bila tidak perlu batas waktu.",
+        "Klik Simpan Sebagai Draf untuk menyiapkan dahulu, atau Simpan dan Publikasikan bila pertemuan sudah siap.",
+        "Periksa Section muncul. Gunakan Pindah ke atas/bawah untuk mengatur urutannya. Terbitkan kelas dan isi di dalamnya agar mahasiswa memperoleh akses."
+      ],
+      "result": "Section tersusun dengan jenis, jadwal, dan status yang sesuai.",
+      "controls": [
+        {
+          "label": "Judul Section",
+          "value": "Teks wajib, contoh Pertemuan 4 Pengolahan Formulir",
+          "effect": "Nama pertemuan yang terlihat dalam kelas."
+        },
+        {
+          "label": "Deskripsi",
+          "value": "Teks tujuan atau ringkasan pertemuan",
+          "effect": "Memberi petunjuk isi dan hasil belajar."
+        },
+        {
+          "label": "Jenis Section",
+          "value": "Perkuliahan, Praktikum, Seminar, Lokakarya, Ujian, Lainnya",
+          "effect": "Mengelompokkan jenis kegiatan. Pilih yang sesuai kegiatan nyata."
+        },
+        {
+          "label": "Dibuka pada",
+          "value": "Tanggal dan jam opsional, contoh 12 Oktober 2026 08.00",
+          "effect": "Awal akses Section sesuai jadwal."
+        },
+        {
+          "label": "Ditutup pada",
+          "value": "Tanggal dan jam sesudah waktu buka, atau kosong",
+          "effect": "Akhir jendela akses Section."
+        },
+        {
+          "label": "Edit",
+          "value": "Tombol pada Section",
+          "effect": "Mengubah metadata, jenis, atau jadwal Section."
+        },
+        {
+          "label": "Pindah ke atas / bawah",
+          "value": "Tombol pada Section",
+          "effect": "Mengubah urutan Section."
+        },
+        {
+          "label": "Simpan Sebagai Draf / Simpan dan Publikasikan",
+          "value": "Tombol editor",
+          "effect": "Draf untuk persiapan, publikasi untuk akses mahasiswa sesuai kelas dan jadwal."
+        }
+      ],
+      "notes": [
+        "Konten terbit di dalam Section draf tetap belum dapat diakses mahasiswa. Periksa tiga lapis: kelas, Section, dan kontennya."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/12-section.png",
+        "alt": "Menyiapkan kelas dan Section dengan penanda merah",
+        "caption": "Penanda gambar: 1 Judul; 2 Jenis; 3 Jadwal; 4 Publikasi"
+      }
+    },
+    {
+      "id": "D2",
+      "title": "Mengunggah Modul PDF dan bahan praktikum",
+      "summary": "Membagikan dokumen yang bisa dipelajari mahasiswa melalui kelas.",
+      "category": "Panduan Dosen",
+      "roles": [
+        "INSTRUCTOR"
+      ],
+      "keywords": [
+        "D2"
+      ],
+      "location": "Section kemudian Materi kemudian Tambah materi",
+      "preparation": "Siapkan PDF final dan jumlah halaman yang benar. Ikuti batas unggahan yang ditampilkan.",
+      "steps": [
+        "Pada Section tujuan, klik Materi. Isi Judul yang jelas dan pilih Modul PDF.",
+        "Klik Cari berkas atau seret PDF ke area unggah. Tunggu nama berkas tampil dan unggahan selesai.",
+        "Isi Jumlah halaman sesuai PDF sebenarnya, misalnya 12. Tentukan jadwal buka/tutup jika perlu.",
+        "Klik Simpan dan Publikasikan. Buka kembali materi untuk memastikan dokumen tampil dan jumlah halamannya benar.",
+        "Untuk dataset atau berkas praktikum, pilih Praktikum & dataset. Unggah berkas dan susun petunjuk praktikum sebelum menerbitkan."
+      ],
+      "result": "Materi terbit dalam Section yang tepat dan berkas dapat dibaca/diunduh sesuai syarat.",
+      "controls": [
+        {
+          "label": "Judul",
+          "value": "Teks wajib, contoh Modul Pertemuan 4",
+          "effect": "Nama materi pada daftar kelas."
+        },
+        {
+          "label": "Materi",
+          "value": "Modul PDF atau Praktikum & dataset",
+          "effect": "Modul PDF memakai pembaca halaman. Praktikum mendukung petunjuk dan berkas pendamping."
+        },
+        {
+          "label": "Cari berkas / seret berkas",
+          "value": "PDF untuk Modul PDF, maksimum 50 MB",
+          "effect": "Mengunggah berkas ke kelas. Tunggu proses selesai sebelum menyimpan."
+        },
+        {
+          "label": "Jumlah halaman",
+          "value": "Bilangan 1 sampai 10000, contoh 12",
+          "effect": "Dipakai sebagai metadata pembaca/progres. Samakan dengan PDF sebenarnya."
+        },
+        {
+          "label": "Dibuka pada / Ditutup pada",
+          "value": "Tanggal-jam opsional, akhir sesudah awal",
+          "effect": "Membatasi jadwal akses materi."
+        },
+        {
+          "label": "Simpan dan Publikasikan",
+          "value": "Tombol",
+          "effect": "Menerbitkan materi sesudah unggahan dan metadata lengkap."
+        }
+      ],
+      "notes": [
+        "Jenis materi yang sudah disimpan tidak dapat diganti melalui editor yang sama. Buat materi baru bila jenisnya harus berubah.",
+        "Bahan PPTX/DOCX yang ingin dibaca sebagai Modul PDF perlu dikonversi ke PDF terlebih dahulu."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/13-materi-pdf.png",
+        "alt": "Mengunggah Modul PDF dan bahan praktikum dengan penanda merah",
+        "caption": "Penanda gambar: 1 Jenis materi; 2 Unggah; 3 Jumlah halaman; 4 Publikasi"
+      }
+    },
+    {
+      "id": "D3",
+      "title": "Mengatur video dan tautan pembelajaran",
+      "summary": "Menyediakan video serta menetapkan syarat penyelesaian tontonan.",
+      "category": "Panduan Dosen",
+      "roles": [
+        "INSTRUCTOR"
+      ],
+      "keywords": [
+        "D3"
+      ],
+      "location": "Section kemudian Materi kemudian Video pembelajaran",
+      "preparation": "Siapkan video unggahan atau tautan sematan. Ketahui durasi aslinya.",
+      "steps": [
+        "Klik Materi pada Section lalu pilih Video pembelajaran. Isi Judul.",
+        "Pilih salah satu sumber: URL Video Embed (YouTube / External), atau unggah MP4/WebM jika kolom URL kosong.",
+        "Isi Durasi (detik), misalnya 600 untuk video 10 menit. Isi Tonton minimal (%), misalnya 85 untuk ambang 85 persen.",
+        "Atur jadwal jika diperlukan lalu Simpan dan Publikasikan. Buka materi dan periksa sumber video dapat dimuat.",
+        "Untuk referensi/simulator/ruang daring, buat materi baru dan pilih Tautan referensi, Simulator virtual, atau Pertemuan daring. Masukkan Tautan lengkap lalu terbitkan."
+      ],
+      "result": "Video atau tautan tersedia dengan jadwal dan syarat penyelesaian yang benar.",
+      "controls": [
+        {
+          "label": "URL Video Embed (YouTube / External)",
+          "value": "URL sematan yang valid atau kosong untuk unggahan",
+          "effect": "Menggunakan sumber video eksternal. Contoh struktur https://www.youtube.com/embed/ID_VIDEO."
+        },
+        {
+          "label": "Berkas video",
+          "value": "MP4/WebM, ikuti batas ukuran yang tampil",
+          "effect": "Digunakan saat URL kosong. Video unggahan mendukung pencatatan waktu tonton."
+        },
+        {
+          "label": "Durasi (detik)",
+          "value": "Bilangan 1 sampai 36000, contoh 600",
+          "effect": "Durasi acuan pelacakan. Isi detik, bukan menit."
+        },
+        {
+          "label": "Tonton minimal (%)",
+          "value": "Bilangan 1 sampai 100, default 85",
+          "effect": "Ambang tontonan untuk syarat progres video unggahan."
+        },
+        {
+          "label": "Tautan",
+          "value": "URL lengkap untuk simulator, pertemuan daring, atau referensi",
+          "effect": "Menentukan halaman/ruang tujuan. Pastikan izin aksesnya sesuai mahasiswa."
+        },
+        {
+          "label": "Dibuka pada / Ditutup pada",
+          "value": "Tanggal-jam opsional",
+          "effect": "Mengendalikan jendela akses materi."
+        }
+      ],
+      "notes": [
+        "Video sematan memiliki tombol Tandai Selesai Menonton dan tidak menggunakan pengamatan waktu pemutar yang sama dengan video unggahan. Pilih unggahan bila pelacakan waktu tonton dibutuhkan."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/14-materi-video.png",
+        "alt": "Mengatur video dan tautan pembelajaran dengan penanda merah",
+        "caption": "Penanda gambar: 1 URL video; 2 Durasi; 3 Ambang tonton"
+      }
+    },
+    {
+      "id": "D4",
+      "title": "Menyusun artikel teks dan impor artikel",
+      "summary": "Membuat materi teks dengan blok, lampiran, atau isi artikel dari JSON.",
+      "category": "Panduan Dosen",
+      "roles": [
+        "INSTRUCTOR"
+      ],
+      "keywords": [
+        "D4"
+      ],
+      "location": "Section kemudian Materi kemudian Materi teks",
+      "preparation": "Siapkan isi materi dan berkas pendamping. Jika menggunakan JSON, periksa isinya terlebih dahulu.",
+      "steps": [
+        "Klik Materi, pilih Materi teks, dan isi Judul. Susun paragraf pertama pada editor blok.",
+        "Klik Tambah blok atau gunakan pemilih jenis blok. Tambahkan judul bagian, daftar langkah, tabel, kode, gambar, atau lampiran sesuai isi materi.",
+        "Untuk lampiran, klik Sisipkan lampiran kemudian unggah berkas pada blok yang muncul.",
+        "Jika memakai artikel dari AI, buka Panduan & artikel AI. Unduh Panduan, Prompt AI, atau Contoh JSON untuk memperoleh format yang benar.",
+        "Klik Pilih JSON atau tempel isi pada Atau tempel JSON dari AI. Klik Tambahkan ke draf, lalu periksa judul, isi, fakta, dan lampiran.",
+        "Atur jadwal lalu Simpan Sebagai Draf atau Simpan dan Publikasikan. Periksa tampilan artikel setelah disimpan."
+      ],
+      "result": "Artikel tersusun, tersimpan, dan tampil sesuai status publikasi.",
+      "controls": [
+        {
+          "label": "Tambah blok",
+          "value": "Jenis blok: paragraf, judul bagian, gambar, kode, rumus, catatan, daftar langkah, tabel, lampiran, media, garis",
+          "effect": "Menambah satu bagian isi. Maksimal 300 blok per artikel."
+        },
+        {
+          "label": "Tingkat judul",
+          "value": "Tingkat heading yang tersedia",
+          "effect": "Membedakan hierarki bagian artikel."
+        },
+        {
+          "label": "Daftar langkah",
+          "value": "Satu langkah per baris",
+          "effect": "Menghasilkan checklist bagi mahasiswa."
+        },
+        {
+          "label": "Tabel",
+          "value": "Satu baris data per baris teks, kolom dipisah tab atau |",
+          "effect": "Menghasilkan tabel pada materi."
+        },
+        {
+          "label": "Bahasa pemrograman / Nama berkas",
+          "value": "Contoh javascript / validasi.js",
+          "effect": "Mengatur label dan tampilan blok kode atau berkas."
+        },
+        {
+          "label": "Rumus LaTeX",
+          "value": "Contoh x^2 + y^2",
+          "effect": "Menampilkan rumus pada blok matematika."
+        },
+        {
+          "label": "Deskripsi gambar / Keterangan",
+          "value": "Teks deskripsi singkat",
+          "effect": "Memberi arti gambar dan caption untuk pembaca."
+        },
+        {
+          "label": "Tautan pada media sematan",
+          "value": "URL media yang sesuai",
+          "effect": "Menyematkan sumber media pada artikel."
+        },
+        {
+          "label": "Pilih JSON / tempel JSON",
+          "value": "JSON maksimal 1 MB sesuai template artikel",
+          "effect": "Memasukkan isi artikel untuk ditinjau."
+        },
+        {
+          "label": "Tambahkan ke draf",
+          "value": "Tombol setelah JSON valid",
+          "effect": "Menambahkan blok di akhir isi. Judul yang sudah diisi tetap digunakan. Belum menerbitkan artikel."
+        },
+        {
+          "label": "Hapus / Duplikasi / Pindah ke atas / bawah",
+          "value": "Kontrol pada blok",
+          "effect": "Menghapus, menyalin, atau mengatur urutan blok dalam draf."
+        }
+      ],
+      "notes": [
+        "Periksa hasil impor sebelum menerbitkan. Artikel dari AI tetap membutuhkan pemeriksaan isi oleh pengajar."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/34-artikel.png",
+        "alt": "Menyusun artikel teks dan impor artikel dengan penanda merah",
+        "caption": "Penanda gambar: 1 Isi artikel; 2 Sisipkan lampiran; 3 Artikel AI"
+      }
+    },
+    {
+      "id": "D5",
+      "title": "Membuat tugas dengan tenggat dan toleransi",
+      "summary": "Menentukan instruksi serta batas pengumpulan yang dapat diikuti mahasiswa.",
+      "category": "Panduan Dosen",
+      "roles": [
+        "INSTRUCTOR"
+      ],
+      "keywords": [
+        "D5"
+      ],
+      "location": "Section kemudian Tugas kemudian Tambah tugas",
+      "preparation": "Siapkan instruksi, kategori nilai, format jawaban, dan jadwal tugas.",
+      "steps": [
+        "Klik Tugas pada Section. Isi Judul dan Petunjuk tugas yang menjelaskan pekerjaan dan bukti yang harus dikumpulkan.",
+        "Pilih Kategori nilai sesuai komponen penilaian. Isi Nilai maksimum, misalnya 100, dan Batas versi pengumpulan, misalnya 3.",
+        "Atur Dibuka pada, Tenggat, dan Batas akhir toleransi bila diperlukan. Contoh tenggat 16 Oktober 2026 23.59, toleransi 17 Oktober 2026 23.59.",
+        "Centang format yang diterima. Contoh PDF dan ZIP untuk laporan serta kode sumber. Atur Izinkan pengumpulan terlambat sesuai ketentuan tugas.",
+        "Klik Simpan Sebagai Draf untuk ditinjau atau Simpan dan Publikasikan untuk membuka tugas sesuai jadwal. Buka tugas lagi untuk memeriksa seluruh aturan."
+      ],
+      "result": "Tugas muncul dengan instruksi, kategori, format, dan jadwal yang benar.",
+      "controls": [
+        {
+          "label": "Judul",
+          "value": "Teks wajib, maksimum 200 karakter",
+          "effect": "Nama tugas yang dikenali mahasiswa."
+        },
+        {
+          "label": "Petunjuk tugas",
+          "value": "Teks wajib, contoh Buat formulir profil dan laporan uji",
+          "effect": "Menjelaskan pekerjaan, keluaran, dan cara penilaian."
+        },
+        {
+          "label": "Kategori nilai",
+          "value": "Pilihan kategori kelas, misalnya Tugas",
+          "effect": "Menghubungkan tugas ke komponen nilai. Kategori progres tidak digunakan untuk tugas."
+        },
+        {
+          "label": "Nilai maksimum",
+          "value": "1 sampai 1000, default 100",
+          "effect": "Batas skor tugas. Skor komponen dinormalisasi ketika dihitung ke skala 100."
+        },
+        {
+          "label": "Dibuka pada",
+          "value": "Tanggal-jam opsional",
+          "effect": "Awal penerimaan pengumpulan."
+        },
+        {
+          "label": "Tenggat",
+          "value": "Tanggal-jam opsional",
+          "effect": "Batas tepat waktu. Pengumpulan sesudahnya mengikuti izin keterlambatan."
+        },
+        {
+          "label": "Batas akhir toleransi",
+          "value": "Tanggal-jam sesudah tenggat atau kosong",
+          "effect": "Batas terakhir menerima tugas, termasuk tugas terlambat."
+        },
+        {
+          "label": "Batas versi pengumpulan",
+          "value": "Bilangan 1 sampai 20, default 3",
+          "effect": "Jumlah versi yang boleh dikirim tiap mahasiswa."
+        },
+        {
+          "label": "Format yang diterima",
+          "value": "Centang minimal satu: TEXT, LINK, PDF, ZIP, PNG, JPG, PY, CPP, DOCX, CSV",
+          "effect": "TEXT membuka jawaban teks, LINK membuka URL, lainnya mengizinkan jenis berkas terkait."
+        },
+        {
+          "label": "Izinkan pengumpulan terlambat",
+          "value": "ON = diizinkan setelah tenggat sampai batas toleransi. OFF = ditutup saat tenggat. Default ON",
+          "effect": "Menentukan apakah versi terlambat masih diterima. Tidak menghapus batas akhir toleransi."
+        }
+      ],
+      "notes": [
+        "Contoh nilai pada tutorial adalah bahan latihan. Sesuaikan dengan ketentuan kelas dan jadwal nyata."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/15-tugas-editor.png",
+        "alt": "Membuat tugas dengan tenggat dan toleransi dengan penanda merah",
+        "caption": "Penanda gambar: 1 Instruksi; 2 Tenggat; 3 Batas toleransi; 4 Versi"
+      }
+    },
+    {
+      "id": "D6",
+      "title": "Memeriksa menilai dan menerbitkan tugas",
+      "summary": "Memberi skor dan umpan balik yang dapat dilihat mahasiswa.",
+      "category": "Panduan Dosen",
+      "roles": [
+        "INSTRUCTOR"
+      ],
+      "keywords": [
+        "D6"
+      ],
+      "location": "Kelas kemudian judul tugas kemudian pengumpulan mahasiswa",
+      "preparation": "Mahasiswa sudah mengumpulkan. Kelas dan aktivitas masih dapat dikelola.",
+      "steps": [
+        "Buka tugas. Pilih mahasiswa dan versi pengumpulan yang hendak dinilai. Periksa waktu, status terlambat, jawaban, tautan, dan berkas.",
+        "Buka atau unduh berkas jawaban. Cocokkan pekerjaan dengan petunjuk dan rubrik Anda.",
+        "Isi Nilai dalam rentang 0 sampai Nilai maksimum tugas, misalnya 85 dari 100. Tulis Umpan balik yang menjelaskan hasil.",
+        "Jika mengubah nilai yang sudah dinilai atau terbit, isi Alasan koreksi minimal lima karakter, misalnya Koreksi sesuai hasil telaah ulang.",
+        "Klik Simpan semua perubahan pada panel penilaian. Gunakan Publikasikan nilai atau publikasi semua nilai bila sudah siap ditampilkan.",
+        "Periksa status publikasi. Nilai tersimpan tetapi belum terbit belum dapat dibaca mahasiswa."
+      ],
+      "result": "Skor dan umpan balik tersimpan serta tersedia bagi mahasiswa setelah publikasi.",
+      "controls": [
+        {
+          "label": "Versi pengumpulan",
+          "value": "Pilih versi yang hendak diperiksa",
+          "effect": "Memastikan Anda menilai jawaban yang benar, bukan hanya berkas terakhir yang terlihat."
+        },
+        {
+          "label": "Nilai",
+          "value": "Angka 0 sampai maksimum tugas, contoh 85 dari 100",
+          "effect": "Menyimpan skor pekerjaan mahasiswa."
+        },
+        {
+          "label": "Umpan balik",
+          "value": "Catatan hasil, contoh Validasi sudah benar, tambahkan uji kolom kosong",
+          "effect": "Memberi arahan perbaikan. Ditampilkan mengikuti publikasi nilai."
+        },
+        {
+          "label": "Alasan koreksi",
+          "value": "Teks minimal 5 karakter saat diwajibkan",
+          "effect": "Mencatat dasar perubahan pada jejak audit, termasuk koreksi nilai terbit."
+        },
+        {
+          "label": "Simpan semua perubahan",
+          "value": "Tombol panel penilaian",
+          "effect": "Menyimpan nilai dan masukan. Periksa status publikasinya."
+        },
+        {
+          "label": "Publikasikan nilai / Publikasikan semua nilai",
+          "value": "Tombol publikasi hasil yang tersedia",
+          "effect": "Membuka hasil penilaian kepada mahasiswa."
+        }
+      ],
+      "notes": [
+        "Selesaikan penilaian pengumpulan yang masuk sebelum menerbitkan nilai akhir kelas."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/26-koreksi-tugas.png",
+        "alt": "Memeriksa menilai dan menerbitkan tugas dengan penanda merah",
+        "caption": "Penanda gambar: 1 Skor; 2 Umpan balik"
+      }
+    },
+    {
+      "id": "D7",
+      "title": "Membuat kuis dan mengatur waktu hasil",
+      "summary": "Menentukan kuis yang dapat dikerjakan dan dinilai sesuai jadwal.",
+      "category": "Panduan Dosen",
+      "roles": [
+        "INSTRUCTOR"
+      ],
+      "keywords": [
+        "D7"
+      ],
+      "location": "Section kemudian Kuis kemudian Tambah kuis",
+      "preparation": "Siapkan soal, kunci/rubrik, kategori nilai, durasi, dan kebijakan hasil.",
+      "steps": [
+        "Klik Kuis pada Section. Isi Judul, Deskripsi, dan Kategori nilai.",
+        "Pilih Perhitungan poin. Untuk Total wajib 100, pastikan jumlah poin soal tepat 100. Untuk Normalisasi ke skala 100, sistem mengubah proporsi skor menjadi skala 100.",
+        "Isi Waktu pengerjaan, Kesempatan pengerjaan, dan Nilai minimum kelulusan. Pilih Perhitungan waktu dan tentukan waktu buka/tutup.",
+        "Pilih Publikasi hasil. Jika Sesuai jadwal, isi Jadwal publikasi hasil. Atur Acak urutan soal dan Acak pilihan jawaban.",
+        "Tambahkan minimal satu soal. Isi kunci atau rubrik setiap soal. Gunakan Genapkan ke 100 poin bila ingin menyeimbangkan total poin.",
+        "Periksa total poin, jadwal, dan kunci, lalu Simpan Sebagai Draf atau Simpan dan Publikasikan."
+      ],
+      "result": "Kuis memiliki soal valid dan pengaturan waktu/hasil yang sesuai.",
+      "controls": [
+        {
+          "label": "Judul / Deskripsi",
+          "value": "Judul wajib, deskripsi petunjuk kuis",
+          "effect": "Menjelaskan topik dan cara pengerjaan."
+        },
+        {
+          "label": "Kategori nilai",
+          "value": "Kategori kelas yang bukan progres",
+          "effect": "Menentukan komponen rekap nilai untuk kuis."
+        },
+        {
+          "label": "Perhitungan poin",
+          "value": "Total wajib 100 (STRICT) atau Normalisasi ke skala 100 (NORMALIZED)",
+          "effect": "STRICT menolak total selain 100. NORMALIZED memakai skor diperoleh dibagi total poin lalu dikali 100."
+        },
+        {
+          "label": "Waktu pengerjaan (menit)",
+          "value": "1 sampai 300, default 30",
+          "effect": "Durasi pengerjaan. Satuan menit."
+        },
+        {
+          "label": "Kesempatan pengerjaan",
+          "value": "1 sampai 10, default 1",
+          "effect": "Membatasi jumlah pengerjaan mahasiswa."
+        },
+        {
+          "label": "Perhitungan waktu",
+          "value": "Durasi sejak mulai atau Berakhir serentak pada waktu tutup",
+          "effect": "Durasi sejak mulai tetap dibatasi waktu tutup. Mode serentak memakai waktu tutup bersama."
+        },
+        {
+          "label": "Nilai minimum kelulusan",
+          "value": "0 sampai 100, default 60",
+          "effect": "Ambang kelulusan kuis pada skala 100."
+        },
+        {
+          "label": "Dibuka pada / Ditutup pada",
+          "value": "Tanggal-jam. Ditutup pada wajib untuk mode serentak",
+          "effect": "Menentukan jendela kuis. Batas waktu tutup dapat memotong durasi yang tersisa."
+        },
+        {
+          "label": "Publikasi hasil",
+          "value": "Diterbitkan pengajar, Otomatis setelah dinilai, Sesuai jadwal, Disembunyikan",
+          "effect": "Manual membutuhkan publikasi. Otomatis menunggu penilaian lengkap. Jadwal menunggu waktu rilis. Disembunyikan menahan hasil dari mahasiswa."
+        },
+        {
+          "label": "Jadwal publikasi hasil",
+          "value": "Tanggal-jam wajib bila Sesuai jadwal",
+          "effect": "Waktu hasil mulai dapat ditampilkan setelah memenuhi syarat penilaian."
+        },
+        {
+          "label": "Acak urutan soal",
+          "value": "ON default = urutan soal diacak. OFF = mengikuti susunan",
+          "effect": "Mengubah urutan soal pada pengerjaan mahasiswa."
+        },
+        {
+          "label": "Acak pilihan jawaban",
+          "value": "ON default = pilihan diacak. OFF = susunan asli",
+          "effect": "Mengacak opsi jenis soal yang mendukung."
+        },
+        {
+          "label": "Genapkan ke 100 poin",
+          "value": "Tombol",
+          "effect": "Mendistribusikan poin agar total 100. Periksa ulang poin dan rubrik sesudahnya."
+        },
+        {
+          "label": "Tambah soal / Gunakan soal bank",
+          "value": "Tombol",
+          "effect": "Menambah soal baru atau mengambil soal dari bank. Kuis mendukung 1 sampai 200 soal."
+        }
+      ],
+      "notes": [
+        "Contoh: mahasiswa mulai 09.50, durasi 30 menit, waktu tutup 10.00. Pengerjaan hanya tersedia sampai 10.00."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/17-kuis-editor.png",
+        "alt": "Membuat kuis dan mengatur waktu hasil dengan penanda merah",
+        "caption": "Penanda gambar: 1 Perhitungan poin; 2 Durasi menit; 3 Mode waktu; 4 Publikasi hasil"
+      }
+    },
+    {
+      "id": "D8",
+      "title": "Menyusun kunci soal objektif",
+      "summary": "Membuat soal pilihan dan isian yang memiliki kunci jelas.",
+      "category": "Panduan Dosen",
+      "roles": [
+        "INSTRUCTOR"
+      ],
+      "keywords": [
+        "D8"
+      ],
+      "location": "Editor kuis atau Bank soal kemudian Tambah soal",
+      "preparation": "Editor kuis/bank soal terbuka. Siapkan pertanyaan dan jawaban yang benar.",
+      "steps": [
+        "Klik Tambah soal. Pilih Jenis soal, isi Poin dan Teks pertanyaan.",
+        "Untuk Pilihan tunggal atau Benar / salah, isi opsi lalu pilih satu Jawaban benar. Untuk Pilihan jamak, centang semua opsi yang benar.",
+        "Untuk Isian singkat, masukkan jawaban yang diterima, dipisah | bila lebih dari satu. Contoh HTTP | Hypertext Transfer Protocol.",
+        "Jika isian berupa angka, isi Jawaban numerik dan Toleransi numerik, misalnya 3.14 dan 0.01. Atur pemeriksaan huruf besar/kecil bila relevan.",
+        "Tulis Penjelasan jawaban bila diperlukan. Periksa kunci sebelum menyimpan kuis atau bank soal."
+      ],
+      "result": "Soal objektif memiliki opsi, kunci, dan poin sesuai maksud penilaian.",
+      "controls": [
+        {
+          "label": "Jenis soal",
+          "value": "Pilihan tunggal, Pilihan jamak, Benar / salah, Isian singkat",
+          "effect": "Menentukan kontrol jawaban serta aturan kunci."
+        },
+        {
+          "label": "Poin",
+          "value": "Bilangan 1 sampai 1000 per soal",
+          "effect": "Skor maksimum soal sebelum normalisasi total kuis."
+        },
+        {
+          "label": "Teks",
+          "value": "Pertanyaan wajib",
+          "effect": "Isi soal yang dijawab mahasiswa."
+        },
+        {
+          "label": "Pilihan jawaban",
+          "value": "Teks setiap opsi, gunakan Tambah untuk opsi baru",
+          "effect": "Menyediakan pilihan. Isi semua opsi yang dipakai dan hapus opsi kosong."
+        },
+        {
+          "label": "Jawaban benar",
+          "value": "Satu opsi untuk tunggal/benar-salah, beberapa checkbox untuk jamak",
+          "effect": "Menentukan kunci penilaian otomatis."
+        },
+        {
+          "label": "Nilai parsial pilihan jamak",
+          "value": "ON = memberikan kredit parsial sesuai aturan pilihan jamak. OFF = menilai kecocokan lengkap",
+          "effect": "Gunakan ON hanya jika penilaian sebagian sesuai rancangan soal."
+        },
+        {
+          "label": "Jawaban benar pada isian",
+          "value": "Teks alternatif dipisah |, contoh GET | get",
+          "effect": "Daftar jawaban yang diterima pada isian singkat."
+        },
+        {
+          "label": "Jawaban numerik (opsional)",
+          "value": "Angka, contoh 3.14",
+          "effect": "Mengaktifkan pencocokan numerik pada soal yang membutuhkan angka."
+        },
+        {
+          "label": "Toleransi numerik",
+          "value": "Angka 0 atau lebih, contoh 0.01",
+          "effect": "Rentang selisih angka yang diterima."
+        },
+        {
+          "label": "Perhatikan huruf besar/kecil",
+          "value": "ON = peka huruf. OFF = tidak peka huruf",
+          "effect": "Menentukan apakah GET dan get dianggap sama."
+        },
+        {
+          "label": "Penjelasan jawaban",
+          "value": "Teks penjelasan",
+          "effect": "Materi pembahasan terkait jawaban benar."
+        }
+      ],
+      "notes": [
+        "Coba baca soal sebagai mahasiswa. Pertanyaan, pilihan, dan kunci harus saling konsisten."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/35-soal-objektif.png",
+        "alt": "Menyusun kunci soal objektif dengan penanda merah",
+        "caption": "Penanda gambar: 1 Jenis soal; 2 Poin soal; 3 Kunci jawaban"
+      }
+    },
+    {
+      "id": "D9",
+      "title": "Menyusun pasangan urutan uraian dan unggahan",
+      "summary": "Membuat soal yang memerlukan pasangan, susunan, atau koreksi manual.",
+      "category": "Panduan Dosen",
+      "roles": [
+        "INSTRUCTOR"
+      ],
+      "keywords": [
+        "D9"
+      ],
+      "location": "Editor kuis atau Bank soal kemudian Jenis soal",
+      "preparation": "Pertanyaan dan rancangan penilaian sudah siap.",
+      "steps": [
+        "Untuk Menjodohkan, isi item kiri dan Deskripsi item kanan. Pilih pasangan benar pada Kunci jawaban setiap item.",
+        "Untuk Mengurutkan, isi seluruh item lalu tentukan Kunci jawaban urutan pertama sampai terakhir. Gunakan setiap item satu kali.",
+        "Untuk Uraian, isi pertanyaan, Poin, Batas kata, dan Rubrik penilaian. Contoh dua baris: Ketepatan konsep | 15 dan Contoh penerapan | 10.",
+        "Untuk Unggah berkas, jelaskan berkas yang diminta dalam pertanyaan dan tetapkan rubrik koreksi. Mahasiswa akan menggunakan kontrol unggah.",
+        "Periksa jumlah poin rubrik sesuai poin soal. Simpan editor kuis/bank setelah seluruh soal ditinjau."
+      ],
+      "result": "Pasangan/urutan lengkap dan soal manual mempunyai rubrik yang dapat digunakan pengajar.",
+      "controls": [
+        {
+          "label": "Menjodohkan",
+          "value": "Item kiri, deskripsi kanan, dan satu pasangan benar tiap item",
+          "effect": "Kunci pasangan menentukan kecocokan jawaban mahasiswa."
+        },
+        {
+          "label": "Mengurutkan",
+          "value": "Urutan lengkap tanpa item ganda",
+          "effect": "Kunci menyatakan posisi item dari awal sampai akhir."
+        },
+        {
+          "label": "Uraian",
+          "value": "Jawaban teks yang dinilai pengajar",
+          "effect": "Memerlukan penilaian manual, tidak cukup hanya skor otomatis kuis."
+        },
+        {
+          "label": "Unggah berkas",
+          "value": "Jawaban berupa file",
+          "effect": "Pengajar memeriksa berkas lalu memberi skor sesuai rubrik."
+        },
+        {
+          "label": "Batas kata",
+          "value": "1 sampai 10000, default 1000",
+          "effect": "Metadata/batas teks pada soal manual. Sesuaikan dengan panjang jawaban yang diminta."
+        },
+        {
+          "label": "Rubrik penilaian",
+          "value": "Satu kriteria per baris: nama | poin, contoh Analisis | 15",
+          "effect": "Membagi skor manual ke kriteria. Total rubrik harus sesuai poin soal."
+        },
+        {
+          "label": "Penjelasan jawaban",
+          "value": "Teks opsional",
+          "effect": "Memberi pembahasan soal."
+        }
+      ],
+      "notes": [
+        "Nilai uraian dan unggahan menunggu penilaian pengajar. Publikasi hasil otomatis tetap menunggu penilaian lengkap."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/36-soal-manual.png",
+        "alt": "Menyusun pasangan urutan uraian dan unggahan dengan penanda merah",
+        "caption": "Penanda gambar: 2 Rubrik; 3 Batas kata"
+      }
+    },
+    {
+      "id": "D10",
+      "title": "Menilai kuis dan mengelola bank soal",
+      "summary": "Menyelesaikan koreksi kuis dan menyimpan soal yang dapat dipakai kembali.",
+      "category": "Panduan Dosen",
+      "roles": [
+        "INSTRUCTOR"
+      ],
+      "keywords": [
+        "D10"
+      ],
+      "location": "Judul kuis untuk koreksi, tab Bank soal untuk pustaka soal",
+      "preparation": "Pengerjaan sudah terkumpul. Untuk bank, akun dapat mengelola kelas.",
+      "steps": [
+        "Buka kuis dan pilih mode koreksi Per mahasiswa atau Per soal. Pilih pengerjaan/jawaban yang hendak dinilai.",
+        "Untuk soal manual, masukkan skor 0 sampai Poin soal. Isi Umpan balik. Jika ada rubrik, periksa skor tiap kriteria dan total.",
+        "Isi Alasan koreksi minimal lima karakter jika mengganti nilai sebelumnya/terbit. Simpan penilaian dan terbitkan hasil sesuai kebijakan kuis.",
+        "Untuk pustaka soal, buka Bank soal. Klik Buat bank soal, isi Judul, lalu Simpan semua perubahan.",
+        "Klik Tambah soal pada bank, isi soal dan kuncinya, lalu Simpan semua perubahan. Pada editor kuis, gunakan Gunakan soal bank untuk mengambil soal yang diperlukan."
+      ],
+      "result": "Jawaban manual sudah dinilai dan soal dapat digunakan kembali melalui bank.",
+      "controls": [
+        {
+          "label": "Mode koreksi Per mahasiswa / Per soal",
+          "value": "Pilihan tampilan",
+          "effect": "Mengubah pengelompokan koreksi, bukan nilai yang tersimpan."
+        },
+        {
+          "label": "Nilai jawaban",
+          "value": "0 sampai Poin soal",
+          "effect": "Skor soal manual. Skor total kuis mengikuti mode poin."
+        },
+        {
+          "label": "Umpan balik",
+          "value": "Teks masukan",
+          "effect": "Penjelasan nilai pada jawaban."
+        },
+        {
+          "label": "Alasan koreksi",
+          "value": "Teks minimal 5 karakter saat diwajibkan",
+          "effect": "Mencatat alasan mengganti nilai yang sudah ada."
+        },
+        {
+          "label": "Publikasikan nilai",
+          "value": "Tombol jika kebijakan memungkinkan",
+          "effect": "Membuka hasil yang siap kepada mahasiswa."
+        },
+        {
+          "label": "Buat bank soal / Judul",
+          "value": "Tombol dan teks judul",
+          "effect": "Membuat wadah soal reusable dalam kelas."
+        },
+        {
+          "label": "Tambah soal / Simpan",
+          "value": "Tombol pada bank/editor",
+          "effect": "Menyimpan soal beserta opsi, kunci, dan rubrik."
+        },
+        {
+          "label": "Impor massal",
+          "value": "Tombol bank soal",
+          "effect": "Memasukkan banyak soal melalui template dan pemeriksaan impor."
+        }
+      ],
+      "notes": [
+        "Bank soal tersimpan per kelas. Saat menggunakan soal bank, tinjau kembali poin dan kunci pada kuis tujuan."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/27-koreksi-kuis.png",
+        "alt": "Menilai kuis dan mengelola bank soal dengan penanda merah",
+        "caption": "Penanda gambar: 1 Nilai soal; 2 Umpan balik"
+      }
+    },
+    {
+      "id": "D11",
+      "title": "Membuka sesi presensi dengan jadwal atau kode",
+      "summary": "Menyiapkan presensi sesuai pelaksanaan pertemuan.",
+      "category": "Panduan Dosen",
+      "roles": [
+        "INSTRUCTOR"
+      ],
+      "keywords": [
+        "D11"
+      ],
+      "location": "Kelas kemudian Presensi kemudian Buat Sesi Presensi",
+      "preparation": "Mahasiswa telah terdaftar aktif. Siapkan topik, tanggal, dan jam pertemuan.",
+      "steps": [
+        "Klik Buat Sesi Presensi. Isi Judul Sesi Presensi, Keterangan / Topik, dan Tanggal Perkuliahan.",
+        "Jika presensi akan dibuka sampai ditutup manual, biarkan Jadwalkan Waktu Presensi tidak dicentang. Untuk jendela waktu, centang dan isi Waktu Mulai serta Waktu Selesai, masing-masing berupa tanggal-jam perangkat. Untuk sesi melewati tengah malam, pilih tanggal selesai pada hari berikutnya.",
+        "Untuk presensi satu klik, biarkan Wajibkan Kode 6 Karakter (Proyektor) OFF. Untuk verifikasi kode, ubah menjadi ON.",
+        "Klik Buat & Buka Sesi. Periksa apakah sesi berstatus Sesi Dibuka atau Terjadwal sesuai waktunya.",
+        "Jika menggunakan kode, klik Kode Proyektor pada sesi dan tampilkan enam karakter kepada mahasiswa. Pantau jumlah Hadir, lalu tutup sesi setelah selesai."
+      ],
+      "result": "Sesi benar tersedia dan menerima presensi sesuai mode/jadwal yang dipilih.",
+      "controls": [
+        {
+          "label": "Judul Sesi Presensi",
+          "value": "Teks wajib 2 sampai 200 karakter",
+          "effect": "Nama sesi, contoh Pertemuan 4 Formulir Web."
+        },
+        {
+          "label": "Keterangan / Topik (Opsional)",
+          "value": "Teks maksimum 1000 karakter atau kosong",
+          "effect": "Ringkasan topik/catatan pertemuan."
+        },
+        {
+          "label": "Tanggal Perkuliahan",
+          "value": "Tanggal kegiatan, contoh 12 Oktober 2026",
+          "effect": "Mengaitkan sesi dengan hari perkuliahan."
+        },
+        {
+          "label": "Jadwalkan Waktu Presensi (Mulai & Selesai)",
+          "value": "OFF default = buka manual sampai ditutup. ON = gunakan jam mulai/selesai",
+          "effect": "Menampilkan isian jam dan menerapkan jendela presensi."
+        },
+        {
+          "label": "Waktu Mulai / Waktu Selesai",
+          "value": "Tanggal-jam lokal masing-masing; akhir tidak sebelum awal",
+          "effect": "Mengatur kapan mahasiswa dapat mengisi. Periksa zona waktu perangkat."
+        },
+        {
+          "label": "Wajibkan Kode 6 Karakter (Proyektor)",
+          "value": "OFF default = satu klik. ON = wajib kode",
+          "effect": "Sistem menghasilkan kode acak enam karakter huruf/angka."
+        },
+        {
+          "label": "Buat & Buka Sesi",
+          "value": "Tombol",
+          "effect": "Membuat sesi. Jadwal masa depan akan tampil terjadwal, bukan menerima pengisian segera."
+        },
+        {
+          "label": "Kode Proyektor",
+          "value": "Tombol pada sesi",
+          "effect": "Menampilkan kode dan informasi sesi untuk dibagikan di kelas."
+        }
+      ],
+      "notes": [
+        "Default sesi baru adalah tanpa kode dan tanpa jadwal. Periksa kedua checkbox sebelum membuat sesi."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/20-presensi-baru.png",
+        "alt": "Membuka sesi presensi dengan jadwal atau kode dengan penanda merah",
+        "caption": "Penanda gambar: 1 Judul sesi; 2 Jadwal ON; 3 kode ON"
+      }
+    },
+    {
+      "id": "D12",
+      "title": "Mengubah jadwal menutup dan memperpanjang presensi",
+      "summary": "Mengendalikan sesi yang sudah dibuat tanpa membuat sesi ganda.",
+      "category": "Panduan Dosen",
+      "roles": [
+        "INSTRUCTOR"
+      ],
+      "keywords": [
+        "D12"
+      ],
+      "location": "Presensi kemudian Atur Jadwal pada sesi",
+      "preparation": "Sesi sudah tersedia. Pastikan Anda memilih judul/tanggal yang benar.",
+      "steps": [
+        "Klik Atur Jadwal pada sesi. Periksa status terbuka/tertutup.",
+        "Untuk mengganti status melalui dialog, klik Tutup Sesi atau Buka Sesi Sekarang. Lanjutkan Simpan Pengaturan untuk menyimpan perubahan dialog.",
+        "Centang Terapkan Jadwal Otomatis bila sesi perlu jam mulai/selesai. Isi tanggal dan jam yang benar. Jika jadwal dihapus, status mengikuti pilihan buka/tutup manual.",
+        "Untuk tambahan waktu cepat, klik +15 Menit atau +30 Menit. Aksi ini langsung menyimpan akhir waktu baru dan membuka sesi, tanpa menunggu tombol Simpan Pengaturan.",
+        "Jika kode perlu diganti, aktifkan kebijakan kode dan klik Acak Ulang Kode atau isi kode. Klik Simpan Pengaturan kemudian bagikan kode yang baru.",
+        "Kembali ke daftar dan periksa jadwal/status. Buka/tutup langsung pada kartu sesi juga tersedia."
+      ],
+      "result": "Status, jadwal, dan kode terbaru berlaku pada sesi yang sama.",
+      "controls": [
+        {
+          "label": "Tutup Sesi / Buka Sesi Sekarang dalam dialog",
+          "value": "Pilihan status",
+          "effect": "Mengubah pilihan status pada form. Simpan Pengaturan agar tersimpan."
+        },
+        {
+          "label": "Buka Sesi / Tutup Sesi pada kartu",
+          "value": "Tombol aksi langsung",
+          "effect": "Mengubah status sesi melalui aksi pada kartu. Periksa jendela jadwalnya."
+        },
+        {
+          "label": "+15 Menit / +30 Menit",
+          "value": "Tombol aksi langsung",
+          "effect": "Menambah dari waktu akhir atau waktu sekarang yang lebih akhir dan langsung membuka sesi."
+        },
+        {
+          "label": "Terapkan Jadwal Otomatis (Mulai & Selesai)",
+          "value": "ON = jam otomatis. OFF = hapus batas jam",
+          "effect": "Sesi terjadwal dapat dibuka kembali saat jadwal masih berjalan. Untuk menutup permanen, tinjau juga jadwal akhirnya."
+        },
+        {
+          "label": "Wajibkan Kode 6 Karakter (Proyektor)",
+          "value": "ON = kode diperlukan. OFF = bebas kode",
+          "effect": "Mengubah metode presensi untuk mahasiswa."
+        },
+        {
+          "label": "Kode",
+          "value": "Maksimal 6 karakter pada isian, contoh AB7K92, kosong untuk kode otomatis",
+          "effect": "Gunakan enam karakter agar sesuai petunjuk mahasiswa."
+        },
+        {
+          "label": "Acak Ulang Kode",
+          "value": "Tombol",
+          "effect": "Menghasilkan kode baru pada draf dialog. Simpan sebelum membagikannya."
+        },
+        {
+          "label": "Simpan Pengaturan",
+          "value": "Tombol",
+          "effect": "Menyimpan isian form jadwal, status, dan kode."
+        },
+        {
+          "label": "Batal",
+          "value": "Tombol",
+          "effect": "Menutup tanpa menyimpan isian dialog. Aksi perpanjangan cepat yang sudah dijalankan tetap berlaku."
+        }
+      ],
+      "notes": [
+        "Mengganti kode membuat kode lama tidak berlaku bagi pengisian berikutnya. Beri tahu mahasiswa ketika kode diganti."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/21-presensi-jadwal.png",
+        "alt": "Mengubah jadwal menutup dan memperpanjang presensi dengan penanda merah",
+        "caption": "Penanda gambar: 1 Buka atau tutup sesi; 2 Perpanjang 15 menit; 3 Kebijakan kode; 4 Simpan pengaturan"
+      }
+    },
+    {
+      "id": "D13",
+      "title": "Mengoreksi kehadiran manual dan ekspor rekap",
+      "summary": "Mencatat izin/sakit/koreksi kehadiran dan meninjau rekap kelas.",
+      "category": "Panduan Dosen",
+      "roles": [
+        "INSTRUCTOR"
+      ],
+      "keywords": [
+        "D13"
+      ],
+      "location": "Presensi kemudian Lembar Presensi atau Rekapitulasi Kehadiran",
+      "preparation": "Sesi dan peserta sudah tersedia. Siapkan bukti alasan koreksi bila diperlukan.",
+      "steps": [
+        "Pilih sesi yang benar lalu klik Lembar Presensi. Cari baris nama dan NIM mahasiswa.",
+        "Klik Hadir, Izin, Sakit, Tidak Hadir (Alpa), atau Terlambat pada baris yang sesuai. Isi Catatan / Izin, misalnya nomor surat atau alasan.",
+        "Gunakan Tandai Semua Hadir hanya setelah memeriksa seluruh peserta. Koreksi kembali pengecualian seperti mahasiswa izin/sakit.",
+        "Klik Simpan Semua Perubahan. Buka kembali lembar untuk memastikan status tersimpan.",
+        "Pada tab Rekapitulasi Kehadiran, tinjau jumlah H, I, S, A, T, persentase, dan kelayakan. Klik Ekspor Rekap (CSV) untuk mengunduh rekap."
+      ],
+      "result": "Status manual tersimpan dan rekap/CSV sesuai data sesi.",
+      "controls": [
+        {
+          "label": "Hadir / Izin / Sakit / Tidak Hadir (Alpa) / Terlambat",
+          "value": "Pilih satu status per mahasiswa",
+          "effect": "Mengubah status baris dalam draf lembar presensi."
+        },
+        {
+          "label": "Catatan / Izin",
+          "value": "Teks, contoh Surat izin 012/IF/2026",
+          "effect": "Mencatat alasan atau referensi bukti."
+        },
+        {
+          "label": "Tandai Semua Hadir",
+          "value": "Tombol",
+          "effect": "Mengubah semua peserta pada lembar menjadi Hadir dalam draf. Tinjau pengecualian sebelum menyimpan."
+        },
+        {
+          "label": "Simpan Semua Perubahan",
+          "value": "Tombol",
+          "effect": "Menyimpan seluruh status dan catatan lembar ke server."
+        },
+        {
+          "label": "Rekapitulasi Kehadiran",
+          "value": "Tab",
+          "effect": "Menampilkan rekap peserta aktif dari sesi kelas."
+        },
+        {
+          "label": "H / I / S / A / T",
+          "value": "Kolom jumlah status",
+          "effect": "Hadir, Izin, Sakit, Alpa, Terlambat."
+        },
+        {
+          "label": "Persentase kehadiran",
+          "value": "(Hadir + Terlambat) / total sesi x 100",
+          "effect": "Pada rekap versi ini Izin dan Sakit tidak menambah persentase."
+        },
+        {
+          "label": "Ekspor Rekap (CSV)",
+          "value": "Tombol",
+          "effect": "Mengunduh file CSV untuk dibuka di spreadsheet. Berbeda dari Ekspor Excel nilai."
+        }
+      ],
+      "notes": [
+        "Contoh: 6 Hadir + 1 Terlambat dari 8 sesi = 87,5 persen. Ambang kelayakan pada rekap mengikuti pengaturan Super Admin yang tersimpan dan ditampilkan pada rekap."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/22-presensi-roster.png",
+        "alt": "Mengoreksi kehadiran manual dan ekspor rekap dengan penanda merah",
+        "caption": "Penanda gambar: 1 Semua hadir; 2 Status; 3 Simpan"
+      }
+    },
+    {
+      "id": "D14",
+      "title": "Mengatur bobot dan sumber nilai kategori",
+      "summary": "Menetapkan cara komponen penilaian berkontribusi pada nilai akhir.",
+      "category": "Panduan Dosen",
+      "roles": [
+        "INSTRUCTOR"
+      ],
+      "keywords": [
+        "D14"
+      ],
+      "location": "Kelas kemudian Rekap nilai kemudian Bobot penilaian",
+      "preparation": "Nilai akhir belum dikunci. Komponen penilaian kelas telah disepakati.",
+      "steps": [
+        "Buka Bobot penilaian. Pilih versi Kebijakan Konversi Huruf Mutu sesuai semester.",
+        "Isi nama kategori dan Bobot (%). Contoh Presensi 10, Tugas 20, Kuis 10, UTS 25, UAS 35. Total harus tepat 100 persen.",
+        "Pilih Sumber Kalkulasi Otomatis tiap kategori. Misalnya Presensi Kehadiran untuk Presensi dan Tugas Terstruktur untuk Tugas.",
+        "Tambahkan kategori bila dibutuhkan. Hapus kategori opsional yang tidak digunakan. Kategori UTS dan UAS wajib tersedia dan tidak dapat dihapus/diubah namanya.",
+        "Periksa total bobot dan versi skala, lalu klik Simpan semua perubahan. Kembali ke rekap untuk meninjau hasil/saran per kategori."
+      ],
+      "result": "Bobot valid 100 persen dan sumber nilai tiap kategori sesuai rancangan.",
+      "controls": [
+        {
+          "label": "Kebijakan Konversi Huruf Mutu",
+          "value": "Versi 2026.1 atau 2024.1",
+          "effect": "Menentukan pemetaan skor ke huruf dan indeks mutu. Gunakan versi kebijakan yang berlaku."
+        },
+        {
+          "label": "Kategori nilai",
+          "value": "Nama komponen, contoh Tugas",
+          "effect": "Label komponen pada rekap. UTS/UAS merupakan kategori wajib."
+        },
+        {
+          "label": "Bobot (%)",
+          "value": "Angka 0 sampai 100, langkah 0,1, total semua kategori 100",
+          "effect": "Kontribusi kategori. Bobot 20 berarti menyumbang 20 persen nilai akhir."
+        },
+        {
+          "label": "Sumber Kalkulasi Otomatis",
+          "value": "Input Manual, Tugas Terstruktur, Kuis, Gabungan Tugas & Kuis, Progres Belajar Materi, Presensi Kehadiran",
+          "effect": "Menentukan sumber saran nilai. Saran perlu ditinjau/dipakai sebelum menjadi nilai draf manual."
+        },
+        {
+          "label": "Tambah kategori",
+          "value": "Tombol",
+          "effect": "Menambah komponen baru. Atur bobot agar total tetap 100."
+        },
+        {
+          "label": "Hapus Kategori",
+          "value": "Tombol kategori opsional",
+          "effect": "Menghapus kategori dari susunan bobot. Tidak tersedia untuk UTS/UAS."
+        },
+        {
+          "label": "Simpan semua perubahan",
+          "value": "Tombol",
+          "effect": "Menerapkan susunan kategori dan versi skala pada kelas."
+        }
+      ],
+      "notes": [
+        "Bobot penilaian dinonaktifkan setelah nilai akhir dikunci. Tentukan bobot sebelum penerbitan akhir."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/25-bobot-nilai.png",
+        "alt": "Mengatur bobot dan sumber nilai kategori dengan penanda merah",
+        "caption": "Penanda gambar: 1 Versi; 2 Bobot; 3 Sumber"
+      }
+    },
+    {
+      "id": "D15",
+      "title": "Meninjau menghitung dan mempublikasikan nilai akhir",
+      "summary": "Memastikan komponen lengkap sebelum nilai resmi terlihat mahasiswa.",
+      "category": "Panduan Dosen",
+      "roles": [
+        "INSTRUCTOR"
+      ],
+      "keywords": [
+        "D15"
+      ],
+      "location": "Kelas kemudian Rekap nilai",
+      "preparation": "Total bobot valid 100 persen. Penilaian tugas/kuis sudah ditinjau.",
+      "steps": [
+        "Periksa tiap baris mahasiswa dan komponen nilai. Klik nama/aksi rincian mahasiswa untuk membuka Rincian Nilai jika tersedia.",
+        "Pada rincian, periksa sumber kegiatan dan Gunakan Nilai Saran jika saran sesuai penilaian. Sesuaikan Nilai Akhir Bagian dalam rentang 0 sampai 100, lalu Simpan ke Draf.",
+        "Untuk banyak mahasiswa, Terapkan Kalkulasi Otomatis ke Draf dapat menerapkan saran sekaligus. Baca konfirmasinya dan tinjau hasil sebelum publikasi.",
+        "Jika mengedit sel nilai langsung, Simpan perubahan terlebih dahulu. Isi alasan koreksi minimal lima karakter bila diwajibkan.",
+        "Klik Hitung nilai akhir. Periksa skor, huruf, indeks mutu, dan komponen kosong. Selesaikan penilaian yang masih menunggu.",
+        "Jika sengaja menerima komponen kosong sebagai nol, centang persetujuan nilai kosong setelah meninjaunya. Klik Publikasikan nilai akhir ketika semua syarat terpenuhi.",
+        "Periksa status nilai akhir telah dikunci, lalu klik Ekspor Excel untuk mengunduh rekap. Koreksi setelah terbit harus memiliki alasan dan dapat memperbarui nilai terbit."
+      ],
+      "result": "Nilai akhir terbit, komponen telah ditinjau, dan ekspor sesuai hasil kelas.",
+      "controls": [
+        {
+          "label": "Nilai kategori / Nilai Akhir Bagian",
+          "value": "Skor 0 sampai 100, contoh 85",
+          "effect": "Angka pada skala kategori. Skor kosong dapat diperhitungkan sebagai 0."
+        },
+        {
+          "label": "Gunakan Nilai Saran",
+          "value": "Tombol pada rincian kategori",
+          "effect": "Menyalin saran hasil kegiatan ke nilai yang sedang diedit. Simpan ke Draf agar tersimpan."
+        },
+        {
+          "label": "Terapkan Kalkulasi Otomatis ke Draf",
+          "value": "Tombol dengan konfirmasi",
+          "effect": "Menerapkan saran kategori otomatis ke draf banyak mahasiswa. Periksa data setelahnya."
+        },
+        {
+          "label": "Simulasi nilai akhir",
+          "value": "Jumlah nilai kategori x bobot / 100",
+          "effect": "Pratinjau hasil sebelum menyimpan/publikasi."
+        },
+        {
+          "label": "Simpan ke Draf / Simpan",
+          "value": "Tombol sesuai panel",
+          "effect": "Menyimpan komponen nilai tanpa langsung mempublikasikan nilai akhir."
+        },
+        {
+          "label": "Alasan perubahan / koreksi",
+          "value": "Minimal 5 karakter saat mengoreksi nilai sebelumnya atau terbit",
+          "effect": "Dasar koreksi dicatat dan diperlukan untuk perubahan tertentu."
+        },
+        {
+          "label": "Hitung nilai akhir",
+          "value": "Tombol",
+          "effect": "Menghitung berdasarkan komponen dan bobot tersimpan. Bobot invalid/perubahan belum tersimpan menghambatnya."
+        },
+        {
+          "label": "Persetujuan nilai kosong",
+          "value": "ON = menyetujui kosong dihitung 0. OFF = publikasi tertahan jika ada nilai kosong",
+          "effect": "Centang setelah memeriksa peserta dan kategori yang kosong."
+        },
+        {
+          "label": "Publikasikan nilai akhir",
+          "value": "Tombol",
+          "effect": "Menerbitkan dan mengunci hasil. Menunggu bobot valid, tidak ada perubahan belum tersimpan, koreksi selesai, dan persetujuan kosong bila perlu."
+        },
+        {
+          "label": "Ekspor Excel",
+          "value": "Tombol",
+          "effect": "Mengunduh rekap .xlsx. Ekspor tidak menggantikan publikasi nilai."
+        }
+      ],
+      "notes": [
+        "Contoh nilai kategori 80, 90, 70, 75, 85 dengan bobot 10, 20, 10, 25, 35 menghasilkan 81,50. Pada skala 2026.1 hasilnya A- dan indeks 3,75."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/24-rekap-nilai.png",
+        "alt": "Meninjau menghitung dan mempublikasikan nilai akhir dengan penanda merah",
+        "caption": "Penanda gambar: 1 Bobot; 2 Ekspor"
+      }
+    },
+    {
+      "id": "D16",
+      "title": "Mengelola peserta pengumuman berkas dan duplikasi",
+      "summary": "Menyiapkan operasional kelas dan memindahkan bahan ke semester baru.",
+      "category": "Panduan Dosen",
+      "roles": [
+        "INSTRUCTOR"
+      ],
+      "keywords": [
+        "D16"
+      ],
+      "location": "Tab Peserta, Pengumuman, Berkas, Jejak audit, dan Duplikasi ke semester baru",
+      "preparation": "Berhak mengelola kelas. Periksa tujuan sebelum mengubah kepesertaan atau status.",
+      "steps": [
+        "Pada Peserta, klik Daftarkan peserta. Cari nama/NIM, pilih mahasiswa, lalu Simpan semua perubahan. Gunakan Nonaktifkan peserta/Aktifkan peserta untuk mengubah hak partisipasi.",
+        "Pada Pengumuman, klik Buat pengumuman. Isi Judul dan Isi pengumuman, atur Diterbitkan serta checkbox Penting, lalu simpan draf atau publikasikan.",
+        "Pada Berkas, periksa status dan file yang digunakan. Gunakan Pindahkan ke sampah hanya untuk file yang memang tidak diperlukan. Gunakan Pulihkan jika masih dalam masa pemulihan.",
+        "Pada Jejak audit, baca pelaku, waktu, peristiwa, serta perubahan sebelum/sesudah untuk memeriksa koreksi.",
+        "Untuk semester baru, klik Duplikasi ke semester baru. Isi Nama kelas dan Tahun akademik & Semester Baru, lalu Simpan semua perubahan.",
+        "Buka kelas hasil duplikasi. Periksa materi draf, perbarui jadwal, tetapkan peserta semester baru, dan terbitkan isi yang siap."
+      ],
+      "result": "Peserta dan komunikasi sesuai kelas. Kelas hasil duplikasi siap ditata untuk semester baru.",
+      "controls": [
+        {
+          "label": "Nonaktifkan peserta",
+          "value": "Tombol dengan konfirmasi",
+          "effect": "Menutup hak partisipasi mahasiswa pada kelas tanpa menghapus riwayat sebelumnya."
+        },
+        {
+          "label": "Aktifkan peserta",
+          "value": "Tombol",
+          "effect": "Mengembalikan hak partisipasi peserta pada kelas."
+        },
+        {
+          "label": "Judul / Isi pengumuman",
+          "value": "Teks wajib",
+          "effect": "Pesan kepada kelas."
+        },
+        {
+          "label": "Diterbitkan",
+          "value": "Tanggal-jam pengumuman atau kosong",
+          "effect": "Menjadwalkan waktu publikasi pengumuman."
+        },
+        {
+          "label": "Penting",
+          "value": "ON = tandai prioritas. OFF = pengumuman biasa",
+          "effect": "Memberi penanda penting pada pengumuman."
+        },
+        {
+          "label": "Pindahkan ke sampah",
+          "value": "Tombol berkas",
+          "effect": "Materi yang memakai file dapat kehilangan akses unduh sampai file dipulihkan."
+        },
+        {
+          "label": "Pulihkan",
+          "value": "Tombol berkas di sampah",
+          "effect": "Memulihkan selama masa retensi yang ditampilkan, saat ini 7 hari."
+        },
+        {
+          "label": "Nama kelas duplikasi",
+          "value": "Teks, contoh Kelas A",
+          "effect": "Nama kelas baru, bukan pengganti nama kelas lama."
+        },
+        {
+          "label": "Tahun akademik & Semester Baru",
+          "value": "Pilihan semester tujuan",
+          "effect": "Menentukan periode kelas baru."
+        },
+        {
+          "label": "Simpan duplikasi",
+          "value": "Tombol",
+          "effect": "Menyalin struktur materi/soal ke kelas draf. Peserta, progres, jawaban, nilai, dan jadwal lama tidak dibawa sebagai hasil belajar baru."
+        }
+      ],
+      "notes": [
+        "Untuk pendaftaran dan impor peserta secara lengkap, ikuti A3 dan A4. Duplikasi tidak otomatis membuka perkuliahan semester baru."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/30-duplikasi.png",
+        "alt": "Mengelola peserta pengumuman berkas dan duplikasi dengan penanda merah",
+        "caption": "Penanda gambar: 1 Nama; 2 Semester"
+      }
+    },
+    {
+      "id": "A1",
+      "title": "Memeriksa cakupan program studi",
+      "summary": "Menjalankan administrasi pada prodi yang ditugaskan.",
+      "category": "Administrasi Kelas",
+      "roles": [
+        "DEPARTMENT_ADMIN"
+      ],
+      "keywords": [
+        "A1"
+      ],
+      "location": "Beranda administrasi kemudian Katalog mata kuliah atau Kelola kelas",
+      "preparation": "Masuk sebagai Admin prodi dan memiliki cakupan prodi dari SSO.",
+      "steps": [
+        "Buka Beranda. Periksa Cakupan program studi sebelum memulai administrasi.",
+        "Klik Katalog mata kuliah untuk mengelola daftar mata kuliah. Klik Kelola kelas untuk mengelola rombel semester.",
+        "Cari kode/nama yang dibutuhkan dan periksa status kelas. Buka kartu kelas untuk meninjau pengajar dan peserta.",
+        "Jika prodi yang ditugaskan tidak tampil, minta pengelola SSO/akademik memeriksa afiliasi. Jangan mengganti data prodi lain untuk mengatasi keterbatasan akses."
+      ],
+      "result": "Data yang ditinjau sesuai program studi dalam cakupan akun.",
+      "controls": [
+        {
+          "label": "Cakupan",
+          "value": "Kode/nama prodi yang ditugaskan",
+          "effect": "Batas data administrasi dan pencarian pengguna yang dapat diakses."
+        },
+        {
+          "label": "Katalog mata kuliah",
+          "value": "Menu",
+          "effect": "Mengelola identitas mata kuliah dan statusnya."
+        },
+        {
+          "label": "Kelola kelas",
+          "value": "Menu",
+          "effect": "Mengelola rombel, periode, pengampu, dan kepesertaan."
+        },
+        {
+          "label": "Rekap nilai",
+          "value": "Menu",
+          "effect": "Meninjau hasil kelas dalam cakupan akun."
+        }
+      ],
+      "notes": [
+        "Dosen lintas prodi perlu afiliasi/penugasan yang sesuai. Pemilihan pengajar tidak mengganti peran dan cakupan akun SSO."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/60-admin-beranda.png",
+        "alt": "Memeriksa cakupan program studi dengan penanda merah",
+        "caption": "Penanda gambar: 1 Katalog; 2 Kelas"
+      }
+    },
+    {
+      "id": "A2",
+      "title": "Menambahkan mata kuliah dan rombel",
+      "summary": "Menyiapkan mata kuliah serta kelas sebelum perkuliahan.",
+      "category": "Administrasi Kelas",
+      "roles": [
+        "DEPARTMENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "keywords": [
+        "A2"
+      ],
+      "location": "Katalog mata kuliah kemudian Tambah mata kuliah, lalu Kelola kelas kemudian Tambah kelas",
+      "preparation": "Kode kurikulum, nama mata kuliah, prodi, SKS, semester, dan pengajar sudah diketahui.",
+      "steps": [
+        "Klik Tambah mata kuliah. Isi Kode, Kode program studi, Judul, Deskripsi, SKS, dan Status. Simpan.",
+        "Buka Kelola kelas dan klik Tambah kelas. Pilih Mata kuliah yang baru disiapkan atau yang sudah tersedia.",
+        "Isi Nama kelas dan Tahun akademik, misalnya Kelas A dan 2026/2027 Ganjil. Pilih Draf selama kelas belum siap.",
+        "Untuk pendaftaran mandiri, isi Kunci pendaftaran mandiri minimal enam karakter. Biarkan kosong jika peserta akan didaftarkan pengelola.",
+        "Cari pengampu minimal dua karakter dari nama/NIDN, pilih hasilnya, lalu Simpan semua perubahan. Buka kelas untuk memeriksa pengampu dan metadata."
+      ],
+      "result": "Mata kuliah dan rombel tersedia dengan pengampu serta periode yang benar.",
+      "controls": [
+        {
+          "label": "Kode",
+          "value": "Teks wajib, contoh IF2101",
+          "effect": "Kode mata kuliah kurikulum. Periksa agar tidak tertukar/duplikat."
+        },
+        {
+          "label": "Kode program studi",
+          "value": "Pilihan prodi dalam cakupan",
+          "effect": "Menempatkan mata kuliah di program studi yang benar."
+        },
+        {
+          "label": "Judul / Deskripsi mata kuliah",
+          "value": "Nama dan deskripsi",
+          "effect": "Identitas kurikulum yang diwarisi kartu kelas."
+        },
+        {
+          "label": "SKS",
+          "value": "Bilangan 1 sampai 12, contoh 3",
+          "effect": "Beban studi mata kuliah."
+        },
+        {
+          "label": "Mata kuliah pada kelas",
+          "value": "Pilihan mata kuliah yang belum diarsipkan",
+          "effect": "Menghubungkan rombel dengan identitas mata kuliah."
+        },
+        {
+          "label": "Nama kelas",
+          "value": "Teks wajib maksimum 200 karakter, contoh Kelas A",
+          "effect": "Membedakan rombel pada mata kuliah dan periode yang sama."
+        },
+        {
+          "label": "Tahun akademik",
+          "value": "Teks/periode yang ditampilkan, contoh 2026/2027 Ganjil",
+          "effect": "Menentukan semester rombel."
+        },
+        {
+          "label": "Status",
+          "value": "Draf atau Terbit untuk kelas baru",
+          "effect": "Draf untuk persiapan. Terbit memungkinkan akses peserta aktif sesuai publikasi isi."
+        },
+        {
+          "label": "Kunci pendaftaran mandiri",
+          "value": "Opsional, minimal 6 karakter, contoh UAY2026",
+          "effect": "Mengizinkan mahasiswa bergabung memakai kunci. Jangan bagikan di ruang publik."
+        },
+        {
+          "label": "Dosen pengampu",
+          "value": "Cari nama/NIDN minimal 2 karakter dan pilih hasil",
+          "effect": "Hanya pengguna yang dipilih masuk penugasan. Mengetik nama saja belum menugaskan dosen."
+        },
+        {
+          "label": "Hapus pengampu terpilih",
+          "value": "Tombol x pada nama pilihan",
+          "effect": "Menghapus pilihan pengampu dari draf sebelum Simpan."
+        }
+      ],
+      "notes": [
+        "Satu mata kuliah dapat memiliki beberapa rombel. Periksa periode dan nama rombel sebelum menambah kelas agar tidak membuat kelas ganda."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/62-tambah-kelas.png",
+        "alt": "Menambahkan mata kuliah dan rombel dengan penanda merah",
+        "caption": "Penanda gambar: 1 Mata kuliah; 2 Tahun; 3 Kunci; 4 Pengampu"
+      }
+    },
+    {
+      "id": "A3",
+      "title": "Mendaftarkan dan mengaktifkan peserta",
+      "summary": "Memastikan daftar peserta sesuai kelas semester berjalan.",
+      "category": "Administrasi Kelas",
+      "roles": [
+        "DEPARTMENT_ADMIN",
+        "SUPER_ADMIN",
+        "INSTRUCTOR"
+      ],
+      "keywords": [
+        "A3"
+      ],
+      "location": "Kelola kelas kemudian kelas kemudian Peserta",
+      "preparation": "Data kepesertaan/KRS sudah disetujui dan identitas mahasiswa tersedia di SSO.",
+      "steps": [
+        "Buka kelas yang benar, lalu tab Peserta. Bandingkan daftar dengan peserta yang seharusnya mengikuti kelas.",
+        "Klik Daftarkan peserta. Isi pencarian nama, NIM, atau email dan klik Pencarian.",
+        "Centang Pilih pada mahasiswa yang sesuai. Periksa jumlah mahasiswa dipilih, lalu klik Simpan semua perubahan.",
+        "Untuk mahasiswa yang tidak berpartisipasi lagi, klik Nonaktifkan peserta dan baca konfirmasi. Untuk mengembalikan akses, klik Aktifkan peserta.",
+        "Periksa daftar akhir, NIM, dan status aktif. Untuk jumlah besar gunakan impor pada A4."
+      ],
+      "result": "Peserta aktif sesuai daftar yang disetujui dan aksesnya benar.",
+      "controls": [
+        {
+          "label": "Cari nama atau NIM/NIDN",
+          "value": "Teks, contoh 202601005",
+          "effect": "Mencari akun dalam cakupan akses."
+        },
+        {
+          "label": "Pencarian",
+          "value": "Tombol",
+          "effect": "Menampilkan hasil yang dapat didaftarkan."
+        },
+        {
+          "label": "Pilih",
+          "value": "ON = masukkan ke daftar pilihan. OFF = batalkan pilihan",
+          "effect": "Memilih mahasiswa yang akan diproses ketika Simpan."
+        },
+        {
+          "label": "Simpan semua perubahan",
+          "value": "Tombol dialog peserta",
+          "effect": "Mendaftarkan/mengaktifkan peserta yang dipilih."
+        },
+        {
+          "label": "Nonaktifkan peserta",
+          "value": "Tombol pada baris peserta",
+          "effect": "Menutup hak partisipasi. Riwayat tidak dihapus."
+        },
+        {
+          "label": "Aktifkan peserta",
+          "value": "Tombol pada peserta nonaktif",
+          "effect": "Mengembalikan akses belajar kelas sesuai status kelas."
+        }
+      ],
+      "notes": [
+        "Periksa NIM, bukan hanya kemiripan nama. Mahasiswa di luar cakupan dapat tidak muncul dalam pencarian."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/63-daftar-peserta.png",
+        "alt": "Mendaftarkan dan mengaktifkan peserta dengan penanda merah",
+        "caption": "Penanda gambar: 1 Cari; 2 Pencarian"
+      }
+    },
+    {
+      "id": "A4",
+      "title": "Impor peserta nilai atau bank soal",
+      "summary": "Memasukkan banyak data setelah meninjau tiap baris.",
+      "category": "Administrasi Kelas",
+      "roles": [
+        "DEPARTMENT_ADMIN",
+        "SUPER_ADMIN",
+        "INSTRUCTOR"
+      ],
+      "keywords": [
+        "A4"
+      ],
+      "location": "Tab Peserta, Rekap nilai, atau Bank soal kemudian Impor massal",
+      "preparation": "Siapkan daftar yang disetujui. Gunakan template dari dialog yang sama.",
+      "steps": [
+        "Klik Impor massal dan pilih Jenis data. Untuk Nilai kategori pilih kategori tujuan, untuk Bank soal pilih bank tujuan.",
+        "Klik Unduh template. Isi kolom sesuai template dan simpan .xlsx atau .csv. Simpan NIM sebagai teks agar angka nol di depan tetap utuh.",
+        "Klik Pilih berkas. Tunggu pratinjau. Baca jumlah Siap impor dan Bermasalah serta isi setiap baris.",
+        "Perbaiki data yang salah. Centang Abaikan untuk baris yang sengaja tidak dimasukkan. Centang Timpa hanya jika pembaruan data sebelumnya memang disetujui.",
+        "Untuk koreksi nilai yang membutuhkan alasan, isi Alasan koreksi minimal lima karakter.",
+        "Klik Impor data siap setelah meninjau. Periksa pesan berhasil dan buka daftar peserta/nilai/bank untuk memastikan hasilnya."
+      ],
+      "result": "Baris yang disetujui masuk ke sasaran yang benar dan baris bermasalah telah ditangani.",
+      "controls": [
+        {
+          "label": "Jenis data",
+          "value": "Peserta kelas (ENROLLMENT), Nilai kategori (GRADES), Bank soal (QUESTIONS)",
+          "effect": "Menentukan jenis template dan tujuan impor."
+        },
+        {
+          "label": "Kategori nilai / Bank soal",
+          "value": "Pilihan target wajib selain impor peserta",
+          "effect": "Mengarahkan nilai ke kategori atau soal ke bank yang benar."
+        },
+        {
+          "label": "Unduh template",
+          "value": "Tombol menghasilkan .xlsx",
+          "effect": "Menyediakan nama kolom dan contoh yang sesuai jenis impor."
+        },
+        {
+          "label": "Peserta kelas",
+          "value": "Kolom identifierValue, email",
+          "effect": "Isi NIM/identitas dan email sesuai akun kampus. Contoh latihan 202601001."
+        },
+        {
+          "label": "Nilai kategori",
+          "value": "Kolom identifierValue, score",
+          "effect": "Isi identitas dan skor kategori 0 sampai 100, misalnya 85."
+        },
+        {
+          "label": "Bank soal",
+          "value": "Kolom text, type, points, options, answerKey, rubric",
+          "effect": "Isi tipe kode sesuai template. options/answerKey/rubric menggunakan format JSON dari contoh template."
+        },
+        {
+          "label": "Pilih berkas",
+          "value": "CSV/XLSX maksimum 10 MB, 1 sampai 500 baris data",
+          "effect": "Membaca lembar pertama untuk pratinjau. Baris header wajib, nama kolom jangan digandakan."
+        },
+        {
+          "label": "Abaikan",
+          "value": "ON = baris tidak diimpor. OFF = tetap diperiksa",
+          "effect": "Memilih pengecualian yang disengaja."
+        },
+        {
+          "label": "Timpa",
+          "value": "ON = mengizinkan penggantian data sebelumnya. OFF = tidak menimpa",
+          "effect": "Periksa Data sebelumnya dan Data baru sebelum mengaktifkannya."
+        },
+        {
+          "label": "Alasan koreksi",
+          "value": "Minimal 5 karakter bila mengubah nilai yang membutuhkan alasan",
+          "effect": "Merekam dasar perubahan nilai."
+        },
+        {
+          "label": "Impor data siap",
+          "value": "Tombol setelah pratinjau valid",
+          "effect": "Menjalankan impor baris yang siap dan disetujui. Mengunggah berkas saja belum menjalankan impor."
+        }
+      ],
+      "notes": [
+        "Dosen dan Super admin yang berhak mengelola kelas menggunakan alur impor yang sama. Jangan mengimpor ke kategori atau bank lain hanya untuk melewati kesalahan."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/29-impor.png",
+        "alt": "Impor peserta nilai atau bank soal dengan penanda merah",
+        "caption": "Penanda gambar: 1 Jenis; 2 Template; 3 Berkas"
+      }
+    },
+    {
+      "id": "A5",
+      "title": "Memantau kelas dan mengatur arsip",
+      "summary": "Meninjau kesiapan kelas dan status akhir perkuliahan.",
+      "category": "Administrasi Kelas",
+      "roles": [
+        "DEPARTMENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "keywords": [
+        "A5"
+      ],
+      "location": "Kelola kelas kemudian kelas kemudian Pengaturan",
+      "preparation": "Periode dan status administrasi kelas sudah disepakati pengelola.",
+      "steps": [
+        "Cari kelas semester berjalan dan buka. Periksa pengampu, peserta, Section, dan isi yang sudah dipublikasikan.",
+        "Buka Presensi/Rekap nilai untuk memantau pencatatan serta penilaian. Gunakan ekspor sesuai kebutuhan: CSV presensi atau Excel nilai.",
+        "Klik Pengaturan. Periksa Nama kelas, Tahun akademik, Status, dan Kunci pendaftaran mandiri.",
+        "Pilih Terbit jika kelas siap digunakan. Jika perkuliahan berakhir dan disetujui untuk arsip, pilih Diarsipkan lalu baca dan setujui konfirmasi.",
+        "Untuk kelas arsip yang perlu dilanjutkan, gunakan Buka kembali kelas dan baca konfirmasi. Periksa kembali jadwal serta penguncian nilai."
+      ],
+      "result": "Status kelas sesuai kondisi perkuliahan dan data siap ditinjau.",
+      "controls": [
+        {
+          "label": "Status Draf",
+          "value": "Pilihan status",
+          "effect": "Kelas tahap persiapan."
+        },
+        {
+          "label": "Status Terbit",
+          "value": "Pilihan status",
+          "effect": "Kelas aktif yang dapat diakses peserta aktif sesuai publikasi isi."
+        },
+        {
+          "label": "Status Diarsipkan",
+          "value": "Pilihan status dan konfirmasi",
+          "effect": "Menjadikan aktivitas kelas hanya-baca selama diarsipkan."
+        },
+        {
+          "label": "Kunci pendaftaran mandiri pada Pengaturan",
+          "value": "Minimal 6 karakter jika diisi",
+          "effect": "Mengganti kunci dengan nilai baru. Kolom kosong mempertahankan kunci yang ada pada formulir ini."
+        },
+        {
+          "label": "Buka kembali kelas",
+          "value": "Tombol kelas arsip",
+          "effect": "Mengubah status kembali Terbit setelah konfirmasi. Nilai akhir yang sudah dikunci tidak otomatis dibuka."
+        },
+        {
+          "label": "Ekspor Rekap (CSV) / Ekspor Excel",
+          "value": "Tombol di fitur masing-masing",
+          "effect": "Menghasilkan rekap presensi atau nilai sesuai cakupan kelas."
+        }
+      ],
+      "notes": [
+        "Arsip kelas dan penguncian nilai akhir adalah dua status berbeda. Periksa keduanya sebelum melanjutkan aktivitas."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/37-pengaturan.png",
+        "alt": "Memantau kelas dan mengatur arsip dengan penanda merah",
+        "caption": "Penanda gambar: 1 Status kelas; 2 Kunci; 3 Simpan"
+      }
+    },
+    {
+      "id": "S1",
+      "title": "Meninjau administrasi seluruh program studi",
+      "summary": "Mengelola universitas dengan cakupan data yang sesuai.",
+      "category": "Pengaturan Universitas",
+      "roles": [
+        "SUPER_ADMIN"
+      ],
+      "keywords": [
+        "S1"
+      ],
+      "location": "Beranda administrasi kemudian Katalog mata kuliah atau Kelola kelas",
+      "preparation": "Masuk sebagai Super admin.",
+      "steps": [
+        "Buka Beranda. Periksa label Cakupan Seluruh program studi.",
+        "Tinjau jumlah mata kuliah, kelas terbit/draf, dan pendaftaran aktif. Klik menu pengelolaan untuk melihat data rinci.",
+        "Cari kode/nama kelas dan buka kelas yang perlu ditinjau. Periksa prodi, pengampu, dan periode sebelum melakukan perubahan.",
+        "Gunakan A2 sampai A5 untuk pengelolaan mata kuliah, kelas, peserta, impor, dan arsip sesuai kewenangan Super Admin.",
+        "Untuk masalah akses pengguna, arahkan perubahan role/afiliasi ke pengelola SSO. Periksa Profil dan jejak audit untuk mendukung penelusuran."
+      ],
+      "result": "Pemantauan dan administrasi dilakukan pada prodi/kelas yang dimaksud.",
+      "controls": [
+        {
+          "label": "Cakupan Seluruh program studi",
+          "value": "Status cakupan akun",
+          "effect": "Super admin dapat meninjau data lintas prodi."
+        },
+        {
+          "label": "Katalog mata kuliah / Kelola kelas",
+          "value": "Menu administrasi",
+          "effect": "Mengakses kurikulum dan rombel seluruh universitas sesuai hak Super admin."
+        },
+        {
+          "label": "Rekap nilai / Agenda akademik",
+          "value": "Menu",
+          "effect": "Meninjau hasil dan jadwal yang tersedia."
+        },
+        {
+          "label": "Jejak audit kelas",
+          "value": "Tab pada kelas",
+          "effect": "Membaca aktivitas dan perubahan data untuk penelusuran."
+        }
+      ],
+      "notes": [
+        "Pimpinan menggunakan role dan cakupan yang diberikan kampus. Versi ini tidak menyediakan role Pimpinan terpisah dengan kewenangan tersendiri."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/70-super-admin.png",
+        "alt": "Meninjau administrasi seluruh program studi dengan penanda merah",
+        "caption": "Penanda gambar: 1 Kebijakan; 2 Tambah kelas"
+      }
+    },
+    {
+      "id": "S2",
+      "title": "Mengatur tahun ajaran dan banner semester",
+      "summary": "Menetapkan periode aktif dan pilihan semester untuk administrasi.",
+      "category": "Pengaturan Universitas",
+      "roles": [
+        "SUPER_ADMIN"
+      ],
+      "keywords": [
+        "S2"
+      ],
+      "location": "Beranda kemudian Kebijakan & Tahun Ajaran kemudian Tahun Ajaran & Semester",
+      "preparation": "Daftar periode akademik dan semester aktif sudah ditetapkan kampus.",
+      "steps": [
+        "Klik Kebijakan & Tahun Ajaran pada Beranda. Dialog Pengaturan & Tata Kelola Akademik terbuka. Pilih Tahun Ajaran & Semester.",
+        "Pilih Tahun Akademik Aktif. Periksa Label Banner Portal Landing yang ikut diperbarui, lalu sesuaikan dengan label semester yang disepakati.",
+        "Untuk periode baru, ketik contoh 2027/2028 Ganjil pada Tambah tahun ajaran, lalu klik + Tambah Semester.",
+        "Periksa daftar semester. Gunakan x pada semester tidak aktif jika perlu menghapusnya dari pilihan. Jangan hapus pilihan yang masih dibutuhkan.",
+        "Klik Simpan Perubahan Kebijakan. Buka kembali pengaturan dan halaman publik untuk memeriksa periode serta banner."
+      ],
+      "result": "Semester aktif, daftar pilihan, dan banner sesuai periode kampus.",
+      "controls": [
+        {
+          "label": "Tahun Akademik Aktif Berjalan",
+          "value": "Pilihan periode, contoh 2026/2027 Ganjil",
+          "effect": "Menjadi acuan periode aktif administrasi."
+        },
+        {
+          "label": "Label Banner Portal Landing",
+          "value": "Teks wajib, contoh SEMESTER GANJIL 2026/2027",
+          "effect": "Teks semester pada halaman publik. Mengubah label tidak memindahkan data kelas lama."
+        },
+        {
+          "label": "Tambah tahun ajaran",
+          "value": "Teks periode baru, contoh 2027/2028 Ganjil",
+          "effect": "Menyiapkan pilihan baru sebelum ditambahkan."
+        },
+        {
+          "label": "+ Tambah Semester",
+          "value": "Tombol",
+          "effect": "Menambahkan periode ke draf daftar, tidak langsung menyimpan ke server."
+        },
+        {
+          "label": "x Hapus semester dari daftar",
+          "value": "Tombol pada semester yang tidak aktif",
+          "effect": "Menghapus dari daftar pilihan. Setidaknya satu periode harus tetap tersedia."
+        },
+        {
+          "label": "Simpan Perubahan Kebijakan",
+          "value": "Tombol",
+          "effect": "Menyimpan perubahan semester, banner, dan pengaturan akademik dalam dialog."
+        }
+      ],
+      "notes": [
+        "Mengganti semester aktif tidak mendaftarkan ulang peserta atau menerbitkan kelas semester baru. Siapkan rombel dan kepesertaan dengan A2/A3."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/71-semester.png",
+        "alt": "Mengatur tahun ajaran dan banner semester dengan penanda merah",
+        "caption": "Penanda gambar: 1 Semester aktif; 2 Label; 3 Tambah; 4 Simpan"
+      }
+    },
+    {
+      "id": "S3",
+      "title": "Menetapkan kebijakan skala nilai dan ambang hadir",
+      "summary": "Menetapkan acuan perhitungan untuk periode yang berlaku.",
+      "category": "Pengaturan Universitas",
+      "roles": [
+        "SUPER_ADMIN"
+      ],
+      "keywords": [
+        "S3"
+      ],
+      "location": "Pengaturan & Tata Kelola Akademik kemudian Kebijakan Bobot Huruf Mutu",
+      "preparation": "Versi kebijakan dan ambang kehadiran sudah disetujui kampus.",
+      "steps": [
+        "Buka tab Kebijakan Bobot Huruf Mutu. Pilih Kebijakan Konversi Huruf Mutu Aktif.",
+        "Baca tabel konversi versi yang dipilih. Pastikan batas skor dan indeks mutu sesuai keputusan akademik.",
+        "Isi Ambang Batas Kehadiran Mengikuti Ujian (%), misalnya 75. Rentang isian 50 sampai 100.",
+        "Klik Simpan Perubahan Kebijakan. Buka lagi untuk memastikan pengaturan tersimpan.",
+        "Minta pengampu meninjau versi skala pada Bobot penilaian kelas sebelum penerbitan nilai. Periksa rekap kehadiran sebelum menggunakan hasil kelayakan sebagai dasar keputusan."
+      ],
+      "result": "Versi kebijakan dan ambang yang diisikan tersimpan.",
+      "controls": [
+        {
+          "label": "Kebijakan Konversi Huruf Mutu Aktif",
+          "value": "2026.1 atau 2024.1",
+          "effect": "Menentukan acuan default konversi nilai. Kelas juga menyimpan versi skalanya."
+        },
+        {
+          "label": "Ambang Batas Kehadiran Mengikuti Ujian (%)",
+          "value": "Bilangan 50 sampai 100, default 75",
+          "effect": "Menyimpan kebijakan ambang kehadiran universitas."
+        },
+        {
+          "label": "Tabel Konversi Skala Nilai",
+          "value": "Tabel baca saja",
+          "effect": "Menampilkan batas skor, huruf, dan indeks versi terpilih."
+        },
+        {
+          "label": "Simpan Perubahan Kebijakan",
+          "value": "Tombol",
+          "effect": "Menerapkan pilihan kebijakan dalam pengaturan sistem."
+        }
+      ],
+      "notes": [
+        "Nilai historis yang sudah diterbitkan/dikunci mempertahankan kebijakannya. Mengubah default tidak menulis ulang nilai historis.",
+        "Perubahan ambang tersimpan langsung dipakai pada perhitungan dan label rekap presensi. Perubahan skala default berlaku pada kelas baru dan hasil duplikasi; nilai akhir yang sudah diterbitkan tidak dihitung ulang."
+      ],
+      "content": "",
+      "figure": {
+        "src": "/help/tutorial/72-kebijakan.png",
+        "alt": "Menetapkan kebijakan skala nilai dan ambang hadir dengan penanda merah",
+        "caption": "Penanda gambar: 1 Versi; 2 Ambang"
+      }
+    }
+  ],
+  "faqs": [
+    {
+      "id": "kendala-1",
+      "title": "Kelas saya kosong",
+      "summary": "Periksa semester, role, afiliasi, penugasan dosen, dan status peserta. Minta admin prodi memeriksa kepesertaan/penugasan.",
+      "category": "Solusi Kendala",
+      "roles": [
+        "SUPER_ADMIN",
+        "DEPARTMENT_ADMIN",
+        "INSTRUCTOR",
+        "STUDENT"
+      ],
+      "keywords": [],
+      "content": "Periksa semester, role, afiliasi, penugasan dosen, dan status peserta. Minta admin prodi memeriksa kepesertaan/penugasan."
+    },
+    {
+      "id": "kendala-2",
+      "title": "Materi sudah terbit tetapi mahasiswa belum melihatnya",
+      "summary": "Periksa status kelas Terbit, Section terbit, materi terbit, jadwal akses, dan peserta aktif.",
+      "category": "Solusi Kendala",
+      "roles": [
+        "SUPER_ADMIN",
+        "DEPARTMENT_ADMIN",
+        "INSTRUCTOR"
+      ],
+      "keywords": [],
+      "content": "Periksa status kelas Terbit, Section terbit, materi terbit, jadwal akses, dan peserta aktif."
+    },
+    {
+      "id": "kendala-3",
+      "title": "Kode presensi ditolak",
+      "summary": "Salin enam karakter yang saat ini ditampilkan pengajar tanpa spasi. Kode dapat berisi huruf. Periksa apakah sesi sudah ditutup atau kode diganti.",
+      "category": "Solusi Kendala",
+      "roles": [
+        "STUDENT"
+      ],
+      "keywords": [],
+      "content": "Salin enam karakter yang saat ini ditampilkan pengajar tanpa spasi. Kode dapat berisi huruf. Periksa apakah sesi sudah ditutup atau kode diganti."
+    },
+    {
+      "id": "kendala-4",
+      "title": "Sesi presensi terjadwal belum dibuka",
+      "summary": "Periksa tanggal dan jam lokal, waktu mulai, dan sesi yang dipilih. Muat ulang tab Presensi ketika waktu mulai tercapai.",
+      "category": "Solusi Kendala",
+      "roles": [
+        "SUPER_ADMIN",
+        "DEPARTMENT_ADMIN",
+        "INSTRUCTOR",
+        "STUDENT"
+      ],
+      "keywords": [],
+      "content": "Periksa tanggal dan jam lokal, waktu mulai, dan sesi yang dipilih. Muat ulang tab Presensi ketika waktu mulai tercapai."
+    },
+    {
+      "id": "kendala-5",
+      "title": "Unggahan berhasil tetapi tugas tidak muncul dalam riwayat",
+      "summary": "Unggah file dahulu lalu klik Kumpulkan tugas. Periksa pesan berhasil dan Riwayat pengumpulan, bukan hanya nama file unggahan.",
+      "category": "Solusi Kendala",
+      "roles": [
+        "STUDENT"
+      ],
+      "keywords": [],
+      "content": "Unggah file dahulu lalu klik Kumpulkan tugas. Periksa pesan berhasil dan Riwayat pengumpulan, bukan hanya nama file unggahan."
+    },
+    {
+      "id": "kendala-6",
+      "title": "Tombol Kumpulkan tugas tidak aktif",
+      "summary": "Periksa jadwal buka, tenggat, izin terlambat, batas toleransi, jumlah versi, kelas arsip, dan nilai akhir terkunci.",
+      "category": "Solusi Kendala",
+      "roles": [
+        "STUDENT"
+      ],
+      "keywords": [],
+      "content": "Periksa jadwal buka, tenggat, izin terlambat, batas toleransi, jumlah versi, kelas arsip, dan nilai akhir terkunci."
+    },
+    {
+      "id": "kendala-7",
+      "title": "Jawaban kuis belum tersimpan",
+      "summary": "Periksa koneksi dan pesan penyimpanan jawaban. Server hanya dapat mengumpulkan jawaban yang telah diterimanya.",
+      "category": "Solusi Kendala",
+      "roles": [
+        "STUDENT"
+      ],
+      "keywords": [],
+      "content": "Periksa koneksi dan pesan penyimpanan jawaban. Server hanya dapat mengumpulkan jawaban yang telah diterimanya."
+    },
+    {
+      "id": "kendala-8",
+      "title": "Nilai kuis atau tugas belum terlihat",
+      "summary": "Penilaian mungkin belum selesai atau hasil belum dipublikasikan. Periksa Riwayat dan tanyakan kepada pengajar.",
+      "category": "Solusi Kendala",
+      "roles": [
+        "STUDENT"
+      ],
+      "keywords": [],
+      "content": "Penilaian mungkin belum selesai atau hasil belum dipublikasikan. Periksa Riwayat dan tanyakan kepada pengajar."
+    },
+    {
+      "id": "kendala-9",
+      "title": "Publikasikan nilai akhir tidak aktif",
+      "summary": "Periksa bobot total 100, perubahan sudah disimpan, semua penilaian selesai, dan persetujuan nilai kosong jika diperlukan.",
+      "category": "Solusi Kendala",
+      "roles": [
+        "SUPER_ADMIN",
+        "DEPARTMENT_ADMIN",
+        "INSTRUCTOR"
+      ],
+      "keywords": [],
+      "content": "Periksa bobot total 100, perubahan sudah disimpan, semua penilaian selesai, dan persetujuan nilai kosong jika diperlukan."
+    },
+    {
+      "id": "kendala-10",
+      "title": "Bobot penilaian tidak dapat diubah",
+      "summary": "Nilai akhir mungkin sudah dikunci atau kelas diarsipkan. Periksa status sebelum mengubah rancangan penilaian.",
+      "category": "Solusi Kendala",
+      "roles": [
+        "SUPER_ADMIN",
+        "DEPARTMENT_ADMIN",
+        "INSTRUCTOR"
+      ],
+      "keywords": [],
+      "content": "Nilai akhir mungkin sudah dikunci atau kelas diarsipkan. Periksa status sebelum mengubah rancangan penilaian."
+    },
+    {
+      "id": "kendala-11",
+      "title": "Impor bermasalah",
+      "summary": "Gunakan template yang sama, NIM sebagai teks, nama kolom benar, skor valid, target kategori/bank dipilih, dan tinjau opsi Timpa/Abaikan.",
+      "category": "Solusi Kendala",
+      "roles": [
+        "SUPER_ADMIN",
+        "DEPARTMENT_ADMIN",
+        "INSTRUCTOR"
+      ],
+      "keywords": [],
+      "content": "Gunakan template yang sama, NIM sebagai teks, nama kolom benar, skor valid, target kategori/bank dipilih, dan tinjau opsi Timpa/Abaikan."
+    },
+    {
+      "id": "kendala-12",
+      "title": "Halaman gagal ditampilkan",
+      "summary": "Klik Muat ulang bagian ini atau buka kembali halaman. Bila tetap gagal, catat pesan dan Nomor permintaan jika ada untuk bantuan prodi.",
+      "category": "Solusi Kendala",
+      "roles": [
+        "SUPER_ADMIN",
+        "DEPARTMENT_ADMIN",
+        "INSTRUCTOR",
+        "STUDENT"
+      ],
+      "keywords": [],
+      "content": "Klik Muat ulang bagian ini atau buka kembali halaman. Bila tetap gagal, catat pesan dan Nomor permintaan jika ada untuk bantuan prodi."
+    },
+    {
+      "id": "kendala-13",
+      "title": "Jam pada perangkat berbeda",
+      "summary": "Sesuaikan zona waktu perangkat. Seluruh tanggal-jam mengikuti zona perangkat dan menampilkan offset sebenarnya. Jadwal tetap mengacu pada timestamp UTC yang sama.",
+      "category": "Solusi Kendala",
+      "roles": [
+        "SUPER_ADMIN",
+        "DEPARTMENT_ADMIN",
+        "INSTRUCTOR",
+        "STUDENT"
+      ],
+      "keywords": [],
+      "content": "Sesuaikan zona waktu perangkat. Seluruh tanggal-jam mengikuti zona perangkat dan menampilkan offset sebenarnya. Jadwal tetap mengacu pada timestamp UTC yang sama."
+    },
+    {
+      "id": "kendala-14",
+      "title": "Draf hilang saat pindah perangkat",
+      "summary": "Draf lokal tersimpan pada browser asal. Simpan ke server sebelum berpindah perangkat. Jangan menganggap autosave lokal sebagai pengumpulan/publikasi.",
+      "category": "Solusi Kendala",
+      "roles": [
+        "SUPER_ADMIN",
+        "DEPARTMENT_ADMIN",
+        "INSTRUCTOR",
+        "STUDENT"
+      ],
+      "keywords": [],
+      "content": "Draf lokal tersimpan pada browser asal. Simpan ke server sebelum berpindah perangkat. Jangan menganggap autosave lokal sebagai pengumpulan/publikasi."
+    }
+  ]
+}

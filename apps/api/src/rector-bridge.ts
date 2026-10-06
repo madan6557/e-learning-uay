@@ -1,26 +1,35 @@
-import type { Express } from "express";
-import { db, config, ensure } from "./core.js";
+import type { Express, RequestHandler } from "express";
+import { createHash, timingSafeEqual } from "node:crypto";
+import { db, ensure } from "./core.js";
+import { authenticate } from "./auth.js";
+
+type SnapshotItem = {
+  id: string; title: string; kind: "PERTEMUAN" | "MATERI" | "TUGAS" | "KUIS";
+  visible: boolean; status: "TERBIT" | "DRAF"; questionCount?: number;
+};
+type SnapshotGrading = {
+  id: string; title: string; kind: "TUGAS" | "KUIS_OTOMATIS"; current: boolean;
+  total: number; graded: number; published: number; pendingSince: string | null;
+  lastGradedAt: string | null; lastPublishedAt: string | null;
+};
+
+const authorizeRectorBridge: RequestHandler = async (req, res, next) => {
+  const token = req.get("X-Rector-Bridge-Token") || req.get("Authorization")?.replace(/^Bearer\s+/i, "");
+  if (token) {
+    const secret = process.env.RECTOR_BRIDGE_TOKEN;
+    ensure(secret && timingSafeEqual(createHash("sha256").update(token).digest(),
+      createHash("sha256").update(secret).digest()), 401, "RECTOR_BRIDGE_UNAUTHORIZED");
+    next();
+    return;
+  }
+  await authenticate(req, res, () => {
+    ensure(req.context.user.role === "SUPER_ADMIN", 401, "RECTOR_BRIDGE_UNAUTHORIZED");
+    next();
+  });
+};
 
 export function registerRectorBridgeRoutes(app: Express) {
-  app.get("/api/v1/integrations/rector/snapshot", async (req, res) => {
-    // Verifikasi otentikasi bridging: Bearer token, header X-Rector-Bridge-Token, atau peran SUPER_ADMIN
-    const tokenHeader =
-      req.headers["x-rector-bridge-token"] ||
-      req.headers.authorization?.replace(/^Bearer\s+/i, "");
-    const bridgeSecret =
-      process.env.RECTOR_BRIDGE_TOKEN ||
-      config.clientSecret ||
-      "uay-rector-telemetry-key";
-
-    const isAuthorizedToken = tokenHeader && tokenHeader === bridgeSecret;
-    const isSuperAdmin = req.context?.user?.role === "SUPER_ADMIN";
-
-    ensure(
-      isAuthorizedToken || isSuperAdmin,
-      401,
-      "RECTOR_BRIDGE_UNAUTHORIZED",
-    );
-
+  app.get("/api/v1/integrations/rector/snapshot", authorizeRectorBridge, async (_req, res) => {
     const now = new Date();
 
     // 1. Ambil daftar dosen (Instructors)
@@ -79,8 +88,8 @@ export function registerRectorBridgeRoutes(app: Express) {
     });
 
     const mappedClasses = classes.map((c) => {
-      const items: any[] = [];
-      const grading: any[] = [];
+      const items: SnapshotItem[] = [];
+      const grading: SnapshotGrading[] = [];
 
       for (const sec of c.sections) {
         items.push({
@@ -175,7 +184,7 @@ export function registerRectorBridgeRoutes(app: Express) {
       },
     });
 
-    const categoryMap: Record<string, any> = {
+    const categoryMap: Record<string, string> = {
       CREATE: "MATERI",
       UPDATE: "MATERI",
       LOGIN: "LOGIN",
@@ -193,8 +202,8 @@ export function registerRectorBridgeRoutes(app: Express) {
       sessionId: null,
       actorId: log.actorId || "system",
       actorName: log.user?.name || "System",
-      actorKind: (log.actorRole === "INSTRUCTOR" ? "DOSEN" : log.actorRole === "SUPER_ADMIN" ? "ADMIN" : "SISTEM") as any,
-      category: (categoryMap[log.action] || "AKSES") as any,
+      actorKind: log.actorRole === "INSTRUCTOR" ? "DOSEN" : log.actorRole === "SUPER_ADMIN" ? "ADMIN" : "SISTEM",
+      category: categoryMap[log.action] || "AKSES",
       action: log.action,
       objectId: log.entityId || log.id,
       objectName: log.entity || "Entity",
@@ -215,6 +224,7 @@ export function registerRectorBridgeRoutes(app: Express) {
         lastLoginAt: true,
         departmentScopes: true,
       },
+      orderBy: [{ lastLoginAt: "desc" }, { id: "asc" }],
       take: 50,
     });
 

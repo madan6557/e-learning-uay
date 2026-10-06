@@ -33,7 +33,7 @@
   overflow-wrap: anywhere;
 }
 .danger-text {
-  color: var(--danger) !important;
+  color: var(--danger);
 }
 .topbar-right,
 .toolbar,
@@ -516,10 +516,10 @@ a.secondary.compact,
   background: #fff;
 }
 .search-field input {
-  border: 0 !important;
-  padding: 10px 0 !important;
+  border: 0;
+  padding: 10px 0;
   min-width: 200px;
-  background: transparent !important;
+  background: transparent;
 }
 .filter-tabs {
   display: flex;
@@ -772,7 +772,7 @@ td small {
   transition: background-color 0.15s ease;
 }
 .clickable-grade-row:hover {
-  background-color: #f1f5f9 !important;
+  background-color: #f1f5f9;
 }
 .modal::backdrop {
   background: #0f1a2559;
@@ -911,7 +911,7 @@ input[type="radio"] {
 }
 .inline-form input {
   flex: 1;
-  min-width: 150px !important;
+  min-width: 150px;
 }
 .user-result {
   display: flex;
@@ -1574,7 +1574,7 @@ progress::-webkit-progress-value {
   font-size: 0.83rem;
 }
 .pdf-controls input {
-  width: 65px !important;
+  width: 65px;
 }
 .video-viewer video {
   display: block;
@@ -2399,7 +2399,7 @@ hr {
     font-size: 0.75rem;
   }
   .pdf-controls input {
-    width: 48px !important;
+    width: 48px;
   }
   .reading-content .attachment {
     flex-wrap: wrap;

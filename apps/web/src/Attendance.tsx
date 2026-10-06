@@ -212,7 +212,7 @@ export function Attendance({
             </h3>
             <p style={{ margin: 0, color: "rgba(255, 255, 255, 0.92)", fontSize: "0.88rem", lineHeight: 1.5 }}>
               {activeOpenSession.requiresCode
-                ? "Dosen telah membuka sesi presensi dengan verifikasi PIN. Masukkan kode 6 karakter dari layar proyektor kelas."
+                ? "Dosen telah membuka sesi presensi dengan verifikasi kode. Masukkan kode 6 karakter dari layar proyektor kelas."
                 : "Dosen telah membuka sesi presensi mandiri (bebas kode). Anda dapat langsung mengonfirmasi kehadiran dengan 1 klik."}
             </p>
           </div>
@@ -237,7 +237,7 @@ export function Attendance({
             onClick={() => setModal({ kind: "checkin", session: activeOpenSession })}
           >
             {activeOpenSession.requiresCode ? <KeyRound size={16} /> : <CheckCircle2 size={16} />}
-            <span>{activeOpenSession.requiresCode ? "Isi Presensi (PIN)" : "Konfirmasi Hadir (1-Klik)"}</span>
+            <span>{activeOpenSession.requiresCode ? "Isi Presensi (Kode)" : "Konfirmasi Hadir (1-Klik)"}</span>
           </button>
         </div>
       )}
@@ -414,7 +414,7 @@ export function Attendance({
                         </span>
                       )}
 
-                      {/* Mode Presensi: Bebas Kode vs Perlu PIN */}
+                      {/* Mode Presensi: Bebas Kode vs Perlu Kode */}
                       {s.requiresCode ? (
                         <span
                           style={{
@@ -430,7 +430,7 @@ export function Attendance({
                             gap: 4,
                           }}
                         >
-                          <KeyRound size={11} /> Perlu PIN
+                          <KeyRound size={11} /> Perlu Kode
                         </span>
                       ) : (
                         <span
@@ -677,7 +677,7 @@ export function Attendance({
                           onClick={() => setModal({ kind: "checkin", session: s })}
                         >
                           {s.requiresCode ? <KeyRound size={14} /> : <CheckCircle2 size={14} />}
-                          <span>{s.requiresCode ? "Isi Presensi (PIN)" : "Konfirmasi Hadir (1-Klik)"}</span>
+                          <span>{s.requiresCode ? "Isi Presensi (Kode)" : "Konfirmasi Hadir (1-Klik)"}</span>
                         </button>
                       )
                     )}
@@ -898,7 +898,7 @@ export function Attendance({
                 Konfirmasi Kehadiran Bebas Kode
               </h3>
               <p style={{ margin: "0 0 20px 0", color: "var(--muted, #64748b)", fontSize: "0.9rem", lineHeight: 1.5 }}>
-                Sesi perkuliahan <strong>{modal.session.title}</strong> menggunakan sistem presensi 1-klik tanpa memerlukan kode PIN. Pastikan Anda telah hadir di ruang perkuliahan.
+                Sesi perkuliahan <strong>{modal.session.title}</strong> menggunakan sistem presensi 1-klik tanpa memerlukan kode. Pastikan Anda telah hadir di ruang perkuliahan.
               </p>
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 20 }}>
                 <button type="button" className="button secondary" onClick={() => setModal(null)}>
@@ -1056,7 +1056,7 @@ export function CreateSessionModal({
           {hasSchedule && <small>Tanggal dan jam mengikuti perangkat. Untuk sesi melewati tengah malam, pilih tanggal selesai pada hari berikutnya.</small>}
         </div>
 
-        {/* Opsi PIN (Default: Bebas Kode / 1-Klik) */}
+        {/* Opsi kode (Default: Bebas Kode / 1-Klik) */}
         <div style={{ borderTop: "1px solid var(--border, #f1f5f9)", paddingTop: 12 }}>
           <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontWeight: 600, fontSize: "0.9rem" }}>
             <input
@@ -1064,10 +1064,10 @@ export function CreateSessionModal({
               checked={requireCode}
               onChange={(e) => setRequireCode(e.target.checked)}
             />
-            <span>Wajibkan Kode PIN 6 Karakter (Proyektor)</span>
+            <span>Wajibkan Kode 6 Karakter (Proyektor)</span>
           </label>
           <p style={{ margin: "4px 0 0 24px", fontSize: "0.8rem", color: "var(--muted, #64748b)" }}>
-            <strong>Default tidak dicentang (Bebas Kode / 1-Klik)</strong>. Mahasiswa cukup klik tombol Hadir. Centang opsi ini jika Anda ingin mahasiswa wajib memasukkan PIN acak yang diproyeksikan di ruang kelas.
+            <strong>Default tidak dicentang (Bebas Kode / 1-Klik)</strong>. Mahasiswa cukup klik tombol Hadir. Centang opsi ini jika Anda ingin mahasiswa wajib memasukkan kode acak 6 karakter yang diproyeksikan di ruang kelas.
           </p>
         </div>
 
@@ -1307,7 +1307,7 @@ export function ScheduleSessionModal({
           {hasSchedule && <small>Tanggal dan jam mengikuti perangkat. Untuk sesi melewati tengah malam, pilih tanggal selesai pada hari berikutnya.</small>}
         </div>
 
-        {/* Kebijakan PIN Presensi */}
+        {/* Kebijakan kode presensi */}
         <div style={{ borderTop: "1px solid var(--border, #f1f5f9)", paddingTop: 12 }}>
           <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontWeight: 600, fontSize: "0.9rem" }}>
             <input
@@ -1315,7 +1315,7 @@ export function ScheduleSessionModal({
               checked={requireCode}
               onChange={(e) => setRequireCode(e.target.checked)}
             />
-            <span>Wajibkan Kode PIN 6 Karakter (Proyektor)</span>
+            <span>Wajibkan Kode 6 Karakter (Proyektor)</span>
           </label>
           <p style={{ margin: "4px 0 8px 24px", fontSize: "0.8rem", color: "var(--muted, #64748b)" }}>
             {requireCode
@@ -1350,7 +1350,7 @@ export function ScheduleSessionModal({
                   setCheckInCode(code);
                 }}
               >
-                Acak Ulang PIN
+                Acak Ulang Kode
               </button>
             </div>
           )}

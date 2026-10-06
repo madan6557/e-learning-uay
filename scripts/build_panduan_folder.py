@@ -44,8 +44,7 @@ def sync_images():
 
 def run_markdown_and_docx_generators():
     print("Executing integrate_panduan_html.py...")
-    cmd1 = 'python "scripts/integrate_panduan_html.py"'
-    subprocess.run(cmd1, cwd=str(ROOT), shell=True, check=True)
+    subprocess.run(["python", "scripts/integrate_panduan_html.py", "--output-dir", str(PANDUAN_DIR)], cwd=ROOT, check=True)
 
     print("Executing generate_guide_docx.py...")
     cmd2 = 'python "scripts/generate_guide_docx.py"'
