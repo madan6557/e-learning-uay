@@ -416,27 +416,23 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
     username ||
     ssoUserId;
 
-  // Check known super-admin identifiers / emails
-  const adminIdentifiers = [
-    ...(
-      process.env.SUPER_ADMIN_IDENTIFIERS ??
-      process.env.SUPER_ADMIN_USERS ??
-      "admin,superadmin,admin@uay.ac.id"
-    )
-      .split(",")
-      .map((s) => s.trim().toLowerCase()),
-    "muhammadrizky",
-    "mrar@gmail.com",
-    "muhammadrizky.mrar@gmail.com",
-    "madan6557",
-  ].filter(Boolean);
+  // Optional super-admin identifiers from environment variable only
+  const adminIdentifiers = (
+    process.env.SUPER_ADMIN_IDENTIFIERS ??
+    process.env.SUPER_ADMIN_USERS ??
+    ""
+  )
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
 
   const isAdminIdentifier =
-    (username && adminIdentifiers.includes(username.toLowerCase())) ||
-    (rawEmail && adminIdentifiers.includes(rawEmail.toLowerCase())) ||
-    (ssoUserId && adminIdentifiers.includes(ssoUserId.toLowerCase())) ||
-    (username && ["admin", "superadmin", "administrator"].includes(username.toLowerCase())) ||
-    (rawEmail && ["admin@uay.ac.id", "superadmin@uay.ac.id"].includes(rawEmail.toLowerCase()));
+    adminIdentifiers.length > 0 &&
+    Boolean(
+      (username && adminIdentifiers.includes(username.toLowerCase())) ||
+        (rawEmail && adminIdentifiers.includes(rawEmail.toLowerCase())) ||
+        (ssoUserId && adminIdentifiers.includes(ssoUserId.toLowerCase())),
+    );
 
   if (isAdminIdentifier) {
     candidateRoles.push("SUPER_ADMIN");
@@ -745,28 +741,7 @@ async function authorizationUrl(
   return url.href;
 }
 
-export async function bootstrapSuperAdmins() {
-  try {
-    await db.user.updateMany({
-      where: {
-        OR: [
-          { username: { in: ["muhammadrizky", "madan6557", "admin", "superadmin"], mode: "insensitive" } },
-          { email: { in: ["mrar@gmail.com", "muhammadrizky.mrar@gmail.com", "admin@uay.ac.id"], mode: "insensitive" } },
-        ],
-      },
-      data: {
-        role: "SUPER_ADMIN",
-        userType: "ADMIN",
-        status: "ACTIVE",
-      },
-    });
-  } catch (err: any) {
-    console.warn("[Auth] bootstrapSuperAdmins non-fatal warning:", err?.message || err);
-  }
-}
-
 export function registerAuth(app: Express) {
-  void bootstrapSuperAdmins();
   app.get("/api/v1/auth/config", async (_req, res) => {
     const systemAcademicSettings = await getAcademicSettings();
     res.json({
