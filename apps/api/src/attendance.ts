@@ -5,6 +5,9 @@ import type { AttendanceStatus } from "@prisma/client";
 import { attendanceSummary, matchesAttendanceCode } from "../../../packages/shared/src/attendance.js";
 
 const statusSchema = z.enum(["PRESENT", "EXCUSED", "SICK", "ABSENT", "LATE"]);
+const timestamp = z.string().datetime({ offset: true });
+const optionalTimestamp = timestamp.nullable().optional()
+  .transform(value => value == null ? value : new Date(value));
 
 function generateRandomCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -143,20 +146,11 @@ export function registerAttendanceRoutes(app: Express) {
             title: z.string().min(2).max(200),
             description: z.string().max(1000).optional(),
             sectionId: z.string().uuid().nullable().optional(),
-            sessionDate: z
-              .string()
+            sessionDate: timestamp
               .optional()
               .transform((d) => (d ? new Date(d) : new Date())),
-            startTime: z
-              .string()
-              .nullable()
-              .optional()
-              .transform((d) => (d ? new Date(d) : null)),
-            endTime: z
-              .string()
-              .nullable()
-              .optional()
-              .transform((d) => (d ? new Date(d) : null)),
+            startTime: optionalTimestamp,
+            endTime: optionalTimestamp,
             isOpen: z.boolean().optional(),
             allowSelfCheckIn: z.boolean().default(true),
             requireCode: z.boolean().default(false),
@@ -164,6 +158,7 @@ export function registerAttendanceRoutes(app: Express) {
           })
           .parse(req.body);
 
+        ensure(!data.startTime || !data.endTime || data.startTime <= data.endTime, 400, "INVALID_DATE_RANGE");
         const now = new Date();
 
         // Kode presensi: DEFAULT TANPA KODE (null) kecuali requireCode = true atau kode custom diisi
@@ -253,20 +248,11 @@ export function registerAttendanceRoutes(app: Express) {
             title: z.string().min(2).max(200).optional(),
             description: z.string().max(1000).nullable().optional(),
             sectionId: z.string().uuid().nullable().optional(),
-            sessionDate: z
-              .string()
+            sessionDate: timestamp
               .optional()
               .transform((d) => (d ? new Date(d) : undefined)),
-            startTime: z
-              .string()
-              .nullable()
-              .optional()
-              .transform((d) => (d ? new Date(d) : null)),
-            endTime: z
-              .string()
-              .nullable()
-              .optional()
-              .transform((d) => (d ? new Date(d) : null)),
+            startTime: optionalTimestamp,
+            endTime: optionalTimestamp,
             isOpen: z.boolean().optional(),
             allowSelfCheckIn: z.boolean().optional(),
             requireCode: z.boolean().optional(),
@@ -275,6 +261,9 @@ export function registerAttendanceRoutes(app: Express) {
           })
           .parse(req.body);
 
+        const nextStart = data.startTime === undefined ? session.startTime : data.startTime;
+        const nextEnd = data.endTime === undefined ? session.endTime : data.endTime;
+        ensure(!nextStart || !nextEnd || nextStart <= nextEnd, 400, "INVALID_DATE_RANGE");
         let nextCode = session.checkInCode;
         if (data.requireCode === false) {
           nextCode = null;

@@ -1366,7 +1366,7 @@ export function AcademicGovernanceModal({
             <div style={{ marginBottom: 18 }}>
               <Field
                 label="Tahun Akademik Aktif Berjalan"
-                hint="Tahun akademik ini otomatis terpilih sebagai default saat dosen membuat kelas baru dan ditampilkan di beranda portal."
+                hint="Tahun akademik ini terpilih sebagai default saat pengelola membuat kelas baru dan ditampilkan di beranda portal."
               >
                 <select
                   value={academicYear}
@@ -1499,7 +1499,7 @@ export function AcademicGovernanceModal({
             <div style={{ marginBottom: 18 }}>
               <Field
                 label="Kebijakan Konversi Huruf Mutu Aktif (Grade Scale Policy)"
-                hint="Menentukan pemetaan skor nilai akhir (0-100) ke huruf mutu (A, B, C, D, E) dan bobot Indeks Prestasi (IPK)."
+                hint="Menentukan pemetaan skor nilai akhir (0-100) ke huruf mutu dan bobot huruf mutu."
               >
                 <select
                   value={scaleVersion}
@@ -1515,7 +1515,7 @@ export function AcademicGovernanceModal({
             <div style={{ marginBottom: 20 }}>
               <Field
                 label="Ambang Batas Kehadiran Mengikuti Ujian (%)"
-                hint="Persentase minimum kehadiran tatap muka mahasiswa agar berhak mengikuti ujian akhir (UTS/UAS)."
+                hint="Ambang penanda kelayakan pada rekap kehadiran. Akses kuis dan tugas tetap mengikuti jadwal aktivitas."
               >
                 <input
                   type="number"
@@ -1603,9 +1603,9 @@ export function AcademicGovernanceModal({
                 marginBottom: 20,
               }}
             >
-              <strong>🛡️ Prinsip Imutabilitas Nilai Historis:</strong>
+              <strong>Pengaruh perubahan skala:</strong>
               <p style={{ margin: "4px 0 0 0" }}>
-                Pengaturan skala ini menjadi default untuk kelas baru, termasuk hasil duplikasi. Skala kelas yang sudah ada dan nilai yang telah diterbitkan tidak dihitung ulang. Nilai mahasiswa pada kelas semester lampau yang telah <strong>Diterbitkan (PUBLISHED)</strong> atau <strong>Dikunci (LOCKED)</strong> tidak akan pernah berubah secara retroaktif guna menjamin integritas rekam jejak akademik universitas.
+                Pengaturan skala ini menjadi default untuk kelas baru, termasuk hasil duplikasi. Skala kelas yang sudah ada dan nilai yang telah diterbitkan tidak dihitung ulang. Revisi nilai terbit mengikuti alur koreksi nilai pada kelas.
               </p>
             </div>
           </div>

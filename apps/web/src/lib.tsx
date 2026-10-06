@@ -1,5 +1,6 @@
 import { uploadLimit, validateUploadSize } from "../../../packages/shared/src/files";
-import { formatDateTime, formatClock } from "../../../packages/shared/src/time";
+import { formatDateTime, formatClock, localDateTimeInput, localInputToUtc } from "../../../packages/shared/src/time";
+export { localDateInput } from "../../../packages/shared/src/time";
 export const clock = formatClock;
 import { confirmAction } from "./confirm";
 import { readCache, readTtl } from "./readCache";
@@ -33,19 +34,10 @@ export const day = (value: string) =>
     day: "2-digit",
     month: "short",
   }).format(new Date(value));
-export function localInput(value: string | null | undefined) {
-  if (!value) return "";
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return "";
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
+export const localInput = localDateTimeInput;
 export const isoInput = (value: FormDataEntryValue | null) => {
   if (!value) return null;
-  const str = String(value).trim();
-  if (!str) return null;
-  const d = new Date(str);
-  return isNaN(d.getTime()) ? null : d.toISOString();
+  return localInputToUtc(String(value));
 };
 export const textValue = (form: FormData, key: string) =>
   String(form.get(key) ?? "").trim();

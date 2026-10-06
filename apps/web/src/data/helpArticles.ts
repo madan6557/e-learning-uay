@@ -97,7 +97,7 @@ export const helpArticles: HelpArticle[] = [
     roles: staff,
     keywords: ["section", "jenis pertemuan", "kuliah", "praktikum", "seminar", "lokakarya", "ujian", "lainnya"],
     steps: [
-      "Buka kelas dan klik Tambah Pertemuan atau Edit Pertemuan.",
+      "Buka kelas dan klik Tambah Section, atau Edit pada Section yang dituju.",
       "Pada pilihan Jenis Pertemuan, pilih kategori yang sesuai: Perkuliahan, Praktikum, Seminar, Lokakarya, Ujian, atau Lainnya.",
       "Isi judul topik dan deskripsi capaian pembelajaran pertemuan, lalu simpan."
     ],
@@ -122,8 +122,8 @@ export const helpArticles: HelpArticle[] = [
     category: "Presensi Perkuliahan",
     roles: staff,
     keywords: ["presensi manual", "buka presensi", "kode presensi", "tandai semua hadir", "dosen"],
-    steps: ["Buka kelas dan tab Presensi.","Buat atau buka sesi. Aktifkan penggunaan kode bila diperlukan.","Gunakan Tampilan Proyektor untuk memperlihatkan kode 6 karakter kepada mahasiswa.","Buka presensi manual untuk mengatur Hadir, Izin, Sakit, Alpa, atau Terlambat dan catat keterangannya.","Simpan perubahan dan tutup sesi sesuai jadwal."],
-    content: "Pengelola kelas yang berhak dapat menampilkan kode serta memperbarui catatan presensi. Perubahan tetap mengikuti akses kelas dan status arsip.",
+    steps: ["Buka kelas dan tab Presensi.","Klik Buat Sesi Presensi untuk sesi baru, atau Buka Sesi untuk sesi yang sudah ada. Aktifkan penggunaan kode bila diperlukan.","Gunakan Kode Proyektor untuk memperlihatkan kode 6 karakter kepada mahasiswa.","Buka Lembar Presensi untuk mengatur Hadir, Izin, Sakit, Alpa, atau Terlambat dan catat keterangannya.","Simpan perubahan dan tutup sesi sesuai jadwal."],
+    content: "Pengelola kelas yang berhak dapat menampilkan kode serta memperbarui catatan presensi. Waktu Mulai dan Waktu Selesai masing-masing memakai tanggal-jam perangkat dan dikirim sebagai UTC. Untuk sesi melewati tengah malam, pilih tanggal selesai pada hari berikutnya. Perubahan tetap mengikuti akses kelas dan status arsip.",
     related: ["attendance-recap", "attendance-rules"]
   },
   {
@@ -174,7 +174,7 @@ export const helpArticles: HelpArticle[] = [
     category: "Materi & Media",
     roles: staff,
     keywords: ["unggah materi", "upload pdf", "upload video", "ppt", "bahan ajar"],
-    steps: ["Buka kelas dan pertemuan yang dituju.","Klik Tambah Materi.","Pilih jenis materi yang tersedia, misalnya Modul PDF, Video Pembelajaran, atau materi teks/praktikum.","Unggah berkas atau isi tautan sematan yang diizinkan. PPTX dapat digunakan sebagai lampiran.","Atur visibilitas dan jadwal materi, lalu simpan."],
+    steps: ["Buka kelas dan pertemuan yang dituju.","Klik Materi pada Section yang dituju.","Pilih jenis materi yang tersedia, misalnya Modul PDF, Video Pembelajaran, atau materi teks/praktikum.","Unggah berkas atau isi tautan sematan yang diizinkan. PPTX dapat digunakan sebagai lampiran.","Atur visibilitas dan jadwal materi, lalu simpan."],
     content: "Modul PDF dan video unggahan dibuka melalui pemutar aplikasi. Video sematan menggunakan pemutar layanan asal. Penggunaan data dan kecepatan pemutaran bergantung pada ukuran berkas, koneksi, dan layanan yang digunakan.",
     related: ["progress-material", "class-cloning"]
   },
@@ -185,7 +185,7 @@ export const helpArticles: HelpArticle[] = [
     category: "Siklus Kelas & Kloning",
     roles: staff,
     keywords: ["clone kelas", "duplikasi kelas", "semester baru", "tahun ajaran baru"],
-    steps: ["Buka kelas yang ingin diduplikasi.","Klik Duplikasi.","Isi nama kelas dan tahun akademik tujuan.","Konfirmasikan duplikasi, lalu sesuaikan materi dan jadwal kelas baru."],
+    steps: ["Buka kelas yang ingin diduplikasi.","Klik Duplikasi ke semester baru.","Isi nama kelas dan tahun akademik tujuan.","Konfirmasikan duplikasi, lalu sesuaikan materi dan jadwal kelas baru."],
     content: "Duplikasi menyalin struktur pertemuan, materi, tugas, kuis, dan kategori penilaian ke kelas baru berstatus draf. Peserta, jawaban, dan nilai lama tidak disalin; jadwal aktivitas dikosongkan untuk diatur kembali. Skala nilai kelas baru memakai default global saat duplikasi dibuat.",
     related: ["courses", "manage-material"]
   },
@@ -200,7 +200,7 @@ export const helpArticles: HelpArticle[] = [
       "Buka tugas pada pertemuan perkuliahan terkait.",
       "Baca petunjuk tugas, kriteria penilaian, dan batas waktu pengumpulan (deadline).",
       "Pilih format pengumpulan: Unggah Berkas (PDF/ZIP) atau Masukkan Tautan (URL Tugas).",
-      "Klik Kirim Tugas. Pastikan status berubah menjadi Terkumpul (Submitted)."
+      "Klik Kumpulkan tugas. Pastikan pengumpulan tercatat pada riwayat setelah server mengonfirmasi."
     ],
     content: "Mahasiswa dapat memperbarui berkas tugas sebelum batas waktu berakhir. Jika dosen menetapkan batas toleransi keterlambatan, pengumpulan setelah batas waktu akan ditandai Terlambat oleh sistem.",
     related: ["grading", "file-safety"]

@@ -24,17 +24,19 @@ test("each upload purpose accepts its exact byte limit and rejects one byte more
 test("device timezone formatting distinguishes UTC+7 and UTC+8 and local inputs round trip as UTC", () => {
   for (const [zone, offset, hour] of [["Asia/Jakarta", "+7", "07"], ["Asia/Makassar", "+8", "08"]]) {
     const script = `import {formatDateTime, formatClock} from './packages/shared/src/time.ts';
+      import {localInput, isoInput} from './apps/web/src/lib.tsx';
       const instant = '2026-10-05T00:30:00.000Z';
-      const local = new Date('2026-10-05T${hour}:30').toISOString();
-      console.log(JSON.stringify([formatDateTime(instant), formatClock(instant), local]));`;
+      const input = localInput(instant);
+      console.log(JSON.stringify([formatDateTime(instant), formatClock(instant), isoInput(input), input]));`;
     const result = spawnSync(process.execPath, ["--import", "tsx", "--input-type=module", "-e", script], {
       env: { ...process.env, TZ: zone }, encoding: "utf8", windowsHide: true,
     });
     assert.equal(result.status, 0, result.stderr);
-    const [date, clock, utc] = JSON.parse(result.stdout);
+    const [date, clock, utc, input] = JSON.parse(result.stdout);
     assert.ok(date.includes(`GMT${offset}`), date);
     assert.ok(clock.includes(`GMT${offset}`), clock);
     assert.ok(clock.includes(`${hour}.30`), clock);
     assert.equal(utc, "2026-10-05T00:30:00.000Z");
+    assert.equal(input, `2026-10-05T${hour}:30`);
   }
 });

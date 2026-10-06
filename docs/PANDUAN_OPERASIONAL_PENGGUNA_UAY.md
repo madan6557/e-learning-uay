@@ -42,7 +42,7 @@ Seluruh tahapan tutorial dalam buku ini dilengkapi dengan **tangkapan layar apli
 - **[D8] [Bagaimana Cara Dosen Menyusun Kunci Jawaban Soal Objektif (Pilihan Ganda, Benar-Salah, Jamak)?](#tutorial-d8)**
 - **[D9] [Bagaimana Cara Dosen Menyusun Soal Menjodohkan, Mengurutkan, Uraian (Esai), dan Unggahan Berkas?](#tutorial-d9)**
 - **[D10] [Bagaimana Cara Dosen Menilai Jawaban Kuis Mahasiswa dan Mengelola Bank Soal?](#tutorial-d10)**
-- **[D11] [Bagaimana Cara Dosen Membuka Sesi Presensi Kuliah dengan Jadwal atau Kode PIN 6-Digit?](#tutorial-d11)**
+- **[D11] [Bagaimana Cara Dosen Membuka Sesi Presensi Kuliah dengan Jadwal atau Kode PIN 6 Karakter?](#tutorial-d11)**
 - **[D12] [Bagaimana Cara Dosen Mengubah Jadwal, Menutup, dan Memperpanjang Waktu Sesi Presensi?](#tutorial-d12)**
 - **[D13] [Bagaimana Cara Dosen Mengoreksi Kehadiran Manual di Lembar Roster dan Mengekspor Rekap?](#tutorial-d13)**
 - **[D14] [Bagaimana Cara Dosen Mengatur Bobot Penilaian dan Sumber Nilai Kategori di Buku Nilai?](#tutorial-d14)**
@@ -820,7 +820,7 @@ Seluruh tahapan tutorial dalam buku ini dilengkapi dengan **tangkapan layar apli
 ---
 
 <a id='tutorial-d11'></a>
-## [D11] Bagaimana Cara Dosen Membuka Sesi Presensi Kuliah dengan Jadwal atau Kode PIN 6-Digit?
+## [D11] Bagaimana Cara Dosen Membuka Sesi Presensi Kuliah dengan Jadwal atau Kode PIN 6 Karakter?
 
 **Kategori Peran:** Dosen / Tutorial D11  
 **Tujuan Tutorial:** Menyiapkan presensi sesuai pelaksanaan pertemuan.  
@@ -829,8 +829,8 @@ Seluruh tahapan tutorial dalam buku ini dilengkapi dengan **tangkapan layar apli
 
 ### Langkah-Langkah Tutorial:
 1. Klik Buat Sesi Presensi. Isi Judul Sesi Presensi, Keterangan / Topik, dan Tanggal Perkuliahan.
-2. Jika presensi akan dibuka sampai ditutup manual, biarkan Jadwalkan Waktu Presensi tidak dicentang. Untuk jendela waktu, centang dan isi Jam Mulai serta Jam Selesai.
-3. Untuk presensi satu klik, biarkan Wajibkan Kode PIN 6-Digit (Proyektor) OFF. Untuk verifikasi kode, ubah menjadi ON.
+2. Jika presensi akan dibuka sampai ditutup manual, biarkan Jadwalkan Waktu Presensi tidak dicentang. Untuk jendela waktu, centang dan isi Waktu Mulai serta Waktu Selesai, masing-masing berupa tanggal-jam lokal perangkat. Pilih tanggal selesai pada hari berikutnya bila sesi melewati tengah malam.
+3. Untuk presensi satu klik, biarkan Wajibkan Kode PIN 6 Karakter (Proyektor) OFF. Untuk verifikasi kode, ubah menjadi ON.
 4. Klik Buat &amp; Buka Sesi. Periksa apakah sesi berstatus Sesi Dibuka atau Terjadwal sesuai waktunya.
 5. Jika menggunakan PIN, klik Kode Proyektor pada sesi dan tampilkan enam karakter kepada mahasiswa. Pantau jumlah Hadir, lalu tutup sesi setelah selesai.
 
@@ -847,8 +847,8 @@ Seluruh tahapan tutorial dalam buku ini dilengkapi dengan **tangkapan layar apli
 | **Keterangan / Topik (Opsional)** | Teks maksimum 1000 karakter atau kosong | Ringkasan topik/catatan pertemuan. |
 | **Tanggal Perkuliahan** | Tanggal kegiatan, contoh 12 Oktober 2026 | Mengaitkan sesi dengan hari perkuliahan. |
 | **Jadwalkan Waktu Presensi (Mulai &amp; Selesai)** | OFF default = buka manual sampai ditutup. ON = gunakan jam mulai/selesai | Menampilkan isian jam dan menerapkan jendela presensi. |
-| **Jam Mulai / Jam Selesai** | Jam lokal pada tanggal yang dipilih, akhir sesudah awal | Mengatur kapan mahasiswa dapat mengisi. Periksa zona waktu perangkat. |
-| **Wajibkan Kode PIN 6-Digit (Proyektor)** | OFF default = satu klik. ON = wajib kode | Sistem menghasilkan kode acak enam karakter huruf/angka. |
+| **Waktu Mulai / Waktu Selesai** | Tanggal-jam lokal masing-masing; akhir tidak sebelum awal | Mengatur kapan mahasiswa dapat mengisi. Server menerima UTC. Jadwal boleh melewati tengah malam; periksa zona waktu perangkat. |
+| **Wajibkan Kode PIN 6 Karakter (Proyektor)** | OFF default = satu klik. ON = wajib kode | Sistem menghasilkan kode acak enam karakter huruf/angka. |
 | **Buat &amp; Buka Sesi** | Tombol | Membuat sesi. Jadwal masa depan akan tampil terjadwal, bukan menerima pengisian segera. |
 | **Kode Proyektor** | Tombol pada sesi | Menampilkan kode dan informasi sesi untuk dibagikan di kelas. |
 
@@ -887,7 +887,7 @@ Seluruh tahapan tutorial dalam buku ini dilengkapi dengan **tangkapan layar apli
 | **Buka Sesi / Tutup Sesi pada kartu** | Tombol aksi langsung | Mengubah status sesi melalui aksi pada kartu. Periksa jendela jadwalnya. |
 | **+15 Menit / +30 Menit** | Tombol aksi langsung | Menambah dari waktu akhir atau waktu sekarang yang lebih akhir dan langsung membuka sesi. |
 | **Terapkan Jadwal Otomatis (Mulai &amp; Selesai)** | ON = jam otomatis. OFF = hapus batas jam | Sesi terjadwal dapat dibuka kembali saat jadwal masih berjalan. Untuk menutup permanen, tinjau juga jadwal akhirnya. |
-| **Wajibkan Kode PIN 6-Digit (Proyektor)** | ON = kode diperlukan. OFF = bebas kode | Mengubah metode presensi untuk mahasiswa. |
+| **Wajibkan Kode PIN 6 Karakter (Proyektor)** | ON = kode diperlukan. OFF = bebas kode | Mengubah metode presensi untuk mahasiswa. |
 | **Kode PIN** | Maksimal 6 karakter pada isian, contoh AB7K92, kosong untuk kode otomatis | Gunakan enam karakter agar sesuai petunjuk mahasiswa. |
 | **Acak Ulang PIN** | Tombol | Menghasilkan kode baru pada draf dialog. Simpan sebelum membagikannya. |
 | **Simpan Pengaturan** | Tombol | Menyimpan isian form jadwal, status, dan kode. |
@@ -1371,7 +1371,7 @@ Seluruh tahapan tutorial dalam buku ini dilengkapi dengan **tangkapan layar apli
 <a id='lampiran-skala'></a>
 # LAMPIRAN 1: KONVERSI NILAI & SKALA STANDAR UAY
 
-Gunakan versi kebijakan skala nilai yang ditetapkan pada kelas. Nilai akhir dihitung dari total nilai kategori dikalikan bobot masing-masing (total bobot wajib berjumlah 100%).
+Skala default global digunakan kelas baru, termasuk hasil duplikasi. Gunakan versi kebijakan skala nilai yang ditetapkan pada kelas. Nilai akhir dihitung dari total nilai kategori dikalikan bobot masing-masing (total bobot wajib berjumlah 100%).
 
 ### Skala Standar Akademik 2026.1 (Semester Berjalan)
 | Rentang Skor Angka Akhir | Huruf Mutu | Angka / Indeks Mutu |
@@ -1386,16 +1386,14 @@ Gunakan versi kebijakan skala nilai yang ditetapkan pada kelas. Nilai akhir dihi
 | 45,00 s.d. < 55 | **D** | **1,00** |
 | 0 s.d. < 45 | **E** | **0,00** |
 
-### Skala Historis 2024.1 (Arsip Kelas Lama)
+### Skala Historis 2024.1
 | Rentang Skor Angka Akhir | Huruf Mutu | Angka / Indeks Mutu |
 |:---:|:---:|:---:|
 | 80,00 s.d. 100 | **A** | **4,00** |
-| 75,00 s.d. < 80 | **B+** | **3,50** |
-| 70,00 s.d. < 75 | **B** | **3,00** |
-| 65,00 s.d. < 70 | **C+** | **2,50** |
-| 55,00 s.d. < 65 | **C** | **2,00** |
-| 45,00 s.d. < 55 | **D** | **1,00** |
-| 0 s.d. < 45 | **E** | **0,00** |
+| 70,00 s.d. < 80 | **B** | **3,00** |
+| 60,00 s.d. < 70 | **C** | **2,00** |
+| 50,00 s.d. < 60 | **D** | **1,00** |
+| 0 s.d. < 50 | **E** | **0,00** |
 
 ---
 
@@ -1406,7 +1404,7 @@ Gunakan versi kebijakan skala nilai yang ditetapkan pada kelas. Nilai akhir dihi
 **Jawaban & Tindakan:** Periksa semester aktif, role akun Anda, dan status kepesertaan. Untuk dosen, pastikan Anda telah ditugaskan sebagai pengampu oleh Admin Prodi. Untuk mahasiswa, pastikan KRS Anda telah disetujui dan didaftarkan ke rombel kelas terkait.
 
 ### Q: Bagaimana jika materi sudah diterbitkan dosen tetapi mahasiswa belum bisa melihatnya?
-**Jawaban & Tindakan:** Periksa 3 tingkatan status: (1) Pastikan status Kelas berstatus Terbit (bukan Draft/Arsip), (2) Pastikan Section (pertemuan) berstatus Terbit, dan (3) Pastikan status Materi di dalam Section berstatus Terbit serta berada dalam rentang jadwal buka/tutup.
+**Jawaban & Tindakan:** Periksa 3 tingkatan status: (1) Pastikan status Kelas berstatus Terbit (bukan Draf; kelas arsip masih dapat dibaca oleh peserta yang berhak), (2) Pastikan Section (pertemuan) berstatus Terbit, dan (3) Pastikan status Materi di dalam Section berstatus Terbit serta berada dalam rentang jadwal buka/tutup.
 
 ### Q: Bagaimana jika kode 6 karakter presensi ditolak saat mahasiswa memasukkannya?
 **Jawaban & Tindakan:** Ketikkan 6 karakter kode persis seperti yang tampil di layar proyektor dosen tanpa spasi. Kode dapat mengandung huruf kapital dan angka (misal AB7K92). Pastikan jam perangkat Anda otomatis dan sesi presensi belum ditutup oleh dosen.

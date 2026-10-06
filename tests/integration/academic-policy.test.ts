@@ -5,8 +5,11 @@ import { once } from "node:events";
 import { createServer } from "node:http";
 import { PrismaClient } from "@prisma/client";
 import { UPLOAD_LIMITS } from "../../packages/shared/src/files.js";
+import { questionSchema } from "../../packages/shared/src/domain.js";
 
 test("global academic policy, attendance privacy, file ACL and adapter failures use production endpoints", async suite => {
+  assert.ok(process.env.DATABASE_URL && new URL(process.env.DATABASE_URL).pathname.endsWith("_test"),
+    "Academic policy tests require an isolated database ending in _test");
   for (const key of ["FILE_SERVICE_URL", "FILE_SERVICE_API_URL", "UAY_FILE_SERVICE_URL",
     "FILE_SERVICE_KEY", "FILE_SERVICE_API_KEY", "UAY_FILE_SERVICE_API_KEY", "FILE_SERVICE_TYPE"]) {
     process.env[key] = "";
@@ -57,6 +60,7 @@ test("global academic policy, attendance privacy, file ACL and adapter failures 
     if (upstreamState === "timeout") return;
     if (upstreamState === "failure") { res.writeHead(500).end('{"error":"offline"}'); return; }
     if (upstreamState === "invalid") { res.end('{"success":true,"data":{}}'); return; }
+    if (upstreamState === "malformed") { res.end('not json'); return; }
     if (req.url?.endsWith("/health")) { res.end('{"success":true,"data":{"status":"ok"}}'); return; }
     if (req.url?.endsWith("/repositories")) { res.end('{"data":[{"id":"repo","name":"Test repository"}]}'); return; }
     res.end(JSON.stringify({ data: { fileId: "remote", originalName: "module.pdf",
@@ -130,6 +134,73 @@ test("global academic policy, attendance privacy, file ACL and adapter failures 
       await request(admin, "/system/settings", "PUT", { academicYear: original.academicYear, minAttendancePercentage: 75 });
       assert.equal((await request(teacher, `/course-classes/${cls.id}/attendance/recap`)).recap[0].isEligibleForExam, true);
     });
+    await suite.test("manual attendance override persists status, notes, manager identity and audit", async () => {
+      const session = await db.attendanceSession.findFirstOrThrow({ where: { classId: cls.id } });
+      const record = await request(teacher, `/attendance/${session.id}/records/${student.id}`, "PATCH", {
+        status: "EXCUSED", notes: "Surat izin akademik fixture",
+      });
+      assert.equal(record.status, "EXCUSED");
+      assert.equal(record.notes, "Surat izin akademik fixture");
+      assert.equal(record.verifiedBy, teacher.id);
+      const stored = await db.attendanceRecord.findUniqueOrThrow({ where: { id: record.id } });
+      assert.equal(stored.notes, record.notes);
+      assert.ok(await db.auditLog.findFirst({ where: { entityId: record.id, actorId: teacher.id } }));
+      await request(student, `/attendance/${session.id}/records/${student.id}`, "PATCH", { status: "PRESENT" }, 403);
+    });
+    await suite.test("attendance timestamps normalize offsets to UTC, reject ambiguous times and survive partial updates", async () => {
+      const path = `/course-classes/${cls.id}/attendance`;
+      const session = await request(teacher, path, "POST", { title: "Overnight schedule",
+        sessionDate: "2026-12-31T00:00:00+08:00", startTime: "2026-12-31T23:30:00+08:00",
+        endTime: "2027-01-01T01:30:00+08:00", isOpen: false }, 201);
+      assert.equal(session.sessionDate, "2026-12-30T16:00:00.000Z");
+      assert.equal(session.startTime, "2026-12-31T15:30:00.000Z");
+      assert.equal(session.endTime, "2026-12-31T17:30:00.000Z");
+      for (const value of ["2026-12-31T23:30:00", "2026-12-31", "invalid"]) {
+        for (const field of ["sessionDate", "startTime", "endTime"]) {
+          await request(teacher, path, "POST", { title: "Invalid time", [field]: value }, 400);
+          await request(teacher, `/attendance/${session.id}`, "PATCH", { [field]: value }, 400);
+        }
+      }
+      await request(teacher, path, "POST", { title: "Reversed schedule", startTime: session.endTime, endTime: session.startTime }, 400);
+      const toggled = await request(teacher, `/attendance/${session.id}`, "PATCH", { isOpen: true });
+      assert.equal(toggled.startTime, session.startTime);
+      assert.equal(toggled.endTime, session.endTime);
+      const extended = await request(teacher, `/attendance/${session.id}`, "PATCH", { endTime: "2027-01-01T02:00:00+08:00" });
+      assert.equal(extended.startTime, session.startTime);
+      assert.equal(extended.endTime, "2026-12-31T18:00:00.000Z");
+      const renamed = await request(teacher, `/attendance/${session.id}`, "PATCH", { title: "Renamed session" });
+      assert.equal(renamed.sessionDate, session.sessionDate);
+      assert.equal(renamed.startTime, extended.startTime);
+      assert.equal(renamed.endTime, extended.endTime);
+      await request(teacher, `/attendance/${session.id}`, "PATCH", { endTime: "2026-12-31T14:00:00Z" }, 400);
+      await request(teacher, `/attendance/${session.id}`, "PATCH", { startTime: "2026-12-31T19:00:00Z" }, 400);
+      const stored = await db.attendanceSession.findUniqueOrThrow({ where: { id: session.id } });
+      assert.equal(stored.startTime!.toISOString(), extended.startTime);
+      assert.equal(stored.endTime!.toISOString(), extended.endTime);
+      const cleared = await request(teacher, `/attendance/${session.id}`, "PATCH", { startTime: null, endTime: null });
+      assert.equal(cleared.startTime, null);
+      assert.equal(cleared.endTime, null);
+    });
+    await suite.test("database timestamp defaults stay UTC in UTC, UTC+7 and UTC+8 sessions", async () => {
+      const defaults = await db.$queryRaw<{ column_default: string }[]>`
+        SELECT column_default FROM information_schema.columns
+        WHERE table_schema = 'public' AND data_type = 'timestamp without time zone'
+          AND column_default LIKE '%CURRENT_TIMESTAMP%'`;
+      assert.equal(defaults.length, 25);
+      for (const row of defaults) assert.match(row.column_default, /AT TIME ZONE 'UTC'/);
+      for (const zone of ["UTC", "Asia/Jakarta", "Asia/Kuala_Lumpur"]) {
+        await db.$transaction(async tx => {
+          await tx.$queryRaw`SELECT set_config('TimeZone', ${zone}, true)`;
+          const [expected] = await tx.$queryRaw<{ epoch: number }[]>`SELECT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::float8 AS epoch`;
+          const [row] = await tx.$queryRaw<{ sessionDate: Date; createdAt: Date }[]>`
+            INSERT INTO attendance_sessions (session_id, class_id, title, updated_at)
+            VALUES (${randomUUID()}, ${cls.id}, 'UTC default fixture', CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+            RETURNING session_date AS "sessionDate", created_at AS "createdAt"`;
+          assert.ok(Math.abs(row.sessionDate.getTime() - expected.epoch * 1000) < 2, zone);
+          assert.ok(Math.abs(row.createdAt.getTime() - expected.epoch * 1000) < 2, zone);
+        });
+      }
+    });
     await suite.test("metadata and download ACL deny outsiders, inactive participants, hidden/scheduled resources and other answers", async () => {
       const file = await db.fileReference.create({ data: {
         id: randomUUID(), classId: cls.id, ownerId: teacher.id, purpose: "RESOURCE", name: "module.pdf",
@@ -161,12 +232,17 @@ test("global academic policy, attendance privacy, file ACL and adapter failures 
       await request(outsider, `/files/${answer.id}/metadata`, "GET", undefined, 403);
       await request(student, `/files/${answer.id}/metadata`);
       await request(teacher, `/files/${answer.id}/metadata`);
+      await request(student, `/files/${answer.id}/metadata?resourceId=${unrelated.id}`, "GET", undefined, 403);
+      await db.resourceItem.update({ where: { id: unrelated.id }, data: { dynamicPayload: { fileObjectId: answer.id, blocks: [] } } });
+      await request(outsider, `/files/${answer.id}/metadata?resourceId=${unrelated.id}`, "GET", undefined, 403);
     });
     await suite.test("server accepts exact upload purpose limits and rejects one byte above", async () => {
       const assignment = await db.assignment.create({ data: { sectionId: section.id, title: "Task", instructions: "Upload", allowedFormats: ["pdf"] } });
       const quiz = await db.quiz.create({ data: { sectionId: section.id, title: "Quiz", status: "PUBLISHED" } });
       const attempt = await db.quizAttempt.create({ data: { quizId: quiz.id, userId: student.id, attemptNum: 1,
-        expiresAt: new Date(Date.now() + 3600000), answersJson: {}, questionSnapshot: [], status: "IN_PROGRESS" } });
+        expiresAt: new Date(Date.now() + 3600000), answersJson: {}, questionSnapshot: [questionSchema.parse({
+          id: randomUUID(), text: "Upload the answer", type: "FILE_UPLOAD", points: 100, answerKey: {},
+        })], status: "IN_PROGRESS" } });
       for (const [purpose, limit] of Object.entries(UPLOAD_LIMITS)) {
         const body = { classId: cls.id, purpose, name: purpose === "COVER" ? "cover.png" : purpose === "VIDEO" ? "video.mp4" : "document.pdf",
           mimeType: purpose === "COVER" ? "image/png" : purpose === "VIDEO" ? "video/mp4" : "application/pdf",
@@ -177,6 +253,16 @@ test("global academic policy, attendance privacy, file ACL and adapter failures 
         assert.ok(ticket.fileObjectId);
         await request(user, "/files/upload-ticket", "POST", { ...body, sizeBytes: limit + 1 }, 400);
       }
+      const ticket = await request(teacher, "/files/upload-ticket", "POST", {
+        classId: cls.id, purpose: "RESOURCE", name: "tiny.pdf", mimeType: "application/pdf",
+        checksum: "a".repeat(64), sizeBytes: 1,
+      });
+      const overflow = await fetch(base + `/files/upload/${ticket.fileObjectId}`, { method: "PUT",
+        headers: { Origin: "http://127.0.0.1:5173", Cookie: cookies.get(teacher.id)!, "Content-Type": "application/pdf" },
+        body: Buffer.from("ab"),
+      });
+      assert.equal(overflow.status, 400);
+      assert.equal((await overflow.json()).error.code, "FILE_TYPE_OR_SIZE");
     });
     await suite.test("active adapters report healthy, timeout, failure and invalid responses without fake success", async () => {
       assert.equal((await request(teacher, "/files/health")).data.simulated, true);
@@ -187,6 +273,8 @@ test("global academic policy, attendance privacy, file ACL and adapter failures 
         upstreamState = "healthy";
         assert.equal((await request(teacher, "/files/health")).data.simulated, false);
         upstreamState = "invalid";
+        await request(teacher, "/files/health", "GET", undefined, 502);
+        upstreamState = "malformed";
         await request(teacher, "/files/health", "GET", undefined, 502);
         upstreamState = "failure";
         await request(teacher, "/files/health", "GET", undefined, 503);
@@ -206,6 +294,9 @@ test("global academic policy, attendance privacy, file ACL and adapter failures 
       await request(teacher, "/repositories", "GET", undefined, 501);
     });
   } finally {
+    // The global expiry worker also runs in other suites. Do not leave active
+    // attempts from this isolated fixture to be picked up on a later day.
+    await db.quizAttempt.deleteMany({ where: { quiz: { section: { classId: cls.id } } } });
     const { id, updatedAt, ...values } = original;
     await db.academicSettings.update({ where: { id }, data: values });
     await new Promise<void>(resolve => server.close(() => resolve()));

@@ -400,13 +400,13 @@ const session2 = await db.attendanceSession.upsert({
     sessionDate: new Date(),
     isOpen: true,
     allowSelfCheckIn: true,
-    checkInCode: 'WEB2026',
+    checkInCode: 'WEB026',
   },
   update: {
     title: 'Pertemuan 02 · Praktikum HTML Semantik & Form Aksesibel',
     isOpen: true,
     allowSelfCheckIn: true,
-    checkInCode: 'WEB2026',
+    checkInCode: 'WEB026',
   },
 });
 

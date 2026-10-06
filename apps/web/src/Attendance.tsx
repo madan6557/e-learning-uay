@@ -16,7 +16,7 @@ import {
   Sliders,
   Calendar,
 } from "lucide-react";
-import { clock, api, useApi, Loading, Notice, Modal, Field, Form, textValue, Pagination, usePagination } from "./lib";
+import { clock, localDateInput, localInput, isoInput, api, useApi, Loading, Notice, Modal, Field, Form, textValue, Pagination, usePagination } from "./lib";
 
 type AttendanceStatus = "PRESENT" | "EXCUSED" | "SICK" | "ABSENT" | "LATE";
 
@@ -930,7 +930,7 @@ export function Attendance({
 // ---------------------------------------------------------------------------
 // Modal Buat Sesi Presensi Baru (Default: Bebas Kode / 1-Klik)
 // ---------------------------------------------------------------------------
-function CreateSessionModal({
+export function CreateSessionModal({
   classId,
   defaultTitle,
   onClose,
@@ -943,38 +943,35 @@ function CreateSessionModal({
 }) {
   const [title, setTitle] = useState(defaultTitle);
   const [description, setDescription] = useState("");
-  const [sessionDate, setSessionDate] = useState(new Date().toISOString().slice(0, 10));
+  const [now] = useState(() => new Date());
+  const [sessionDate, setSessionDate] = useState(() => localDateInput(now));
   const [hasSchedule, setHasSchedule] = useState(false);
 
-  // Waktu perkuliahan standar (sekarang & +2 jam)
-  const now = new Date();
-  const defStartTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-  const endHour = (now.getHours() + 2) % 24;
-  const defEndTime = `${String(endHour).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-
-  const [startTime, setStartTime] = useState(defStartTime);
-  const [endTime, setEndTime] = useState(defEndTime);
+  const [startTime, setStartTime] = useState(() => localInput(now));
+  const [endTime, setEndTime] = useState(() => localInput(now.getTime() + 2 * 60 * 60 * 1000));
   const [requireCode, setRequireCode] = useState(false); // DEFAULT FALSE (Bebas Kode / 1-Klik)
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setError(null);
     try {
       let finalStartTime: string | null = null;
       let finalEndTime: string | null = null;
 
       if (hasSchedule && startTime) {
-        finalStartTime = new Date(`${sessionDate}T${startTime}:00`).toISOString();
+        finalStartTime = isoInput(startTime);
       }
       if (hasSchedule && endTime) {
-        finalEndTime = new Date(`${sessionDate}T${endTime}:00`).toISOString();
+        finalEndTime = isoInput(endTime);
       }
 
       await api(`/course-classes/${classId}/attendance`, "POST", {
         title,
         description: description || undefined,
-        sessionDate: new Date(`${sessionDate}T00:00:00`).toISOString(),
+        sessionDate: isoInput(sessionDate),
         startTime: finalStartTime,
         endTime: finalEndTime,
         isOpen: !hasSchedule || (finalStartTime ? new Date(finalStartTime) <= new Date() : true),
@@ -983,6 +980,8 @@ function CreateSessionModal({
       });
       onCreated();
       onClose();
+    } catch (err) {
+      setError(err as Error);
     } finally {
       setSaving(false);
     }
@@ -991,6 +990,7 @@ function CreateSessionModal({
   return (
     <Modal title="Buat Sesi Presensi Baru" onClose={onClose}>
       <form onSubmit={handleSubmit} style={{ display: "grid", gap: 16 }}>
+        {error && <Notice error={error} />}
         <Field label="Judul Sesi Presensi">
           <input
             value={title}
@@ -1034,24 +1034,26 @@ function CreateSessionModal({
 
           {hasSchedule && (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginLeft: 24 }}>
-              <Field label="Jam Mulai">
+              <Field label="Waktu Mulai">
                 <input
-                  type="time"
+                  type="datetime-local"
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
                   required={hasSchedule}
                 />
               </Field>
-              <Field label="Jam Selesai">
+              <Field label="Waktu Selesai">
                 <input
-                  type="time"
+                  type="datetime-local"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
+                  min={startTime || undefined}
                   required={hasSchedule}
                 />
               </Field>
             </div>
           )}
+          {hasSchedule && <small>Tanggal dan jam mengikuti perangkat. Untuk sesi melewati tengah malam, pilih tanggal selesai pada hari berikutnya.</small>}
         </div>
 
         {/* Opsi PIN (Default: Bebas Kode / 1-Klik) */}
@@ -1085,7 +1087,7 @@ function CreateSessionModal({
 // ---------------------------------------------------------------------------
 // Modal Pengaturan & Jadwal Sesi Presensi Dosen
 // ---------------------------------------------------------------------------
-function ScheduleSessionModal({
+export function ScheduleSessionModal({
   session,
   onClose,
   onSaved,
@@ -1100,15 +1102,15 @@ function ScheduleSessionModal({
   const [description, setDescription] = useState(session.description || "");
 
   const initialDate = session.sessionDate
-    ? new Date(session.sessionDate).toISOString().slice(0, 10)
-    : new Date().toISOString().slice(0, 10);
+    ? localDateInput(session.sessionDate)
+    : localDateInput(new Date());
   const [sessionDate, setSessionDate] = useState(initialDate);
 
   const initialStartTime = session.startTime
-    ? new Date(session.startTime).toTimeString().slice(0, 5)
+    ? localInput(session.startTime)
     : "";
   const initialEndTime = session.endTime
-    ? new Date(session.endTime).toTimeString().slice(0, 5)
+    ? localInput(session.endTime)
     : "";
 
   const [hasSchedule, setHasSchedule] = useState(Boolean(session.startTime || session.endTime));
@@ -1116,9 +1118,11 @@ function ScheduleSessionModal({
   const [endTime, setEndTime] = useState(initialEndTime);
   const [checkInCode, setCheckInCode] = useState(session.checkInCode || "");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   const handleQuickExtend = async (minutes: number) => {
     setSaving(true);
+    setError(null);
     try {
       const currentEnd = session.endTime ? new Date(session.endTime).getTime() : Date.now();
       const newEnd = new Date(Math.max(Date.now(), currentEnd) + minutes * 60000).toISOString();
@@ -1128,6 +1132,8 @@ function ScheduleSessionModal({
       });
       onSaved();
       onClose();
+    } catch (err) {
+      setError(err as Error);
     } finally {
       setSaving(false);
     }
@@ -1136,21 +1142,22 @@ function ScheduleSessionModal({
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setError(null);
     try {
       let finalStartTime: string | null = null;
       let finalEndTime: string | null = null;
 
       if (hasSchedule && startTime) {
-        finalStartTime = new Date(`${sessionDate}T${startTime}:00`).toISOString();
+        finalStartTime = startTime === initialStartTime ? session.startTime : isoInput(startTime);
       }
       if (hasSchedule && endTime) {
-        finalEndTime = new Date(`${sessionDate}T${endTime}:00`).toISOString();
+        finalEndTime = endTime === initialEndTime ? session.endTime : isoInput(endTime);
       }
 
       await api(`/attendance/${session.id}`, "PATCH", {
         title,
         description: description || null,
-        sessionDate: new Date(`${sessionDate}T00:00:00`).toISOString(),
+        sessionDate: sessionDate === initialDate && session.sessionDate ? session.sessionDate : isoInput(sessionDate),
         startTime: hasSchedule ? finalStartTime : null,
         endTime: hasSchedule ? finalEndTime : null,
         isOpen,
@@ -1159,6 +1166,8 @@ function ScheduleSessionModal({
       });
       onSaved();
       onClose();
+    } catch (err) {
+      setError(err as Error);
     } finally {
       setSaving(false);
     }
@@ -1167,6 +1176,7 @@ function ScheduleSessionModal({
   return (
     <Modal title={`Pengaturan & Jadwal Sesi: ${session.title}`} onClose={onClose}>
       <form onSubmit={handleSave} style={{ display: "grid", gap: 16 }}>
+        {error && <Notice error={error} />}
         {/* Banner Status & Perpanjang Cepat */}
         <div
           style={{
@@ -1275,24 +1285,26 @@ function ScheduleSessionModal({
 
           {hasSchedule && (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginLeft: 24 }}>
-              <Field label="Jam Mulai">
+              <Field label="Waktu Mulai">
                 <input
-                  type="time"
+                  type="datetime-local"
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
                   required={hasSchedule}
                 />
               </Field>
-              <Field label="Jam Selesai">
+              <Field label="Waktu Selesai">
                 <input
-                  type="time"
+                  type="datetime-local"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
+                  min={startTime || undefined}
                   required={hasSchedule}
                 />
               </Field>
             </div>
           )}
+          {hasSchedule && <small>Tanggal dan jam mengikuti perangkat. Untuk sesi melewati tengah malam, pilih tanggal selesai pada hari berikutnya.</small>}
         </div>
 
         {/* Kebijakan PIN Presensi */}

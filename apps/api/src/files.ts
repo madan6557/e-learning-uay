@@ -55,16 +55,21 @@ export async function checkFileService(options?: { timeoutMs?: number; requestId
   const body = await serviceJson(response);
   ensure(["ok", "healthy"].includes(body.status) && body.storage?.accessible !== false,
     502, "FILE_SERVICE_INVALID_RESPONSE");
-  return { ...body, mode, simulated: false, timestamp: new Date().toISOString() };
+  return { ...body, mode, simulated: isDemo, timestamp: new Date().toISOString() };
 }
 
 async function authorizeFileAccess(req: Request, file: FileReference, resourceId?: string) {
-  if (resourceId && !["SUBMISSION", "QUIZ_ANSWER"].includes(file.purpose)) {
+  if (resourceId) {
     const resource = await db.resourceItem.findUnique({ where: { id: resourceId } });
     ensure(resource, 404, "NOT_FOUND");
     ensure(resourceFileIds(resource.dynamicPayload).includes(file.id), 403, "FILE_ACCESS_DENIED");
     const cls = await itemAccess(db, req.context.user, resource.sectionId);
     if (!cls.canManage) available(resource);
+    if (["SUBMISSION", "QUIZ_ANSWER"].includes(file.purpose)) {
+      const fileClass = await classAccess(db, req.context.user, file.classId);
+      ensure(!fileClass.isInactiveParticipant, 403, "PARTICIPATION_DISABLED");
+      ensure(fileClass.canManage || file.ownerId === req.context.user.id, 403, "FILE_ACCESS_DENIED");
+    }
     return cls;
   }
   const cls = await classAccess(db, req.context.user, file.classId);
@@ -196,8 +201,9 @@ export async function uayUpload(params: {
     },
   );
   ensure(res.ok, 502, "FILE_SERVICE_REJECTED");
-  const json = await res.json();
-  return json.data ?? json;
+  const uploaded = await serviceJson(res);
+  ensure(typeof uploaded.id === "string", 502, "FILE_SERVICE_INVALID_RESPONSE");
+  return uploaded;
 }
 
 export async function uayGetMetadata(
@@ -255,8 +261,7 @@ export async function uayTrash(
     },
   );
   ensure(res.ok, 502, "FILE_SERVICE_REJECTED");
-  const json = await res.json();
-  return json.data ?? json;
+  return serviceJson(res);
 }
 
 export async function uayRestore(
@@ -273,8 +278,7 @@ export async function uayRestore(
     },
   );
   ensure(res.ok, 502, "FILE_SERVICE_REJECTED");
-  const json = await res.json();
-  return json.data ?? json;
+  return serviceJson(res);
 }
 
 export async function uayGetRepositories(options?: {
@@ -644,7 +648,7 @@ export function registerFiles(app: Express) {
   app.get("/api/v1/files/health", async (req, res) => {
     const data = await checkFileService({ requestId: req.context.requestId });
     res.json({ statusCode: 200, success: true, data,
-      message: data.simulated ? "Local storage simulation is available" : "File service is healthy" });
+      message: data.simulated ? "File service simulation is available" : "File service is healthy" });
   });
 
   app.post("/api/v1/files/upload-ticket", async (req, res) =>

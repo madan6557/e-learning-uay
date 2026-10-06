@@ -10,6 +10,8 @@
 //
 // Identity columns mirror the SSO vocabulary one-for-one. See
 // packages/shared/src/sso.ts for the claim-to-column contract.
+// DateTime values use UTC in TIMESTAMP(3). Database-generated defaults explicitly
+// convert to UTC so PostgreSQL session timezones cannot shift stored instants.
 
 datasource db {
   provider = "postgresql"
@@ -94,7 +96,7 @@ model User {
   status           UserStatus     @default(ACTIVE) @map("status")
   lastLoginAt      DateTime?      @map("last_login_at")
   lastActiveAt     DateTime?      @map("last_active_at")
-  createdAt        DateTime       @default(now()) @map("created_at")
+  createdAt        DateTime       @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("created_at")
   updatedAt        DateTime       @updatedAt @map("updated_at")
 
   instructedClasses ClassInstructor[]
@@ -135,7 +137,7 @@ model Course {
   credits        Int          @default(3) @map("credits")
   departmentCode String       @map("department_code")
   status         CourseStatus @default(DRAFT) @map("status")
-  createdAt      DateTime     @default(now()) @map("created_at")
+  createdAt      DateTime     @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("created_at")
   updatedAt      DateTime     @updatedAt @map("updated_at")
 
   classes       CourseClass[]
@@ -155,7 +157,7 @@ model CourseClass {
   status            CourseStatus @default(PUBLISHED) @map("status")
   gradeScaleVersion String?      @default("2026.1") @map("grade_scale_version")
   gradeScalePolicy  Json?        @map("grade_scale_policy")
-  createdAt         DateTime     @default(now()) @map("created_at")
+  createdAt         DateTime     @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("created_at")
   updatedAt         DateTime     @updatedAt @map("updated_at")
 
   instructors     ClassInstructor[]
@@ -189,7 +191,7 @@ model Enrollment {
   class      CourseClass @relation(fields: [classId], references: [id], onDelete: Cascade)
   userId     String      @map("user_id")
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  enrolledAt DateTime    @default(now()) @map("enrolled_at")
+  enrolledAt DateTime    @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("enrolled_at")
   isActive   Boolean     @default(true) @map("is_active")
 
   @@unique([classId, userId])
@@ -221,7 +223,7 @@ model Section {
   isVisible   Boolean     @default(true) @map("is_visible")
   startDate   DateTime?   @map("start_date")
   endDate     DateTime?   @map("end_date")
-  createdAt   DateTime    @default(now()) @map("created_at")
+  createdAt   DateTime    @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("created_at")
   updatedAt   DateTime    @updatedAt @map("updated_at")
 
   resources          ResourceItem[]
@@ -258,7 +260,7 @@ model ResourceItem {
   isVisible          Boolean      @default(true) @map("is_visible")
   availableFrom      DateTime?    @map("available_from")
   availableUntil     DateTime?    @map("available_until")
-  createdAt          DateTime     @default(now()) @map("created_at")
+  createdAt          DateTime     @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("created_at")
   updatedAt          DateTime     @updatedAt @map("updated_at")
 
   downloads       MaterialDownload[]
@@ -307,7 +309,7 @@ model MaterialDownload {
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   resourceItemId String       @map("resource_item_id")
   resourceItem   ResourceItem @relation(fields: [resourceItemId], references: [id], onDelete: Cascade)
-  downloadedAt   DateTime     @default(now()) @map("downloaded_at")
+  downloadedAt   DateTime     @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("downloaded_at")
 
   @@unique([userId, resourceItemId])
   @@index([resourceItemId])
@@ -336,7 +338,7 @@ model GradeCategory {
   isMandatory       Boolean           @default(false) @map("is_mandatory")
   sourceType        String            @default("MANUAL") @map("source_type")
   order             Int               @default(0) @map("order")
-  createdAt         DateTime          @default(now()) @map("created_at")
+  createdAt         DateTime          @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("created_at")
 
   quizzes     Quiz[]
   assignments Assignment[]
@@ -393,7 +395,7 @@ model QuestionBank {
   course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   title       String   @map("title")
   description String?  @map("description")
-  createdAt   DateTime @default(now()) @map("created_at")
+  createdAt   DateTime @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("created_at")
 
   questions Question[]
 
@@ -415,7 +417,7 @@ model Question {
   maxWords       Int           @default(1000) @map("max_words")
   explanation    String?       @map("explanation")
   order          Int           @default(0) @map("order")
-  createdAt      DateTime      @default(now()) @map("created_at")
+  createdAt      DateTime      @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("created_at")
 
   answerGrades QuizAnswerGrade[]
 
@@ -446,7 +448,7 @@ model Quiz {
   availableUntil     DateTime?       @map("available_until")
   contentOrder       Int             @default(0) @map("content_order")
   isVisible          Boolean         @default(true) @map("is_visible")
-  createdAt          DateTime        @default(now()) @map("created_at")
+  createdAt          DateTime        @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("created_at")
   updatedAt          DateTime        @updatedAt @map("updated_at")
 
   questions Question[]
@@ -473,7 +475,7 @@ model QuizAttempt {
   publishedAt      DateTime? @map("published_at")
   forced           Boolean   @default(false) @map("forced")
   answersJson      Json      @map("answers_json")
-  startedAt        DateTime  @default(now()) @map("started_at")
+  startedAt        DateTime  @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("started_at")
   submittedAt      DateTime? @map("submitted_at")
   isGraded         Boolean   @default(false) @map("is_graded")
 
@@ -494,7 +496,7 @@ model QuizAnswerGrade {
   grader     User        @relation(fields: [graderId], references: [id], onDelete: Cascade)
   score      Float       @map("score")
   feedback   String?     @map("feedback")
-  gradedAt   DateTime    @default(now()) @map("graded_at")
+  gradedAt   DateTime    @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("graded_at")
 
   @@unique([attemptId, questionId])
   @@index([questionId])
@@ -530,7 +532,7 @@ model Assignment {
   maxAttempts     Int            @default(3) @map("max_attempts")
   contentOrder    Int            @default(0) @map("content_order")
   isVisible       Boolean        @default(true) @map("is_visible")
-  createdAt       DateTime       @default(now()) @map("created_at")
+  createdAt       DateTime       @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("created_at")
   updatedAt       DateTime       @updatedAt @map("updated_at")
 
   submissions AssignmentSubmission[]
@@ -555,7 +557,7 @@ model AssignmentSubmission {
   score         Float?           @map("score")
   feedback      String?          @map("feedback")
   isPublished   Boolean          @default(false) @map("is_published")
-  submittedAt   DateTime         @default(now()) @map("submitted_at")
+  submittedAt   DateTime         @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("submitted_at")
   gradedAt      DateTime?        @map("graded_at")
 
   @@unique([assignmentId, userId, version])
@@ -576,8 +578,8 @@ model Announcement {
   authorId    String      @map("author_id")
   isImportant Boolean     @default(false) @map("is_important")
   isPublished Boolean     @default(true) @map("is_published")
-  publishedAt DateTime    @default(now()) @map("published_at")
-  createdAt   DateTime    @default(now()) @map("created_at")
+  publishedAt DateTime    @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("published_at")
+  createdAt   DateTime    @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("created_at")
 
   @@index([classId, publishedAt])
   @@map("announcements")
@@ -594,7 +596,7 @@ model Notification {
   eventKey  String    @map("event_key")
   isRead    Boolean   @default(false) @map("is_read")
   readAt    DateTime? @map("read_at")
-  createdAt DateTime  @default(now()) @map("created_at")
+  createdAt DateTime  @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("created_at")
 
   @@unique([userId, eventKey])
   @@index([userId, isRead])
@@ -633,7 +635,7 @@ model AuditLog {
   /// SSO `audit_events.after_data`.
   afterState  Json?       @map("after_data")
   metadata    Json        @map("metadata")
-  createdAt   DateTime    @default(now()) @map("created_at")
+  createdAt   DateTime    @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("created_at")
 
   @@index([actorId, createdAt])
   @@index([entity, entityId])
@@ -658,7 +660,7 @@ model FileReference {
   sizeBytes Int       @map("size_bytes")
   checksum  String    @map("checksum")
   status    String    @default("PENDING") @map("status")
-  createdAt DateTime  @default(now()) @map("created_at")
+  createdAt DateTime  @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("created_at")
   trashedAt DateTime? @map("trashed_at")
 
   @@index([classId, purpose])
@@ -669,7 +671,7 @@ model FileReference {
 model ResourceProgress {
   userId         String   @map("user_id")
   resourceItemId String   @map("resource_item_id")
-  completedAt    DateTime @default(now()) @map("completed_at")
+  completedAt    DateTime @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("completed_at")
   checklistIds   String[] @default([]) @map("checklist_ids")
 
   @@id([userId, resourceItemId])
@@ -681,7 +683,7 @@ model IdempotencyRecord {
   key         String   @map("key")
   requestHash String   @map("request_hash")
   result      Json     @map("result")
-  createdAt   DateTime @default(now()) @map("created_at")
+  createdAt   DateTime @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("created_at")
 
   @@id([userId, key])
   @@map("idempotency_records")
@@ -719,13 +721,13 @@ model AttendanceSession {
   section          Section?           @relation(fields: [sectionId], references: [id], onDelete: SetNull)
   title            String             @map("title")
   description      String?            @map("description")
-  sessionDate      DateTime           @default(now()) @map("session_date")
+  sessionDate      DateTime           @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("session_date")
   startTime        DateTime?          @map("start_time")
   endTime          DateTime?          @map("end_time")
   isOpen           Boolean            @default(false) @map("is_open")
   checkInCode      String?            @map("check_in_code")
   allowSelfCheckIn Boolean            @default(true) @map("allow_self_check_in")
-  createdAt        DateTime           @default(now()) @map("created_at")
+  createdAt        DateTime           @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("created_at")
   updatedAt        DateTime           @updatedAt @map("updated_at")
 
   records          AttendanceRecord[]
@@ -745,7 +747,7 @@ model AttendanceRecord {
   checkedInAt DateTime?         @map("checked_in_at")
   notes       String?           @map("notes")
   verifiedBy  String?           @map("verified_by")
-  createdAt   DateTime          @default(now()) @map("created_at")
+  createdAt   DateTime          @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("created_at")
   updatedAt   DateTime          @updatedAt @map("updated_at")
 
   @@unique([sessionId, userId])

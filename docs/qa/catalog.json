@@ -12124,14 +12124,14 @@
         },
         {
           "action": "Kumpulkan tugas lalu lihat konfirmasi.",
-          "expected": "Banner sukses menyebut waktu WIB dan versi 2."
+          "expected": "Banner sukses menyebut waktu perangkat dengan offset zona sebenarnya dan versi 2."
         },
         {
           "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
-          "expected": "Banner sukses menyebut waktu WIB dan versi 2."
+          "expected": "Banner sukses menyebut waktu perangkat dengan offset zona sebenarnya dan versi 2."
         }
       ],
-      "expected": "Banner sukses menyebut waktu WIB dan versi 2.",
+      "expected": "Banner sukses menyebut waktu perangkat dengan offset zona sebenarnya dan versi 2.",
       "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
       "automation": null,
       "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
@@ -13830,16 +13830,16 @@
       "role": "Operator / DevOps",
       "module": "Operasional",
       "family": "OPS",
-      "title": "Waktu operasional WIB",
+      "title": "Waktu mengikuti perangkat",
       "type": "Operasional",
-      "section": "9.2",
-      "sourceLine": 2171,
+      "section": "7.1",
+      "sourceLine": 1521,
       "requirements": [],
       "preconditions": [
         "Lingkungan staging/layanan kampus untuk kasus ini tersedia; gunakan akun dan data uji terpisah.",
         "Siapkan akses komponen, runbook dan pemilik layanan yang terkait."
       ],
-      "data": "Timestamp server UTC; browser zona Asia/Singapore.",
+      "data": "Timestamp server UTC; uji browserzonaAsia/Jakarta danAsia/Makassar.",
       "steps": [
         {
           "action": "Gunakan lingkungan staging atau database terisolasi; catat versi aplikasi dan waktu mulai.",
@@ -13851,14 +13851,14 @@
         },
         {
           "action": "Bandingkan deadline, notifikasi, timestamp audit dan formulir.",
-          "expected": "Waktu tampil WIB UTC+7 sesuai §9.2."
+          "expected": "Timestamp sama tampil GMT+7 pada UTC+7 dan GMT+8 pada UTC+8; input lokal dikirim UTC."
         },
         {
           "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
-          "expected": "Waktu tampil WIB UTC+7 sesuai §9.2."
+          "expected": "Timestamp sama tampil GMT+7 pada UTC+7 dan GMT+8 pada UTC+8; input lokal dikirim UTC."
         }
       ],
-      "expected": "Waktu tampil WIB UTC+7 sesuai §9.2.",
+      "expected": "Timestamp sama tampil GMT+7 pada UTC+7 dan GMT+8 pada UTC+8; input lokal dikirim UTC.",
       "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
       "automation": null,
       "manualReason": "Memerlukan VPS / Redis / layanan kampus atau simulasi khusus yang tidak dibuktikan oleh tes lokal.",
@@ -14356,15 +14356,15 @@
           "expected": "Data/fitur uji tersedia; respons awal tercatat untuk dibandingkan."
         },
         {
-          "action": "Buka kalender, pindah bulan dan pilih agenda; cocokkan tanggal WIB serta tautan detail aktivitas.",
-          "expected": "Agenda dan zona WIB konsisten."
+          "action": "Buka kalender, pindah bulan dan pilih agenda; cocokkan tanggal sesuai perangkat serta tautan detail aktivitas.",
+          "expected": "Agenda mengikuti zona perangkat dengan offset yang sesuai."
         },
         {
           "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
-          "expected": "Agenda dan zona WIB konsisten."
+          "expected": "Agenda mengikuti zona perangkat dengan offset yang sesuai."
         }
       ],
-      "expected": "Agenda dan zona WIB konsisten.",
+      "expected": "Agenda mengikuti zona perangkat dengan offset yang sesuai.",
       "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
       "automation": null,
       "manualReason": "Fitur rilis lanjutan; belum dinyatakan tersedia pada pilot.",
@@ -14985,7 +14985,7 @@
         "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
         "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
       ],
-      "data": "Sesi presensi aktif dengan kode 6 digit.",
+      "data": "Sesi presensi aktif dengan kode 6 karakter.",
       "steps": [
         {
           "action": "Masuk sebagai Mahasiswa melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
@@ -15009,7 +15009,7 @@
       "automation": {
         "kind": "unit",
         "file": "tests/attendance.test.ts",
-        "title": "Attendance: check-in code validation is case-insensitive and trims whitespace",
+        "title": "attendance codes accept case and surrounding spaces without accepting an empty or wrong code",
         "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
       },
       "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
@@ -15023,7 +15023,7 @@
       "role": "Dosen",
       "module": "Presensi & kehadiran",
       "family": "ATT",
-      "title": "Ambang batas kehadiran 75% untuk kelayakan ujian",
+      "title": "Ambang kehadiran tersimpan untuk kelayakan ujian",
       "type": "Fungsional",
       "section": "3.1.2",
       "sourceLine": 296,
@@ -15034,7 +15034,7 @@
         "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
         "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
       ],
-      "data": "Rekap kehadiran mahasiswa dengan persentase di atas dan di bawah 75%.",
+      "data": "Rekap kehadiran mahasiswa; ubah ambang global dari75% menjadi80%.",
       "steps": [
         {
           "action": "Masuk sebagai Dosen melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
@@ -15046,19 +15046,19 @@
         },
         {
           "action": "Hitung persentase kehadiran terhadap total sesi perkuliahan.",
-          "expected": "Mahasiswa dengan kehadiran >= 75% dinyatakan ELIGIBLE; < 75% dinyatakan NOT_ELIGIBLE."
+          "expected": "Kelayakan mengikuti ambang tersimpan; persentase75% lolos ambang75% dan tidak lolos ambang80%."
         },
         {
           "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
-          "expected": "Mahasiswa dengan kehadiran >= 75% dinyatakan ELIGIBLE; < 75% dinyatakan NOT_ELIGIBLE."
+          "expected": "Kelayakan mengikuti ambang tersimpan; persentase75% lolos ambang75% dan tidak lolos ambang80%."
         }
       ],
-      "expected": "Mahasiswa dengan kehadiran >= 75% dinyatakan ELIGIBLE; < 75% dinyatakan NOT_ELIGIBLE.",
+      "expected": "Kelayakan mengikuti ambang tersimpan; persentase75% lolos ambang75% dan tidak lolos ambang80%.",
       "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
       "automation": {
         "kind": "unit",
         "file": "tests/attendance.test.ts",
-        "title": "Attendance: exam eligibility threshold strictly enforces 75% rule",
+        "title": "attendance eligibility uses configured threshold and the unrounded percentage",
         "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
       },
       "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
@@ -15105,9 +15105,9 @@
       "expected": "Status tersimpan dan catatan izin tampil pada lembar presensi dan rekap.",
       "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
       "automation": {
-        "kind": "unit",
-        "file": "tests/attendance.test.ts",
-        "title": "Attendance: manual override transitions and note handling",
+        "kind": "integration",
+        "file": "tests/integration/academic-policy.test.ts",
+        "title": "manual attendance override persists status, notes, manager identity and audit",
         "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
       },
       "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
@@ -15144,14 +15144,14 @@
         },
         {
           "action": "Klik Buka Presensi, tentukan judul pertemuan, tipe mandiri dan durasi 30 menit.",
-          "expected": "Sesi presensi aktif, kode 6 digit digenerate, dan roster mahasiswa otomatis terisi."
+          "expected": "Sesi presensi aktif, kode 6 karakter digenerate, dan roster mahasiswa otomatis terisi."
         },
         {
           "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
-          "expected": "Sesi presensi aktif, kode 6 digit digenerate, dan roster mahasiswa otomatis terisi."
+          "expected": "Sesi presensi aktif, kode 6 karakter digenerate, dan roster mahasiswa otomatis terisi."
         }
       ],
-      "expected": "Sesi presensi aktif, kode 6 digit digenerate, dan roster mahasiswa otomatis terisi.",
+      "expected": "Sesi presensi aktif, kode 6 karakter digenerate, dan roster mahasiswa otomatis terisi.",
       "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
       "automation": null,
       "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",

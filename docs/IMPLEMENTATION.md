@@ -88,3 +88,13 @@ Kode presensi hanya diberikan kepada pengelola, dengan indikator `requiresCode` 
 File Service diperiksa melalui adapter aktif. Kegagalan eksternal tidak beralih menjadi sukses lokal. Adapter legacy tidak mendukung daftar repositori dan mengembalikan 501. Mode lokal ditandai simulasi. Batas unggahan bersama: cover 5 MB, materi/tugas/jawaban kuis 50 MB, video 100 MB (1 MB = 1.048.576 byte). Frontend menolak ukuran berlebih sebelum membaca berkas; server memvalidasi tiket dan jumlah byte unggahan lokal/UAY.
 
 Tampilan waktu mengikuti perangkat dengan offset sebenarnya; input jadwal dikirim sebagai UTC. Router memakai path dan mendukung pengalihan hash lama. Login lokal menggunakan provider fixture SSO; landing tidak menyediakan pemilih akun. Kelas terarsip dapat dibuka kembali oleh pengelola yang berhak.
+
+## Konsistensi waktu — 6 Oktober 2026
+
+Konversi input tanggal dan tanggal-jam memakai helper bersama. Tanggal form presensi berasal dari kalender perangkat, bukan potongan tanggal UTC. Waktu Mulai dan Waktu Selesai masing-masing memakai input tanggal-jam sehingga jadwal lintas tengah malam dan pengeditan dari zona berbeda tidak kehilangan tanggal. Menyimpan pengaturan tanpa perubahan jadwal mempertahankan timestamp asli, termasuk detik dan milidetik.
+
+API presensi mewajibkan timestamp dengan `Z` atau offset, memvalidasi urutan jadwal, dan membedakan field yang tidak dikirim dari `null`. Pembaruan status/kode atau perpanjangan akhir sesi tidak lagi menghapus waktu lainnya. Pesan kegagalan ditampilkan pada form.
+
+Migrasi `202610060008_utc_timestamp_defaults` membuat 25 default DateTime menghasilkan `CURRENT_TIMESTAMP AT TIME ZONE 'UTC'`. Kolom tetap memakai `TIMESTAMP(3)` sesuai konvensi proyek; default tidak lagi bergantung pada zona sesi PostgreSQL. Migrasi hanya mengubah default dan tidak menebak atau menggeser timestamp lama.
+
+Build, 49 tes utama, dan 45 tes integrasi lulus. Form produksi diuji melalui React/JSDOM pada UTC+7 dan UTC+8, termasuk pergantian tahun, jadwal lintas hari, serta payload UTC saat simpan ulang. Default SQL diuji pada sesi UTC, UTC+7 dan UTC+8. Rincian: [TIME-CONSISTENCY-VERIFICATION.md](qa/TIME-CONSISTENCY-VERIFICATION.md).

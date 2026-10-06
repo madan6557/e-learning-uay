@@ -1826,7 +1826,7 @@ for (const row of [
     "Success state dengan timestamp dan versi",
     "Kirim tugas versi2.",
     "Kumpulkan tugas lalu lihat konfirmasi.",
-    "Banner sukses menyebut waktu WIB dan versi2.",
+    "Banner sukses menyebut waktu perangkat dengan offset zona sebenarnya dan versi2.",
   ],
   [
     "Failure state menyediakan retry",
@@ -2138,10 +2138,10 @@ for (const [title, data, action, expected] of [
     "Tidak ada kehilangan jawaban/progress; kapasitas pilot tervalidasi.",
   ],
   [
-    "Waktu operasionalWIB",
-    "Timestamp serverUTC; browserzonaAsia/Singapore.",
+    "Waktu mengikuti perangkat",
+    "Timestamp serverUTC; uji browserzonaAsia/Jakarta danAsia/Makassar.",
     "Bandingkan deadline,notifikasi,timestampaudit dan formulir.",
-    "Waktu tampil WIBUTC+7 sesuai§9.2.",
+    "Timestamp sama tampil GMT+7 pada UTC+7 dan GMT+8 pada UTC+8; input lokal dikirim UTC.",
   ],
 ])
   add(
@@ -2241,7 +2241,7 @@ for (const [role, title, data, expected] of [
     "Mahasiswa",
     "Kalender akademik interaktif",
     "Tugas,kuis danpertemuan.",
-    "Agenda dan zonaWIB konsisten.",
+    "Agenda mengikuti zona perangkat dengan offset yang sesuai.",
   ],
   [
     "Mahasiswa",
@@ -2351,7 +2351,7 @@ const futureActions = [
   ],
   [
     "Siapkan tenggat tugas, jadwal kuis dan pertemuan pada kelas yang diikuti.",
-    "Buka kalender, pindah bulan dan pilih agenda; cocokkan tanggal WIB serta tautan detail aktivitas.",
+    "Buka kalender, pindah bulan dan pilih agenda; cocokkan tanggal sesuai perangkat serta tautan detail aktivitas.",
   ],
   [
     "Gunakan kontak pengujian dan gateway staging; picu satu notifikasi tugas/kuis.",
@@ -2384,13 +2384,13 @@ add(
   "Mahasiswa",
   "3.1.2",
   "Validasi kode presensi mandiri case-insensitive dan auto-trim",
-  "Sesi presensi aktif dengan kode 6 digit.",
+  "Sesi presensi aktif dengan kode 6 karakter.",
   "Masukkan kode presensi dengan huruf kecil dan spasi di awal/akhir.",
   "Kode tervalidasi sukses dan kehadiran tercatat HADIR (PRESENT).",
   {
     automation: existing(
       "tests/attendance.test.ts",
-      "Attendance: check-in code validation is case-insensitive and trims whitespace",
+      "attendance codes accept case and surrounding spaces without accepting an empty or wrong code",
       "unit",
     ),
   },
@@ -2399,14 +2399,14 @@ add(
   "ATT",
   "Dosen",
   "3.1.2",
-  "Ambang batas kehadiran 75% untuk kelayakan ujian",
-  "Rekap kehadiran mahasiswa dengan persentase di atas dan di bawah 75%.",
+  "Ambang kehadiran tersimpan untuk kelayakan ujian",
+  "Rekap kehadiran mahasiswa; ubah ambang global dari75% menjadi80%.",
   "Hitung persentase kehadiran terhadap total sesi perkuliahan.",
-  "Mahasiswa dengan kehadiran >= 75% dinyatakan ELIGIBLE; < 75% dinyatakan NOT_ELIGIBLE.",
+  "Kelayakan mengikuti ambang tersimpan; persentase75% lolos ambang75% dan tidak lolos ambang80%.",
   {
     automation: existing(
       "tests/attendance.test.ts",
-      "Attendance: exam eligibility threshold strictly enforces 75% rule",
+      "attendance eligibility uses configured threshold and the unrounded percentage",
       "unit",
     ),
   },
@@ -2421,9 +2421,9 @@ add(
   "Status tersimpan dan catatan izin tampil pada lembar presensi dan rekap.",
   {
     automation: existing(
-      "tests/attendance.test.ts",
-      "Attendance: manual override transitions and note handling",
-      "unit",
+      "tests/integration/academic-policy.test.ts",
+      "manual attendance override persists status, notes, manager identity and audit",
+      "integration",
     ),
   },
 );
@@ -2434,7 +2434,7 @@ add(
   "Buka sesi presensi perkuliahan dengan kode acak dan durasi",
   "Kelas aktif pada semester berjalan.",
   "Klik Buka Presensi, tentukan judul pertemuan, tipe mandiri dan durasi 30 menit.",
-  "Sesi presensi aktif, kode 6 digit digenerate, dan roster mahasiswa otomatis terisi.",
+  "Sesi presensi aktif, kode 6 karakter digenerate, dan roster mahasiswa otomatis terisi.",
 );
 add(
   "ATT",
