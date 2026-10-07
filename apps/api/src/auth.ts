@@ -96,7 +96,15 @@ export function getEffectiveRedirectUri(req?: Request): string {
       (req.headers["x-forwarded-proto"] as string)?.split(",")[0]?.trim() ||
       (req.secure ? "https" : "http");
     if (host) {
-      return `${proto}://${host}/api/v1/auth/callback`;
+      const apiHost = config.apiOrigin ? new URL(config.apiOrigin).host : null;
+      if (apiHost && host === apiHost && config.redirectUri) {
+        return config.redirectUri;
+      }
+      const isFrontendDomain =
+        host.endsWith(".vercel.app") ||
+        (process.env.APP_ORIGIN && host === new URL(process.env.APP_ORIGIN).host);
+      const callbackPath = isFrontendDomain ? "/auth/callback" : "/api/v1/auth/callback";
+      return `${proto}://${host}${callbackPath}`;
     }
   }
   return config.redirectUri;
@@ -114,6 +122,10 @@ export function getEffectiveOrigin(req?: Request): string {
       (req.headers["x-forwarded-proto"] as string)?.split(",")[0]?.trim() ||
       (req.secure ? "https" : "http");
     if (host) {
+      const apiHost = config.apiOrigin ? new URL(config.apiOrigin).host : null;
+      if (apiHost && host === apiHost && config.origin) {
+        return config.origin;
+      }
       return `${proto}://${host}`;
     }
   }

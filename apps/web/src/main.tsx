@@ -124,8 +124,15 @@ function LoginButton({
           return;
         }
 
-        // Mode demo / pengujian: gunakan alur otorisasi backend agar mock fixture membuka daftar akun uji
-        if (config?.demoEnabled) {
+        // Mode demo / pengujian: selalu gunakan alur otorisasi backend agar mock SSO membuka daftar akun uji
+        const isHostedDemo =
+          Boolean(config?.demoEnabled) ||
+          (typeof window !== "undefined" &&
+            (window.location.hostname.endsWith(".vercel.app") ||
+              window.location.hostname === "vercel.app" ||
+              window.location.hostname.includes("railway.app")));
+
+        if (isHostedDemo || config?.mode === "development") {
           const { authorizationUrl } = await api<{ authorizationUrl: string }>(
             "/auth/authorization",
             "POST",

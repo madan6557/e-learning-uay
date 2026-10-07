@@ -66,6 +66,10 @@ export default async function handler(req, res) {
       continue;
     headers.set(name, Array.isArray(value) ? value.join(", ") : value);
   }
+  const forwardedHost = req.headers["x-forwarded-host"] || req.headers.host;
+  if (forwardedHost) headers.set("x-forwarded-host", String(forwardedHost));
+  const forwardedProto = req.headers["x-forwarded-proto"] || "https";
+  if (forwardedProto) headers.set("x-forwarded-proto", String(forwardedProto));
 
   try {
     const method = req.method ?? "GET";
@@ -93,8 +97,13 @@ export default async function handler(req, res) {
     });
     res.statusCode = upstream.status;
     for (const [name, value] of upstream.headers) {
-      if (name !== "set-cookie" && !hopByHopHeaders.has(name))
-        res.setHeader(name, value);
+      if (name !== "set-cookie" && !hopByHopHeaders.has(name)) {
+        if (name === "location" && value.startsWith(apiOrigin)) {
+          res.setHeader("Location", value.slice(apiOrigin.length) || "/");
+        } else {
+          res.setHeader(name, value);
+        }
+      }
     }
     const cookies = upstream.headers.getSetCookie?.() ?? [];
     if (cookies.length) res.setHeader("Set-Cookie", cookies);

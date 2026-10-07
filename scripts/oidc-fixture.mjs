@@ -255,7 +255,12 @@ h1{font-size:26px;font-weight:700;margin:0 0 6px;color:#123027}
           );
         }
         const code = randomBytes(32).toString("base64url");
-        const effectiveCallback = requestedRedirect || redirectUri;
+        const effectiveCallback =
+          requestedRedirect &&
+          (requestedRedirect.endsWith("/auth/callback") ||
+            requestedRedirect.endsWith("/api/v1/auth/callback"))
+            ? requestedRedirect
+            : redirectUri;
         codes.set(code, {
           userId: user.id,
           nonce: p.get("nonce") || "demo-nonce",
