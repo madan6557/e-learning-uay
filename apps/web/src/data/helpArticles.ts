@@ -1,6 +1,6 @@
 import guide from "./helpGuide.json";
 
-export type HelpRole = "SUPER_ADMIN" | "DEPARTMENT_ADMIN" | "INSTRUCTOR" | "STUDENT";
+export type HelpRole = "SUPER_ADMIN" | "DEPARTMENT_ADMIN" | "INSTRUCTOR" | "STUDENT" | "RECTOR";
 export type HelpArticle = {
   id: string;
   title: string;
@@ -20,11 +20,11 @@ export type HelpArticle = {
   gradeScales?: boolean;
 };
 
-export const helpRoles: HelpRole[] = ["SUPER_ADMIN", "DEPARTMENT_ADMIN", "INSTRUCTOR", "STUDENT"];
+export const helpRoles: HelpRole[] = ["SUPER_ADMIN", "DEPARTMENT_ADMIN", "INSTRUCTOR", "STUDENT", "RECTOR"];
 export const helpArticles: HelpArticle[] = [
   ...guide.tutorials.map(article => ({ ...article, roles: article.roles as HelpRole[] })),
   {
-    id: "skala", title: "Konversi nilai", category: "Konversi Nilai", roles: helpRoles,
+    id: "skala", title: "Konversi nilai", category: "Konversi Nilai", roles: helpRoles.filter(role => role !== "RECTOR"),
     summary: "Batas skor, huruf mutu, dan indeks untuk setiap versi skala nilai.",
     keywords: ["nilai", "huruf", "bobot", "2026.1", "2024.1"],
     content: "Gunakan versi kebijakan pada kelas. Nilai dihitung dari nilai kategori dikalikan bobotnya. Total bobot harus 100 persen. Nilai akhir yang sudah diterbitkan mempertahankan versi kebijakannya.",

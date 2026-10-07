@@ -1,5 +1,7 @@
 # Panduan penggunaan E-Learning UAY
 
+Edisi 7 Oktober 2026. Mencakup Mahasiswa, Dosen, Admin Prodi, Super Admin, dan Rektor. Buka Bantuan → Buka buku panduan (tab baru) untuk petunjuk yang sesuai dengan peran akun.
+
 Panduan ini memakai konten yang sama dengan halaman Bantuan. Di aplikasi, panduan yang tampil mengikuti role akun. Nama, angka, dan tanggal pada gambar merupakan contoh.
 
 Langkah disajikan sebagai daftar bernomor tanpa checklist. Tanggal dan jam mengikuti zona perangkat dengan offset sebenarnya; jadwal dikirim dan disimpan sebagai UTC.
@@ -39,6 +41,11 @@ Langkah disajikan sebagai daftar bernomor tanpa checklist. Tanggal dan jam mengi
 - [S1 — Meninjau administrasi seluruh program studi](#tutorial-s1)
 - [S2 — Mengatur tahun ajaran dan banner semester](#tutorial-s2)
 - [S3 — Menetapkan kebijakan skala nilai dan ambang hadir](#tutorial-s3)
+- [R1 — Membuka pemantauan akademik](#tutorial-r1)
+- [R2 — Memilih periode dan membaca ringkasan](#tutorial-r2)
+- [R3 — Menelusuri dosen dan kelas](#tutorial-r3)
+- [R4 — Membaca riwayat kegiatan dan rentang masuk](#tutorial-r4)
+- [R5 — Mengunduh laporan dan memahami kendala](#tutorial-r5)
 
 - [Konversi nilai](#konversi-nilai)
 - [Solusi kendala](#solusi-kendala)
@@ -47,7 +54,7 @@ Langkah disajikan sebagai daftar bernomor tanpa checklist. Tanggal dan jam mengi
 
 ## U1 — Masuk dengan akun kampus
 
-**Peran:** Super Admin, Admin Prodi, Dosen, Mahasiswa.
+**Peran:** Super Admin, Admin Prodi, Dosen, Mahasiswa, Rektor.
 
 **Tujuan:** Membuka ruang belajar dengan role yang diberikan kampus.
 
@@ -57,10 +64,10 @@ Langkah disajikan sebagai daftar bernomor tanpa checklist. Tanggal dan jam mengi
 
 ### Langkah
 
-1. Buka portal E-Learning UAY. Klik Masuk SSO di header atau Masuk dengan SSO UAY pada halaman utama.
+1. Buka portal E-Learning UAY. Klik Masuk dengan SSO UAY pada halaman utama.
 2. Pada halaman SSO kampus, isi identitas akun dan kata sandi. Ikuti verifikasi tambahan jika diminta oleh SSO.
 3. Setelah berhasil, tunggu sampai browser kembali ke Beranda E-Learning. Periksa nama dan role di kanan atas.
-4. Klik Kelas saya atau Kelola kelas sesuai role Anda. Bila kelas kosong, hubungi bagian akademik prodi untuk memeriksa kepesertaan atau penugasan.
+4. Pilih menu sesuai peran: Kelas saya untuk dosen atau mahasiswa, Kelola kelas untuk administrator, dan Pemantauan Akademik untuk rektor. Bila kelas belum tersedia, hubungi bagian akademik prodi.
 
 **Periksa hasil:** Beranda tampil dengan identitas yang benar. Menu sesuai kewenangan akun.
 
@@ -75,7 +82,7 @@ Penanda gambar: 1 Masuk SSO
 | Masuk dengan SSO UAY | Tombol, tanpa input di E-Learning | Mengalihkan browser ke layanan SSO kampus. |
 | Identitas SSO | Gunakan identitas yang ditetapkan kampus, misalnya NIM atau NIDN | Diisi di halaman SSO, bukan di formulir E-Learning. |
 | Kata sandi SSO | Kata sandi milik akun kampus | Diproses oleh SSO. Pemulihan mengikuti fasilitas dan petugas SSO kampus. |
-| Role pada profil | Mahasiswa, Dosen, Admin prodi, atau Super admin | Ditetapkan SSO. Pengguna tidak memilih atau mengganti role melalui menu E-Learning. |
+| Role pada profil | Mahasiswa, Dosen, Admin Prodi, Super Admin, atau Rektor | Ditetapkan SSO. Pengguna tidak memilih atau mengganti role melalui menu E-Learning. |
 
 ### Catatan penggunaan
 
@@ -133,7 +140,7 @@ Draf lokal hanya tersedia pada perangkat dan browser yang menyimpannya. Pesan dr
 
 ## U3 — Profil notifikasi bantuan dan keluar
 
-**Peran:** Super Admin, Admin Prodi, Dosen, Mahasiswa.
+**Peran:** Super Admin, Admin Prodi, Dosen, Mahasiswa, Rektor.
 
 **Tujuan:** Memeriksa identitas, membaca pemberitahuan, dan mengakhiri sesi.
 
@@ -144,8 +151,8 @@ Draf lokal hanya tersedia pada perangkat dan browser yang menyimpannya. Pesan dr
 ### Langkah
 
 1. Buka Profil. Periksa nama, nomor identitas, role, dan afiliasi program studi. Jika tidak sesuai, hubungi bagian akademik/SSO.
-2. Buka Notifikasi. Klik pemberitahuan yang relevan untuk membuka kelas atau aktivitas. Gunakan Tandai dibaca atau Tandai semua dibaca bila tersedia.
-3. Buka Bantuan, ketik kata kunci seperti presensi atau tugas. Pilih artikel sesuai role dan ikuti langkahnya.
+2. Jika menu Notifikasi tersedia untuk peran Anda, buka pemberitahuan yang relevan. Gunakan Tandai dibaca atau Tandai semua dibaca bila tersedia.
+3. Buka Bantuan dan cari kata kunci yang sesuai kebutuhan. Pilih artikel atau Buka buku panduan (tab baru). Panduan mengikuti peran akun yang sedang masuk.
 4. Jika kendala berlanjut, catat nama kelas, aktivitas, waktu kejadian, pesan kesalahan, dan Nomor permintaan yang tampil. Sampaikan kepada petugas akademik prodi.
 5. Klik Keluar pada bagian kanan atas setelah selesai. Pastikan halaman publik muncul kembali, terutama pada komputer bersama.
 
@@ -162,8 +169,9 @@ Penanda gambar: 1 Keluar
 | Buka pengelolaan akun SSO | Tautan pada Profil bila tersedia | Membuka layanan akun kampus. Perubahan identitas dan akses mengikuti pengelola SSO. |
 | Hapus semua draf lokal | Tombol pada Profil | Menghapus draf lokal akun dari browser ini. Pastikan pekerjaan yang dibutuhkan sudah disimpan terlebih dahulu. |
 | Pencarian Bantuan | Teks, misalnya kode presensi | Mencari artikel bantuan yang tersedia untuk role Anda. |
-| Tandai semua dibaca | Tombol pada Notifikasi | Mengubah status semua notifikasi menjadi dibaca, bukan menghapus isi aktivitas. |
+| Tandai semua dibaca | Tombol pada Notifikasi bila menu tersedia | Mengubah status semua notifikasi menjadi dibaca, bukan menghapus isi aktivitas. |
 | Keluar | Tombol | Mengakhiri sesi E-Learning. Menutup tab saja tidak sama dengan menekan Keluar. |
+| Buka buku panduan (tab baru) | Tautan pada Bantuan | Membuka panduan sesuai peran dalam tab baru tanpa kotak centang. |
 
 ### Catatan penggunaan
 
@@ -1462,6 +1470,181 @@ Nilai historis yang sudah diterbitkan/dikunci mempertahankan kebijakannya. Mengu
 
 Perubahan ambang tersimpan langsung dipakai pada perhitungan dan label rekap presensi. Perubahan skala default berlaku pada kelas baru dan hasil duplikasi; nilai akhir yang sudah diterbitkan tidak dihitung ulang.
 
+<a id="tutorial-r1"></a>
+
+## R1 — Membuka pemantauan akademik
+
+**Peran:** Rektor, Super Admin.
+
+**Tujuan:** Melihat kondisi akademik universitas melalui satu akun kampus.
+
+**Buka:** Pemantauan Akademik
+
+**Sebelum mulai:** Akun Rektor atau Super Admin telah masuk. Pilih semester dan periode yang hendak dibaca.
+
+### Langkah
+
+1. Masuk dengan akun kampus yang memiliki peran Rektor. Pada demo, pilih akun Rektor pada pemilih akun.
+2. Buka menu Pemantauan Akademik. Halaman Ringkasan menampilkan dosen beraktivitas, pekerjaan belum dinilai, dan nilai yang sudah dibagikan.
+3. Baca Data terakhir sebagai waktu kondisi data. Waktu Dimuat menunjukkan kapan halaman mengambil data; pemeriksaan dilakukan setiap lima menit.
+4. Periksa label Demo — data simulasi. Label ini berarti angka merupakan contoh, bukan hasil kegiatan kampus.
+
+**Periksa hasil:** Laporan dan rincian yang tampil mengikuti filter; tidak ada perubahan pada data akademik.
+
+### Input, pilihan, dan tombol
+
+| Kontrol di layar | Nilai atau contoh | Fungsi dan akibat |
+| --- | --- | --- |
+| Pemantauan Akademik | Menu utama rektor | Membuka laporan tanpa mengubah kelas atau nilai. |
+| Bantuan | Buka buku panduan (tab baru) | Membuka panduan yang mengikuti peran akun. |
+
+### Catatan penggunaan
+
+Akun rektor hanya melihat laporan. Akun ini tidak mengubah materi, peserta, tugas, atau nilai.
+
+Angka pada demo bersifat simulasi. Pada lingkungan terhubung, laporan berasal dari data e-learning.
+
+<a id="tutorial-r2"></a>
+
+## R2 — Memilih periode dan membaca ringkasan
+
+**Peran:** Rektor, Super Admin.
+
+**Tujuan:** Membandingkan kegiatan dalam periode dengan kondisi kelas saat data terakhir diperbarui.
+
+**Buka:** Pemantauan Akademik
+
+**Sebelum mulai:** Akun Rektor atau Super Admin telah masuk. Pilih semester dan periode yang hendak dibaca.
+
+### Langkah
+
+1. Pilih Ubah filter, lalu tentukan semester, tanggal awal dan akhir, program studi, dosen, atau kelas.
+2. Gunakan periode yang sama saat membandingkan laporan. Pilihan filter tersimpan pada alamat halaman.
+3. Lihat jumlah dosen beraktivitas dan rekap program studi. Klik Lihat dosen & kelas untuk menelusuri rinciannya.
+4. Baca pekerjaan belum dinilai dan nilai sudah dibagikan sebagai kondisi kelas pada Data terakhir, bukan tambahan kegiatan pada setiap muat ulang.
+
+**Periksa hasil:** Laporan dan rincian yang tampil mengikuti filter; tidak ada perubahan pada data akademik.
+
+### Input, pilihan, dan tombol
+
+| Kontrol di layar | Nilai atau contoh | Fungsi dan akibat |
+| --- | --- | --- |
+| Ubah filter | Semester, periode, prodi, dosen, kelas | Membatasi laporan dan unduhan dengan pilihan yang sama. |
+| Reset filter | Pilihan awal laporan | Mengembalikan cakupan laporan. |
+
+### Catatan penggunaan
+
+Masuk akun, membuka kelas, dan kegiatan akademik adalah tiga hal berbeda. Membuka kelas saja belum membuktikan pelaksanaan perkuliahan.
+
+Jika belum ada pekerjaan yang menjadi dasar persentase, tampilan menyebut Belum ada data. Tidak ada skor atau peringkat kinerja otomatis.
+
+<a id="tutorial-r3"></a>
+
+## R3 — Menelusuri dosen dan kelas
+
+**Peran:** Rektor, Super Admin.
+
+**Tujuan:** Mengetahui kegiatan yang dilakukan dosen serta pekerjaan penilaian pada kelasnya.
+
+**Buka:** Pemantauan Akademik
+
+**Sebelum mulai:** Akun Rektor atau Super Admin telah masuk. Pilih semester dan periode yang hendak dibaca.
+
+### Langkah
+
+1. Buka Dosen & kelas. Cari nama dosen atau persempit pilihan program studi.
+2. Pilih nama dosen untuk membaca kegiatan, kelas yang diampu, dan kontribusinya pada setiap kelas.
+3. Buka kelas untuk memeriksa pertemuan, materi, tugas, kuis, dan perkembangan penilaian.
+4. Pisahkan pekerjaan belum dinilai, nilai draf, nilai yang sudah dibagikan, dan riwayat koreksi. Perhatikan umur antrean yang ditampilkan.
+
+**Periksa hasil:** Laporan dan rincian yang tampil mengikuti filter; tidak ada perubahan pada data akademik.
+
+### Input, pilihan, dan tombol
+
+| Kontrol di layar | Nilai atau contoh | Fungsi dan akibat |
+| --- | --- | --- |
+| Nama dosen | Dosen yang dipilih | Membuka rincian kegiatan pelaku tersebut. |
+| Nama kelas | Kelas yang dipilih | Membuka kondisi kelas dan pekerjaan penilaian. |
+
+### Catatan penggunaan
+
+Pada kelas dengan beberapa pengampu, kegiatan dicatat atas nama pelakunya. Antrean penilaian adalah pekerjaan kelas dan tidak dijumlahkan berulang untuk setiap pengampu.
+
+Penilaian otomatis kuis dibedakan dari penilaian manual dosen. Kiriman tugas yang sudah digantikan tidak dihitung kembali sebagai pekerjaan menunggu penilaian.
+
+Identitas mahasiswa, nilai individual, jawaban, dan isi umpan balik mahasiswa tidak ditampilkan dalam laporan rektor.
+
+<a id="tutorial-r4"></a>
+
+## R4 — Membaca riwayat kegiatan dan rentang masuk
+
+**Peran:** Rektor, Super Admin.
+
+**Tujuan:** Menelusuri urutan kegiatan serta waktu masuk dan keluar yang tercatat.
+
+**Buka:** Pemantauan Akademik
+
+**Sebelum mulai:** Akun Rektor atau Super Admin telah masuk. Pilih semester dan periode yang hendak dibaca.
+
+### Langkah
+
+1. Buka Riwayat kegiatan atau riwayat pada rincian dosen. Pilih dosen dan tanggal yang ingin dilihat.
+2. Baca grafik harian dari 00.00 sampai 24.00 sesuai zona waktu perangkat. Kegiatan malam dan sesi yang melewati tengah malam tetap ditampilkan.
+3. Perhatikan rentang masuk sampai keluar yang tercatat. Jika waktu keluar tidak tercatat, gunakan keterangan tersebut; jangan menganggap sesi berlangsung hingga saat ini.
+4. Pilih baris kegiatan untuk melihat waktu, tindakan, objek, kelas, dan pelakunya. Pisahkan kegiatan dosen, administrator, serta proses otomatis.
+
+**Periksa hasil:** Laporan dan rincian yang tampil mengikuti filter; tidak ada perubahan pada data akademik.
+
+### Input, pilihan, dan tombol
+
+| Kontrol di layar | Nilai atau contoh | Fungsi dan akibat |
+| --- | --- | --- |
+| Grafik harian | 00.00–24.00, waktu lokal | Memperlihatkan kapan sesi dan kegiatan tercatat pada hari tersebut. |
+| Riwayat kegiatan | Baris kegiatan dan rentang waktunya | Membantu menelusuri urutan tindakan tanpa mengubah data. |
+
+### Catatan penggunaan
+
+Rentang masuk bukan durasi bekerja atau durasi mengajar. Waktu pengerjaan yang ditampilkan hanya berasal dari awal dan akhir tindakan yang tercatat.
+
+Lima perubahan pada satu materi adalah lima tindakan pada satu materi. Memperbarui halaman tidak menciptakan kegiatan baru.
+
+Laporan ini belum menyediakan presensi, forum diskusi, atau kehadiran telekonferensi.
+
+<a id="tutorial-r5"></a>
+
+## R5 — Mengunduh laporan dan memahami kendala
+
+**Peran:** Rektor, Super Admin.
+
+**Tujuan:** Menyimpan laporan sesuai pilihan filter dan menangani pemuatan yang gagal.
+
+**Buka:** Pemantauan Akademik
+
+**Sebelum mulai:** Akun Rektor atau Super Admin telah masuk. Pilih semester dan periode yang hendak dibaca.
+
+### Langkah
+
+1. Tentukan filter sebelum mengunduh. Dari Ringkasan, daftar dosen, atau rincian yang dibuka, pilih Unduh tabel atau Unduh laporan.
+2. Unduh tabel menghasilkan CSV berisi seluruh baris yang cocok, termasuk baris pada halaman tabel lainnya.
+3. Unduh laporan menghasilkan PDF dengan ringkasan atau rincian halaman, filter, cara membaca indikator, waktu data, dan label demo bila digunakan.
+4. Jika data gagal dimuat, gunakan Coba lagi. Jika sesi masuk berakhir, masuk kembali melalui akun kampus. Untuk meminta perubahan peran, hubungi pengelola akun kampus.
+
+**Periksa hasil:** Laporan dan rincian yang tampil mengikuti filter; tidak ada perubahan pada data akademik.
+
+### Input, pilihan, dan tombol
+
+| Kontrol di layar | Nilai atau contoh | Fungsi dan akibat |
+| --- | --- | --- |
+| Unduh tabel | CSV | Menyimpan seluruh baris yang cocok dengan filter. |
+| Unduh laporan | PDF | Menyimpan laporan dari tampilan yang sedang dibuka. |
+| Coba lagi | Saat pemuatan gagal | Mengambil ulang data tanpa mengubah aktivitas akademik. |
+
+### Catatan penggunaan
+
+Tanggal dan jam pada layar serta laporan mengikuti zona waktu perangkat; periksa label zona atau offset yang tercetak.
+
+Laporan adalah alat pertimbangan rektor. Angka kegiatan tidak menjadi penilaian otomatis atas kualitas pembelajaran.
+
 ## Konversi nilai
 
 Gunakan versi skala pada kelas. Total bobot kategori harus 100 persen. Mengubah skala default tidak menghitung ulang nilai akhir yang telah diterbitkan.
@@ -1560,13 +1743,13 @@ Gunakan template yang sama, NIM sebagai teks, nama kolom benar, skor valid, targ
 
 ### Halaman gagal ditampilkan
 
-**Peran:** Super Admin, Admin Prodi, Dosen, Mahasiswa.
+**Peran:** Super Admin, Admin Prodi, Dosen, Mahasiswa, Rektor.
 
 Klik Muat ulang bagian ini atau buka kembali halaman. Bila tetap gagal, catat pesan dan Nomor permintaan jika ada untuk bantuan prodi.
 
 ### Jam pada perangkat berbeda
 
-**Peran:** Super Admin, Admin Prodi, Dosen, Mahasiswa.
+**Peran:** Super Admin, Admin Prodi, Dosen, Mahasiswa, Rektor.
 
 Sesuaikan zona waktu perangkat. Seluruh tanggal-jam mengikuti zona perangkat dan menampilkan offset sebenarnya. Jadwal tetap mengacu pada timestamp UTC yang sama.
 

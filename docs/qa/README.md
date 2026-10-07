@@ -41,7 +41,7 @@ Runner HTTP lokal hanya menerima origin `http://127.0.0.1:5174` dan alamat loopb
 
 ## Cakupan dan batas penerimaan
 
-317 kasus disusun dari markdown **Technical Design - E-Learning UAY - v5.0.md**, mencakup 15 keluarga RTM, 12 dimensi BVA, 9 cause-effect, 12 kriteria pilot, editor 11 blok, 8 tipe kuis, keamanan/otorisasi, draf, serta operasional dan rilis lanjutan. Katalog merupakan turunan dokumen; jumlah kasus bukan klaim 317 requirement resmi.
+354 kasus disusun dari markdown **Technical Design - E-Learning UAY - v5.0.md**, mencakup 18 keluarga RTM, 12 dimensi BVA, 9 cause-effect, 12 kriteria pilot, editor 11 blok, 8 tipe kuis, keamanan/otorisasi, draf, serta operasional dan rilis lanjutan. Tambahan **TC-REC-004–022** serta **TC-HELP-001–006** mengacu pada implementasi dan panduan 7 Oktober 2026: peran Rektor, akses laporan hanya baca, filter, sesi 24 jam, waktu lokal, progres penilaian, ekspor, dan panduan pada tab baru sesuai peran tanpa checklist. Tambahan ini memiliki acuan Implementasi saat ini dan tidak diberi kode requirement RTM baru. Katalog merupakan turunan dokumen dan implementasi; jumlah kasus bukan klaim 354 requirement resmi.
 
 Dokumen menyebut 151 butir kebutuhan, tetapi 15 rentang kode RTM berjumlah 117; PDF requirement per butir tidak ada di workspace. Karena itu acuan menggunakan **keluarga kode dan paragraf dokumen**, tanpa mengarang arti setiap kode individual. Prioritas per kasus diturunkan dari cakupan §3.1; `CRS-007/008` disebut eksplisit. Catatan ketidakkonsistenan dokumen terlihat pada menu Cakupan dokumen.
 
@@ -55,3 +55,5 @@ npm run qa:build
 ```
 
 `qa:test` memeriksa keterlacakan katalog, semantik perbandingan, hitungan ringkasan, isolasi/validasi backup, URL aman, CSV, dan pencatatan hasil melalui komponen React. `qa:build` membuat ulang katalog dan halaman sumber, memeriksa TypeScript, lalu membangun portal terpisah dari frontend E-Learning. Build statis tetap bisa membaca bukti, membuka acuan sumber dan menyimpan hasil manual; eksekusi ulang dari tombol memerlukan server lokal.
+
+Pemeriksaan pembaruan panduan, tampilan desktop/ponsel, dan bahan buku/PPT tercatat dalam [verifikasi panduan 7 Oktober 2026](GUIDE-UPDATE-VERIFICATION.md).

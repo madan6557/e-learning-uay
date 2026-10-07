@@ -5,6 +5,7 @@
     "path": "docs/Technical Design - E-Learning UAY - v5.0.md",
     "sha256": "1dfda756cde43dd82f300f9e0a47b6f9cca01f9bf1014b034409006189f6d537",
     "notes": [
+      "Tambahan REC-004 dan seterusnya serta HELP mengacu pada implementasi dan panduan 7 Oktober 2026, bukan penambahan butir RTM resmi. Peran Rektor memakai sesi e-learning yang sama; zona waktu mengikuti perangkat.",
       "RTM §3.1.1 menyebut 151 butir, tetapi 15 rentang kode yang ditampilkan berjumlah 117. Detail per butir pada PDF requirement tidak ada di workspace; keterlacakan memakai keluarga kode dan paragraf v5 yang tersedia.",
       "RTM menyebut 4 tipe kuis, sedangkan §3.1 dan §3.3.2 menguraikan 8 tipe. Katalog mengikuti uraian lengkap 8 tipe.",
       "Prioritas dan role tiap kasus diturunkan dari cakupan §3.1. CRS-007/008 disebut eksplisit. Pembagian prioritas per kode lain tidak dirinci oleh dokumen.",
@@ -17,6 +18,7 @@
     "Dosen",
     "Admin Prodi",
     "Super Admin",
+    "Rektor",
     "Operator / DevOps"
   ],
   "priorities": [
@@ -42,7 +44,8 @@
     "Progres belajar",
     "Presensi & kehadiran",
     "Isolasi Program Studi",
-    "Integrasi Dashboard Rektor",
+    "Pemantauan Akademik & integrasi rektor",
+    "Bantuan & panduan sesuai peran",
     "Jejak audit",
     "Operasional",
     "Rilis lanjutan",
@@ -139,7 +142,7 @@
     {
       "code": "REC",
       "range": "REC-001–003",
-      "module": "Integrasi Dashboard Rektor"
+      "module": "Pemantauan Akademik & integrasi rektor"
     }
   ],
   "cases": [
@@ -15398,7 +15401,7 @@
       "id": "TC-REC-001",
       "priority": "P0",
       "role": "Operator / DevOps",
-      "module": "Integrasi Dashboard Rektor",
+      "module": "Pemantauan Akademik & integrasi rektor",
       "family": "REC",
       "title": "Kontrak skema ReportingSnapshot sesuai spesifikasi Dashboard Rektor",
       "type": "Fungsional",
@@ -15447,7 +15450,7 @@
       "id": "TC-REC-002",
       "priority": "P0",
       "role": "Operator / DevOps",
-      "module": "Integrasi Dashboard Rektor",
+      "module": "Pemantauan Akademik & integrasi rektor",
       "family": "REC",
       "title": "Validasi otorisasi Bearer Token pada endpoint integrasi rektor",
       "type": "Fungsional",
@@ -15496,7 +15499,7 @@
       "id": "TC-REC-003",
       "priority": "P0",
       "role": "Operator / DevOps",
-      "module": "Integrasi Dashboard Rektor",
+      "module": "Pemantauan Akademik & integrasi rektor",
       "family": "REC",
       "title": "Agregasi metrik aktivitas perkuliahan dan publikasi prodi",
       "type": "Fungsional",
@@ -15535,6 +15538,1181 @@
       "tags": [],
       "scope": "local",
       "priorityBasis": "Prioritas diturunkan dari cakupan rilis §3.1; bukan pemetaan per butir requirement resmi."
+    },
+    {
+      "id": "TC-REC-004",
+      "priority": "P0",
+      "role": "Rektor",
+      "module": "Pemantauan Akademik & integrasi rektor",
+      "family": "REC",
+      "title": "Masuk melalui satu akun kampus dan akses laporan hanya baca",
+      "type": "Fungsional",
+      "section": "Implementasi saat ini",
+      "sourceLine": 1,
+      "sourceDocument": "current",
+      "requirements": [],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Akun Rektor, Super Admin, Dosen, Mahasiswa; sesi aktif dan tanpa sesi.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Rektor melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka Pemantauan Akademik melalui menu akun rektor.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Buka /rector dan panggil API laporan serta percobaan perubahan akademik.",
+          "expected": "Rektor/Super Admin dapat membaca; dosen/mahasiswa ditolak; tanpa sesi 401; perubahan akademik rektor ditolak."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Rektor/Super Admin dapat membaca; dosen/mahasiswa ditolak; tanpa sesi 401; perubahan akademik rektor ditolak."
+        }
+      ],
+      "expected": "Rektor/Super Admin dapat membaca; dosen/mahasiswa ditolak; tanpa sesi 401; perubahan akademik rektor ditolak.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "api",
+        "file": "tests/integration/rector-access.test.ts",
+        "title": "same cookie works; no separate demo login or academic write",
+        "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Regresi laporan rektor yang sudah diimplementasikan."
+    },
+    {
+      "id": "TC-REC-005",
+      "priority": "P0",
+      "role": "Rektor",
+      "module": "Pemantauan Akademik & integrasi rektor",
+      "family": "REC",
+      "title": "Ringkasan cocok dengan dosen dan rekap program studi",
+      "type": "Fungsional",
+      "section": "Implementasi saat ini",
+      "sourceLine": 1,
+      "sourceDocument": "current",
+      "requirements": [],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Fixture deterministik laporan akademik.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Rektor melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka Pemantauan Akademik melalui menu akun rektor.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Bandingkan ringkasan, tabel dosen, dan rekap prodi dengan periode sama.",
+          "expected": "Total dan kegiatan pelaku cocok tanpa peringkat otomatis."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Total dan kegiatan pelaku cocok tanpa peringkat otomatis."
+        }
+      ],
+      "expected": "Total dan kegiatan pelaku cocok tanpa peringkat otomatis.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "unit",
+        "file": "tests/rector-reporting.test.ts",
+        "title": "summary matches departmental totals, lecturer activity and daily evidence",
+        "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Regresi laporan rektor yang sudah diimplementasikan."
+    },
+    {
+      "id": "TC-REC-006",
+      "priority": "P0",
+      "role": "Rektor",
+      "module": "Pemantauan Akademik & integrasi rektor",
+      "family": "REC",
+      "title": "Kelas bersama tidak menggandakan kegiatan dan antrean",
+      "type": "Fungsional",
+      "section": "Implementasi saat ini",
+      "sourceLine": 1,
+      "sourceDocument": "current",
+      "requirements": [],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Kelas dengan dua pengampu.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Rektor melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka Pemantauan Akademik melalui menu akun rektor.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Buka kedua dosen dan kelas bersama, lalu bandingkan ringkasan.",
+          "expected": "Kegiatan diberikan kepada pelakunya; antrean kelas dihitung sekali."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Kegiatan diberikan kepada pelakunya; antrean kelas dihitung sekali."
+        }
+      ],
+      "expected": "Kegiatan diberikan kepada pelakunya; antrean kelas dihitung sekali.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "unit",
+        "file": "tests/rector-reporting.test.ts",
+        "title": "shared classes attribute evidence to actual actors; class backlog is not duplicated in university totals",
+        "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Regresi laporan rektor yang sudah diimplementasikan."
+    },
+    {
+      "id": "TC-REC-007",
+      "priority": "P0",
+      "role": "Rektor",
+      "module": "Pemantauan Akademik & integrasi rektor",
+      "family": "REC",
+      "title": "Login saja, tanpa kegiatan, tanpa kelas dan tindakan per objek",
+      "type": "Fungsional",
+      "section": "Implementasi saat ini",
+      "sourceLine": 1,
+      "sourceDocument": "current",
+      "requirements": [],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Dosen aktif, hanya login, tidak aktif dan tidak diampu kelas.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Rektor melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka Pemantauan Akademik melalui menu akun rektor.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Bandingkan jumlah tindakan dan objek pada rincian dosen.",
+          "expected": "Login terpisah dari kegiatan akademik; lima perubahan satu materi tidak menjadi lima materi."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Login terpisah dari kegiatan akademik; lima perubahan satu materi tidak menjadi lima materi."
+        }
+      ],
+      "expected": "Login terpisah dari kegiatan akademik; lima perubahan satu materi tidak menjadi lima materi.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "unit",
+        "file": "tests/rector-reporting.test.ts",
+        "title": "actions and unique objects, login-only, inactive and unassigned lecturers stay distinct",
+        "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Regresi laporan rektor yang sudah diimplementasikan."
+    },
+    {
+      "id": "TC-REC-008",
+      "priority": "P0",
+      "role": "Rektor",
+      "module": "Pemantauan Akademik & integrasi rektor",
+      "family": "REC",
+      "title": "Filter konsisten dan kondisi data tidak menjadi aktivitas baru",
+      "type": "Fungsional",
+      "section": "Implementasi saat ini",
+      "sourceLine": 1,
+      "sourceDocument": "current",
+      "requirements": [],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Semester, prodi, dosen, kelas dan periode berbeda.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Rektor melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka Pemantauan Akademik melalui menu akun rektor.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Ubah satu filter, periksa URL, ringkasan dan rincian; muat ulang.",
+          "expected": "Filter membatasi cakupan konsisten; kondisi kelas bukan kegiatan baru pada tanggal muat ulang."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Filter membatasi cakupan konsisten; kondisi kelas bukan kegiatan baru pada tanggal muat ulang."
+        }
+      ],
+      "expected": "Filter membatasi cakupan konsisten; kondisi kelas bukan kegiatan baru pada tanggal muat ulang.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "unit",
+        "file": "tests/rector-reporting.test.ts",
+        "title": "snapshot metrics ignore activity dates; semester, department, lecturer and class constrain scope",
+        "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Regresi laporan rektor yang sudah diimplementasikan."
+    },
+    {
+      "id": "TC-REC-009",
+      "priority": "P0",
+      "role": "Rektor",
+      "module": "Pemantauan Akademik & integrasi rektor",
+      "family": "REC",
+      "title": "Kiriman pengganti dan penilaian otomatis dibedakan",
+      "type": "Fungsional",
+      "section": "Implementasi saat ini",
+      "sourceLine": 1,
+      "sourceDocument": "current",
+      "requirements": [],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Tugas dikirim dua kali; kuis otomatis dan pekerjaan manual.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Rektor melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka Pemantauan Akademik melalui menu akun rektor.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Periksa pekerjaan belum dinilai pada kelas.",
+          "expected": "Kiriman lama tidak masuk antrean; penilaian kuis otomatis memiliki jumlah tersendiri."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Kiriman lama tidak masuk antrean; penilaian kuis otomatis memiliki jumlah tersendiri."
+        }
+      ],
+      "expected": "Kiriman lama tidak masuk antrean; penilaian kuis otomatis memiliki jumlah tersendiri.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "unit",
+        "file": "tests/rector-reporting.test.ts",
+        "title": "latest submissions exclude superseded work and automatic grading has its own total",
+        "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Regresi laporan rektor yang sudah diimplementasikan."
+    },
+    {
+      "id": "TC-REC-010",
+      "priority": "P0",
+      "role": "Rektor",
+      "module": "Pemantauan Akademik & integrasi rektor",
+      "family": "REC",
+      "title": "Rentang login berakhir pada logout yang tercatat",
+      "type": "Fungsional",
+      "section": "Implementasi saat ini",
+      "sourceLine": 1,
+      "sourceDocument": "current",
+      "requirements": [],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Sesi lengkap dan kegiatan dengan awal/akhir tercatat.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Rektor melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka Pemantauan Akademik melalui menu akun rektor.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Baca grafik sesi dan riwayat per dosen.",
+          "expected": "Rentang menggunakan bukti masuk/keluar; logout bukan kegiatan akademik; bukan durasi kerja."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Rentang menggunakan bukti masuk/keluar; logout bukan kegiatan akademik; bukan durasi kerja."
+        }
+      ],
+      "expected": "Rentang menggunakan bukti masuk/keluar; logout bukan kegiatan akademik; bukan durasi kerja.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "unit",
+        "file": "tests/rector-reporting.test.ts",
+        "title": "connection spans and action intervals use explicit recorded events, without crediting logout as academic work",
+        "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Regresi laporan rektor yang sudah diimplementasikan."
+    },
+    {
+      "id": "TC-REC-011",
+      "priority": "P0",
+      "role": "Rektor",
+      "module": "Pemantauan Akademik & integrasi rektor",
+      "family": "REC",
+      "title": "Grafik harian meliputi akses selama 24 jam",
+      "type": "Fungsional",
+      "section": "Implementasi saat ini",
+      "sourceLine": 1,
+      "sourceDocument": "current",
+      "requirements": [],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Sesi pagi, sore dan malam pada zona perangkat.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Rektor melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka Pemantauan Akademik melalui menu akun rektor.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Buka grafik harian dan periksa 00.00–24.00.",
+          "expected": "Semua sesi hari tersebut tampil tanpa pembatasan jam kerja."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Semua sesi hari tersebut tampil tanpa pembatasan jam kerja."
+        }
+      ],
+      "expected": "Semua sesi hari tersebut tampil tanpa pembatasan jam kerja.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "unit",
+        "file": "tests/rector-reporting.test.ts",
+        "title": "daily session chart covers the device's full day, including afternoon and evening connections",
+        "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Regresi laporan rektor yang sudah diimplementasikan."
+    },
+    {
+      "id": "TC-REC-012",
+      "priority": "P0",
+      "role": "Rektor",
+      "module": "Pemantauan Akademik & integrasi rektor",
+      "family": "REC",
+      "title": "Sesi melewati tengah malam tetap dapat ditelusuri",
+      "type": "Fungsional",
+      "section": "Implementasi saat ini",
+      "sourceLine": 1,
+      "sourceDocument": "current",
+      "requirements": [],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Sesi lintas hari dan beberapa hari.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Rektor melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka Pemantauan Akademik melalui menu akun rektor.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Pilih masing-masing tanggal dan periksa rentang.",
+          "expected": "Grafik membagi sesi di batas hari tanpa mengubah waktu login/logout asli."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Grafik membagi sesi di batas hari tanpa mengubah waktu login/logout asli."
+        }
+      ],
+      "expected": "Grafik membagi sesi di batas hari tanpa mengubah waktu login/logout asli.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "unit",
+        "file": "tests/rector-reporting.test.ts",
+        "title": "daily chart splits overnight and multi-day sessions without losing time or altering login/logout evidence",
+        "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Regresi laporan rektor yang sudah diimplementasikan."
+    },
+    {
+      "id": "TC-REC-013",
+      "priority": "P0",
+      "role": "Rektor",
+      "module": "Pemantauan Akademik & integrasi rektor",
+      "family": "REC",
+      "title": "Logout belum tercatat dan data kosong tidak dikarang",
+      "type": "Fungsional",
+      "section": "Implementasi saat ini",
+      "sourceLine": 1,
+      "sourceDocument": "current",
+      "requirements": [],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Sesi tanpa logout, kejadian tepat tengah malam, filter kosong.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Rektor melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka Pemantauan Akademik melalui menu akun rektor.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Lihat grafik dan rincian pada periode tersebut.",
+          "expected": "Ada keterangan belum tercatat; tidak menggambar rentang sampai sekarang tanpa bukti."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Ada keterangan belum tercatat; tidak menggambar rentang sampai sekarang tanpa bukti."
+        }
+      ],
+      "expected": "Ada keterangan belum tercatat; tidak menggambar rentang sampai sekarang tanpa bukti.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "unit",
+        "file": "tests/rector-reporting.test.ts",
+        "title": "daily chart handles exact midnight, unknown logout, and point events without invented continuation",
+        "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Regresi laporan rektor yang sudah diimplementasikan."
+    },
+    {
+      "id": "TC-REC-014",
+      "priority": "P0",
+      "role": "Rektor",
+      "module": "Pemantauan Akademik & integrasi rektor",
+      "family": "REC",
+      "title": "Waktu lokal konsisten pada layar, tanggal dan unduhan",
+      "type": "Fungsional",
+      "section": "Implementasi saat ini",
+      "sourceLine": 1,
+      "sourceDocument": "current",
+      "requirements": [],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Perangkat Asia/Makassar; tanggal dekat tengah malam.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Rektor melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka Pemantauan Akademik melalui menu akun rektor.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Pilih periode, buka ringkasan, detail dan unduh CSV/PDF.",
+          "expected": "Tanggal dan zona sesuai perangkat; zona tidak selalu WIB."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Tanggal dan zona sesuai perangkat; zona tidak selalu WIB."
+        }
+      ],
+      "expected": "Tanggal dan zona sesuai perangkat; zona tidak selalu WIB.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "api",
+        "file": "tests/integration/rector-access.test.ts",
+        "title": "device timezone is consistent across filters, summary, details and exports",
+        "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Regresi laporan rektor yang sudah diimplementasikan."
+    },
+    {
+      "id": "TC-REC-015",
+      "priority": "P0",
+      "role": "Rektor",
+      "module": "Pemantauan Akademik & integrasi rektor",
+      "family": "REC",
+      "title": "CSV seluruh halaman cocok filter dan tidak memuat data mahasiswa",
+      "type": "Fungsional",
+      "section": "Implementasi saat ini",
+      "sourceLine": 1,
+      "sourceDocument": "current",
+      "requirements": [],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Tabel beberapa halaman dan filter kronologi.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Rektor melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka Pemantauan Akademik melalui menu akun rektor.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Unduh tabel lalu hitung seluruh baris.",
+          "expected": "Seluruh baris cocok termasuk halaman lain; tidak ada identitas, nilai individual atau jawaban mahasiswa."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Seluruh baris cocok termasuk halaman lain; tidak ada identitas, nilai individual atau jawaban mahasiswa."
+        }
+      ],
+      "expected": "Seluruh baris cocok termasuk halaman lain; tidak ada identitas, nilai individual atau jawaban mahasiswa.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "unit",
+        "file": "tests/rector-reporting.test.ts",
+        "title": "exports contain all matching rows without student content; chronology filters also affect exports",
+        "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Regresi laporan rektor yang sudah diimplementasikan."
+    },
+    {
+      "id": "TC-REC-016",
+      "priority": "P0",
+      "role": "Rektor",
+      "module": "Pemantauan Akademik & integrasi rektor",
+      "family": "REC",
+      "title": "PDF ringkasan dan rincian lengkap",
+      "type": "Fungsional",
+      "section": "Implementasi saat ini",
+      "sourceLine": 1,
+      "sourceDocument": "current",
+      "requirements": [],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Halaman ringkasan, dosen dan kelas.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Rektor melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka Pemantauan Akademik melalui menu akun rektor.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Unduh laporan pada setiap halaman.",
+          "expected": "PDF valid memuat filter, waktu data, definisi dan label demo saat fixture dipakai."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "PDF valid memuat filter, waktu data, definisi dan label demo saat fixture dipakai."
+        }
+      ],
+      "expected": "PDF valid memuat filter, waktu data, definisi dan label demo saat fixture dipakai.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "unit",
+        "file": "tests/rector-reporting.test.ts",
+        "title": "PDF reports generate complete valid files for overview, lecturer and class",
+        "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Regresi laporan rektor yang sudah diimplementasikan."
+    },
+    {
+      "id": "TC-REC-017",
+      "priority": "P0",
+      "role": "Rektor",
+      "module": "Pemantauan Akademik & integrasi rektor",
+      "family": "REC",
+      "title": "Publikasi, nilai draf dan koreksi tidak tercampur",
+      "type": "Fungsional",
+      "section": "Implementasi saat ini",
+      "sourceLine": 1,
+      "sourceDocument": "current",
+      "requirements": [],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Tugas belum dinilai, draf, publikasi dan koreksi.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Rektor melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka Pemantauan Akademik melalui menu akun rektor.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Periksa progres penilaian dan riwayat pada rincian kelas.",
+          "expected": "Publikasi memakai status sebenarnya; laporan tidak membawa nilai mahasiswa."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Publikasi memakai status sebenarnya; laporan tidak membawa nilai mahasiswa."
+        }
+      ],
+      "expected": "Publikasi memakai status sebenarnya; laporan tidak membawa nilai mahasiswa.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "api",
+        "file": "tests/integration/rector-access.test.ts",
+        "title": "latest submissions, true publication and no student payload",
+        "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Regresi laporan rektor yang sudah diimplementasikan."
+    },
+    {
+      "id": "TC-REC-018",
+      "priority": "P0",
+      "role": "Rektor",
+      "module": "Pemantauan Akademik & integrasi rektor",
+      "family": "REC",
+      "title": "Keluar dan penonaktifan mengakhiri akses laporan",
+      "type": "Fungsional",
+      "section": "Implementasi saat ini",
+      "sourceLine": 1,
+      "sourceDocument": "current",
+      "requirements": [],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Akun rektor aktif lalu dinonaktifkan atau keluar.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Rektor melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka Pemantauan Akademik melalui menu akun rektor.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Panggil ulang API laporan setelah status berubah.",
+          "expected": "Sesi berakhir atau akun dinonaktifkan tidak dapat membaca laporan."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Sesi berakhir atau akun dinonaktifkan tidak dapat membaca laporan."
+        }
+      ],
+      "expected": "Sesi berakhir atau akun dinonaktifkan tidak dapat membaca laporan.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "api",
+        "file": "tests/integration/rector-access.test.ts",
+        "title": "deactivation and logout revoke report access",
+        "scope": "Assertion regresi terpilih; UI tetap perlu diverifikasi manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Regresi laporan rektor yang sudah diimplementasikan."
+    },
+    {
+      "id": "TC-REC-019",
+      "priority": "P1",
+      "role": "Rektor",
+      "module": "Pemantauan Akademik & integrasi rektor",
+      "family": "REC",
+      "title": "Responsif dan teks terbaca",
+      "type": "Fungsional",
+      "section": "Implementasi saat ini",
+      "sourceLine": 1,
+      "sourceDocument": "current",
+      "requirements": [],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Desktop 1440, tablet 820, ponsel 390 piksel.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Rektor melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka Pemantauan Akademik.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Buka Ringkasan, rincian dosen/kelas, filter dan riwayat pada tiap ukuran.",
+          "expected": "Tidak ada konten terpotong; tabel dapat digeser; navigasi dan tombol terbaca."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Tidak ada konten terpotong; tabel dapat digeser; navigasi dan tombol terbaca."
+        }
+      ],
+      "expected": "Tidak ada konten terpotong; tabel dapat digeser; navigasi dan tombol terbaca.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": null,
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Pemeriksaan antarmuka dan laporan rilis saat ini."
+    },
+    {
+      "id": "TC-REC-020",
+      "priority": "P1",
+      "role": "Rektor",
+      "module": "Pemantauan Akademik & integrasi rektor",
+      "family": "REC",
+      "title": "Kesalahan pemuatan dan Coba lagi",
+      "type": "Fungsional",
+      "section": "Implementasi saat ini",
+      "sourceLine": 1,
+      "sourceDocument": "current",
+      "requirements": [],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "API sementara tidak tersedia; sesi kemudian kedaluwarsa.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Rektor melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka Pemantauan Akademik.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Buka laporan, pulihkan API, tekan Coba lagi; uji sesi berakhir.",
+          "expected": "Pesan mudah dipahami; mencoba kembali memulihkan laporan; sesi berakhir meminta masuk dan tidak memicu 401 berulang."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Pesan mudah dipahami; mencoba kembali memulihkan laporan; sesi berakhir meminta masuk dan tidak memicu 401 berulang."
+        }
+      ],
+      "expected": "Pesan mudah dipahami; mencoba kembali memulihkan laporan; sesi berakhir meminta masuk dan tidak memicu 401 berulang.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": null,
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Pemeriksaan antarmuka dan laporan rilis saat ini."
+    },
+    {
+      "id": "TC-REC-021",
+      "priority": "P1",
+      "role": "Rektor",
+      "module": "Pemantauan Akademik & integrasi rektor",
+      "family": "REC",
+      "title": "Tidak ada pembagi dan sumber belum tersedia",
+      "type": "Fungsional",
+      "section": "Implementasi saat ini",
+      "sourceLine": 1,
+      "sourceDocument": "current",
+      "requirements": [],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Filter tanpa pekerjaan; presensi, forum, telekonferensi.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Rektor melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka Pemantauan Akademik.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Baca persentase dan panduan membaca laporan.",
+          "expected": "Belum ada data menggantikan rasio tanpa pembagi; sumber belum tersedia dinyatakan jelas."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Belum ada data menggantikan rasio tanpa pembagi; sumber belum tersedia dinyatakan jelas."
+        }
+      ],
+      "expected": "Belum ada data menggantikan rasio tanpa pembagi; sumber belum tersedia dinyatakan jelas.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": null,
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Pemeriksaan antarmuka dan laporan rilis saat ini."
+    },
+    {
+      "id": "TC-REC-022",
+      "priority": "P1",
+      "role": "Rektor",
+      "module": "Pemantauan Akademik & integrasi rektor",
+      "family": "REC",
+      "title": "PDF terbaca dan pergantian halaman rapi",
+      "type": "Fungsional",
+      "section": "Implementasi saat ini",
+      "sourceLine": 1,
+      "sourceDocument": "current",
+      "requirements": [],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Laporan dengan tabel panjang dari kelas dan dosen.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Rektor melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka Pemantauan Akademik.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Buka seluruh halaman PDF dan bandingkan dengan filter layar.",
+          "expected": "Teks dan tabel terbaca, tidak terpotong; waktu data dan label demo tercetak."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Teks dan tabel terbaca, tidak terpotong; waktu data dan label demo tercetak."
+        }
+      ],
+      "expected": "Teks dan tabel terbaca, tidak terpotong; waktu data dan label demo tercetak.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": null,
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Pemeriksaan antarmuka dan laporan rilis saat ini."
+    },
+    {
+      "id": "TC-HELP-001",
+      "priority": "P1",
+      "role": "Mahasiswa",
+      "module": "Bantuan & panduan sesuai peran",
+      "family": "HELP",
+      "title": "Bantuan membuka panduan HTML pada tab baru sesuai peran",
+      "type": "Fungsional",
+      "section": "Implementasi saat ini",
+      "sourceLine": 1,
+      "sourceDocument": "current",
+      "requirements": [],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Akun Mahasiswa yang sedang masuk; URL tambahan ?role=SUPER_ADMIN.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Mahasiswa melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka Bantuan.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Buka Bantuan lalu klik Buka buku panduan (tab baru). Cari artikel, buka daftar isi, dan cetak pratinjau.",
+          "expected": "Tab baru terbuka tanpa mengganti Bantuan. Hanya petunjuk untuk peran akun tampil; URL tidak mengganti peran. Langkah bernomor tanpa checklist atau kotak centang."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Tab baru terbuka tanpa mengganti Bantuan. Hanya petunjuk untuk peran akun tampil; URL tidak mengganti peran. Langkah bernomor tanpa checklist atau kotak centang."
+        }
+      ],
+      "expected": "Tab baru terbuka tanpa mengganti Bantuan. Hanya petunjuk untuk peran akun tampil; URL tidak mengganti peran. Langkah bernomor tanpa checklist atau kotak centang.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "unit",
+        "file": "tests/standalone-guide.test.ts",
+        "title": "standalone HTML guide follows the session role, ignores role URL overrides and contains no checklist",
+        "scope": "Filter konten dan DOM teruji; pembukaan tab, cetak dan tata letak tetap diperiksa manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Regresi panduan berdasarkan peran."
+    },
+    {
+      "id": "TC-HELP-002",
+      "priority": "P1",
+      "role": "Dosen",
+      "module": "Bantuan & panduan sesuai peran",
+      "family": "HELP",
+      "title": "Bantuan membuka panduan HTML pada tab baru sesuai peran",
+      "type": "Fungsional",
+      "section": "Implementasi saat ini",
+      "sourceLine": 1,
+      "sourceDocument": "current",
+      "requirements": [],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Akun Dosen yang sedang masuk; URL tambahan ?role=SUPER_ADMIN.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Dosen melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka Bantuan.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Buka Bantuan lalu klik Buka buku panduan (tab baru). Cari artikel, buka daftar isi, dan cetak pratinjau.",
+          "expected": "Tab baru terbuka tanpa mengganti Bantuan. Hanya petunjuk untuk peran akun tampil; URL tidak mengganti peran. Langkah bernomor tanpa checklist atau kotak centang."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Tab baru terbuka tanpa mengganti Bantuan. Hanya petunjuk untuk peran akun tampil; URL tidak mengganti peran. Langkah bernomor tanpa checklist atau kotak centang."
+        }
+      ],
+      "expected": "Tab baru terbuka tanpa mengganti Bantuan. Hanya petunjuk untuk peran akun tampil; URL tidak mengganti peran. Langkah bernomor tanpa checklist atau kotak centang.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "unit",
+        "file": "tests/standalone-guide.test.ts",
+        "title": "standalone HTML guide follows the session role, ignores role URL overrides and contains no checklist",
+        "scope": "Filter konten dan DOM teruji; pembukaan tab, cetak dan tata letak tetap diperiksa manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Regresi panduan berdasarkan peran."
+    },
+    {
+      "id": "TC-HELP-003",
+      "priority": "P1",
+      "role": "Admin Prodi",
+      "module": "Bantuan & panduan sesuai peran",
+      "family": "HELP",
+      "title": "Bantuan membuka panduan HTML pada tab baru sesuai peran",
+      "type": "Fungsional",
+      "section": "Implementasi saat ini",
+      "sourceLine": 1,
+      "sourceDocument": "current",
+      "requirements": [],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Akun Admin Prodi yang sedang masuk; URL tambahan ?role=SUPER_ADMIN.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Admin Prodi melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka Bantuan.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Buka Bantuan lalu klik Buka buku panduan (tab baru). Cari artikel, buka daftar isi, dan cetak pratinjau.",
+          "expected": "Tab baru terbuka tanpa mengganti Bantuan. Hanya petunjuk untuk peran akun tampil; URL tidak mengganti peran. Langkah bernomor tanpa checklist atau kotak centang."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Tab baru terbuka tanpa mengganti Bantuan. Hanya petunjuk untuk peran akun tampil; URL tidak mengganti peran. Langkah bernomor tanpa checklist atau kotak centang."
+        }
+      ],
+      "expected": "Tab baru terbuka tanpa mengganti Bantuan. Hanya petunjuk untuk peran akun tampil; URL tidak mengganti peran. Langkah bernomor tanpa checklist atau kotak centang.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "unit",
+        "file": "tests/standalone-guide.test.ts",
+        "title": "standalone HTML guide follows the session role, ignores role URL overrides and contains no checklist",
+        "scope": "Filter konten dan DOM teruji; pembukaan tab, cetak dan tata letak tetap diperiksa manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Regresi panduan berdasarkan peran."
+    },
+    {
+      "id": "TC-HELP-004",
+      "priority": "P1",
+      "role": "Super Admin",
+      "module": "Bantuan & panduan sesuai peran",
+      "family": "HELP",
+      "title": "Bantuan membuka panduan HTML pada tab baru sesuai peran",
+      "type": "Fungsional",
+      "section": "Implementasi saat ini",
+      "sourceLine": 1,
+      "sourceDocument": "current",
+      "requirements": [],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Akun Super Admin yang sedang masuk; URL tambahan ?role=SUPER_ADMIN.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Super Admin melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka Bantuan.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Buka Bantuan lalu klik Buka buku panduan (tab baru). Cari artikel, buka daftar isi, dan cetak pratinjau.",
+          "expected": "Tab baru terbuka tanpa mengganti Bantuan. Hanya petunjuk untuk peran akun tampil; URL tidak mengganti peran. Langkah bernomor tanpa checklist atau kotak centang."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Tab baru terbuka tanpa mengganti Bantuan. Hanya petunjuk untuk peran akun tampil; URL tidak mengganti peran. Langkah bernomor tanpa checklist atau kotak centang."
+        }
+      ],
+      "expected": "Tab baru terbuka tanpa mengganti Bantuan. Hanya petunjuk untuk peran akun tampil; URL tidak mengganti peran. Langkah bernomor tanpa checklist atau kotak centang.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "unit",
+        "file": "tests/standalone-guide.test.ts",
+        "title": "standalone HTML guide follows the session role, ignores role URL overrides and contains no checklist",
+        "scope": "Filter konten dan DOM teruji; pembukaan tab, cetak dan tata letak tetap diperiksa manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Regresi panduan berdasarkan peran."
+    },
+    {
+      "id": "TC-HELP-005",
+      "priority": "P1",
+      "role": "Rektor",
+      "module": "Bantuan & panduan sesuai peran",
+      "family": "HELP",
+      "title": "Bantuan membuka panduan HTML pada tab baru sesuai peran",
+      "type": "Fungsional",
+      "section": "Implementasi saat ini",
+      "sourceLine": 1,
+      "sourceDocument": "current",
+      "requirements": [],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Akun Rektor yang sedang masuk; URL tambahan ?role=SUPER_ADMIN.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Rektor melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka Bantuan.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Buka Bantuan lalu klik Buka buku panduan (tab baru). Cari artikel, buka daftar isi, dan cetak pratinjau.",
+          "expected": "Tab baru terbuka tanpa mengganti Bantuan. Hanya petunjuk untuk peran akun tampil; URL tidak mengganti peran. Langkah bernomor tanpa checklist atau kotak centang."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Tab baru terbuka tanpa mengganti Bantuan. Hanya petunjuk untuk peran akun tampil; URL tidak mengganti peran. Langkah bernomor tanpa checklist atau kotak centang."
+        }
+      ],
+      "expected": "Tab baru terbuka tanpa mengganti Bantuan. Hanya petunjuk untuk peran akun tampil; URL tidak mengganti peran. Langkah bernomor tanpa checklist atau kotak centang.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": {
+        "kind": "unit",
+        "file": "tests/standalone-guide.test.ts",
+        "title": "standalone HTML guide follows the session role, ignores role URL overrides and contains no checklist",
+        "scope": "Filter konten dan DOM teruji; pembukaan tab, cetak dan tata letak tetap diperiksa manual."
+      },
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Regresi panduan berdasarkan peran."
+    },
+    {
+      "id": "TC-HELP-006",
+      "priority": "P1",
+      "role": "Rektor",
+      "module": "Bantuan & panduan sesuai peran",
+      "family": "HELP",
+      "title": "Panduan terlindungi saat belum masuk dan setelah keluar",
+      "type": "Fungsional",
+      "section": "Implementasi saat ini",
+      "sourceLine": 1,
+      "sourceDocument": "current",
+      "requirements": [],
+      "preconditions": [
+        "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+        "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi."
+      ],
+      "data": "Tab panduan terbuka; sesi belum ada atau diakhiri pada tab aplikasi.",
+      "steps": [
+        {
+          "action": "Masuk sebagai Rektor melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.",
+          "expected": "Lingkungan dan identitas uji sesuai peran kasus."
+        },
+        {
+          "action": "Buka /Panduan/panduan.html.",
+          "expected": "Konteks kelas/fitur uji tersedia sesuai hak akses."
+        },
+        {
+          "action": "Buka URL panduan tanpa sesi; masuk lalu keluar dari tab aplikasi, kembali ke tab panduan dan muat ulang.",
+          "expected": "Tanpa sesi pengguna diminta masuk; setelah keluar akses mengikuti sesi aktual, tidak tetap menampilkan petunjuk peran sebelumnya."
+        },
+        {
+          "action": "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "expected": "Tanpa sesi pengguna diminta masuk; setelah keluar akses mengikuti sesi aktual, tidak tetap menampilkan petunjuk peran sebelumnya."
+        }
+      ],
+      "expected": "Tanpa sesi pengguna diminta masuk; setelah keluar akses mengikuti sesi aktual, tidak tetap menampilkan petunjuk peran sebelumnya.",
+      "cleanup": "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "automation": null,
+      "manualReason": "Verifikasi antarmuka dan alur pengguna memerlukan pengujian manual.",
+      "tags": [],
+      "scope": "local",
+      "priorityBasis": "Perilaku autentikasi panduan lintas tab."
     }
   ]
 }

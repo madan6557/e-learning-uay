@@ -72,6 +72,7 @@ const roleShort: Record<string, string> = {
   "Admin Prodi": "AP",
   "Super Admin": "SA",
   "Operator / DevOps": "OP",
+  "Rektor": "R",
 };
 const phaseLabels: Record<string, string> = {
   preparing: t.preparing,
@@ -1555,10 +1556,12 @@ export function App() {
               <div className="detail-source">
                 <span>{selected.id}</span>
                 <span>
-                  v5 §{selected.section} · {selected.module}
+                  {selected.sourceDocument === "current"
+                    ? "Implementasi 7 Oktober 2026"
+                    : `v5 §${selected.section}`} · {selected.module}
                 </span>
                 <a
-                  href={`/source/v5.html#L${selected.sourceLine}`}
+                  href={`/source/${selected.sourceDocument === "current" ? "current" : "v5"}.html#L${selected.sourceLine}`}
                   target="_blank"
                   rel="noreferrer"
                   className="text-link"

@@ -53,6 +53,8 @@ const AssignmentPage = lazy(() =>
   import("./Assessment").then((m) => ({ default: m.AssignmentPage })),
 );
 import { HelpPage } from "./HelpPage";
+import { GuidePage } from "./GuidePage";
+import "./guide.css";
 import { useSessionExpiry } from "./useSessionExpiry";
 import "./styles.css";
 import "./workspace.css";
@@ -777,6 +779,21 @@ function App() {
   const user = identity.data;
   const [route, setRoute] = useState(routeFromLocation);
   useNavigationGuard();
+  useEffect(() => {
+    if (route.split('?')[0] !== '/Panduan/panduan.html') return;
+    // A new tab uses the shared campus cookie. Recheck the account when the
+    // reader returns after logging out or switching accounts in another tab.
+    const refreshIdentity = () => identity.reload();
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') refreshIdentity();
+    };
+    window.addEventListener('focus', refreshIdentity);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('focus', refreshIdentity);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [route]);
 
   const [authErrorNotice, setAuthErrorNotice] = useState<string | null>(() => {
     try {
@@ -830,10 +847,6 @@ function App() {
     if (!user) return;
     if(user.role === 'RECTOR' && route.split('?')[0] === '/dashboard') {
       navigate('/rector', true);
-      return;
-    }
-    if(user.role === 'RECTOR' && route.split('?')[0] === '/help') {
-      navigate('/rector?view=definitions', true);
       return;
     }
     const pending = sessionStorage.getItem("uay-return-path");
@@ -935,6 +948,7 @@ function App() {
   const parsedRoute = new URL(route, location.origin);
   const pathname = parsedRoute.pathname;
   const params = parsedRoute.searchParams;
+  if (pathname === '/Panduan/panduan.html') return <GuidePage user={user} />;
   const [, section, id, itemKind, itemSlug] = pathname.split("/");
   let page;
   if (section === 'rector' && ['RECTOR','SUPER_ADMIN'].includes(user.role))
@@ -988,7 +1002,7 @@ function App() {
   else if (section === "profile")
     page = <Profile user={user} accountUrl={config.data?.accountUrl} />;
   else if (section === "help")
-    page = user.role === 'RECTOR' ? <Loading /> : <HelpPage user={user} />;
+    page = <HelpPage user={user} />;
   else if (
     ["", "dashboard", "classes", "agenda", "grades", "notifications"].includes(
       section,

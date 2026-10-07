@@ -1,0 +1,86 @@
+{
+  "2026.1": {
+    "version": "2026.1",
+    "name": "Standar Akademik UAY 2026/2027",
+    "description": "Skala nilai terstandar UAY aktif (A >= 85, A- >= 80, B+ >= 75)",
+    "bands": [
+      {
+        "minScore": 85,
+        "letter": "A",
+        "point": 4
+      },
+      {
+        "minScore": 80,
+        "letter": "A-",
+        "point": 3.75
+      },
+      {
+        "minScore": 75,
+        "letter": "B+",
+        "point": 3.5
+      },
+      {
+        "minScore": 70,
+        "letter": "B",
+        "point": 3
+      },
+      {
+        "minScore": 65,
+        "letter": "B-",
+        "point": 2.75
+      },
+      {
+        "minScore": 60,
+        "letter": "C+",
+        "point": 2.5
+      },
+      {
+        "minScore": 55,
+        "letter": "C",
+        "point": 2
+      },
+      {
+        "minScore": 45,
+        "letter": "D",
+        "point": 1
+      },
+      {
+        "minScore": 0,
+        "letter": "E",
+        "point": 0
+      }
+    ]
+  },
+  "2024.1": {
+    "version": "2024.1",
+    "name": "Standar Akademik Lama UAY (Sebelum 2026)",
+    "description": "Skala historis periode lama (A >= 80, B >= 70, C >= 60, D >= 50)",
+    "bands": [
+      {
+        "minScore": 80,
+        "letter": "A",
+        "point": 4
+      },
+      {
+        "minScore": 70,
+        "letter": "B",
+        "point": 3
+      },
+      {
+        "minScore": 60,
+        "letter": "C",
+        "point": 2
+      },
+      {
+        "minScore": 50,
+        "letter": "D",
+        "point": 1
+      },
+      {
+        "minScore": 0,
+        "letter": "E",
+        "point": 0
+      }
+    ]
+  }
+}

@@ -9,6 +9,7 @@ export type Case = {
   type: string;
   section: string;
   sourceLine: number;
+  sourceDocument?: "current";
   requirements: string[];
   preconditions: string[];
   data: string;

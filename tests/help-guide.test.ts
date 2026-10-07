@@ -6,14 +6,15 @@ import React, { act, createElement } from "react";
 import { JSDOM } from "jsdom";
 import { helpArticles, helpArticlesForRole, type HelpRole } from "../apps/web/src/data/helpArticles.js";
 
-const tutorialIds = (role: unknown) => helpArticlesForRole(role).filter(article => /^[UMDAS]\d+$/.test(article.id)).map(article => article.id);
+const tutorialIds = (role: unknown) => helpArticlesForRole(role).filter(article => /^[UMDASR]\d+$/.test(article.id)).map(article => article.id);
 const sequence = (prefix: string, count: number) => Array.from({ length: count }, (_, index) => `${prefix}${index + 1}`);
 test("guide exposes only common and assigned tutorials for each account role", () => {
   const common = sequence("U", 3);
   assert.deepEqual(tutorialIds("STUDENT"), [...common, ...sequence("M", 6)]);
   assert.deepEqual(tutorialIds("INSTRUCTOR"), [...common, ...sequence("D", 16), "A3", "A4"]);
   assert.deepEqual(tutorialIds("DEPARTMENT_ADMIN"), [...common, ...sequence("A", 5)]);
-  assert.deepEqual(tutorialIds("SUPER_ADMIN"), [...common, "A2", "A3", "A4", "A5", ...sequence("S", 3)]);
+  assert.deepEqual(tutorialIds("SUPER_ADMIN"), [...common, "A2", "A3", "A4", "A5", ...sequence("S", 3), ...sequence("R", 5)]);
+  assert.deepEqual(tutorialIds("RECTOR"), ["U1", "U3", ...sequence("R", 5)]);
   for (const role of [null, undefined, "UNKNOWN", "student", "__proto__"]) assert.deepEqual(helpArticlesForRole(role), []);
 });
 
@@ -52,10 +53,13 @@ test("help search and article detail contain no checklist and role changes hide 
     });
   };
   try {
-    for (const [role, count] of [["STUDENT", 20], ["INSTRUCTOR", 31], ["DEPARTMENT_ADMIN", 18], ["SUPER_ADMIN", 20]] as const) {
+    for (const [role, count] of [["STUDENT", 20], ["INSTRUCTOR", 31], ["DEPARTMENT_ADMIN", 18], ["SUPER_ADMIN", 25], ["RECTOR", 9]] as const) {
       await render(role);
       assert.match(dom.window.document.body.textContent!, new RegExp(`Menampilkan ${count} panduan`));
       assert.equal(dom.window.document.querySelectorAll('input[type="checkbox"], [data-filter], [data-step]').length, 0);
+      const guideLink = dom.window.document.querySelector<HTMLAnchorElement>('a[href="/Panduan/panduan.html"]')!;
+      assert.equal(guideLink.target, "_blank");
+      assert.equal(guideLink.rel, "noopener noreferrer");
     }
     await render("STUDENT");
     await search("S3");
@@ -67,7 +71,7 @@ test("help search and article detail contain no checklist and role changes hide 
     assert.equal(dom.window.document.querySelectorAll("ol li").length, 5);
     assert.ok(dom.window.document.querySelector(".help-guide-table tbody th"));
     assert.equal(dom.window.document.querySelectorAll('input[type="checkbox"], [data-step]').length, 0);
-    await act(async () => (dom.window.document.querySelector(".button.secondary") as HTMLButtonElement).click());
+    await act(async () => (dom.window.document.querySelector("button.button.secondary") as HTMLButtonElement).click());
     assert.equal(dom.window.document.activeElement, dom.window.document.querySelector(".help-guide-link"));
     await act(async () => (dom.window.document.querySelector(".help-guide-link") as HTMLButtonElement).click());
     await act(async () => (dom.window.document.querySelector(".help-guide-image") as HTMLButtonElement).click());

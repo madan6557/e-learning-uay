@@ -44,9 +44,9 @@ npm audit
 
 Untuk pengujian manual, [panduan pengujian](docs/PANDUAN-PENGUJIAN.md) memuat daftar periksa langkah demi langkah per modul beserta hasil yang diharapkan.
 
-**Portal pengujian interaktif v5:** jalankan `npm run qa`, lalu buka **http://127.0.0.1:5174/**. Katalog 329 kasus disusun **P0/P1/P2 → Role**, dengan langkah, hasil manual, bukti otomatis, ringkasan progres, serta perbandingan hasil. Jalankan `npm run qa:run` atau tombol **Jalankan otomatis** untuk memperbarui bukti. Lihat [panduan portal QA](docs/qa/README.md).
+**Portal pengujian interaktif v5:** jalankan `npm run qa`, lalu buka **http://127.0.0.1:5174/**. Katalog 354 kasus disusun **P0/P1/P2 → Role**, dengan langkah, hasil manual, bukti otomatis, ringkasan progres, serta perbandingan hasil. Jalankan `npm run qa:run` atau tombol **Jalankan otomatis** untuk memperbarui bukti. Lihat [panduan portal QA](docs/qa/README.md).
 
-Menu **Bantuan** memuat tutorial, gambar, dan solusi kendala sesuai role akun, tanpa checklist. [Panduan penggunaan utama](docs/BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md) diekspor dari konten Bantuan dan definisi skala nilai yang sama. Jalankan `npm run docs:guide` setelah memperbarui konten, lalu `npm run docs:guide:check` untuk memastikan dokumen masih sesuai.
+Menu **Bantuan** memuat tutorial, gambar, dan solusi kendala sesuai lima peran akun, termasuk Rektor. Tautan **Buka buku panduan (tab baru)** membuka `/Panduan/panduan.html` dengan isi mengikuti sesi akun dan langkah bernomor tanpa checklist. [Panduan penggunaan utama](docs/BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md) diekspor dari konten Bantuan dan definisi skala nilai yang sama. Jalankan `npm run docs:guide` setelah memperbarui konten, lalu `npm run docs:guide:check` untuk memastikan dokumen masih sesuai.
 
 Panduan 11 blok dan tag teks, prompt AI, serta contoh JSON artikel tersedia pada
 **Panduan & artikel AI** di editor Materi teks/Praktikum. Berkas sumber yang bisa

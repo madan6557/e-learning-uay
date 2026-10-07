@@ -55,6 +55,10 @@ test("hosted demo keeps the browser callback on the frontend origin without prov
       method: "POST",
       headers: {
         Origin: origin,
+        // The socket uses a random local port; production is reached through
+        // the API's reverse proxy. Preserve that public host in this fixture.
+        "X-Forwarded-Host": new URL(apiOrigin).host,
+        "X-Forwarded-Proto": "https",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ demoUserId: id }),
@@ -71,7 +75,11 @@ test("hosted demo keeps the browser callback on the frontend origin without prov
     assert.equal(callback.origin, origin);
     assert.equal(callback.pathname, "/auth/callback");
     const completed = await fetch(base + "/api/v1/auth/callback" + callback.search, {
-      headers: { Cookie: stateCookie },
+      headers: {
+        Cookie: stateCookie,
+        "X-Forwarded-Host": new URL(apiOrigin).host,
+        "X-Forwarded-Proto": "https",
+      },
       redirect: "manual",
     });
     assert.equal(completed.status, 302);

@@ -1,312 +1,108 @@
-# -*- coding: utf-8 -*-
-"""
-Generate beautifully formatted DOCX user guide document for E-Learning UAY with embedded UI screenshots.
-Designed specifically for non-technical users (Lecturers, Students, Campus Admins, Leadership).
+"""Build the user book from the same role guide displayed by E-Learning UAY.
+Use the Codex bundled Python (python-docx), then render with render_docx.py.
 """
 from pathlib import Path
-import re
-import shutil
-import docx
+import argparse, json
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.enum.table import WD_TABLE_ALIGNMENT, WD_CELL_VERTICAL_ALIGNMENT
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
-ROOT = Path(r"E:\UVAYA\Project\E - Learning UAY")
-DOCS_DIR = ROOT / "docs"
-PROJECT_ROOT = Path(r"E:\UVAYA\Project")
-PANDUAN_DIR = PROJECT_ROOT / "Panduan"
-OUT_DOCX = DOCS_DIR / "Buku Panduan Penggunaan E-Learning UAY.docx"
-OUT_ROOT_DOCX = PROJECT_ROOT / "Buku Panduan Penggunaan E-Learning UAY.docx"
+ROOT = Path(__file__).resolve().parents[1]
+LABELS = {'STUDENT':'Mahasiswa','INSTRUCTOR':'Dosen','DEPARTMENT_ADMIN':'Admin Prodi','SUPER_ADMIN':'Super Admin','RECTOR':'Rektor'}
 
-def sanitize_xml(s):
-    if not isinstance(s, str):
-        return ""
-    s = s.replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '"')
-    return re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', s)
+def fill(cell, color):
+    node=OxmlElement('w:shd'); node.set(qn('w:fill'),color); cell._tc.get_or_add_tcPr().append(node)
+def table(doc,headers,rows,widths):
+    t=doc.add_table(rows=1,cols=len(headers));t.alignment=WD_TABLE_ALIGNMENT.CENTER;t.autofit=False
+    for c,w in zip(t.columns,widths):c.width=Inches(w)
+    for i,h in enumerate(headers):t.rows[0].cells[i].text=h
+    repeat=OxmlElement('w:tblHeader');t.rows[0]._tr.get_or_add_trPr().append(repeat)
+    for vals in rows:
+        for c,txt in zip(t.add_row().cells,vals):c.text=str(txt)
+    for ri,row in enumerate(t.rows):
+        no_split=OxmlElement('w:cantSplit');row._tr.get_or_add_trPr().append(no_split)
+        for ci,c in enumerate(row.cells):
+            c.width=Inches(widths[ci]);c.vertical_alignment=WD_CELL_VERTICAL_ALIGNMENT.CENTER
+            pr=c._tc.get_or_add_tcPr();b=OxmlElement('w:tcBorders')
+            for edge in ['top','left','bottom','right']:
+                e=OxmlElement('w:'+edge);e.set(qn('w:val'),'single');e.set(qn('w:sz'),'4');e.set(qn('w:color'),'D9D9D9');b.append(e)
+            pr.append(b);m=OxmlElement('w:tcMar')
+            for edge in ['top','bottom','left','right']:
+                e=OxmlElement('w:'+edge);e.set(qn('w:w'),'110');e.set(qn('w:type'),'dxa');m.append(e)
+            pr.append(m);fill(c,'173E61' if ri==0 else ('F1F5F9' if ri%2 else 'FFFFFF'))
+            for p in c.paragraphs:
+                p.paragraph_format.space_after=Pt(2);p.paragraph_format.line_spacing=1.12
+                for r in p.runs:r.font.size=Pt(10.5);r.font.bold=ri==0;r.font.color.rgb=RGBColor.from_string('FFFFFF' if ri==0 else '000000')
 
-def set_cell_background(cell, fill_hex):
-    tcPr = cell._tc.get_or_add_tcPr()
-    shd = OxmlElement('w:shd')
-    shd.set(qn('w:val'), 'clear')
-    shd.set(qn('w:color'), 'auto')
-    shd.set(qn('w:fill'), fill_hex)
-    tcPr.append(shd)
+def new_heading(doc,title):
+    p=doc.add_heading(title,1);p.paragraph_format.page_break_before=True
 
-def set_cell_margins(cell, top=100, bottom=100, left=150, right=150):
-    tcPr = cell._tc.get_or_add_tcPr()
-    tcMar = OxmlElement('w:tcMar')
-    for m, val in [('top', top), ('bottom', bottom), ('left', left), ('right', right)]:
-        node = OxmlElement(f'w:{m}')
-        node.set(qn('w:w'), str(val))
-        node.set(qn('w:type'), 'dxa')
-        tcMar.append(node)
-    tcPr.append(tcMar)
-
-def create_guide_docx():
-    doc = Document()
-    
-    # Page setup - Margins
-    for section in doc.sections:
-        section.top_margin = Inches(0.9)
-        section.bottom_margin = Inches(0.9)
-        section.left_margin = Inches(0.9)
-        section.right_margin = Inches(0.9)
-        section.header_distance = Inches(0.4)
-        section.footer_distance = Inches(0.4)
-
-    # Color definitions
-    C_PRIMARY = RGBColor(22, 101, 52)      # Deep Emerald Green (#166534)
-    C_SECONDARY = RGBColor(15, 23, 42)     # Dark Slate
-    C_MUTED = RGBColor(100, 116, 139)      # Muted Gray
-    C_TEXT = RGBColor(30, 41, 59)          # Body Slate
-
-    # 1. Cover Page
-    p_inst = doc.add_paragraph()
-    p_inst.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r_inst = p_inst.add_run("UNIVERSITAS ACHMAD YANI (UAY)\nLEMBAGA PENGEMBANGAN TEKNOLOGI INFORMASI & PEMBELAJARAN")
-    r_inst.font.name = "Arial"
-    r_inst.font.size = Pt(11)
-    r_inst.font.bold = True
-    r_inst.font.color.rgb = C_PRIMARY
-
-    doc.add_paragraph("\n" * 2)
-
-    # Official Logo on Cover
-    logo_path = DOCS_DIR / "images" / "uay-logo.png"
-    if logo_path.exists():
-        p_logo = doc.add_paragraph()
-        p_logo.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        r_logo = p_logo.add_run()
-        r_logo.add_picture(str(logo_path), width=Inches(2.0))
-
-    doc.add_paragraph("\n")
-
-    p_title = doc.add_paragraph()
-    p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r_title = p_title.add_run("BUKU PANDUAN PENGGUNAAN RESMI\nE-LEARNING UAY")
-    r_title.font.name = "Arial"
-    r_title.font.size = Pt(24)
-    r_title.font.bold = True
-    r_title.font.color.rgb = C_PRIMARY
-
-    p_sub = doc.add_paragraph()
-    p_sub.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r_sub = p_sub.add_run("Pedoman Operasional Praktis Sistem Pembelajaran Digital Kampus Berbasis Peran\n(Dosen Pengampu · Mahasiswa · Admin Program Studi · Pimpinan)")
-    r_sub.font.name = "Arial"
-    r_sub.font.size = Pt(12)
-    r_sub.font.color.rgb = C_SECONDARY
-
-    doc.add_paragraph("\n" * 3)
-
-    p_meta = doc.add_paragraph()
-    p_meta.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r_meta = p_meta.add_run("Edisi Ramah Pengguna Non-Teknis · Terbit: Oktober 2026\nTahun Akademik 2026/2027 · Alamat Resmi: https://e-learning.uay.ac.id\nBanjarmasin, Kalimantan Selatan")
-    r_meta.font.name = "Arial"
-    r_meta.font.size = Pt(10)
-    r_meta.font.italic = True
-    r_meta.font.color.rgb = C_MUTED
-
-    doc.add_page_break()
-
-    # Parse markdown and add content
-    md_file = DOCS_DIR / "BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md"
-    with open(md_file, "r", encoding="utf-8") as f:
-        lines = f.readlines()
-
-    in_table = False
-    table_rows = []
-
-    def flush_table():
-        nonlocal in_table, table_rows
-        if not table_rows:
-            in_table = False
-            return
-        
-        # Clean rows
-        cleaned = []
-        for r in table_rows:
-            cells = [c.strip() for c in r.strip().strip('|').split('|')]
-            if cells and all(set(c).issubset({'-', ':', ' '}) for c in cells):
-                continue
-            cleaned.append(cells)
-        
-        if not cleaned:
-            in_table = False
-            table_rows = []
-            return
-
-        cols_count = max(len(r) for r in cleaned)
-        table = doc.add_table(rows=len(cleaned), cols=cols_count)
-        table.alignment = WD_TABLE_ALIGNMENT.CENTER
-        
-        for r_idx, r_data in enumerate(cleaned):
-            is_header = (r_idx == 0)
-            row = table.rows[r_idx]
-            for c_idx in range(cols_count):
-                cell = row.cells[c_idx]
-                val = r_data[c_idx] if c_idx < len(r_data) else ""
-                cell.text = sanitize_xml(val.replace("**", "").replace("*", ""))
-                
-                # Styling
-                if is_header:
-                    set_cell_background(cell, "166534")  # Emerald Green
-                    for p in cell.paragraphs:
-                        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                        for run in p.runs:
-                            run.font.bold = True
-                            run.font.color.rgb = RGBColor(255, 255, 255)
-                            run.font.size = Pt(9.5)
-                else:
-                    bg = "F8FAFC" if (r_idx % 2 == 1) else "FFFFFF"
-                    set_cell_background(cell, bg)
-                    for p in cell.paragraphs:
-                        for run in p.runs:
-                            run.font.size = Pt(9)
-                            run.font.color.rgb = C_TEXT
-                set_cell_margins(cell, top=100, bottom=100, left=150, right=150)
-        
-        doc.add_paragraph()  # Spacing after table
-        in_table = False
-        table_rows = []
-
-    skip_front = True
-    for line in lines:
-        stripped = line.strip()
-
-        # Skip markdown cover title line since we created a native cover page
-        if stripped.startswith("# BUKU PANDUAN PENGGUNAAN RESMI"):
-            skip_front = False
-            continue
-        if skip_front:
-            continue
-        if stripped.startswith("**Pedoman Praktis") or stripped.startswith("*Edisi Ramah"):
-            continue
-        if stripped == "---":
-            continue
-
-        # Check table
-        if stripped.startswith("|") and stripped.endswith("|"):
-            in_table = True
-            table_rows.append(stripped)
-            continue
-        elif in_table:
-            flush_table()
-
-        # Image embed: ![Alt](images/filename.png)
-        img_match = re.match(r'!\[(.*?)\]\((.*?)\)', stripped)
-        if img_match:
-            img_rel = img_match.group(2).strip()
-            candidates = [
-                DOCS_DIR / img_rel,
-                PANDUAN_DIR / img_rel,
-                DOCS_DIR / "images" / "tutorial" / Path(img_rel).name,
-                PANDUAN_DIR / "images" / "tutorial" / Path(img_rel).name,
-                DOCS_DIR / "images" / Path(img_rel).name,
-                PANDUAN_DIR / "images" / Path(img_rel).name
-            ]
-            img_file = None
-            for cand in candidates:
-                if cand.exists():
-                    img_file = cand
-                    break
-            if img_file and img_file.exists():
-                p_img = doc.add_paragraph()
-                p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                p_img.paragraph_format.space_before = Pt(8)
-                p_img.paragraph_format.space_after = Pt(4)
-                r_img = p_img.add_run()
-                r_img.add_picture(str(img_file), width=Inches(6.0))
-            continue
-
-        # Image caption: *Gambar X.X: ...*
-        if stripped.startswith("*Gambar ") and stripped.endswith("*"):
-            p_cap = doc.add_paragraph()
-            p_cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            p_cap.paragraph_format.space_after = Pt(10)
-            r_cap = p_cap.add_run(sanitize_xml(stripped.strip("*")))
-            r_cap.font.name = "Arial"
-            r_cap.font.size = Pt(8.5)
-            r_cap.font.italic = True
-            r_cap.font.color.rgb = C_MUTED
-            continue
-
-        # Skip anchor tags
-        if stripped.startswith("<a id=") or stripped.startswith("</a>"):
-            continue
-
-        # Headings
-        if stripped.startswith("# "):
-            h = doc.add_heading(level=1)
-            r = h.add_run(sanitize_xml(stripped[2:]))
-            r.font.name = "Arial"
-            r.font.bold = True
-            r.font.color.rgb = C_PRIMARY
-            h.paragraph_format.space_before = Pt(22)
-            h.paragraph_format.space_after = Pt(8)
-        elif stripped.startswith("## "):
-            h = doc.add_heading(level=1)
-            r = h.add_run(sanitize_xml(stripped[3:]))
-            r.font.name = "Arial"
-            r.font.bold = True
-            r.font.color.rgb = RGBColor(21, 128, 61)
-            h.paragraph_format.space_before = Pt(16)
-            h.paragraph_format.space_after = Pt(6)
-        elif stripped.startswith("### "):
-            h = doc.add_heading(level=2)
-            r = h.add_run(sanitize_xml(stripped[4:]))
-            r.font.name = "Arial"
-            r.font.bold = True
-            r.font.color.rgb = C_SECONDARY
-            h.paragraph_format.space_before = Pt(12)
-            h.paragraph_format.space_after = Pt(4)
-        elif stripped.startswith("#### "):
-            h = doc.add_heading(level=3)
-            r = h.add_run(sanitize_xml(stripped[5:]))
-            r.font.name = "Arial"
-            r.font.bold = True
-            r.font.color.rgb = C_SECONDARY
-            h.paragraph_format.space_before = Pt(8)
-            h.paragraph_format.space_after = Pt(2)
-        elif stripped.startswith("```"):
-            continue
-        elif stripped.startswith("> "):
-            # Callout box
-            p = doc.add_paragraph()
-            p.paragraph_format.left_indent = Inches(0.4)
-            p.paragraph_format.right_indent = Inches(0.2)
-            r = p.add_run(sanitize_xml(stripped[2:]))
-            r.font.italic = True
-            r.font.size = Pt(9.5)
-            r.font.color.rgb = RGBColor(180, 83, 9)  # Amber
-        elif stripped:
-            # Normal paragraph or list
-            p = doc.add_paragraph()
-            if stripped.startswith("- ") or stripped.startswith("* "):
-                p.paragraph_format.left_indent = Inches(0.25)
-                raw_text = stripped[2:]
-            elif stripped[0].isdigit() and len(stripped) > 2 and stripped[1:3] in (". ", ") "):
-                p.paragraph_format.left_indent = Inches(0.25)
-                raw_text = stripped
-            else:
-                raw_text = stripped
-
-            clean_text = sanitize_xml(raw_text.replace("**", "").replace("*", ""))
-            r = p.add_run(clean_text)
-            r.font.name = "Arial"
-            r.font.size = Pt(10)
-            r.font.color.rgb = C_TEXT
-            p.paragraph_format.space_after = Pt(3)
-
-    if in_table:
-        flush_table()
-
-    doc.save(str(OUT_DOCX))
-    shutil.copy2(OUT_DOCX, OUT_ROOT_DOCX)
-    shutil.copy2(OUT_DOCX, PANDUAN_DIR / "Buku Panduan Penggunaan E-Learning UAY.docx")
-    print(f"Formatted DOCX generated: {OUT_DOCX} and copied to {OUT_ROOT_DOCX} & {PANDUAN_DIR}")
-
-if __name__ == "__main__":
-    create_guide_docx()
+def build(output):
+    guide=json.loads((ROOT/'apps/web/src/data/helpGuide.json').read_text(encoding='utf-8'))
+    doc=Document();sec=doc.sections[0];sec.page_width=Inches(8.5);sec.page_height=Inches(11)
+    sec.top_margin=sec.bottom_margin=Inches(.8);sec.left_margin=sec.right_margin=Inches(.85)
+    sec.header_distance=sec.footer_distance=Inches(.35)
+    for name in ['Normal','Title','Subtitle','Heading 1','Heading 2','Heading 3']:
+        st=doc.styles[name];st.font.name='Arial';st.font.color.rgb=RGBColor(0,0,0)
+    st=doc.styles['Normal'];st.font.size=Pt(11.5);st.paragraph_format.space_after=Pt(6);st.paragraph_format.line_spacing=1.14
+    for name,size in [('Title',26),('Heading 1',20),('Heading 2',15),('Heading 3',12.5)]:
+        st=doc.styles[name];st.font.size=Pt(size);st.paragraph_format.keep_with_next=True;st.paragraph_format.space_before=Pt(12);st.paragraph_format.space_after=Pt(8)
+    p=sec.header.paragraphs[0];p.text='E-Learning UAY  |  Panduan penggunaan  |  Edisi 7 Oktober 2026';p.style='Normal'
+    for r in p.runs:r.font.size=Pt(9);r.font.color.rgb=RGBColor(0,0,0)
+    p=sec.footer.paragraphs[0];p.alignment=WD_ALIGN_PARAGRAPH.RIGHT;p.add_run('E-Learning UAY  |  ')
+    field=OxmlElement('w:fldSimple');field.set(qn('w:instr'),'PAGE');p._p.append(field)
+    p=doc.add_paragraph('UNIVERSITAS ACHMAD YANI BANJARMASIN');p.alignment=WD_ALIGN_PARAGRAPH.CENTER
+    logo=ROOT/'docs/images/uay-logo.png'
+    if logo.exists():
+        p=doc.add_paragraph();p.alignment=WD_ALIGN_PARAGRAPH.CENTER;p.add_run().add_picture(str(logo),width=Inches(1.5))
+    doc.add_paragraph('Buku Panduan Penggunaan E Learning UAY',style='Title')
+    doc.add_paragraph('Petunjuk bagi mahasiswa dosen administrator dan rektor',style='Subtitle')
+    doc.add_paragraph('Buku ini menjelaskan penggunaan E-Learning UAY sesuai peran akun, mulai dari masuk dan mengikuti kelas hingga mengelola pembelajaran serta membaca laporan akademik. Gunakan bagian yang sesuai dengan tugas Anda.')
+    doc.add_paragraph('Edisi 7 Oktober 2026\nhttps://e-learning.uay.ac.id\nTahun akademik 2026/2027')
+    doc.add_paragraph('Panduan pada menu Bantuan memakai isi yang sama dengan buku ini. Pilih Buka buku panduan (tab baru) untuk membaca bagian yang mengikuti peran akun Anda. Langkah pada panduan HTML berupa daftar bernomor tanpa kotak centang.')
+    new_heading(doc,'Cara menggunakan buku ini')
+    doc.add_paragraph('Buku mencakup lima peran. Peran ditetapkan pengelola akun kampus; pengguna tidak dapat mengganti kewenangan melalui panduan. Dalam aplikasi, bagian yang tidak sesuai dengan peran tidak ditampilkan.')
+    table(doc,['Peran','Bagian yang digunakan'],[(LABELS[role],', '.join(a['id'] for a in guide['tutorials'] if role in a['roles'])) for role in LABELS],[1.55,5.25])
+    doc.add_paragraph('Tanggal dan jam di aplikasi serta laporan rektor mengikuti zona waktu perangkat. Periksa label zona atau offset, misalnya GMT+8. Mengubah zona tidak mengubah waktu kejadian aslinya. Pastikan pengaturan perangkat benar sebelum memasukkan jadwal.')
+    doc.add_paragraph('Nama, jumlah, dan tanggal pada gambar adalah contoh. Label Demo — data simulasi menandakan lingkungan contoh. Laporan terhubung menggunakan data e-learning yang tersedia pada waktu data terakhir.')
+    doc.add_heading('Daftar tutorial',2)
+    for a in guide['tutorials']:doc.add_paragraph(a['id']+'  '+a['title'])
+    for a in guide['tutorials']:
+        new_heading(doc,a['id']+' '+a['title'].replace('&','dan'))
+        doc.add_paragraph('Peran: '+', '.join(LABELS[r] for r in a['roles']))
+        doc.add_paragraph(a['summary']);doc.add_paragraph('Buka: '+a['location']);doc.add_paragraph('Sebelum mulai: '+a['preparation'])
+        if a['id']=='A4':
+            for note in a['notes']:doc.add_paragraph('Catatan: '+note)
+        doc.add_heading('Langkah penggunaan',2)
+        for i,step in enumerate(a['steps'],1):
+            p=doc.add_paragraph(f'{i}. {step}');p.paragraph_format.left_indent=Inches(.18);p.paragraph_format.first_line_indent=Inches(-.18)
+        doc.add_paragraph('Periksa hasil: '+a['result'])
+        if a.get('figure'):
+            from PIL import Image
+            f=a['figure'];img=ROOT/'apps/web/public'/f['src'].lstrip('/');w,h=Image.open(img).size
+            width=min(6.75,(2.8 if a['id']=='A4' else 3.15)*w/h)
+            p=doc.add_paragraph();p.paragraph_format.keep_with_next=True;p.add_run().add_picture(str(img),width=Inches(width))
+            p=doc.add_paragraph(f['caption']+'. Gambar menggunakan data contoh.');p.paragraph_format.space_after=Pt(10)
+            for r in p.runs:r.font.size=Pt(9.5)
+        doc.add_heading('Pilihan dan tombol',2)
+        table(doc,['Pilihan','Contoh','Kegunaan'],[(c['label'],c['value'],c['effect']) for c in a['controls']],[1.55,1.7,3.55])
+        if a['notes'] and a['id']!='A4':
+            doc.add_heading('Catatan penggunaan',2)
+            for n in a['notes']:doc.add_paragraph(n)
+    new_heading(doc,'Konversi nilai')
+    doc.add_paragraph('Gunakan skala pada kelas. Jumlah bobot kategori harus 100 persen. Nilai akhir yang sudah diterbitkan mempertahankan versi kebijakannya. Pengubahan skala default bukan penghitungan ulang nilai yang telah terbit.')
+    # Canonical scale values exported by the application, not copied from an old slide.
+    scales=json.loads((ROOT/'docs/guide-grade-scales.json').read_text(encoding='utf-8'))
+    for scale in scales.values():
+        doc.add_heading('Skala '+scale['version'],2)
+        table(doc,['Skor minimum','Huruf mutu','Indeks mutu'],[(str(b['minScore']),b['letter'],str(b['point'])) for b in scale['bands']],[2.4,2.2,2.2])
+    new_heading(doc,'Solusi kendala')
+    for a in guide['faqs']:
+        doc.add_heading(a['title'],2);doc.add_paragraph('Peran: '+', '.join(LABELS[r] for r in a['roles']));doc.add_paragraph(a['content'])
+    doc.core_properties.title='Buku Panduan Penggunaan E Learning UAY';doc.core_properties.subject='Petunjuk lima peran sesuai aplikasi pada 7 Oktober 2026';doc.core_properties.author='Universitas Achmad Yani';doc.core_properties.comments='Sumber isi apps/web/src/data/helpGuide.json. Gambar memakai data contoh.'
+    output.parent.mkdir(parents=True,exist_ok=True);doc.save(output);print(output)
+if __name__=='__main__':
+    ap=argparse.ArgumentParser();ap.add_argument('--output',type=Path,default=ROOT/'docs/Buku Panduan Penggunaan E-Learning UAY.docx');args=ap.parse_args();build(args.output)

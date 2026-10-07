@@ -8,6 +8,7 @@ import {
   ListOrdered,
   AlertCircle,
   HelpCircle,
+  ExternalLink,
 } from "lucide-react";
 import { helpArticlesForRole, type HelpArticle, type HelpRole } from "./data/helpArticles.js";
 import { Pagination, usePagination, Modal } from "./lib";
@@ -25,6 +26,7 @@ const roleLabels: Record<HelpRole, string> = {
   INSTRUCTOR: "Dosen Pengampu",
   DEPARTMENT_ADMIN: "Admin Program Studi",
   SUPER_ADMIN: "Super Admin",
+  RECTOR: "Rektor",
 };
 
 function articleText(article: HelpArticle): string {
@@ -121,6 +123,7 @@ export function HelpPage({ user }: { user: { role?: unknown } | null }) {
         <p style={{ color: "var(--muted, #64748b)", marginTop: 6, fontSize: "0.95rem" }}>
           Temukan panduan lengkap pengoperasian fitur E-Learning UAY, tutorial langkah demi langkah, dan solusi kendala belajar.
         </p>
+        {userRole && <a className="button secondary" href="/Panduan/panduan.html" target="_blank" rel="noopener noreferrer"><ExternalLink size={18} /> Buka buku panduan <span>(tab baru)</span></a>}
       </div>
 
       {selectedArticle ? (

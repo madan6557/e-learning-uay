@@ -86,12 +86,17 @@ test("quick demo selection uses the real OIDC callback and rejects bypass", asyn
         body: "{}",
       })
     ).json();
-    assert.equal(
-      (await fetch(logout.logoutUrl, { redirect: "manual" })).headers.get(
-        "location",
-      ),
-      "http://127.0.0.1:5173",
-    );
+    assert.equal(logout.ok, true);
+    // Current logout prefers ending the provider session on the server. A
+    // browser redirect is returned only when that operation is unavailable.
+    if (logout.backchannel) assert.equal(logout.logoutUrl, null);
+    else {
+      assert.equal(typeof logout.logoutUrl, "string");
+      assert.equal(
+        (await fetch(logout.logoutUrl, { redirect: "manual" })).headers.get("location"),
+        "http://127.0.0.1:5173",
+      );
+    }
     assert.equal(
       (await fetch(base + "/api/v1/me", { headers: { Cookie: session } }))
         .status,

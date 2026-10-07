@@ -12,10 +12,13 @@ const labels = {
   DEPARTMENT_ADMIN: "Admin Prodi",
   INSTRUCTOR: "Dosen",
   STUDENT: "Mahasiswa",
+  RECTOR: "Rektor",
 };
 const cell = (value) => value.replaceAll("|", "\\|");
 const lines = [
   "# Panduan penggunaan E-Learning UAY",
+  "",
+  "Edisi 7 Oktober 2026. Mencakup Mahasiswa, Dosen, Admin Prodi, Super Admin, dan Rektor. Buka Bantuan → Buka buku panduan (tab baru) untuk petunjuk yang sesuai dengan peran akun.",
   "",
   "Panduan ini memakai konten yang sama dengan halaman Bantuan. Di aplikasi, panduan yang tampil mengikuti role akun. Nama, angka, dan tanggal pada gambar merupakan contoh.",
   "",
@@ -56,10 +59,7 @@ for (const article of guide.tutorials) {
     "",
     `**Periksa hasil:** ${article.result}`,
     "",
-    `![${article.figure.alt}](images/tutorial/${basename(article.figure.src)})`,
-    "",
-    article.figure.caption,
-    "",
+    ...(article.figure ? [`![${article.figure.alt}](images/tutorial/${basename(article.figure.src)})`, "", article.figure.caption, ""] : []),
     "### Input, pilihan, dan tombol",
     "",
     "| Kontrol di layar | Nilai atau contoh | Fungsi dan akibat |",
@@ -112,6 +112,7 @@ const master = lines.join("\n");
 const alias =
   "# Panduan operasional E-Learning UAY\n\nGunakan [panduan penggunaan utama](BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md) atau menu **Bantuan** di aplikasi. Panduan di aplikasi mengikuti role akun.\n\nDokumen ini merupakan tautan ke sumber utama agar petunjuk tidak memiliki dua salinan yang berbeda.\n";
 const files = {
+  "guide-grade-scales.json": JSON.stringify(GRADE_SCALE_PRESETS, null, 2) + "\n",
   "BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md": master,
   "PANDUAN_OPERASIONAL_PENGGUNA_UAY.md": alias,
 };
@@ -132,7 +133,7 @@ for (const directory of directories) {
     } else writeFileSync(path, content);
   }
   if (!check)
-    for (const article of guide.tutorials)
+    for (const article of guide.tutorials.filter(article => article.figure))
       copyFileSync(
         resolve(root, "apps/web/public", article.figure.src.slice(1)),
         resolve(directory, "images/tutorial", basename(article.figure.src)),

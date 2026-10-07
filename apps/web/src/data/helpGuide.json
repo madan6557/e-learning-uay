@@ -1,8 +1,12 @@
 {
   "source": {
-    "name": "panduan.html",
-    "sha256": "f5c01b61cc12f52a24f5ca79119cb22f7594bde2a6e8622763d05a748ffb2b10",
-    "tutorialCount": 33
+    "name": "Konten Bantuan E-Learning UAY",
+    "originalImport": {
+      "name": "panduan.html",
+      "sha256": "f5c01b61cc12f52a24f5ca79119cb22f7594bde2a6e8622763d05a748ffb2b10"
+    },
+    "tutorialCount": 38,
+    "updatedAt": "2026-10-07"
   },
   "tutorials": [
     {
@@ -14,7 +18,8 @@
         "SUPER_ADMIN",
         "DEPARTMENT_ADMIN",
         "INSTRUCTOR",
-        "STUDENT"
+        "STUDENT",
+        "RECTOR"
       ],
       "keywords": [
         "U1"
@@ -22,10 +27,10 @@
       "location": "Portal E-Learning kemudian Masuk dengan SSO UAY",
       "preparation": "Siapkan identitas dan kata sandi akun SSO kampus. Gunakan alamat portal yang diberikan kampus.",
       "steps": [
-        "Buka portal E-Learning UAY. Klik Masuk SSO di header atau Masuk dengan SSO UAY pada halaman utama.",
+        "Buka portal E-Learning UAY. Klik Masuk dengan SSO UAY pada halaman utama.",
         "Pada halaman SSO kampus, isi identitas akun dan kata sandi. Ikuti verifikasi tambahan jika diminta oleh SSO.",
         "Setelah berhasil, tunggu sampai browser kembali ke Beranda E-Learning. Periksa nama dan role di kanan atas.",
-        "Klik Kelas saya atau Kelola kelas sesuai role Anda. Bila kelas kosong, hubungi bagian akademik prodi untuk memeriksa kepesertaan atau penugasan."
+        "Pilih menu sesuai peran: Kelas saya untuk dosen atau mahasiswa, Kelola kelas untuk administrator, dan Pemantauan Akademik untuk rektor. Bila kelas belum tersedia, hubungi bagian akademik prodi."
       ],
       "result": "Beranda tampil dengan identitas yang benar. Menu sesuai kewenangan akun.",
       "controls": [
@@ -46,7 +51,7 @@
         },
         {
           "label": "Role pada profil",
-          "value": "Mahasiswa, Dosen, Admin prodi, atau Super admin",
+          "value": "Mahasiswa, Dosen, Admin Prodi, Super Admin, atau Rektor",
           "effect": "Ditetapkan SSO. Pengguna tidak memilih atau mengganti role melalui menu E-Learning."
         }
       ],
@@ -165,7 +170,8 @@
         "SUPER_ADMIN",
         "DEPARTMENT_ADMIN",
         "INSTRUCTOR",
-        "STUDENT"
+        "STUDENT",
+        "RECTOR"
       ],
       "keywords": [
         "U3"
@@ -174,8 +180,8 @@
       "preparation": "Sudah masuk dengan akun sendiri.",
       "steps": [
         "Buka Profil. Periksa nama, nomor identitas, role, dan afiliasi program studi. Jika tidak sesuai, hubungi bagian akademik/SSO.",
-        "Buka Notifikasi. Klik pemberitahuan yang relevan untuk membuka kelas atau aktivitas. Gunakan Tandai dibaca atau Tandai semua dibaca bila tersedia.",
-        "Buka Bantuan, ketik kata kunci seperti presensi atau tugas. Pilih artikel sesuai role dan ikuti langkahnya.",
+        "Jika menu Notifikasi tersedia untuk peran Anda, buka pemberitahuan yang relevan. Gunakan Tandai dibaca atau Tandai semua dibaca bila tersedia.",
+        "Buka Bantuan dan cari kata kunci yang sesuai kebutuhan. Pilih artikel atau Buka buku panduan (tab baru). Panduan mengikuti peran akun yang sedang masuk.",
         "Jika kendala berlanjut, catat nama kelas, aktivitas, waktu kejadian, pesan kesalahan, dan Nomor permintaan yang tampil. Sampaikan kepada petugas akademik prodi.",
         "Klik Keluar pada bagian kanan atas setelah selesai. Pastikan halaman publik muncul kembali, terutama pada komputer bersama."
       ],
@@ -198,13 +204,18 @@
         },
         {
           "label": "Tandai semua dibaca",
-          "value": "Tombol pada Notifikasi",
+          "value": "Tombol pada Notifikasi bila menu tersedia",
           "effect": "Mengubah status semua notifikasi menjadi dibaca, bukan menghapus isi aktivitas."
         },
         {
           "label": "Keluar",
           "value": "Tombol",
           "effect": "Mengakhiri sesi E-Learning. Menutup tab saja tidak sama dengan menekan Keluar."
+        },
+        {
+          "label": "Buka buku panduan (tab baru)",
+          "value": "Tautan pada Bantuan",
+          "effect": "Membuka panduan sesuai peran dalam tab baru tanpa kotak centang."
         }
       ],
       "notes": [
@@ -2368,6 +2379,223 @@
         "alt": "Menetapkan kebijakan skala nilai dan ambang hadir dengan penanda merah",
         "caption": "Penanda gambar: 1 Versi; 2 Ambang"
       }
+    },
+    {
+      "id": "R1",
+      "title": "Membuka pemantauan akademik",
+      "summary": "Melihat kondisi akademik universitas melalui satu akun kampus.",
+      "category": "Pemantauan Akademik",
+      "roles": [
+        "RECTOR",
+        "SUPER_ADMIN"
+      ],
+      "keywords": [
+        "rektor",
+        "laporan",
+        "pemantauan",
+        "R1"
+      ],
+      "content": "Melihat kondisi akademik universitas melalui satu akun kampus.",
+      "location": "Pemantauan Akademik",
+      "preparation": "Akun Rektor atau Super Admin telah masuk. Pilih semester dan periode yang hendak dibaca.",
+      "result": "Laporan dan rincian yang tampil mengikuti filter; tidak ada perubahan pada data akademik.",
+      "steps": [
+        "Masuk dengan akun kampus yang memiliki peran Rektor. Pada demo, pilih akun Rektor pada pemilih akun.",
+        "Buka menu Pemantauan Akademik. Halaman Ringkasan menampilkan dosen beraktivitas, pekerjaan belum dinilai, dan nilai yang sudah dibagikan.",
+        "Baca Data terakhir sebagai waktu kondisi data. Waktu Dimuat menunjukkan kapan halaman mengambil data; pemeriksaan dilakukan setiap lima menit.",
+        "Periksa label Demo — data simulasi. Label ini berarti angka merupakan contoh, bukan hasil kegiatan kampus."
+      ],
+      "controls": [
+        {
+          "label": "Pemantauan Akademik",
+          "value": "Menu utama rektor",
+          "effect": "Membuka laporan tanpa mengubah kelas atau nilai."
+        },
+        {
+          "label": "Bantuan",
+          "value": "Buka buku panduan (tab baru)",
+          "effect": "Membuka panduan yang mengikuti peran akun."
+        }
+      ],
+      "notes": [
+        "Akun rektor hanya melihat laporan. Akun ini tidak mengubah materi, peserta, tugas, atau nilai.",
+        "Angka pada demo bersifat simulasi. Pada lingkungan terhubung, laporan berasal dari data e-learning."
+      ]
+    },
+    {
+      "id": "R2",
+      "title": "Memilih periode dan membaca ringkasan",
+      "summary": "Membandingkan kegiatan dalam periode dengan kondisi kelas saat data terakhir diperbarui.",
+      "category": "Pemantauan Akademik",
+      "roles": [
+        "RECTOR",
+        "SUPER_ADMIN"
+      ],
+      "keywords": [
+        "rektor",
+        "laporan",
+        "pemantauan",
+        "R2"
+      ],
+      "content": "Membandingkan kegiatan dalam periode dengan kondisi kelas saat data terakhir diperbarui.",
+      "location": "Pemantauan Akademik",
+      "preparation": "Akun Rektor atau Super Admin telah masuk. Pilih semester dan periode yang hendak dibaca.",
+      "result": "Laporan dan rincian yang tampil mengikuti filter; tidak ada perubahan pada data akademik.",
+      "steps": [
+        "Pilih Ubah filter, lalu tentukan semester, tanggal awal dan akhir, program studi, dosen, atau kelas.",
+        "Gunakan periode yang sama saat membandingkan laporan. Pilihan filter tersimpan pada alamat halaman.",
+        "Lihat jumlah dosen beraktivitas dan rekap program studi. Klik Lihat dosen & kelas untuk menelusuri rinciannya.",
+        "Baca pekerjaan belum dinilai dan nilai sudah dibagikan sebagai kondisi kelas pada Data terakhir, bukan tambahan kegiatan pada setiap muat ulang."
+      ],
+      "controls": [
+        {
+          "label": "Ubah filter",
+          "value": "Semester, periode, prodi, dosen, kelas",
+          "effect": "Membatasi laporan dan unduhan dengan pilihan yang sama."
+        },
+        {
+          "label": "Reset filter",
+          "value": "Pilihan awal laporan",
+          "effect": "Mengembalikan cakupan laporan."
+        }
+      ],
+      "notes": [
+        "Masuk akun, membuka kelas, dan kegiatan akademik adalah tiga hal berbeda. Membuka kelas saja belum membuktikan pelaksanaan perkuliahan.",
+        "Jika belum ada pekerjaan yang menjadi dasar persentase, tampilan menyebut Belum ada data. Tidak ada skor atau peringkat kinerja otomatis."
+      ]
+    },
+    {
+      "id": "R3",
+      "title": "Menelusuri dosen dan kelas",
+      "summary": "Mengetahui kegiatan yang dilakukan dosen serta pekerjaan penilaian pada kelasnya.",
+      "category": "Pemantauan Akademik",
+      "roles": [
+        "RECTOR",
+        "SUPER_ADMIN"
+      ],
+      "keywords": [
+        "rektor",
+        "laporan",
+        "pemantauan",
+        "R3"
+      ],
+      "content": "Mengetahui kegiatan yang dilakukan dosen serta pekerjaan penilaian pada kelasnya.",
+      "location": "Pemantauan Akademik",
+      "preparation": "Akun Rektor atau Super Admin telah masuk. Pilih semester dan periode yang hendak dibaca.",
+      "result": "Laporan dan rincian yang tampil mengikuti filter; tidak ada perubahan pada data akademik.",
+      "steps": [
+        "Buka Dosen & kelas. Cari nama dosen atau persempit pilihan program studi.",
+        "Pilih nama dosen untuk membaca kegiatan, kelas yang diampu, dan kontribusinya pada setiap kelas.",
+        "Buka kelas untuk memeriksa pertemuan, materi, tugas, kuis, dan perkembangan penilaian.",
+        "Pisahkan pekerjaan belum dinilai, nilai draf, nilai yang sudah dibagikan, dan riwayat koreksi. Perhatikan umur antrean yang ditampilkan."
+      ],
+      "controls": [
+        {
+          "label": "Nama dosen",
+          "value": "Dosen yang dipilih",
+          "effect": "Membuka rincian kegiatan pelaku tersebut."
+        },
+        {
+          "label": "Nama kelas",
+          "value": "Kelas yang dipilih",
+          "effect": "Membuka kondisi kelas dan pekerjaan penilaian."
+        }
+      ],
+      "notes": [
+        "Pada kelas dengan beberapa pengampu, kegiatan dicatat atas nama pelakunya. Antrean penilaian adalah pekerjaan kelas dan tidak dijumlahkan berulang untuk setiap pengampu.",
+        "Penilaian otomatis kuis dibedakan dari penilaian manual dosen. Kiriman tugas yang sudah digantikan tidak dihitung kembali sebagai pekerjaan menunggu penilaian.",
+        "Identitas mahasiswa, nilai individual, jawaban, dan isi umpan balik mahasiswa tidak ditampilkan dalam laporan rektor."
+      ]
+    },
+    {
+      "id": "R4",
+      "title": "Membaca riwayat kegiatan dan rentang masuk",
+      "summary": "Menelusuri urutan kegiatan serta waktu masuk dan keluar yang tercatat.",
+      "category": "Pemantauan Akademik",
+      "roles": [
+        "RECTOR",
+        "SUPER_ADMIN"
+      ],
+      "keywords": [
+        "rektor",
+        "laporan",
+        "pemantauan",
+        "R4"
+      ],
+      "content": "Menelusuri urutan kegiatan serta waktu masuk dan keluar yang tercatat.",
+      "location": "Pemantauan Akademik",
+      "preparation": "Akun Rektor atau Super Admin telah masuk. Pilih semester dan periode yang hendak dibaca.",
+      "result": "Laporan dan rincian yang tampil mengikuti filter; tidak ada perubahan pada data akademik.",
+      "steps": [
+        "Buka Riwayat kegiatan atau riwayat pada rincian dosen. Pilih dosen dan tanggal yang ingin dilihat.",
+        "Baca grafik harian dari 00.00 sampai 24.00 sesuai zona waktu perangkat. Kegiatan malam dan sesi yang melewati tengah malam tetap ditampilkan.",
+        "Perhatikan rentang masuk sampai keluar yang tercatat. Jika waktu keluar tidak tercatat, gunakan keterangan tersebut; jangan menganggap sesi berlangsung hingga saat ini.",
+        "Pilih baris kegiatan untuk melihat waktu, tindakan, objek, kelas, dan pelakunya. Pisahkan kegiatan dosen, administrator, serta proses otomatis."
+      ],
+      "controls": [
+        {
+          "label": "Grafik harian",
+          "value": "00.00–24.00, waktu lokal",
+          "effect": "Memperlihatkan kapan sesi dan kegiatan tercatat pada hari tersebut."
+        },
+        {
+          "label": "Riwayat kegiatan",
+          "value": "Baris kegiatan dan rentang waktunya",
+          "effect": "Membantu menelusuri urutan tindakan tanpa mengubah data."
+        }
+      ],
+      "notes": [
+        "Rentang masuk bukan durasi bekerja atau durasi mengajar. Waktu pengerjaan yang ditampilkan hanya berasal dari awal dan akhir tindakan yang tercatat.",
+        "Lima perubahan pada satu materi adalah lima tindakan pada satu materi. Memperbarui halaman tidak menciptakan kegiatan baru.",
+        "Laporan ini belum menyediakan presensi, forum diskusi, atau kehadiran telekonferensi."
+      ]
+    },
+    {
+      "id": "R5",
+      "title": "Mengunduh laporan dan memahami kendala",
+      "summary": "Menyimpan laporan sesuai pilihan filter dan menangani pemuatan yang gagal.",
+      "category": "Pemantauan Akademik",
+      "roles": [
+        "RECTOR",
+        "SUPER_ADMIN"
+      ],
+      "keywords": [
+        "rektor",
+        "laporan",
+        "pemantauan",
+        "R5"
+      ],
+      "content": "Menyimpan laporan sesuai pilihan filter dan menangani pemuatan yang gagal.",
+      "location": "Pemantauan Akademik",
+      "preparation": "Akun Rektor atau Super Admin telah masuk. Pilih semester dan periode yang hendak dibaca.",
+      "result": "Laporan dan rincian yang tampil mengikuti filter; tidak ada perubahan pada data akademik.",
+      "steps": [
+        "Tentukan filter sebelum mengunduh. Dari Ringkasan, daftar dosen, atau rincian yang dibuka, pilih Unduh tabel atau Unduh laporan.",
+        "Unduh tabel menghasilkan CSV berisi seluruh baris yang cocok, termasuk baris pada halaman tabel lainnya.",
+        "Unduh laporan menghasilkan PDF dengan ringkasan atau rincian halaman, filter, cara membaca indikator, waktu data, dan label demo bila digunakan.",
+        "Jika data gagal dimuat, gunakan Coba lagi. Jika sesi masuk berakhir, masuk kembali melalui akun kampus. Untuk meminta perubahan peran, hubungi pengelola akun kampus."
+      ],
+      "controls": [
+        {
+          "label": "Unduh tabel",
+          "value": "CSV",
+          "effect": "Menyimpan seluruh baris yang cocok dengan filter."
+        },
+        {
+          "label": "Unduh laporan",
+          "value": "PDF",
+          "effect": "Menyimpan laporan dari tampilan yang sedang dibuka."
+        },
+        {
+          "label": "Coba lagi",
+          "value": "Saat pemuatan gagal",
+          "effect": "Mengambil ulang data tanpa mengubah aktivitas akademik."
+        }
+      ],
+      "notes": [
+        "Tanggal dan jam pada layar serta laporan mengikuti zona waktu perangkat; periksa label zona atau offset yang tercetak.",
+        "Laporan adalah alat pertimbangan rektor. Angka kegiatan tidak menjadi penilaian otomatis atas kualitas pembelajaran."
+      ]
     }
   ],
   "faqs": [
@@ -2515,7 +2743,8 @@
         "SUPER_ADMIN",
         "DEPARTMENT_ADMIN",
         "INSTRUCTOR",
-        "STUDENT"
+        "STUDENT",
+        "RECTOR"
       ],
       "keywords": [],
       "content": "Klik Muat ulang bagian ini atau buka kembali halaman. Bila tetap gagal, catat pesan dan Nomor permintaan jika ada untuk bantuan prodi."
@@ -2529,7 +2758,8 @@
         "SUPER_ADMIN",
         "DEPARTMENT_ADMIN",
         "INSTRUCTOR",
-        "STUDENT"
+        "STUDENT",
+        "RECTOR"
       ],
       "keywords": [],
       "content": "Sesuaikan zona waktu perangkat. Seluruh tanggal-jam mengikuti zona perangkat dan menampilkan offset sebenarnya. Jadwal tetap mengacu pada timestamp UTC yang sama."
