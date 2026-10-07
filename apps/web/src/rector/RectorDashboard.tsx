@@ -995,7 +995,9 @@ function Overview({
                     />
                   </div>
                   <small>
-                    {i === 0 || i === s.daily.length - 1 || i % 7 === 0
+                    {i === 0 ||
+                    i === s.daily.length - 1 ||
+                    (i % 7 === 0 && s.daily.length - 1 - i >= 5)
                       ? shortDay(d.date)
                       : ""}
                   </small>

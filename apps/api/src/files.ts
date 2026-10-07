@@ -202,8 +202,9 @@ export async function uayUpload(params: {
   );
   ensure(res.ok, 502, "FILE_SERVICE_REJECTED");
   const uploaded = await serviceJson(res);
-  ensure(typeof uploaded.id === "string", 502, "FILE_SERVICE_INVALID_RESPONSE");
-  return uploaded;
+  const fileId = uploaded.fileId || uploaded.id;
+  ensure(typeof fileId === "string", 502, "FILE_SERVICE_INVALID_RESPONSE");
+  return { ...uploaded, id: fileId, fileId };
 }
 
 export async function uayGetMetadata(
@@ -631,8 +632,9 @@ async function handleBinaryUpload(id: string, req: any, res: any) {
         actorId: fileRef.ownerId,
         requestId: req.context?.requestId,
       });
-      if (uayRes?.id) {
-        await setRemoteFileId(id, uayRes.id);
+      const remoteId = uayRes?.fileId || uayRes?.id;
+      if (remoteId) {
+        await setRemoteFileId(id, remoteId);
       } else {
         ensure(false, 502, "FILE_SERVICE_INVALID_RESPONSE");
       }
