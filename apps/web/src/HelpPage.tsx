@@ -123,7 +123,7 @@ export function HelpPage({ user }: { user: { role?: unknown } | null }) {
         <p style={{ color: "var(--muted, #64748b)", marginTop: 6, fontSize: "0.95rem" }}>
           Temukan panduan lengkap pengoperasian fitur E-Learning UAY, tutorial langkah demi langkah, dan solusi kendala belajar.
         </p>
-        {userRole && <a className="button secondary" href="/Panduan/panduan.html" target="_blank" rel="noopener noreferrer"><ExternalLink size={18} /> Buka buku panduan <span>(tab baru)</span></a>}
+        {userRole && <a className="button secondary" href="/Panduan/panduan.html" target="_blank" rel="noopener noreferrer"><ExternalLink size={18} /> Buka buku panduan</a>}
       </div>
 
       {selectedArticle ? (
