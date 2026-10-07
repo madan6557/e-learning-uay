@@ -1088,10 +1088,18 @@ function App() {
 const hot = (import.meta as any).hot;
 const root = hot?.data.root ?? createRoot(document.getElementById("root")!);
 if (hot) hot.data.root = root;
+
+// Vercel Analytics hanya diaktifkan jika aplikasi berjalan di domain Vercel
+const isVercel =
+  typeof window !== "undefined" &&
+  (window.location.hostname.endsWith(".vercel.app") ||
+    window.location.hostname === "vercel.app" ||
+    Boolean((import.meta.env as any).VITE_VERCEL_ENV));
+
 root.render(
   <>
     <ConfirmationHost />
     <App />
-    <Analytics />
+    {isVercel && <Analytics />}
   </>,
 );
