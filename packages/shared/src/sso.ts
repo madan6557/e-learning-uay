@@ -36,8 +36,8 @@ export type IdentifierType = (typeof IDENTIFIER_TYPES)[number];
 /** Role names registered for this application in SSO `roles`. */
 export const APPLICATION_ROLES = [
   "SUPER_ADMIN",
-  "DEPARTMENT_ADMIN",
   "RECTOR",
+  "DEPARTMENT_ADMIN",
   "INSTRUCTOR",
   "STUDENT",
 ] as const;

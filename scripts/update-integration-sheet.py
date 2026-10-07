@@ -32,7 +32,7 @@ replace(doc[1], (47,641,290,771),
     'STUDENT: Mahasiswa peserta perkuliahan.\n'
     'Permintaan akun dan batas akses rektor: halaman 9-10.', 8.5)
 replace(doc[7], (228,178,446,220),
-    'Jika beberapa role diberikan, urutan: SUPER_ADMIN > DEPARTMENT_ADMIN > RECTOR > INSTRUCTOR > STUDENT. Akun rektor hanya diberi RECTOR.', 8)
+    'Jika beberapa role diberikan, urutan: SUPER_ADMIN > RECTOR > DEPARTMENT_ADMIN > INSTRUCTOR > STUDENT. Akun rektor hanya diberi RECTOR.', 8)
 
 styles=getSampleStyleSheet()
 styles.add(ParagraphStyle(name='BodyUAY',fontName='Helvetica',fontSize=10.5,leading=15,textColor=HexColor('#273747'),spaceAfter=8))

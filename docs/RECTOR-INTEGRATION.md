@@ -18,7 +18,7 @@ Data demo deterministik memuat 12 dosen fiktif, empat program studi, 24 kelas, d
 - Terapkan migrasi `20261006090000_rector_role` melalui `npm run db:migrate`, lalu build aplikasi.
 - Gunakan konfigurasi SSO kampus yang sudah berlaku, `AUTH_MODE=oidc`, dan `DEMO_MODE=false`. Jangan memakai provider demonstrasi untuk layanan kampus.
 - Permintaan akun dan batas hak akses ditambahkan pada lembar data integrasi versi 1.1, halaman 9–10. Identitas akun resmi tetap harus diisi oleh pihak kampus.
-- Bila seseorang memiliki beberapa role, urutan pemilihan adalah `SUPER_ADMIN`, `DEPARTMENT_ADMIN`, `RECTOR`, `INSTRUCTOR`, `STUDENT`. Berikan hanya `RECTOR` pada akun yang khusus untuk pemantauan.
+- Bila seseorang memiliki beberapa role, urutan pemilihan adalah `SUPER_ADMIN`, `RECTOR`, `DEPARTMENT_ADMIN`, `INSTRUCTOR`, `STUDENT`. Berikan hanya `RECTOR` pada akun yang khusus untuk pemantauan.
 
 ## Hak akses dan data
 

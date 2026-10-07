@@ -14,6 +14,8 @@ test('rector identity is a separate read-only role, including Indonesian alias',
   const rector=identityClaims.parse({...base,roles:['RECTOR']});
   assert.equal(rector.role,'RECTOR');assert.equal(rector.userType,'STAFF');
   assert.equal(identityClaims.parse({...base,roles:['INSTRUCTOR','RECTOR']}).role,'RECTOR');
+  assert.equal(identityClaims.parse({...base,roles:['DEPARTMENT_ADMIN','RECTOR']}).role,'RECTOR');
+  assert.equal(identityClaims.parse({...base,roles:['STAFF','RECTOR']}).role,'RECTOR');
   assert.equal(identityClaims.parse({...base,roles:['RECTOR','SUPER_ADMIN']}).role,'SUPER_ADMIN');
 });
 

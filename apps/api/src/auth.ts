@@ -387,7 +387,7 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
   const claims: any = { ...rawClaims };
 
   // 1. Gather all possible role strings from token
-  const candidateRoles: string[] = [
+  const explicitRoles: string[] = [
     ...(Array.isArray(claims.roles) ? claims.roles : []),
     ...(typeof claims.roles === "string" ? claims.roles.split(/[,\s]+/) : []),
     ...(typeof claims.role === "string" ? [claims.role] : []),
@@ -400,18 +400,30 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
     ...(Array.isArray((rawClaims as any).groups)
       ? (rawClaims as any).groups
       : []),
-    ...(rawClaims.user_type === "ADMIN"
-      ? ["SUPER_ADMIN"]
-      : rawClaims.user_type === "LECTURER"
-        ? ["INSTRUCTOR"]
-        : rawClaims.user_type === "STAFF"
-          ? ["DEPARTMENT_ADMIN"]
-          : []),
     ...(Array.isArray((rawClaims as any).attributes?.roles)
       ? (rawClaims as any).attributes.roles
       : []),
     ...(typeof (rawClaims as any).attributes?.role === "string"
       ? [(rawClaims as any).attributes.role]
+      : []),
+  ];
+
+  const hasExplicitRole = explicitRoles.some(
+    (r) => normalizeRole(String(r)) !== null,
+  );
+
+  const candidateRoles: string[] = [
+    ...explicitRoles,
+    ...(!hasExplicitRole
+      ? rawClaims.user_type === "ADMIN"
+        ? ["SUPER_ADMIN"]
+        : rawClaims.user_type === "LECTURER"
+          ? ["INSTRUCTOR"]
+          : rawClaims.user_type === "STAFF"
+            ? ["DEPARTMENT_ADMIN"]
+            : rawClaims.user_type === "STUDENT"
+              ? ["STUDENT"]
+              : []
       : []),
   ];
 

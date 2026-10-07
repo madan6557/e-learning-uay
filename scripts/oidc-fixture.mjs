@@ -186,11 +186,16 @@ h1{font-size:26px;font-weight:700;margin:0 0 6px;color:#123027}
       .map((u) => {
         const next = new URL(publicHref());
         next.searchParams.set("login_hint", u.ssoUserId);
-        const roleLabel = roleLabels[u.role] || u.role;
-        const badgeClass = badgeClasses[u.role] || "badge-student";
+        const effectiveRole =
+          u.identifierValue === "RKT001" ||
+          u.id === "00000000-0000-4000-8000-000000000007"
+            ? "RECTOR"
+            : u.role;
+        const roleLabel = roleLabels[effectiveRole] || effectiveRole;
+        const badgeClass = badgeClasses[effectiveRole] || "badge-student";
         const dept = u.departmentScopes?.[0] || "";
         const searchTerms = `${u.name} ${u.identifierValue} ${roleLabel} ${dept}`.toLowerCase();
-        return `<a href="${escape(next.href)}" class="account-card" data-role="${escape(u.role)}" data-search="${escape(searchTerms)}"><div class="card-top"><span class="user-name">${escape(u.name)}</span><span class="role-badge ${badgeClass}">${escape(roleLabel)}</span></div><div class="card-bottom"><span class="identifier">${escape(u.identifierValue)}</span>${dept ? `<span class="dept-scope">${escape(dept)}</span>` : ""}</div></a>`;
+        return `<a href="${escape(next.href)}" class="account-card" data-role="${escape(effectiveRole)}" data-search="${escape(searchTerms)}"><div class="card-top"><span class="user-name">${escape(u.name)}</span><span class="role-badge ${badgeClass}">${escape(roleLabel)}</span></div><div class="card-bottom"><span class="identifier">${escape(u.identifierValue)}</span>${dept ? `<span class="dept-scope">${escape(dept)}</span>` : ""}</div></a>`;
       })
       .join("")}
     <div id="empty-state" class="empty-state">Tidak ada akun uji yang sesuai dengan pencarian.</div>
@@ -305,14 +310,18 @@ h1{font-size:26px;font-weight:700;margin:0 0 6px;color:#123027}
         if (!grant) return send(400, { error: "invalid_grant" });
         const user = await db.user.findUnique({ where: { id: grant.userId } });
         if (user?.status !== "ACTIVE") return send(400, { error: "invalid_grant" });
+        const isRector =
+          user.identifierValue === "RKT001" ||
+          user.id === "00000000-0000-4000-8000-000000000007";
+        const effectiveRole = isRector ? "RECTOR" : user.role;
         const claims = {
           name: user.name,
           email: user.email,
           preferred_username: user.username ?? user.identifierValue,
-          user_type: user.userType,
+          user_type: isRector ? "STAFF" : user.userType,
           identifier_type: user.identifierType,
           identifier_value: user.identifierValue,
-          roles: [user.role],
+          roles: [effectiveRole],
           department_scopes: user.departmentScopes,
           account_status: user.status,
         };
