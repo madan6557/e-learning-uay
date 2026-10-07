@@ -12,6 +12,8 @@ export type ActivityCategory =
   | "PENGUMUMAN"
   | "KELAS";
 export interface ReportFilters {
+  /** Browser IANA timezone, shared by date filters, daily totals and exports. */
+  timeZone?: string;
   semester?: string;
   from?: string;
   to?: string;
@@ -24,6 +26,7 @@ export interface ReportFilters {
   sessionId?: string;
 }
 export interface SnapshotMeta {
+  timeZone: string;
   demo: boolean;
   snapshotAt: string;
   responseAt: string;

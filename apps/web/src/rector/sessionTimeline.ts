@@ -1,15 +1,14 @@
 import type { LoginSession } from "../../../../packages/shared/src/rector.js";
+import { localDateInput, shiftCalendarDay } from "../../../../packages/shared/src/time.js";
 
 const DAY = 86400000;
-const wibDay = (time: number) =>
-  new Date(time + 7 * 3600000).toISOString().slice(0, 10);
-
 export function dayWindow(day: string) {
-  const start = Date.parse(`${day}T00:00:00+07:00`);
-  return { start, end: start + DAY };
+  const start = Date.parse(`${day}T00:00:00`);
+  const end = Date.parse(`${shiftCalendarDay(day, 1)}T00:00:00`);
+  return { start, end };
 }
 
-/** Clip connection evidence to one WIB day without changing recorded times. */
+/** Clip connection evidence to one device-local day without changing recorded times. */
 export function dailySessionSegments(sessions: LoginSession[], day: string) {
   const { start, end } = dayWindow(day);
   return sessions
@@ -65,11 +64,11 @@ export function sessionChartCalendar(
       Date.parse(s.logoutAt ?? s.lastObservedAt),
     ])
     .filter(Number.isFinite);
-  const first = from ?? (times.length ? wibDay(Math.min(...times)) : "");
-  const last = to ?? (times.length ? wibDay(Math.max(...times)) : "");
+  const first = from ?? (times.length ? localDateInput(Math.min(...times)) : "");
+  const last = to ?? (times.length ? localDateInput(Math.max(...times)) : "");
   if (!first || !last) return { days: [], defaultDay: "" };
-  const start = dayWindow(first).start;
-  const end = dayWindow(last).start;
+  const start = Date.parse(`${first}T00:00:00Z`);
+  const end = Date.parse(`${last}T00:00:00Z`);
   if (
     !Number.isFinite(start) ||
     !Number.isFinite(end) ||
@@ -78,7 +77,7 @@ export function sessionChartCalendar(
   )
     return { days: [], defaultDay: "" };
   const days: string[] = [];
-  for (let time = end; time >= start; time -= DAY) days.push(wibDay(time));
+  for (let time = end; time >= start; time -= DAY) days.push(new Date(time).toISOString().slice(0, 10));
   return {
     days,
     defaultDay:

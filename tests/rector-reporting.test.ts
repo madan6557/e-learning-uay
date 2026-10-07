@@ -30,7 +30,11 @@ import type {
   ReportFilters,
 } from "../packages/shared/src/rector.js";
 const source = new FixtureDataSource();
+// Existing fixture assertions use its original Jakarta calendar. Other device
+// zones are tested in separate processes by rector-time-ui.test.ts.
+process.env.TZ = "Asia/Jakarta";
 const f: ReportFilters = {
+  timeZone: "Asia/Jakarta",
   semester: "2026/2027 Ganjil",
   from: "2026-09-01",
   to: "2026-10-02",
@@ -164,23 +168,41 @@ test("latest submissions exclude superseded work and automatic grading has its o
   assert.equal(gradingMetrics([], s.snapshotAt).percentage, null);
   assert.equal(gradingMetrics([], s.snapshotAt).oldestPendingDays, null);
 });
-test("dates use WIB boundaries and active days use local dates", async () => {
+test("dates use the requested timezone for filtering, daily totals and active days", async () => {
   const s = await source.readSnapshot();
   const template = s.activities.find((a) => a.category === "LOGIN")!;
   s.activities = [
-    { ...template, id: "boundary-1", at: "2026-09-30T16:59:59.000Z" },
-    { ...template, id: "boundary-2", at: "2026-09-30T17:00:00.000Z" },
+    { ...template, category: "MATERI", id: "boundary-1", at: "2026-09-30T15:59:59.000Z" },
+    { ...template, category: "MATERI", id: "boundary-2", at: "2026-09-30T16:00:00.000Z" },
+    { ...template, category: "MATERI", id: "boundary-3", at: "2026-09-30T16:59:59.000Z" },
+    { ...template, category: "MATERI", id: "boundary-4", at: "2026-09-30T17:00:00.000Z" },
   ];
   assert.equal(
     selectReport(s, { ...f, from: "2026-09-30", to: "2026-09-30" }).activities
       .length,
-    1,
+    3,
   );
   assert.equal(
     selectReport(s, { ...f, from: "2026-10-01", to: "2026-10-01" }).activities
       .length,
     1,
   );
+  const localFilters = { ...f, timeZone: "Asia/Makassar", from: "2026-10-01", to: "2026-10-01" };
+  const local = summary(s, localFilters);
+  assert.equal(local.activity.academicActions, 3);
+  assert.equal(local.daily[0].date, "2026-10-01");
+  assert.equal(local.daily[0].academic, 3);
+  assert.equal(lecturerDetail(s, localFilters, template.actorId)!.activities.length, 3);
+  const csv = csvReport(s, localFilters, "activities");
+  assert.ok(csv.includes("Asia/Makassar"));
+  assert.ok(csv.includes("00.00 GMT+8"));
+  assert.ok(!csv.includes("30 Sep 2026"));
+  assert.equal(activityMetrics(s.activities.slice(0, 2), "Asia/Jakarta").activeDays, 1);
+  assert.equal(activityMetrics(s.activities.slice(0, 2), "Asia/Makassar").activeDays, 2);
+  s.snapshotAt = "2026-09-30T16:30:00.000Z";
+  assert.equal(options(s, "Asia/Jakarta").defaultFilters.to, "2026-09-30");
+  assert.equal(options(s, "Asia/Makassar").defaultFilters.to, "2026-10-01");
+  assert.equal(options(s, "Asia/Makassar").defaultFilters.from, "2026-09-01");
 });
 test("exports contain all matching rows without student content; chronology filters also affect exports", async () => {
   const s = await source.readSnapshot();
@@ -189,7 +211,8 @@ test("exports contain all matching rows without student content; chronology filt
   assert.ok(!csv.includes("Dr. Aruna Prameswari"));
   assert.ok(csv.includes("Demo - data simulasi"));
   assert.ok(csv.includes("Data terakhir"));
-  assert.ok(csv.includes("WIB"));
+  assert.ok(csv.includes("GMT+7"));
+  assert.ok(!csv.includes("WIB"));
   const events = csvReport(s, { ...f, actorKind: "SISTEM" }, "activities");
   assert.ok(events.includes("Penilaian otomatis"));
   assert.ok(!events.includes("Login berhasil"));
@@ -305,7 +328,7 @@ test("session filtering includes midnight overlaps, retains unknown logout, and 
     2,
   );
 });
-test("daily session chart covers a fixed 24 hours WIB, including afternoon and evening connections", async () => {
+test("daily session chart covers the device's full day, including afternoon and evening connections", async () => {
   const s = await source.readSnapshot();
   const window = dayWindow("2026-09-23");
   assert.equal(

@@ -11,11 +11,12 @@ import type {
   ReportFilters,
   Summary,
 } from "../../../../packages/shared/src/rector.js";
+import { calendarDate, localTimeZone } from "../../../../packages/shared/src/time.js";
 export const isAcademic = (a: Activity) =>
   !["LOGIN", "LOGOUT", "AKSES"].includes(a.category);
 const last = (events: Activity[]) =>
   events.reduce<string | null>((v, a) => (!v || a.at > v ? a.at : v), null);
-export function activityMetrics(events: Activity[]): ActivityMetrics {
+export function activityMetrics(events: Activity[], timeZone = localTimeZone()): ActivityMetrics {
   const own = events.filter((a) => a.actorKind === "DOSEN");
   const academic = own.filter(isAcademic);
   const material = academic.filter((a) => a.category === "MATERI");
@@ -25,11 +26,7 @@ export function activityMetrics(events: Activity[]): ActivityMetrics {
     accesses: own.filter((a) => a.category === "AKSES").length,
     academicActions: academic.length,
     activeDays: new Set(
-      academic.map((a) =>
-        new Date(new Date(a.at).getTime() + 7 * 3600000)
-          .toISOString()
-          .slice(0, 10),
-      ),
+      academic.map((a) => calendarDate(a.at, timeZone)),
     ).size,
     materialActions: material.length,
     materialObjects: new Set(material.map((a) => a.objectId)).size,
@@ -98,12 +95,10 @@ export function selectReport(s: ReportingSnapshot, f: ReportFilters) {
           .includes(f.search.toLocaleLowerCase("id"))),
   );
   const lecturerIds = new Set(lecturers.map((l) => l.id));
-  const from = f.from ? Date.parse(`${f.from}T00:00:00+07:00`) : -Infinity;
-  const to = f.to ? Date.parse(`${f.to}T23:59:59.999+07:00`) : Infinity;
   const activities = s.activities.filter(
     (a) =>
-      Date.parse(a.at) >= from &&
-      Date.parse(a.at) <= to &&
+      (!f.from || calendarDate(a.at, f.timeZone) >= f.from) &&
+      (!f.to || calendarDate(a.at, f.timeZone) <= f.to) &&
       (!f.category || a.category === f.category) &&
       (!f.actorKind || a.actorKind === f.actorKind) &&
       (!f.sessionId || a.sessionId === f.sessionId) &&
@@ -123,8 +118,6 @@ export function selectReport(s: ReportingSnapshot, f: ReportFilters) {
 export function loginSessions(s: ReportingSnapshot, f: ReportFilters) {
   const selected = selectReport(s, f);
   const lecturerIds = new Set(selected.lecturers.map((l) => l.id));
-  const from = f.from ? Date.parse(`${f.from}T00:00:00+07:00`) : -Infinity;
-  const to = f.to ? Date.parse(`${f.to}T23:59:59.999+07:00`) : Infinity;
   // Sessions are user-level connection evidence, like login events. Class
   // and semester filters restrict lecturer scope, never invent a class login.
   return s.sessions
@@ -133,8 +126,8 @@ export function loginSessions(s: ReportingSnapshot, f: ReportFilters) {
         lecturerIds.has(session.lecturerId) &&
         (!f.sessionId || session.id === f.sessionId) &&
         (!f.actorKind || f.actorKind === "DOSEN") &&
-        Date.parse(session.loginAt) <= to &&
-        Date.parse(session.logoutAt ?? session.lastObservedAt) >= from,
+        (!f.to || calendarDate(session.loginAt, f.timeZone) <= f.to) &&
+        (!f.from || calendarDate(session.logoutAt ?? session.lastObservedAt, f.timeZone) >= f.from),
     )
     .sort((a, b) => b.loginAt.localeCompare(a.loginAt));
 }
@@ -149,7 +142,7 @@ export function lecturerRows(
     );
     return {
       ...l,
-      ...activityMetrics(selected.activities.filter((a) => a.actorId === l.id)),
+      ...activityMetrics(selected.activities.filter((a) => a.actorId === l.id), f.timeZone),
       classCount: classes.length,
       pending: gradingMetrics(classes, s.snapshotAt).pending,
     };
@@ -163,7 +156,7 @@ export function summary(s: ReportingSnapshot, f: ReportFilters): Summary {
     { date: string; academic: number; login: number; access: number }
   >();
   const from = f.from ?? "2026-09-01";
-  const to = f.to ?? s.snapshotAt.slice(0, 10);
+  const to = f.to ?? calendarDate(s.snapshotAt, f.timeZone);
   // Range validation bounds this loop to at most 731 days.
   for (
     let d = Date.parse(from + "T00:00:00Z");
@@ -175,9 +168,7 @@ export function summary(s: ReportingSnapshot, f: ReportFilters): Summary {
   }
   for (const a of own) {
     if (a.category === "LOGOUT") continue;
-    const date = new Date(Date.parse(a.at) + 7 * 3600000)
-      .toISOString()
-      .slice(0, 10);
+    const date = calendarDate(a.at, f.timeZone);
     const row = daily.get(date) ?? { date, academic: 0, login: 0, access: 0 };
     row[
       a.category === "LOGIN"
@@ -203,7 +194,7 @@ export function summary(s: ReportingSnapshot, f: ReportFilters): Summary {
     ).length,
     assignmentCount: items.filter((i) => i.kind === "TUGAS").length,
     quizCount: items.filter((i) => i.kind === "KUIS").length,
-    activity: activityMetrics(activities),
+    activity: activityMetrics(activities, f.timeZone),
     grading: gradingMetrics(classes, s.snapshotAt),
     daily: [...daily.values()].sort((a, b) => a.date.localeCompare(b.date)),
     sessions: loginSessions(s, f),
@@ -228,7 +219,10 @@ export function summary(s: ReportingSnapshot, f: ReportFilters): Summary {
       })),
   };
 }
-export function options(s: ReportingSnapshot): FilterOptions {
+export function options(s: ReportingSnapshot, timeZone = localTimeZone()): FilterOptions {
+  const snapshotDay = calendarDate(s.snapshotAt, timeZone);
+  const previousMonth = new Date(`${snapshotDay.slice(0, 7)}-01T00:00:00Z`);
+  previousMonth.setUTCMonth(previousMonth.getUTCMonth() - 1);
   return {
     semesters: [...new Set(s.classes.map((c) => c.semester))].sort().reverse(),
     departments: [...new Set(s.lecturers.map((l) => l.department))].sort(),
@@ -243,21 +237,12 @@ export function options(s: ReportingSnapshot): FilterOptions {
       }),
     ),
     defaultFilters: {
+      timeZone,
       semester:
         [...new Set(s.classes.map((c) => c.semester))].sort().reverse()[0] ??
         "all",
-      from: new Date(
-        Date.UTC(
-          new Date(s.snapshotAt).getUTCFullYear(),
-          new Date(s.snapshotAt).getUTCMonth() - 1,
-          1,
-        ),
-      )
-        .toISOString()
-        .slice(0, 10),
-      to: new Date(Date.parse(s.snapshotAt) + 7 * 3600000)
-        .toISOString()
-        .slice(0, 10),
+      from: previousMonth.toISOString().slice(0, 10),
+      to: snapshotDay,
     },
   };
 }
@@ -277,6 +262,7 @@ export function lecturerDetail(
         selected.activities.filter(
           (a) => a.classId === c.id && a.actorId === id,
         ),
+        f.timeZone,
       ),
       grading: gradingMetrics([c], s.snapshotAt),
     })),
@@ -308,6 +294,7 @@ export function classDetail(
           selected.activities.filter(
             (a) => a.actorId === lecturer.id && a.classId === id,
           ),
+          f.timeZone,
         ),
       })),
     grading: gradingMetrics([cls], s.snapshotAt),

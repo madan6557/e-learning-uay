@@ -11,16 +11,14 @@ import {
   selectReport,
   summary,
 } from "./reporting.js";
+import { formatDateTime, localTimeZone } from "../../../../packages/shared/src/time.js";
 export type ReportView =
   "overview" | "lecturers" | "lecturer" | "class" | "activities";
-export const formatDate = (value: string | null) =>
+export const formatDate = (value: string | null, timeZone = localTimeZone()) =>
   value
-    ? new Intl.DateTimeFormat("id-ID", {
-        dateStyle: "medium",
-        timeStyle: "short",
-        timeZone: "Asia/Jakarta",
-      }).format(new Date(value)) + " WIB"
+    ? formatDateTime(value, timeZone)
     : "Belum ada data";
+const dateFormatter = (filters: ReportFilters) => (value: string | null) => formatDate(value, filters.timeZone);
 const clean = (value: unknown) =>
   String(value ?? "").replace(/[\u2010-\u2015]/g, "-");
 const readableLabel = (value: string) =>
@@ -47,11 +45,12 @@ export function exportTable(
   view: ReportView,
   id?: string,
 ) {
+  const formatDate = dateFormatter(f);
   if (view === "activities")
     return {
       title: "Kronologi aktivitas",
       headers: [
-        "Waktu (WIB)",
+        "Waktu lokal",
         "Pelaku",
         "Kategori pelaku",
         "Tindakan",
@@ -82,7 +81,7 @@ export function exportTable(
         "Dinilai",
         "Antrean",
         "Terbit",
-        "Mulai antrean (WIB)",
+        "Mulai antrean (lokal)",
       ],
       rows: d.class.grading
         .filter((w) => w.current)
@@ -124,8 +123,8 @@ export function exportTable(
       "Publikasi",
       "Koreksi",
       "Antrean kelas",
-      "Login terakhir (WIB)",
-      "Akademik terakhir (WIB)",
+      "Login terakhir (lokal)",
+      "Akademik terakhir (lokal)",
     ],
     rows: rows.map((l) => [
       l.name,
@@ -155,6 +154,7 @@ export function csvReport(
   id?: string,
   demo = true,
 ) {
+  const formatDate = dateFormatter(f);
   const t = exportTable(s, f, view, id);
   // Quote every cell and neutralize spreadsheet formulas in any text field.
   const cell = (v: unknown) =>
@@ -167,6 +167,7 @@ export function csvReport(
   const lines = [
     [demo ? "Demo - data simulasi" : "Pemantauan Akademik E-Learning UAY"],
     ["Data terakhir", formatDate(s.snapshotAt)],
+    ["Zona waktu perangkat", f.timeZone ?? localTimeZone()],
     ["Filter", JSON.stringify(f)],
     ["Laporan", t.title],
     t.headers,
@@ -177,7 +178,7 @@ export function csvReport(
     lines.push(
       [],
       ["Sesi login - waktu terhubung, bukan durasi kerja"],
-      ["Login (WIB)", "Logout (WIB)", "Status", "Sesi"],
+      ["Login (lokal)", "Logout (lokal)", "Status", "Sesi"],
     );
     lines.push(
       ...detail.sessions.map((session) => [
@@ -191,8 +192,8 @@ export function csvReport(
       [],
       ["Aktivitas dosen dalam periode"],
       [
-        "Mulai (WIB)",
-        "Selesai tercatat (WIB)",
+        "Mulai (lokal)",
+        "Selesai tercatat (lokal)",
         "Tindakan",
         "Objek",
         "Kelas",
@@ -222,6 +223,7 @@ export async function pdfReport(
   selectedSession?: string,
   demo = true,
 ): Promise<Buffer> {
+  const formatDate = dateFormatter(f);
   const table = exportTable(s, f, view, id);
   const stats = summary(s, f);
   const doc = new PDFDocument({
@@ -247,8 +249,8 @@ export async function pdfReport(
       .text(clean(text), 42, doc.y, { width, lineGap: 3 });
     doc.moveDown(0.65);
   }
-  function heading(text: string) {
-    if (doc.y + 55 > bottom) doc.addPage();
+  function heading(text: string, reserve = 55) {
+    if (doc.y + reserve > bottom) doc.addPage();
     paragraph(text, 13, true);
   }
   function rows(headers: string[], values: unknown[][], ratios?: number[]) {
@@ -269,7 +271,7 @@ export async function pdfReport(
       );
       if (doc.y + height > bottom) {
         doc.addPage();
-        row(headers, true);
+        if (!header) row(headers, true);
       }
       doc.font(header ? "Helvetica-Bold" : "Helvetica").fontSize(10);
       const y = doc.y;
@@ -294,6 +296,7 @@ export async function pdfReport(
   paragraph(
     `Data terakhir: ${formatDate(s.snapshotAt)}\nLaporan dibuat: ${formatDate(new Date().toISOString())}`,
   );
+  paragraph(`Zona waktu perangkat: ${f.timeZone ?? localTimeZone()}`, 9);
   const lecturer = f.lecturer
     ? s.lecturers.find((l) => l.id === f.lecturer)?.name
     : "Semua dosen";
@@ -402,13 +405,13 @@ export async function pdfReport(
         ]),
         [2.5, 1, 1, 1, 1],
       );
-      heading("Sesi login dalam periode");
+      heading("Sesi login dalam periode", 160);
       paragraph(
         "Rentang login sampai logout adalah waktu terhubung, bukan durasi kerja. Logout yang tidak tercatat tidak diperkirakan.",
         9,
       );
       rows(
-        ["Login (WIB)", "Logout (WIB)", "Status"],
+        ["Login (lokal)", "Logout (lokal)", "Status"],
         d.sessions.map((session) => [
           formatDate(session.loginAt),
           formatDate(session.logoutAt),
@@ -443,7 +446,7 @@ export async function pdfReport(
       `${formatDate(a.at)}${a.completedAt ? `\nSelesai: ${formatDate(a.completedAt)}` : ""}`;
     if (view === "lecturer")
       rows(
-        ["Mulai / selesai (WIB)", "Aktivitas", "Kelas / objek"],
+        ["Mulai / selesai (lokal)", "Aktivitas", "Kelas / objek"],
         events.map((a) => [
           at(a),
           a.action,
@@ -453,7 +456,7 @@ export async function pdfReport(
       );
     else
       rows(
-        ["Mulai / selesai (WIB)", "Pelaku", "Tindakan", "Objek"],
+        ["Mulai / selesai (lokal)", "Pelaku", "Tindakan", "Objek"],
         events.map((a) => [
           at(a),
           `${a.actorName}\n${a.actorKind === "DOSEN" ? "Dosen" : a.actorKind === "ADMIN" ? "Admin akademik" : "Proses otomatis"}`,

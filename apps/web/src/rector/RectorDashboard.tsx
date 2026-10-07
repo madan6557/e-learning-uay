@@ -48,15 +48,12 @@ import {
   type ReportResponse,
   type Summary,
 } from "../../../../packages/shared/src/rector";
+import { formatDateTime, localTimeZone } from "../../../../packages/shared/src/time";
 import "./styles.css";
 const API = "/api/rector/v1";
 const formatDate = (v: string | null) =>
   v
-    ? new Intl.DateTimeFormat("id-ID", {
-        dateStyle: "medium",
-        timeStyle: "short",
-        timeZone: "Asia/Jakarta",
-      }).format(new Date(v)) + " WIB"
+    ? formatDateTime(v)
     : "Belum ada data";
 const n = (v: number) => new Intl.NumberFormat("id-ID").format(v);
 const shortDay = (v: string) =>
@@ -65,8 +62,7 @@ const shortDay = (v: string) =>
     : new Intl.DateTimeFormat("id-ID", {
         day: "numeric",
         month: "short",
-        timeZone: "Asia/Jakarta",
-      }).format(new Date(v + "T00:00:00+07:00"));
+      }).format(new Date(v + "T00:00:00"));
 type View =
   | "overview"
   | "lecturers"
@@ -426,6 +422,7 @@ function Pagination({
   );
 }
 export function RectorDashboard({ demo }: { demo: boolean }) {
+  const timeZone = localTimeZone();
   const [refreshKey, setRefreshKey] = useState(0);
   const [params, setParams] = useState(
     () => new URLSearchParams(location.search),
@@ -460,9 +457,12 @@ export function RectorDashboard({ demo }: { demo: boolean }) {
     setParams(next);
   };
   const filters = useReport<FilterOptions>(
-    session ? "/filters" : null,
+    session ? "/filters?timeZone=" + encodeURIComponent(timeZone) : null,
     unauthorized,
   );
+  useEffect(() => {
+    if (params.get("timeZone") !== timeZone) update({ timeZone }, true);
+  }, [params, timeZone]);
   const opts = filters.data?.data;
   useEffect(() => {
     if (!opts) return;
@@ -485,6 +485,7 @@ export function RectorDashboard({ demo }: { demo: boolean }) {
   const id = params.get("id") ?? "";
   const query = useMemo(() => {
     const q = new URLSearchParams();
+    q.set("timeZone", timeZone);
     for (const key of [
       "semester",
       "from",
@@ -509,7 +510,7 @@ export function RectorDashboard({ demo }: { demo: boolean }) {
     if (params.get("session")) q.set("_session", params.get("session")!);
     q.set("_refresh", String(refreshKey));
     return q;
-  }, [params, opts, view, id, refreshKey]);
+  }, [params, opts, view, id, refreshKey, timeZone]);
   const report = useReport<Summary>(
     session && opts ? "/summary?" + query : null,
     unauthorized,

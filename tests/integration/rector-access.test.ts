@@ -197,6 +197,29 @@ test("one E-Learning session authorizes aggregate-only rector reports", async (s
         );
       },
     );
+    await suite.test("device timezone is consistent across filters, summary, details and exports", async () => {
+      const loginAt = "2026-09-30T16:30:00.000Z";
+      await db.user.update({ where: { id: ids[1] }, data: { lastLoginAt: new Date(loginAt) } });
+      const query = `semester=all&lecturer=${ids[1]}&from=2026-10-01&to=2026-10-01&timeZone=Asia%2FMakassar`;
+      const report = await (await req(`/api/rector/v1/summary?${query}`, "RECTOR")).json();
+      assert.equal(report.meta.timeZone, "Asia/Makassar");
+      assert.equal(report.data.activity.logins, 1);
+      assert.equal(report.data.daily[0].date, "2026-10-01");
+      assert.equal(report.data.daily[0].login, 1);
+      const jakarta = await (await req(`/api/rector/v1/summary?${query.replace("Asia%2FMakassar", "Asia%2FJakarta")}`, "RECTOR")).json();
+      assert.equal(jakarta.data.activity.logins, 0);
+      const rows = await (await req(`/api/rector/v1/lecturers?${query}`, "RECTOR")).json();
+      assert.equal(rows.data.items[0].logins, 1);
+      const detail = await (await req(`/api/rector/v1/lecturers/${ids[1]}?${query}`, "RECTOR")).json();
+      assert.equal(detail.data.sessions[0].loginAt, loginAt, "recorded UTC instants must remain unchanged");
+      const csv = await (await req(`/api/rector/v1/exports/csv?${query}&view=activities`, "RECTOR")).text();
+      assert.ok(csv.includes("00.30 GMT+8"));
+      assert.ok(csv.includes("Asia/Makassar"));
+      assert.ok(!csv.includes("WIB"));
+      const filters = await (await req("/api/rector/v1/filters?timeZone=Asia%2FMakassar", "RECTOR")).json();
+      assert.equal(filters.data.defaultFilters.timeZone, "Asia/Makassar");
+      await req("/api/rector/v1/summary?timeZone=Not%2FAZone", "RECTOR", "GET", 400);
+    });
     await suite.test(
       "deactivation and logout revoke report access",
       async () => {

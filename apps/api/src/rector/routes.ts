@@ -18,6 +18,7 @@ import {
   summary,
 } from "./reporting.js";
 import { csvReport, pdfReport } from "./exports.js";
+import { localTimeZone, validTimeZone } from "../../../../packages/shared/src/time.js";
 const prefix = "/api/rector/v1";
 
 function failure(
@@ -44,6 +45,7 @@ const date = z
     "Tanggal tidak valid",
   );
 const querySchema = z.object({
+  timeZone: z.string().min(1).max(100).refine(validTimeZone, "Zona waktu tidak valid").optional(),
   semester: z.string().max(60).optional(),
   from: date.optional(),
   to: date.optional(),
@@ -117,8 +119,10 @@ export function rectorReporting(source: ReportingDataSource, demo: boolean) {
   app.get(`${prefix}/{*resource}`, async (req, res) => {
     const s = await source.readSnapshot();
     const q = querySchema.parse(req.query);
-    const defaults = options(s).defaultFilters;
+    const timeZone = q.timeZone ?? localTimeZone();
+    const defaults = options(s, timeZone).defaultFilters;
     const f: ReportFilters = {
+      timeZone,
       semester:
         q.semester === "all" ? undefined : (q.semester ?? defaults.semester),
       from: q.from ?? defaults.from,
@@ -138,7 +142,7 @@ export function rectorReporting(source: ReportingDataSource, demo: boolean) {
       failure(res, 400, "INVALID_DATE_RANGE");
       return;
     }
-    const valid = options(s);
+    const valid = options(s, timeZone);
     if (
       (f.semester && !valid.semesters.includes(f.semester)) ||
       (f.department && !valid.departments.includes(f.department)) ||
@@ -149,6 +153,7 @@ export function rectorReporting(source: ReportingDataSource, demo: boolean) {
       return;
     }
     const meta: SnapshotMeta = {
+      timeZone,
       demo,
       snapshotAt: s.snapshotAt,
       responseAt: new Date().toISOString(),

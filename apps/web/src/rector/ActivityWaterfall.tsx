@@ -9,22 +9,20 @@ import type {
   Activity,
   LoginSession,
 } from "../../../../packages/shared/src/rector";
+import { formatClock as clock, localDateInput } from "../../../../packages/shared/src/time";
 
-const clock = (at: string | number) =>
+const axisClock = (at: string | number) =>
   new Intl.DateTimeFormat("id-ID", {
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: "Asia/Jakarta",
   }).format(new Date(at));
 const date = (at: string | number) =>
   new Intl.DateTimeFormat("id-ID", {
     day: "numeric",
     month: "long",
     year: "numeric",
-    timeZone: "Asia/Jakarta",
   }).format(new Date(at));
-const localDay = (at: string) =>
-  new Date(Date.parse(at) + 7 * 3600000).toISOString().slice(0, 10);
+const localDay = localDateInput;
 export const categoryLabel: Record<string, string> = {
   LOGIN: "Masuk",
   LOGOUT: "Keluar",
@@ -55,13 +53,18 @@ function Ruler({
   end: number;
   fullDay?: boolean;
 }) {
+  const labels = ["00.00", "06.00", "12.00", "18.00", "24.00"];
+  const ticks = labels.map((label, i) => {
+    const at = fullDay
+      ? i === 4 ? end : Date.parse(`${localDateInput(start)}T${String(i * 6).padStart(2, "0")}:00:00`)
+      : start + ((end - start) * i) / 4;
+    return { at, label: fullDay ? label : axisClock(at) };
+  });
   return (
     <div className="time-ruler" aria-hidden="true">
-      {Array.from({ length: 5 }, (_, i) => (
-        <span key={i} style={{ left: `${i * 25}%` }}>
-          {fullDay
-            ? ["00.00", "06.00", "12.00", "18.00", "24.00"][i]
-            : clock(start + ((end - start) * i) / 4)}
+      {ticks.map((tick, i) => (
+        <span key={i} style={{ left: `${(tick.at - start) / (end - start) * 100}%` }}>
+          {tick.label}
         </span>
       ))}
     </div>
@@ -127,7 +130,7 @@ export function SessionChart({
         <div>
           <h3>Rentang login sampai logout</h3>
           <p>
-            24 jam · 00.00–24.00 WIB. Klik sesi untuk melihat aktivitas dosen.
+            00.00–24.00 · waktu lokal perangkat. Klik sesi untuk melihat aktivitas dosen.
           </p>
         </div>
         {days.length > 0 && (
@@ -136,7 +139,7 @@ export function SessionChart({
             <select value={day} onChange={(e) => setDay(e.target.value)}>
               {days.map((d) => (
                 <option key={d} value={d}>
-                  {date(d + "T00:00:00+07:00")}
+                  {date(d + "T00:00:00")}
                 </option>
               ))}
             </select>
@@ -167,7 +170,6 @@ export function SessionChart({
                           ? "24.00"
                           : clock(s.logoutAt)
                         : "logout belum tercatat"}{" "}
-                      WIB
                     </small>
                     {segment.startsBeforeDay && (
                       <small className="session-continuation">
@@ -182,7 +184,7 @@ export function SessionChart({
                     {!s.logoutAt && (
                       <small>
                         Terakhir tercatat: {date(s.lastObservedAt)},{" "}
-                        {clock(s.lastObservedAt)} WIB
+                        {clock(s.lastObservedAt)}
                       </small>
                     )}
                   </span>
@@ -192,7 +194,7 @@ export function SessionChart({
                     start={start}
                     end={end}
                     kind={s.logoutAt ? "connection" : "unknown"}
-                    label={`${s.lecturerName}: masuk ${date(s.loginAt)} ${clock(s.loginAt)}, ${s.logoutAt ? `keluar ${date(s.logoutAt)} ${clock(s.logoutAt)}` : "logout belum tercatat"} WIB`}
+                    label={`${s.lecturerName}: masuk ${date(s.loginAt)} ${clock(s.loginAt)}, ${s.logoutAt ? `keluar ${date(s.logoutAt)} ${clock(s.logoutAt)}` : "logout belum tercatat"}`}
                   />
                 </button>
               );
@@ -280,7 +282,7 @@ export function ActivityWaterfall({
                 <option key={s.id} value={s.id}>
                   {date(s.loginAt)} · {clock(s.loginAt)} –{" "}
                   {s.logoutAt
-                    ? clock(s.logoutAt) + " WIB"
+                    ? clock(s.logoutAt)
                     : "logout belum tercatat"}{" "}
                   ·{" "}
                   {
@@ -299,14 +301,14 @@ export function ActivityWaterfall({
             <span>
               <LogIn size={17} />
               <small>Login</small>
-              <strong>{clock(session.loginAt)} WIB</strong>
+              <strong>{clock(session.loginAt)}</strong>
             </span>
             <span>
               <LogOut size={17} />
               <small>Logout</small>
               <strong>
                 {session.logoutAt
-                  ? `${clock(session.logoutAt)} WIB${localDay(session.logoutAt) !== localDay(session.loginAt) ? " · " + date(session.logoutAt) : ""}`
+                  ? `${clock(session.logoutAt)}${localDay(session.logoutAt) !== localDay(session.loginAt) ? " · " + date(session.logoutAt) : ""}`
                   : "Belum tercatat"}
               </strong>
             </span>
@@ -322,8 +324,7 @@ export function ActivityWaterfall({
           {!session.logoutAt && (
             <p className="quiet-note unknown-session-note">
               Logout belum tercatat. Garis putus-putus ditampilkan sampai
-              aktivitas terakhir yang tercatat, {clock(session.lastObservedAt)}{" "}
-              WIB.
+              aktivitas terakhir yang tercatat, {clock(session.lastObservedAt)}.
             </p>
           )}
           <div className="waterfall-toolbar">
@@ -358,7 +359,7 @@ export function ActivityWaterfall({
                 <tr>
                   <th>Aktivitas</th>
                   <th>Kelas</th>
-                  <th>Waktu WIB</th>
+                  <th>Waktu lokal</th>
                   <th className="waterfall-time-heading">
                     <Ruler start={start} end={end} />
                   </th>
@@ -422,7 +423,7 @@ export function ActivityWaterfall({
                         start={start}
                         end={end}
                         kind={a.category.toLowerCase()}
-                        label={`${a.action}, ${clock(a.at)}${a.completedAt ? " sampai " + clock(a.completedAt) : ""} WIB`}
+                        label={`${a.action}, ${clock(a.at)}${a.completedAt ? " sampai " + clock(a.completedAt) : ""}`}
                       />
                     </td>
                   </tr>
@@ -452,7 +453,7 @@ export function ActivityWaterfall({
                   <small>
                     {classes.find((c) => c.id === a.classId)?.title ??
                       categoryLabel[a.category]}{" "}
-                    · {clock(a.at)} WIB
+                    · {clock(a.at)}
                   </small>
                 </span>
                 <Span
@@ -461,7 +462,7 @@ export function ActivityWaterfall({
                   start={start}
                   end={end}
                   kind={a.category.toLowerCase()}
-                  label={`${a.action}, ${clock(a.at)} WIB`}
+                  label={`${a.action}, ${clock(a.at)}`}
                 />
               </button>
             ))}
@@ -492,14 +493,14 @@ export function ActivityWaterfall({
                 <div>
                   <dt>Waktu tercatat</dt>
                   <dd>
-                    {date(selected.at)}, {clock(selected.at)} WIB
+                    {date(selected.at)}, {clock(selected.at)}
                   </dd>
                 </div>
                 <div>
                   <dt>Selesai tercatat</dt>
                   <dd>
                     {selected.completedAt
-                      ? clock(selected.completedAt) + " WIB"
+                      ? clock(selected.completedAt)
                       : "Hanya waktu kejadian tersedia"}
                   </dd>
                 </div>
@@ -555,7 +556,7 @@ export function ActivityWaterfall({
           <table>
             <thead>
               <tr>
-                <th>Waktu WIB</th>
+                <th>Waktu lokal</th>
                 <th>Aktivitas</th>
                 <th>Kelas / objek</th>
               </tr>
@@ -565,7 +566,7 @@ export function ActivityWaterfall({
                 <tr key={a.id}>
                   <td>
                     {date(a.at)}
-                    <small>{clock(a.at)} WIB</small>
+                    <small>{clock(a.at)}</small>
                   </td>
                   <td>{a.action}</td>
                   <td>

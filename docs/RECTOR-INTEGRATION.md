@@ -6,7 +6,7 @@ Dashboard rektor sekarang menjadi bagian dari e-learning, memakai halaman masuk,
 
 1. Jalankan `npm run dev` seperti biasa. Launcher menerapkan migrasi dan mengaktifkan `DEMO_MODE=true` bila belum diatur.
 2. Buka e-learning, pilih **Masuk dengan SSO UAY**, lalu **Rektor UAY (Akun Uji)** dengan nomor `RKT001` pada provider lokal.
-3. Rektor langsung masuk ke **Pemantauan Akademik**. Telusuri Ringkasan → Dosen & kelas → dosen → kelas. Riwayat dosen menampilkan rentang masuk sampai keluar pada grafik 00.00–24.00 WIB.
+3. Rektor langsung masuk ke **Pemantauan Akademik**. Telusuri Ringkasan → Dosen & kelas → dosen → kelas. Riwayat dosen menampilkan rentang masuk sampai keluar pada grafik 00.00–24.00 sesuai waktu lokal perangkat. Zona waktu perangkat ikut dikirim ke API dan dicatat pada URL; filter tanggal, rekap harian, CSV, dan PDF memakai zona yang sama. Waktu kejadian asli tetap tersimpan sebagai UTC.
 4. Gunakan filter periode/program studi dan unduh tabel CSV atau laporan PDF. Panduan membaca memberi empat penjelasan utama; rincian perhitungan dapat dibuka bila diperlukan.
 5. Keluar melalui tombol sesi e-learning. Tidak ada login tambahan khusus dashboard.
 
