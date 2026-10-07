@@ -865,13 +865,6 @@ export function registerAuth(app: Express) {
       req,
     );
 
-    console.log("[Auth OIDC Server] Session sync token claims received:", {
-      sub: access.sub,
-      roles: access.roles,
-      realm_access: access.realm_access,
-      resource_access: access.resource_access,
-      user_type: (access as any).user_type,
-    });
 
     res.json({
       ok: true,

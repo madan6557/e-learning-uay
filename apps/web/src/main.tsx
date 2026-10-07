@@ -665,35 +665,6 @@ function AuthCallbackPage({
         }
         setAuthToken(oidcUser.access_token);
 
-        const accessClaims = parseJwtPayload(oidcUser.access_token);
-        const idClaims = parseJwtPayload(oidcUser.id_token);
-
-        // Cetak isi token dan klaim secara lengkap ke DevTools Console
-        console.group(
-          "%c[UAY SSO] Token & Profil Berhasil Diterima dari SSO",
-          "background: #1d4ed8; color: #ffffff; font-weight: bold; font-size: 13px; padding: 4px 8px; border-radius: 4px;",
-        );
-        console.log("%cAccess Token (Raw):", "color: #3b82f6; font-weight: bold;", oidcUser.access_token);
-        console.log("%cDecoded Access Token Claims:", "color: #10b981; font-weight: bold;", accessClaims);
-        console.log("%cKeycloak Roles & Access:", "color: #f59e0b; font-weight: bold;", {
-          realm_access: (accessClaims as any)?.realm_access,
-          resource_access: (accessClaims as any)?.resource_access,
-          roles: (accessClaims as any)?.roles,
-          groups: (accessClaims as any)?.groups,
-          user_type: (accessClaims as any)?.user_type,
-          preferred_username: (accessClaims as any)?.preferred_username,
-          email: (accessClaims as any)?.email,
-        });
-        console.log("%cID Token (Raw):", "color: #3b82f6;", oidcUser.id_token);
-        console.log("%cDecoded ID Token Claims:", "color: #10b981;", idClaims);
-        console.log("%cProfile Object:", "color: #a855f7;", oidcUser.profile);
-        console.groupEnd();
-
-        try {
-          (window as any).__OIDC_USER__ = oidcUser;
-          (window as any).__OIDC_ACCESS_TOKEN__ = oidcUser.access_token;
-          (window as any).__OIDC_CLAIMS__ = accessClaims;
-        } catch {}
 
         // Sync with backend session & user database
         await api("/auth/session", "POST", {
@@ -880,45 +851,6 @@ function App() {
     if (["/", "/login"].includes(route)) navigate(user.role === 'RECTOR' ? '/rector' : '/dashboard', true);
   }, [user, route]);
 
-  useEffect(() => {
-    if (user) {
-      const rawToken = getAuthToken();
-      const parsedToken = parseJwtPayload(rawToken);
-      try {
-        (window as any).__UAY_USER__ = user;
-        (window as any).__UAY_TOKEN__ = rawToken;
-        (window as any).__UAY_CLAIMS__ = parsedToken;
-        (window as any).showToken = () => {
-          console.group(
-            "%c[UAY SSO INSPECTOR] Token & Sesi Akun Aktif",
-            "background: #2563eb; color: #fff; font-weight: bold; padding: 4px 8px; border-radius: 4px;",
-          );
-          console.log("%cData Pengguna (/api/v1/me):", "font-weight: bold; color: #38bdf8;", user);
-          console.log("%cRaw Access Token:", "font-weight: bold; color: #93c5fd;", rawToken);
-          console.log("%cParsed Claims:", "font-weight: bold; color: #34d399;", parsedToken);
-          console.groupEnd();
-          return { user, rawToken, claims: parsedToken };
-        };
-      } catch {}
-
-      console.groupCollapsed(
-        `%c[UAY SSO DEBUG] Sesi Pengguna: ${user.name} [Role: ${user.role}] - Klik untuk lihat token & claims`,
-        "background: #0f766e; color: #5eead4; font-weight: bold; padding: 3px 6px; border-radius: 4px;",
-      );
-      console.log("%cProfil Akun (/api/v1/me):", "color: #38bdf8; font-weight: bold;", user);
-      if (rawToken) {
-        console.log("%cRaw Access Token:", "color: #93c5fd;", rawToken);
-        console.log("%cDecoded JWT Claims:", "color: #34d399; font-weight: bold;", parsedToken);
-      } else {
-        console.log("%cAutentikasi sesi aktif melalui HTTP Cookie.", "color: #f59e0b;");
-      }
-      console.log(
-        "%cTips: Ketik showToken() atau window.__UAY_CLAIMS__ di console untuk melihat token kapan saja.",
-        "color: #a855f7; font-style: italic;",
-      );
-      console.groupEnd();
-    }
-  }, [user]);
   const logout = async () => {
     if (!(await confirmUnsaved())) return;
     setAuthToken(null);
