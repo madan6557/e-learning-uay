@@ -64,7 +64,9 @@ assert.equal(new Date(window.end).toISOString(), e.end);
 assert.equal(window.end - window.start, 24 * 3600000);
 const instant = "2026-09-22T16:30:00.000Z";
 assert.equal(calendarDate(instant), e.day);
-assert.equal(formatClock(instant), e.clock);
+// ICU versions label a zero UTC offset as either GMT or GMT+0.
+// Both represent the same device-local clock and timezone.
+assert.equal(formatClock(instant).replace(/\bGMT\+0\b/g, "GMT"), e.clock);
 const snapshot = await new FixtureDataSource().readSnapshot();
 const session = {
   ...snapshot.sessions[0],
