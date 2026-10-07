@@ -108,6 +108,7 @@ test("OIDC authorization code with PKCE, JWT validation, refresh, logout and rev
   await once(app, "listening");
   const base = `http://127.0.0.1:${(app.address() as any).port}/api/v1`;
   let sessionCookie = "";
+  let bearerToken = "";
   async function login(mode = "active") {
     tokenMode = mode;
     await new Promise((r) => setTimeout(r, 1100));
@@ -144,20 +145,45 @@ test("OIDC authorization code with PKCE, JWT validation, refresh, logout and rev
         assert.equal(user.password, undefined);
       },
     );
+    await suite.test("bearer-only requests provide the route identity for notifications", async () => {
+      const stored = JSON.parse((await cache.get(`session:${hash(sessionCookie.split("=")[1])}`))!);
+      bearerToken = stored.accessToken;
+      assert.ok(bearerToken);
+      const headers = { Authorization: `Bearer ${bearerToken}` };
+      const me = await fetch(`${base}/me`, { headers });
+      assert.equal(me.status, 200);
+      assert.equal((await me.json() as any).ssoUserId, subject);
+      const unread = await fetch(`${base}/notifications/unread-count`, { headers });
+      assert.equal(unread.status, 200);
+      assert.equal(typeof (await unread.json() as any).count, "number");
+      const invalid = await fetch(`${base}/notifications/unread-count`, { headers: { Authorization: "Bearer invalid-token" } });
+      assert.equal(invalid.status, 401);
+      await cache.set(`revoked:${subject}`, "1", 60);
+      try {
+        const revoked = await fetch(`${base}/notifications/unread-count`, { headers });
+        assert.equal(revoked.status, 403);
+      } finally {
+        await cache.del(`revoked:${subject}`);
+      }
+    });
     await suite.test(
       "bad state, nonce, audience and account status are rejected",
       async () => {
         const state = await fetch(
           `${base}/auth/callback?state=abcdefghijklmnopqrstuv&code=invalid`,
-          { headers: { Cookie: "uay-oidc-state=different" } },
+          { headers: { Cookie: "uay-oidc-state=different" }, redirect: "manual" },
         );
-        assert.equal(state.status, 401);
+        assert.equal(state.status, 302);
+        assert.equal(state.headers.get("location"), "/?auth_error=INVALID_STATE");
         const badNonce = await login("wrong-nonce");
-        assert.equal(badNonce.status, 401);
+        assert.equal(badNonce.status, 302);
+        assert.equal(badNonce.headers.get("location"), "/?auth_error=INVALID_NONCE");
         const badAudience = await login("wrong-audience");
-        assert.equal(badAudience.status, 401);
+        assert.equal(badAudience.status, 302);
+        assert.equal(badAudience.headers.get("location"), "/?auth_error=ERR_JWT_CLAIM_VALIDATION_FAILED");
         const disabled = await login("disabled");
-        assert.equal(disabled.status, 403);
+        assert.equal(disabled.status, 302);
+        assert.equal(disabled.headers.get("location"), "/?auth_error=ACCOUNT_DISABLED");
       },
     );
     await suite.test(

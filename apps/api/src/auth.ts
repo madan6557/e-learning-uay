@@ -1180,8 +1180,18 @@ export async function authenticate(
           const ssoMe = await fetchSsoMeProfile(token);
           user = await syncUser({ ...claims, ...(ssoMe ?? {}) }, true);
         }
-        ensure(user && user.status === "ACTIVE", 403, "ACCOUNT_DISABLED");
-        (req as any).user = user;
+        ensure(
+          user && user.status === "ACTIVE" && !(await cache.get(`revoked:${user.ssoUserId}`)),
+          403,
+          "ACCOUNT_DISABLED",
+        );
+        req.context = {
+          user,
+          requestId:
+            req.get("X-Request-ID")?.slice(0, 100) ?? randomBytes(16).toString("hex"),
+          ip: req.ip ?? "",
+          userAgent: req.get("User-Agent")?.slice(0, 500) ?? "",
+        };
         const now = new Date();
         if (
           !user.lastActiveAt ||

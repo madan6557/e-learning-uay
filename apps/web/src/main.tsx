@@ -53,6 +53,7 @@ const AssignmentPage = lazy(() =>
   import("./Assessment").then((m) => ({ default: m.AssignmentPage })),
 );
 import { HelpPage } from "./HelpPage";
+import { useSessionExpiry } from "./useSessionExpiry";
 import "./styles.css";
 import "./workspace.css";
 import "./experience.css";
@@ -391,19 +392,21 @@ function AuthShell({
   logout: () => Promise<void>;
   children: ReactNode;
 }) {
+  const drawerQuery = pathname.startsWith('/rector') ? '(max-width:1024px)' : '(max-width:760px)';
   const [menuOpen, setMenuOpen] = useState(false),
     [mobile, setMobile] = useState(
-      () => matchMedia("(max-width:760px)").matches,
+      () => matchMedia(drawerQuery).matches,
     );
   useEffect(() => {
-    const media = matchMedia("(max-width:760px)");
+    const media = matchMedia(drawerQuery);
     const update = () => {
       setMobile(media.matches);
       if (!media.matches) setMenuOpen(false);
     };
+    update();
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
-  }, []);
+  }, [drawerQuery]);
   useEffect(() => {
     if (!menuOpen) return;
     const activeItem = document.querySelector<HTMLElement>(
@@ -450,6 +453,7 @@ function AuthShell({
   useEffect(() => {
     localStorage.setItem("uay-nav-collapsed", collapsed ? "1" : "0");
   }, [collapsed]);
+  const displayCollapsed = collapsed && !mobile;
   const [unread, setUnread] = useState(0);
   useEffect(() => {
     if (user.role === 'RECTOR') return;
@@ -498,8 +502,8 @@ function AuthShell({
   );
   return (
     <div
-      className={`app-shell ${menuOpen ? "menu-open" : ""} ${
-        collapsed ? "nav-collapsed" : ""
+      className={`app-shell ${pathname.startsWith('/rector') ? "rector-workspace" : ""} ${menuOpen ? "menu-open" : ""} ${
+        displayCollapsed ? "nav-collapsed" : ""
       }`}
     >
       <a className="skip-link" href="#main-content">
@@ -518,9 +522,9 @@ function AuthShell({
         inert={mobile && !menuOpen}
       >
         <div className="sidebar-brand">
-        <Brand home={rector ? '/rector' : '/dashboard'} collapsed={collapsed} />
+        <Brand home={rector ? '/rector' : '/dashboard'} collapsed={displayCollapsed} />
         </div>
-        {!collapsed && <p className="nav-caption">MENU</p>}
+        {!displayCollapsed && <p className="nav-caption">MENU</p>}
         <nav aria-label="Navigasi utama">
           {links.map(([href, Icon, label]: any) => {
             const active = pathname === href || pathname.startsWith(`${href}/`);
@@ -531,10 +535,10 @@ function AuthShell({
                 href={href}
                 className={active ? "active" : ""}
                 aria-current={active ? "page" : undefined}
-                title={collapsed ? label : undefined}
+                title={displayCollapsed ? label : undefined}
               >
                 <Icon size={22} />
-                {!collapsed && <span className="nav-label">{label}</span>}
+                {!displayCollapsed && <span className="nav-label">{label}</span>}
                 {badge > 0 && (
                   <span className="nav-badge">
                     {badge > 99 ? "99+" : badge}
@@ -804,24 +808,22 @@ function App() {
     return null;
   });
 
+  useSessionExpiry(() => {
+    setAuthToken(null);
+    if (typeof sessionStorage !== "undefined") {
+      sessionStorage.removeItem("uay-return-path");
+    }
+    if (identity.data) {
+      identity.setData(null);
+      setAuthErrorNotice("SESSION_EXPIRED");
+      navigate("/");
+    }
+  });
   useEffect(() => {
     const change = () => setRoute(location.pathname + location.search || "/");
-    const expired = () => {
-      setAuthToken(null);
-      if (typeof sessionStorage !== "undefined") {
-        sessionStorage.removeItem("uay-return-path");
-      }
-      if (identity.data) {
-        identity.setData(null);
-        setAuthErrorNotice("SESSION_EXPIRED");
-        navigate("/");
-      }
-    };
     window.addEventListener("routechange", change);
-    window.addEventListener("session-expired", expired);
     return () => {
       window.removeEventListener("routechange", change);
-      window.removeEventListener("session-expired", expired);
     };
   }, []);
   useEffect(() => {

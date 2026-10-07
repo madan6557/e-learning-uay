@@ -3397,6 +3397,20 @@ table th {
 .sidebar nav a .nav-label {white-space:normal;overflow:visible;text-overflow:clip;}
 .sidebar-collapse-btn { font-size: 0.875rem; min-height: 40px; }
 .nav-caption {font-size: 0.8125rem;}
+.rector-workspace .workspace {container:rector-shell / inline-size;}
+.rector-workspace .topbar {height:auto;min-height:72px;flex-wrap:nowrap;}
+.rector-workspace .topbar-left {flex:1;min-width:0;}
+.rector-workspace .topbar-right {flex:none;flex-wrap:nowrap;}
+.rector-workspace .breadcrumbs {min-width:0;}
+.rector-workspace .breadcrumbs ol {flex-wrap:nowrap;}
+.rector-workspace .breadcrumbs li:last-child {white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rector-workspace .environment-badge {display:inline-flex;white-space:nowrap;text-transform:none;letter-spacing:0;font-size:12px;}
+@container rector-shell (max-width:950px) {
+ .rector-workspace .breadcrumbs li:not(:last-child) {display:none;}
+}
+@container rector-shell (max-width:700px) {
+ .rector-workspace .user-chip-details,.rector-workspace .logout-text {display:none;}
+}
 .workspace,
 main {
   min-width: 0;
@@ -3416,4 +3430,21 @@ main {
   .sidebar {width:min(280px,calc(100vw - 48px));}
   .sidebar nav a { min-height: 48px; }
   .sidebar-collapse-section { display: none; }
+}
+/* Report navigation becomes a drawer before its rail squeezes the report. */
+@media(max-width:1024px) {
+ .rector-workspace .workspace {margin-left:0;width:100%;}
+ .rector-workspace .sidebar {position:fixed;inset:0 auto 0 0;width:min(280px,calc(100vw - 48px));padding:24px 18px;transform:translateX(-100%);z-index:30;}
+ .rector-workspace.menu-open .sidebar {transform:translateX(0);}
+ .rector-workspace .sidebar-brand {margin:0 0 12px;padding:0;border:0;height:auto;}
+ .rector-workspace .sidebar-collapse-section {display:none;}
+ .rector-workspace .topbar .mobile-menu {display:inline-flex;}
+ .rector-workspace .topbar-mark {display:none;}
+ .rector-workspace .nav-scrim {display:block;position:fixed;inset:0;background:#1a283660;z-index:25;border:0;width:100%;height:100%;}
+ .rector-workspace main {padding:24px 20px 40px;}
+}
+@media(max-width:520px) {
+ .rector-workspace .topbar .breadcrumbs,.rector-workspace .topbar-divider {display:none;}
+ .rector-workspace .topbar {padding-inline:12px;gap:8px;}
+ .rector-workspace main {padding-inline:14px;}
 }
