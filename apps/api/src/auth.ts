@@ -853,6 +853,14 @@ export function registerAuth(app: Express) {
       req,
     );
 
+    console.log("[Auth OIDC Server] Session sync token claims received:", {
+      sub: access.sub,
+      roles: access.roles,
+      realm_access: access.realm_access,
+      resource_access: access.resource_access,
+      user_type: (access as any).user_type,
+    });
+
     res.json({
       ok: true,
       user: {
@@ -864,10 +872,11 @@ export function registerAuth(app: Express) {
         userType: user.userType,
         identifierValue: user.identifierValue,
       },
+      tokenClaims: access,
     });
   });
   app.post("/api/v1/auth/authorization", async (req, res) => {
-    ensure(config.authMode === "oidc", 503, "SSO_CONFIGURATION");
+    ensure(config.authMode === "oidc" || isDemo, 503, "SSO_CONFIGURATION");
     const { demoUserId } = z
       .object({ demoUserId: z.string().uuid().optional() })
       .parse(req.body);
@@ -888,7 +897,7 @@ export function registerAuth(app: Express) {
   // links. The React UI uses the authorization endpoint above, so this path is
   // never left visible in the browser address bar.
   app.get("/api/v1/auth/login", async (req, res) => {
-    ensure(config.authMode === "oidc", 503, "SSO_CONFIGURATION");
+    ensure(config.authMode === "oidc" || isDemo, 503, "SSO_CONFIGURATION");
     const demoUserId = req.query.demoUserId;
     let demoSubject: string | undefined;
     if (demoUserId) {

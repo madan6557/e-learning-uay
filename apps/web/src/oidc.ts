@@ -59,7 +59,20 @@ export async function handleOidcCallback(authConfig?: {
   redirectUri?: string;
 }): Promise<User> {
   const manager = getOidcManager(authConfig);
-  return await manager.signinRedirectCallback();
+  const user = await manager.signinRedirectCallback();
+  try {
+    console.log(
+      "%c[SSO OIDC CLIENT] Signin redirect callback berhasil diselesaikan:",
+      "color: #10b981; font-weight: bold;",
+      {
+        access_token: user.access_token,
+        id_token: user.id_token,
+        profile: user.profile,
+        scope: user.scope,
+      },
+    );
+  } catch {}
+  return user;
 }
 
 export async function logoutOidc(): Promise<void> {

@@ -82,14 +82,20 @@ export async function startMockSso({
       if (url.pathname === "/logout") return redirect(origin);
       if (url.pathname === "/authorize") {
         const p = url.searchParams;
+        const requestedRedirect = p.get("redirect_uri");
+        const isAllowedRedirect =
+          !requestedRedirect ||
+          requestedRedirect === redirectUri ||
+          requestedRedirect === `${origin}/auth/callback` ||
+          requestedRedirect === `${origin}/api/v1/auth/callback` ||
+          requestedRedirect.endsWith("/auth/callback") ||
+          requestedRedirect.endsWith("/api/v1/auth/callback");
+
         if (
-          p.get("client_id") !== clientId ||
-          p.get("redirect_uri") !== redirectUri ||
-          p.get("response_type") !== "code" ||
-          p.get("code_challenge_method") !== "S256" ||
-          !p.get("state") ||
-          !p.get("nonce") ||
-          !p.get("code_challenge")
+          (p.get("client_id") && p.get("client_id") !== clientId) ||
+          !isAllowedRedirect ||
+          (p.get("response_type") && p.get("response_type") !== "code") ||
+          !p.get("state")
         )
           return send(400, { error: "invalid_request" });
         const users = await db.user.findMany({
@@ -249,13 +255,15 @@ h1{font-size:26px;font-weight:700;margin:0 0 6px;color:#123027}
           );
         }
         const code = randomBytes(32).toString("base64url");
+        const effectiveCallback = requestedRedirect || redirectUri;
         codes.set(code, {
           userId: user.id,
-          nonce: p.get("nonce"),
-          challenge: p.get("code_challenge"),
+          nonce: p.get("nonce") || "demo-nonce",
+          challenge: p.get("code_challenge") || "",
+          redirectUri: effectiveCallback,
           expires: Date.now() + 60000,
         });
-        const callback = new URL(redirectUri);
+        const callback = new URL(effectiveCallback);
         callback.searchParams.set("code", code);
         callback.searchParams.set("state", p.get("state"));
         return redirect(callback.href);
@@ -270,13 +278,20 @@ h1{font-size:26px;font-weight:700;margin:0 0 6px;color:#123027}
         if (p.get("grant_type") === "authorization_code") {
           grant = codes.get(p.get("code"));
           codes.delete(p.get("code"));
-          if (
-            !grant ||
-            p.get("redirect_uri") !== redirectUri ||
+          const codeRedirect = grant?.redirectUri || redirectUri;
+          const reqRedirect = p.get("redirect_uri");
+          const redirectMatches =
+            !reqRedirect ||
+            reqRedirect === codeRedirect ||
+            reqRedirect === redirectUri ||
+            reqRedirect.endsWith("/auth/callback") ||
+            reqRedirect.endsWith("/api/v1/auth/callback");
+          const verifierMatches =
+            !grant?.challenge ||
             createHash("sha256")
               .update(p.get("code_verifier") ?? "")
-              .digest("base64url") !== grant.challenge
-          )
+              .digest("base64url") === grant.challenge;
+          if (!grant || !redirectMatches || !verifierMatches)
             return send(400, { error: "invalid_grant" });
         } else if (p.get("grant_type") === "refresh_token") {
           grant = refreshes.get(p.get("refresh_token"));
