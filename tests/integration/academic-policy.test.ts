@@ -24,7 +24,7 @@ test("global academic policy, attendance privacy, file ACL and adapter failures 
   const users = await Promise.all(["SUPER_ADMIN", "DEPARTMENT_ADMIN", "INSTRUCTOR", "STUDENT", "STUDENT"]
     .map((role: any) => { const id = randomUUID(); return db.user.create({ data: {
       id, role, ssoUserId: id, identifierValue: id, email: `${id}@example.test`,
-      name: `Policy ${role}`, departmentScopes: role === "DEPARTMENT_ADMIN" ? ["IF"] : [],
+      name: `Policy ${role}`, departmentScopes: ["DEPARTMENT_ADMIN", "INSTRUCTOR"].includes(role) ? ["IF"] : [],
     } }); }));
   const [admin, department, teacher, student, outsider] = users;
   const cookies = new Map<string, string>();
@@ -100,7 +100,7 @@ test("global academic policy, attendance privacy, file ACL and adapter failures 
         classId: cls.id, userId: student.id, categoryScoresJson: {}, finalScore: 80,
         gradeLetter: "A-", gradePoint: 3.75, gradeScaleVersion: "2026.1", publishedAt: new Date(), isLocked: true,
       } });
-      const created = await request(admin, "/course-classes", "POST", {
+      const created = await request(teacher, "/course-classes", "POST", {
         courseId: course.id, name: "New policy class", academicYear: "2027/2028 Genap", instructorIds: [teacher.id],
       }, 201);
       assert.equal((await db.courseClass.findUniqueOrThrow({ where: { id: created.id } })).gradeScaleVersion, "2024.1");

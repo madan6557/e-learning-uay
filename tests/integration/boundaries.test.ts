@@ -24,6 +24,7 @@ test("quiz scheduling boundaries follow the technical design", async (suite) => 
         name: `Boundary ${role}`,
         email: `${id}@example.test`,
         role,
+        departmentScopes: role === "INSTRUCTOR" ? ["IF"] : [],
       },
     });
   };
@@ -83,7 +84,7 @@ test("quiz scheduling boundaries follow the technical design", async (suite) => 
     })
   ).body;
   const cls = (
-    await request(admin, "/course-classes", "POST", {
+    await request(teacher, "/course-classes", "POST", {
       courseId: course.id,
       name: "Boundary A",
       academicYear: "2026/2027",

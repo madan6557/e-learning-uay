@@ -77,6 +77,8 @@ export function formatDateTime(
   value: string | number | Date,
   timeZone?: string,
 ): string {
+  const parsed = validDate(value);
+  if (!Number.isFinite(parsed.getTime())) return "Waktu tidak tersedia";
   return new Intl.DateTimeFormat("id-ID", {
     day: "numeric",
     month: "short",
@@ -85,17 +87,19 @@ export function formatDateTime(
     minute: "2-digit",
     timeZoneName: "shortOffset",
     timeZone,
-  }).format(validDate(value));
+  }).format(parsed);
 }
 
 export function formatClock(
   value: string | number | Date,
   timeZone?: string,
 ): string {
+  const parsed = validDate(value);
+  if (!Number.isFinite(parsed.getTime())) return "Waktu tidak tersedia";
   return new Intl.DateTimeFormat("id-ID", {
     hour: "2-digit",
     minute: "2-digit",
     timeZoneName: "shortOffset",
     timeZone,
-  }).format(validDate(value));
+  }).format(parsed);
 }

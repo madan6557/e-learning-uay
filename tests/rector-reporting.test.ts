@@ -388,7 +388,8 @@ test("daily chart splits overnight and multi-day sessions without losing time or
     "2026-09-24",
   );
   assert.deepEqual(calendar.days, ["2026-09-24", "2026-09-23"]);
-  assert.equal(calendar.defaultDay, "2026-09-23");
+  assert.equal(calendar.defaultDay, "2026-09-24");
+  assert.equal(calendar.latestSessionDay, "2026-09-23");
   const multi = {
     ...overnight,
     loginAt: "2026-09-22T23:00:00+07:00",

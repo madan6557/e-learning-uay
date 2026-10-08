@@ -9,10 +9,51 @@ import {
   AlertCircle,
   HelpCircle,
   ExternalLink,
+  MessageSquare,
+  Phone,
+  Mail,
+  KeyRound,
+  Clock,
+  ChevronDown,
+  Headphones,
+  LifeBuoy,
 } from "lucide-react";
 import { helpArticlesForRole, type HelpArticle, type HelpRole } from "./data/helpArticles.js";
 import { Pagination, usePagination, Modal } from "./lib";
 import { GRADE_SCALE_PRESETS } from "../../../packages/shared/src/domain";
+
+const quickFaqs = [
+  {
+    id: "sso-password",
+    q: "Bagaimana cara reset atau mengganti kata sandi akun E-Learning?",
+    a: "Akun E-Learning UAY menggunakan Single Sign-On (SSO). Jika Anda lupa kata sandi, silakan gunakan fasilitas Lupa Password pada portal SSO UAY (https://sso.uay.ac.id/reset-password) atau hubungi Helpdesk UPT TIK UAY dengan menunjukkan identitas resmi (KTM/KTP) dan NIM/NIDN.",
+    icon: KeyRound,
+  },
+  {
+    id: "upload-quota",
+    q: "Mengapa berkas tugas gagal diunggah atau muncul kesalahan ukuran berkas?",
+    a: "Batas ukuran berkas yang didukung sistem saat ini adalah maksimal 50 MB. Pastikan berkas menggunakan ekstensi yang diizinkan (PDF, DOCX, ZIP, dll). Jika berkas terlalu besar, gunakan alat kompresi dokumen PDF atau arsipkan ke dalam format ZIP sebelum mengunggah.",
+    icon: AlertCircle,
+  },
+  {
+    id: "scores-released",
+    q: "Kapan nilai dan umpan balik tugas atau kuis saya dapat dilihat?",
+    a: "Untuk kuis pilihan ganda otomatis, nilai akan langsung muncul pada kartu 'HASIL & NILAI KUIS' di bagian atas halaman kuis setelah pengerjaan berakhir atau hasil dipublikasikan dosen. Untuk tugas, nilai beserta catatan feedback dosen akan tampil di kartu 'HASIL PENILAIAN TUGAS' setelah dosen selesai memeriksa kiriman Anda.",
+    icon: BookOpen,
+  },
+  {
+    id: "attendance-progress",
+    q: "Bagaimana agar kehadiran (presensi) perkuliahan saya tercatat?",
+    a: "Presensi tercatat secara otomatis saat Anda menuntaskan aktivitas sesi perkuliahan. Buka dan baca dokumen modul hingga selesai, atau tonton video pembelajaran minimal mencapai persentase batas (85%) yang ditentukan dosen.",
+    icon: ShieldCheck,
+  },
+  {
+    id: "missing-class",
+    q: "Kelas semester aktif belum muncul di daftar kelas saya?",
+    a: "Pastikan kartu rencana studi (KRS) Anda pada sistem SIAKAD UAY sudah disetujui (ACC) oleh Dosen Penasihat Akademik (PA). Jika kelas perkuliahan menggunakan kunci pendaftaran mandiri (Enrollment Key), klik tombol '+ Gabung Kelas' di menu Kelas Saya lalu masukkan kunci yang diberikan dosen.",
+    icon: HelpCircle,
+  },
+];
 
 function normalize(value: string): string {
   return value
@@ -53,6 +94,7 @@ export function HelpPage({ user }: { user: { role?: unknown } | null }) {
   const [category, setCategory] = useState("Semua");
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
   const [zoomedArticleId, setZoomedArticleId] = useState<string | null>(null);
+  const [openFaqId, setOpenFaqId] = useState<string | null>(null);
   const articleHeading = useRef<HTMLHeadingElement>(null);
   const articleButtons = useRef(new Map<string, HTMLButtonElement>());
   const returnArticleId = useRef<string | null>(null);
@@ -463,6 +505,214 @@ export function HelpPage({ user }: { user: { role?: unknown } | null }) {
               />
             </div>
           )}
+
+          {/* Helpdesk & Support Cards */}
+          <div style={{ marginTop: 36 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+              <Headphones size={22} style={{ color: "var(--primary, #0284c7)" }} />
+              <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 700 }}>
+                Layanan Bantuan &amp; Helpdesk IT UAY
+              </h2>
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+                gap: 14,
+                marginBottom: 28,
+              }}
+            >
+              <div
+                className="card"
+                style={{
+                  padding: 16,
+                  borderRadius: 10,
+                  border: "1px solid var(--border, #e2e8f0)",
+                  background: "var(--card-bg, #ffffff)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#16a34a" }}>
+                  <MessageSquare size={18} />
+                  <strong style={{ fontSize: "0.95rem" }}>WhatsApp Helpdesk</strong>
+                </div>
+                <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--muted, #64748b)", lineHeight: 1.4 }}>
+                  Konsultasi kendala teknis dan konfirmasi akun mahasiswa via WhatsApp resmi UPT TIK.
+                </p>
+                <a
+                  href="https://wa.me/628115000829?text=Halo%20Helpdesk%20E-Learning%20UAY,%20saya%20butuh%20bantuan"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="button secondary sm"
+                  style={{ marginTop: "auto", display: "inline-flex", alignItems: "center", gap: 6, width: "fit-content" }}
+                >
+                  <Phone size={14} />
+                  +62 811-5000-829
+                  <ExternalLink size={12} />
+                </a>
+              </div>
+
+              <div
+                className="card"
+                style={{
+                  padding: 16,
+                  borderRadius: 10,
+                  border: "1px solid var(--border, #e2e8f0)",
+                  background: "var(--card-bg, #ffffff)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--primary, #0284c7)" }}>
+                  <Mail size={18} />
+                  <strong style={{ fontSize: "0.95rem" }}>Email Dukungan Akademik</strong>
+                </div>
+                <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--muted, #64748b)", lineHeight: 1.4 }}>
+                  Kirimkan tiket pelaporan kendala sinkronisasi data kelas atau nilai SIAKAD.
+                </p>
+                <a
+                  href="mailto:bantuan@elearning.uay.ac.id"
+                  className="button secondary sm"
+                  style={{ marginTop: "auto", display: "inline-flex", alignItems: "center", gap: 6, width: "fit-content" }}
+                >
+                  <Mail size={14} />
+                  bantuan@elearning.uay.ac.id
+                </a>
+              </div>
+
+              <div
+                className="card"
+                style={{
+                  padding: 16,
+                  borderRadius: 10,
+                  border: "1px solid var(--border, #e2e8f0)",
+                  background: "var(--card-bg, #ffffff)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#d97706" }}>
+                  <KeyRound size={18} />
+                  <strong style={{ fontSize: "0.95rem" }}>Reset Kata Sandi SSO</strong>
+                </div>
+                <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--muted, #64748b)", lineHeight: 1.4 }}>
+                  Lupa password login SSO? Buka portal pemulihan kata sandi mandiri Universitas Achmad Yani.
+                </p>
+                <a
+                  href="https://sso.uay.ac.id/reset-password"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="button secondary sm"
+                  style={{ marginTop: "auto", display: "inline-flex", alignItems: "center", gap: 6, width: "fit-content" }}
+                >
+                  <ExternalLink size={14} />
+                  Portal Reset Password SSO
+                </a>
+              </div>
+
+              <div
+                className="card"
+                style={{
+                  padding: 16,
+                  borderRadius: 10,
+                  border: "1px solid var(--border, #e2e8f0)",
+                  background: "var(--card-bg, #ffffff)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#64748b" }}>
+                  <Clock size={18} />
+                  <strong style={{ fontSize: "0.95rem" }}>Jam Pelayanan</strong>
+                </div>
+                <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--muted, #64748b)", lineHeight: 1.4 }}>
+                  Senin – Jumat: 08:00 – 16:00 WITA<br />
+                  Sabtu, Minggu &amp; Libur Nasional: Tutup
+                </p>
+                <span style={{ marginTop: "auto", fontSize: "0.78rem", color: "var(--muted, #94a3b8)" }}>
+                  Gedung Rektorat UAY Lt. 2, UPT TIK
+                </span>
+              </div>
+            </div>
+
+            {/* Quick FAQ Section */}
+            <div style={{ marginTop: 24, marginBottom: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                <LifeBuoy size={22} style={{ color: "var(--primary, #0284c7)" }} />
+                <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 700 }}>
+                  Pertanyaan Sering Diajukan (FAQ)
+                </h2>
+              </div>
+              <div style={{ display: "grid", gap: 8 }}>
+                {quickFaqs.map((faq) => {
+                  const isOpen = openFaqId === faq.id;
+                  const Icon = faq.icon;
+                  return (
+                    <div
+                      key={faq.id}
+                      className="card"
+                      style={{
+                        borderRadius: 10,
+                        border: "1px solid var(--border, #e2e8f0)",
+                        background: "var(--card-bg, #ffffff)",
+                        overflow: "hidden",
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setOpenFaqId(isOpen ? null : faq.id)}
+                        style={{
+                          width: "100%",
+                          textAlign: "left",
+                          padding: "14px 18px",
+                          background: "transparent",
+                          border: "none",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 12,
+                        }}
+                      >
+                        <span style={{ display: "flex", alignItems: "center", gap: 10, fontWeight: 600, fontSize: "0.95rem", color: "var(--foreground, #0f172a)" }}>
+                          <Icon size={18} style={{ color: "var(--primary, #0284c7)", flexShrink: 0 }} />
+                          {faq.q}
+                        </span>
+                        <ChevronDown
+                          size={18}
+                          style={{
+                            color: "var(--muted, #94a3b8)",
+                            transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+                            transition: "transform 0.2s ease",
+                            flexShrink: 0,
+                          }}
+                        />
+                      </button>
+                      {isOpen && (
+                        <div
+                          style={{
+                            padding: "0 18px 16px 46px",
+                            fontSize: "0.9rem",
+                            lineHeight: 1.6,
+                            color: "var(--foreground, #334155)",
+                            borderTop: "1px solid var(--border-subtle, #f1f5f9)",
+                            paddingTop: 12,
+                          }}
+                        >
+                          {faq.a}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </div>
       )}
       {selectedArticle?.figure && zoomedArticleId === selectedArticle.id && (

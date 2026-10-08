@@ -47,8 +47,8 @@ for (let i = 0; i < 30; i++) {
     await new Promise((r) => setTimeout(r, 1000));
   }
 }
-await db.$disconnect();
 if (!ready) throw new Error("Local PostgreSQL did not become ready.");
+await db.$disconnect();
 await run([
   "node_modules/prisma/build/index.js",
   "migrate",
@@ -56,7 +56,13 @@ await run([
   "--schema",
   "packages/db/prisma/schema.prisma",
 ]);
-await run(["--import", "tsx", "packages/db/seed.ts"]);
+const hasLocalUsers = (await db.user.count()) > 0;
+await db.$disconnect();
+if (hasLocalUsers) {
+  console.log("Existing local users found; preserving data and skipping demo seed.");
+} else {
+  await run(["--import", "tsx", "packages/db/seed.ts"]);
+}
 launch(["scripts/file-service.mjs"]);
 const { startMockSso } = await import("./oidc-fixture.mjs");
 const sso = await startMockSso({

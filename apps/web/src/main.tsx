@@ -1,47 +1,54 @@
+/**
+ * ============================================================================
+ * E-LEARNING UNIVERSITAS ACHMAD YANI (UAY) - FRONTEND APPLICATION ROOT
+ * ============================================================================
+ * @module apps/web/src/main.tsx
+ *
+ * Titik masuk utama (SPA Entrypoint) aplikasi frontend React.
+ *
+ * Tanggung Jawab & Arsitektur:
+ * 1. Otentikasi sesi Keycloak SSO OIDC dan verifikasi state identitas (`/api/v1/me`).
+ * 2. Routing sisi-klien (client-side routing) dan layout shell (`AuthShell`, `PublicShell`).
+ * 3. Navigasi peran (Super Admin, Rektor, Admin Prodi, Dosen, Mahasiswa).
+ * 4. Pemilih rute cerdas (route dispatcher) ke modul: ClassPage, QuizPage,
+ *    AssignmentPage, Catalog, AnnouncementsPage, Profile, Help, dan RectorDashboard.
+ * ============================================================================
+ */
+
 import { ConfirmationHost } from "./confirm";
-import { ErrorBoundary } from "./ErrorBoundary";
 import { createRoot } from "react-dom/client";
-import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
+import { lazy, useEffect, useState } from "react";
 import { Analytics } from "@vercel/analytics/react";
-import {
-  BookOpen,
-  LayoutDashboard,
-  GraduationCap,
-  Bell,
-  CalendarDays,
-  CircleHelp,
-  LogOut,
-  ArrowRight,
-  LibraryBig,
-  Menu,
-  ShieldCheck,
-  ClipboardCheck,
-  PanelLeftClose,
-  PanelLeftOpen,
-} from "lucide-react";
 import {
   t,
   api,
   useApi,
   Loading,
-  Notice,
   navigate,
-  Action,
   Empty,
   setAuthToken,
-  getAuthToken,
-  parseJwtPayload,
 } from "./lib";
-import { loginWithOidc, handleOidcCallback, logoutOidc } from "./oidc";
+import { handleOidcCallback, logoutOidc } from "./oidc";
 import { readCache } from "./readCache";
 import { Dashboard, Catalog, Profile } from "./pages";
-import { Avatar, Breadcrumbs, IconButton, UserChip } from "./ui";
+import { AnnouncementsPage } from "./AnnouncementsPage";
 import {
   DraftUserContext,
   confirmUnsaved,
   useNavigationGuard,
 } from "./useLocalDraft";
 import { routeFromLocation } from "./router";
+import { HelpPage } from "./HelpPage";
+import { GuidePage } from "./GuidePage";
+import "./guide.css";
+import { useSessionExpiry } from "./useSessionExpiry";
+import "./styles.css";
+import "./workspace.css";
+import "./experience.css";
+
+import { PublicShell, AuthShell } from "./components/layout";
+import { Landing } from "./pages/Landing";
+
 const ClassPage = lazy(() =>
   import("./ClassPage").then((m) => ({ default: m.ClassPage })),
 );
@@ -52,602 +59,7 @@ const QuizPage = lazy(() =>
 const AssignmentPage = lazy(() =>
   import("./Assessment").then((m) => ({ default: m.AssignmentPage })),
 );
-import { HelpPage } from "./HelpPage";
-import { GuidePage } from "./GuidePage";
-import "./guide.css";
-import { useSessionExpiry } from "./useSessionExpiry";
-import "./styles.css";
-import "./workspace.css";
-import "./experience.css";
-// The square mark and product-name lockup is shared with the UAY SSO console
-// so the two applications read as one environment.
-function Brand({
-  home = "/",
-  collapsed = false,
-}: {
-  home?: string;
-  collapsed?: boolean;
-}) {
-  return (
-    <a className="brand" href={home} aria-label="UAY E-Learning beranda">
-      <span className="brand-mark" aria-hidden="true">
-        <picture>
-          <source srcSet="/uay-logo.webp" type="image/webp" />
-          <img
-            src="/uay-logo.png"
-            alt="Logo UAY"
-            className="brand-logo-img"
-            width="26"
-            height="26"
-            loading="eager"
-            decoding="async"
-          />
-        </picture>
-      </span>
-      {!collapsed && <span className="brand-name">E-Learning UAY</span>}
-    </a>
-  );
-}
-function LoginButton({
-  children,
-  className,
-  demoUserId,
-  label,
-  config,
-}: {
-  children: ReactNode;
-  className: string;
-  demoUserId?: string;
-  label: string;
-  config?: any;
-}) {
-  return (
-    <Action
-      className={className}
-      label={label}
-      run={async () => {
-        if (
-          !location.pathname.startsWith("/auth") &&
-          !location.pathname.startsWith("/api") &&
-          !["/", "/login"].includes(location.pathname)
-        ) {
-          sessionStorage.setItem(
-            "uay-return-path",
-            location.pathname + location.search,
-          );
-        } else {
-          sessionStorage.removeItem("uay-return-path");
-        }
 
-        if (demoUserId) {
-          await api("/auth/development-login", "POST", {
-            userId: demoUserId,
-          });
-          location.assign("/");
-          return;
-        }
-
-        // Mode demo / pengujian: selalu gunakan alur otorisasi backend agar mock SSO membuka daftar akun uji
-        const isHostedDemo =
-          Boolean(config?.demoEnabled) ||
-          (typeof window !== "undefined" &&
-            (window.location.hostname.endsWith(".vercel.app") ||
-              window.location.hostname === "vercel.app" ||
-              window.location.hostname.includes("railway.app")));
-
-        if (isHostedDemo || config?.mode === "development") {
-          const { authorizationUrl } = await api<{ authorizationUrl: string }>(
-            "/auth/authorization",
-            "POST",
-          );
-          location.assign(authorizationUrl);
-          return;
-        }
-
-        try {
-          await loginWithOidc({
-            issuer: config?.issuer,
-            clientId: config?.clientId,
-            redirectUri: config?.redirectUri,
-          });
-        } catch (e) {
-          console.warn(
-            "[Auth] Client OIDC signinRedirect failed, trying backend fallback:",
-            e,
-          );
-          const { authorizationUrl } = await api<{ authorizationUrl: string }>(
-            "/auth/authorization",
-            "POST",
-          );
-          location.assign(authorizationUrl);
-        }
-      }}
-    >
-      {children}
-    </Action>
-  );
-}
-function PublicShell({
-  children,
-  config,
-}: {
-  children: ReactNode;
-  config?: any;
-}) {
-  return (
-    <div className="public-shell">
-      <a className="skip-link" href="#main-content">
-        Lewati ke konten
-      </a>
-      <header className="public-header">
-        <Brand />
-        <nav aria-label="Menu publik">
-          <LoginButton
-            className="header-sso-btn"
-            label="Masuk dengan SSO UAY"
-            config={config}
-          >
-            <span>Masuk SSO</span>
-            <ArrowRight size={15} />
-          </LoginButton>
-        </nav>
-      </header>
-      <main id="main-content">
-        <ErrorBoundary>{children}</ErrorBoundary>
-      </main>
-      <footer>
-        <span>© {new Date().getFullYear()} {t.university}</span>
-        <span>{t.timeZone}</span>
-      </footer>
-    </div>
-  );
-}
-function getAuthErrorMessage(code: string): string {
-  switch (code) {
-    case "SESSION_EXPIRED":
-      return "Sesi login Anda telah berakhir atau kode otentikasi kedaluwarsa. Data login telah dibersihkan otomatis. Silakan klik tombol Masuk untuk memulai sesi baru.";
-    case "INVALID_STATE":
-      return "Verifikasi keamanan sesi tidak valid atau telah kedaluwarsa. Data login lama telah dibersihkan, silakan masuk kembali.";
-    case "ACCOUNT_DISABLED":
-      return "Akun akademik Anda sedang berstatus non-aktif. Silakan hubungi bagian akademik atau administrator prodi.";
-    case "INVALID_IDENTITY":
-      return "Identitas akun tidak ditemukan pada sistem SSO. Pastikan Anda menggunakan akun UAY yang terdaftar.";
-    case "access_denied":
-      return "Proses masuk SSO dibatalkan atau izin ditolak.";
-    default:
-      return "Terjadi kendala saat autentikasi SSO. Sesi login telah dibersihkan otomatis, silakan coba masuk kembali.";
-  }
-}
-
-function Landing({
-  config,
-  error,
-  authError,
-  onClearAuthError,
-}: {
-  config: any;
-  error?: Error | null;
-  authError?: string | null;
-  onClearAuthError?: () => void;
-}) {
-  return (
-    <PublicShell config={config}>
-      {authError && (
-        <div
-          role="alert"
-          style={{
-            maxWidth: 1040,
-            margin: "24px auto -8px auto",
-            padding: "14px 20px",
-            backgroundColor: "#fef2f2",
-            border: "1px solid #fecaca",
-            borderRadius: "10px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "16px",
-            color: "#991b1b",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <span style={{ fontSize: "1.25rem", lineHeight: 1 }} aria-hidden="true">
-              ⚠️
-            </span>
-            <div>
-              <strong style={{ fontSize: "0.95rem" }}>Pemberitahuan Masuk</strong>
-              <p
-                style={{
-                  margin: "3px 0 0 0",
-                  fontSize: "0.88rem",
-                  color: "#b91c1c",
-                }}
-              >
-                {getAuthErrorMessage(authError)}
-              </p>
-            </div>
-          </div>
-          {onClearAuthError && (
-            <button
-              type="button"
-              onClick={onClearAuthError}
-              aria-label="Tutup pemberitahuan"
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "#991b1b",
-                fontSize: "1.1rem",
-                cursor: "pointer",
-                padding: "4px 8px",
-                lineHeight: 1,
-              }}
-            >
-              ✕
-            </button>
-          )}
-        </div>
-      )}
-      {error && <Notice error={error} />}
-      <section className="landing-hero">
-        <div className="hero-content">
-          <div className="hero-pill">
-            <span className="hero-pill-dot" />
-            <span>UNIVERSITAS ACHMAD YANI BANJARMASIN</span>
-          </div>
-          <h1>E-Learning UAY</h1>
-          <p>
-            Materi kuliah, tugas, kuis, dan rekap nilai untuk mahasiswa dan
-            dosen Universitas Achmad Yani.
-          </p>
-          <div className="hero-actions">
-            <LoginButton
-              className="button hero-cta"
-              label="Masuk dengan SSO UAY"
-              config={config}
-            >
-              <span>Masuk dengan SSO UAY</span>
-              <ArrowRight size={18} />
-            </LoginButton>
-          </div>
-          <div className="landing-caption">
-            <ShieldCheck size={16} />
-            <span>Gunakan akun akademik UAY Anda.</span>
-          </div>
-        </div>
-        {/* A visitor here has exactly one job: sign in. The panel answers the
-            three things that actually confuse people afterwards, instead of
-            repeating the feature cards below the hero. */}
-        <aside className="landing-preview" aria-label="Sebelum masuk">
-          <div className="preview-body">
-            <div className="preview-portal-card">
-              <div className="portal-badge-row">
-                <span className="portal-badge">
-                  {config?.semesterLabel ||
-                    config?.academicYear ||
-                    "SEMESTER GANJIL 2026/2027"}
-                </span>
-              </div>
-              <h4>Sebelum masuk</h4>
-              <p>
-                Akses diatur oleh program studi dan dosen pengampu, bukan oleh
-                aplikasi ini.
-              </p>
-            </div>
-            <dl className="portal-notes">
-              <div>
-                <dt>Daftar kelas kosong</dt>
-                <dd>
-                  Program studi belum mendaftarkan Anda pada kelas semester ini.
-                </dd>
-              </div>
-              <div>
-                <dt>Kelas terbuka tetapi belum ada isinya</dt>
-                <dd>Dosen belum menerbitkan materi atau aktivitas.</dd>
-              </div>
-              <div>
-                <dt>Tidak dapat masuk</dt>
-                <dd>Hubungi bagian akademik program studi Anda.</dd>
-              </div>
-            </dl>
-          </div>
-        </aside>
-      </section>
-      <section className="landing-features" aria-label="Fitur pembelajaran">
-        {[
-          [
-            BookOpen,
-            "Kelas",
-            "Section, materi, dan pengumuman dari dosen pengampu.",
-          ],
-          [
-            ClipboardCheck,
-            "Tugas dan kuis",
-            "Kerjakan sebelum tenggat. Setiap versi pengumpulan tersimpan.",
-          ],
-          [
-            GraduationCap,
-            "Nilai",
-            "Rekap per kategori beserta bobotnya, setelah dosen menerbitkan.",
-          ],
-        ].map(([Icon, title, text]: any) => (
-          <article className="feature-card" key={title}>
-            <div className="feature-icon-wrapper">
-              <Icon size={22} />
-            </div>
-            <h2>{title}</h2>
-            <p>{text}</p>
-          </article>
-        ))}
-      </section>
-    </PublicShell>
-  );
-}
-function AuthShell({
-  user,
-  pathname,
-  demo,
-  logout,
-  children,
-}: {
-  user: any;
-  pathname: string;
-  demo: boolean;
-  logout: () => Promise<void>;
-  children: ReactNode;
-}) {
-  const drawerQuery = pathname.startsWith('/rector') ? '(max-width:1024px)' : '(max-width:760px)';
-  const [menuOpen, setMenuOpen] = useState(false),
-    [mobile, setMobile] = useState(
-      () => matchMedia(drawerQuery).matches,
-    );
-  useEffect(() => {
-    const media = matchMedia(drawerQuery);
-    const update = () => {
-      setMobile(media.matches);
-      if (!media.matches) setMenuOpen(false);
-    };
-    update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, [drawerQuery]);
-  useEffect(() => {
-    if (!menuOpen) return;
-    const activeItem = document.querySelector<HTMLElement>(
-      "#academic-navigation a.active, #academic-navigation a",
-    );
-    activeItem?.focus();
-    const escape = (e: KeyboardEvent) => {
-      if (e.key === "Tab") {
-        const items = [
-          ...document.querySelectorAll<HTMLElement>(
-            "#academic-navigation a, #academic-navigation button",
-          ),
-        ].filter((el) => el.offsetParent !== null);
-        const first = items[0],
-          last = items.at(-1);
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last?.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first?.focus();
-        }
-      }
-      if (e.key === "Escape") {
-        setMenuOpen(false);
-        setTimeout(
-          () => document.getElementById("open-mobile-menu")?.focus(),
-          0,
-        );
-      }
-    };
-    document.addEventListener("keydown", escape);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", escape);
-      document.body.style.overflow = "";
-    };
-  }, [menuOpen]);
-  useEffect(() => setMenuOpen(false), [pathname]);
-  // Sidebar width preference is per-device, like the SSO console's.
-  const [collapsed, setCollapsed] = useState(
-    () => user.role !== 'RECTOR' && localStorage.getItem("uay-nav-collapsed") === "1",
-  );
-  useEffect(() => {
-    localStorage.setItem("uay-nav-collapsed", collapsed ? "1" : "0");
-  }, [collapsed]);
-  const displayCollapsed = collapsed && !mobile;
-  const [unread, setUnread] = useState(0);
-  useEffect(() => {
-    if (user.role === 'RECTOR') return;
-    let active = true;
-    const load = () =>
-      api<{ count: number }>("/notifications/unread-count")
-        .then((r) => {
-          if (active) setUnread(r.count);
-        })
-        .catch(() => {});
-    load();
-    const timer = setInterval(load, 60000);
-    window.addEventListener("notifications-changed", load);
-    return () => {
-      active = false;
-      clearInterval(timer);
-      window.removeEventListener("notifications-changed", load);
-    };
-  }, []);
-  const admin = ["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(user.role);
-  const rector = user.role === 'RECTOR';
-  const links = rector ? [
-    ['/rector', LayoutDashboard, 'Pemantauan Akademik'],
-    ['/profile', ShieldCheck, t.profile],
-    ['/help', CircleHelp, t.help],
-  ] : [
-    ["/dashboard", LayoutDashboard, t.dashboard],
-    ...(user.role === 'SUPER_ADMIN' ? [['/rector', ClipboardCheck, 'Pemantauan Akademik']] : []),
-    ...(admin ? [["/catalog", LibraryBig, t.catalog]] : []),
-    ["/classes", BookOpen, admin ? t.manageClasses : t.myClasses],
-    ["/agenda", CalendarDays, admin ? t.academicAgenda : t.agenda],
-    ["/grades", GraduationCap, admin ? t.gradeOverview : t.grades],
-    ["/notifications", Bell, t.notifications],
-    ["/profile", ShieldCheck, t.profile],
-    ["/help", CircleHelp, t.help],
-  ];
-  const current = String(
-    links.find(
-      ([href]) => pathname === href || pathname.startsWith(`${href}/`),
-    )?.[2] ??
-      (pathname.startsWith("/quizzes")
-        ? "Kuis"
-        : pathname.startsWith("/assignments")
-          ? "Tugas"
-          : t.learningSpace),
-  );
-  return (
-    <div
-      className={`app-shell ${pathname.startsWith('/rector') ? "rector-workspace" : ""} ${menuOpen ? "menu-open" : ""} ${
-        displayCollapsed ? "nav-collapsed" : ""
-      }`}
-    >
-      <a className="skip-link" href="#main-content">
-        Lewati ke konten
-      </a>
-      {menuOpen && (
-        <button
-          className="nav-scrim"
-          onClick={() => setMenuOpen(false)}
-          aria-label="Tutup navigasi"
-        />
-      )}
-      <aside
-        className="sidebar"
-        id="academic-navigation"
-        inert={mobile && !menuOpen}
-      >
-        <div className="sidebar-brand">
-        <Brand home={rector ? '/rector' : '/dashboard'} collapsed={displayCollapsed} />
-        </div>
-        {!displayCollapsed && <p className="nav-caption">MENU</p>}
-        <nav aria-label="Navigasi utama">
-          {links.map(([href, Icon, label]: any) => {
-            const active = pathname === href || pathname.startsWith(`${href}/`);
-            const badge = href === "/notifications" ? unread : 0;
-            return (
-              <a
-                key={href}
-                href={href}
-                className={active ? "active" : ""}
-                aria-current={active ? "page" : undefined}
-                title={displayCollapsed ? label : undefined}
-              >
-                <Icon size={22} />
-                {!displayCollapsed && <span className="nav-label">{label}</span>}
-                {badge > 0 && (
-                  <span className="nav-badge">
-                    {badge > 99 ? "99+" : badge}
-                    <span className="sr-only"> {t.unreadNotifications}</span>
-                  </span>
-                )}
-              </a>
-            );
-          })}
-        </nav>
-        <div className="sidebar-collapse-section">
-          <button
-            type="button"
-            className="sidebar-collapse-btn"
-            onClick={() => setCollapsed((value) => !value)}
-            aria-pressed={collapsed}
-            aria-label={collapsed ? "Perluas navigasi" : t.collapseNav}
-            title={collapsed ? "Perluas navigasi" : undefined}
-          >
-            {collapsed ? (
-              <PanelLeftOpen size={16} />
-            ) : (
-              <>
-                <PanelLeftClose size={16} />
-                <span className="collapse-label">Ciutkan sidebar</span>
-              </>
-            )}
-          </button>
-        </div>
-      </aside>
-      <div className="workspace" inert={mobile && menuOpen}>
-        <header className="topbar">
-          <div className="topbar-left">
-            <IconButton
-              id="open-mobile-menu"
-              label="Buka menu"
-              className="mobile-menu"
-              aria-expanded={menuOpen}
-              aria-controls="academic-navigation"
-              onClick={() => setMenuOpen(true)}
-            >
-              <Menu size={22} />
-            </IconButton>
-            {/* The SSO console shows the same mark once its rail is hidden. */}
-            <a
-              className="brand-mark topbar-mark"
-              href={rector ? '/rector' : '/dashboard'}
-              aria-label="UAY E-Learning beranda"
-            >
-              <picture>
-                <source srcSet="/uay-logo.webp" type="image/webp" />
-                <img
-                  src="/uay-logo.png"
-                  alt="Logo UAY"
-                  className="brand-logo-img"
-                  width="24"
-                  height="24"
-                  loading="eager"
-                  decoding="async"
-                />
-              </picture>
-            </a>
-            <Breadcrumbs
-              items={
-                pathname === "/dashboard" || pathname === "/rector"
-                  ? [{ label: pathname === "/rector" ? "Pemantauan Akademik" : "Beranda" }]
-                  : [
-                      { label: rector ? "Pemantauan Akademik" : "Beranda", href: rector ? '/rector' : '/dashboard' },
-                      { label: current },
-                    ]
-              }
-            />
-          </div>
-          <div className="topbar-right">
-            {demo && (
-              <span className="environment-badge">
-                <span className="badge-dot" />
-                {pathname.startsWith('/rector') ? 'Demo — data simulasi' : 'Mode Uji'}
-              </span>
-            )}
-            <div className="user-nav-group">
-              <UserChip user={user} role={(t.roles as any)[user.role]} />
-              <span className="topbar-divider" aria-hidden="true" />
-              <Action
-                label="Keluar dari sesi"
-                className="minimal-logout-btn"
-                run={logout}
-              >
-                <LogOut size={15} />
-                <span className="logout-text">Keluar</span>
-              </Action>
-            </div>
-          </div>
-        </header>
-        <main id="main-content">
-          <ErrorBoundary key={pathname}>
-            <Suspense fallback={<Loading />}>{children}</Suspense>
-          </ErrorBoundary>
-        </main>
-        <footer>
-          <span>© {new Date().getFullYear()} {t.university}</span>
-          <a href="/help">{t.help}</a>
-        </footer>
-      </div>
-    </div>
-  );
-}
 function AuthCallbackPage({
   config,
   onSuccess,
@@ -953,7 +365,7 @@ function App() {
   let page;
   if (section === 'rector' && ['RECTOR','SUPER_ADMIN'].includes(user.role))
     page = <RectorDashboard demo={!!config.data?.demoEnabled} />;
-  else if (user.role === 'RECTOR' && !['profile','help'].includes(section))
+  else if (user.role === 'RECTOR' && !['profile','help','announcements'].includes(section))
     page = <Empty><h1>Pemantauan akademik</h1><p>Akun rektor dapat melihat laporan kegiatan dosen dan penyelesaian penilaian.</p><a className="button" href="/rector">Buka laporan akademik</a></Empty>;
   else if (section === "classes" && id)
     page = (
@@ -999,6 +411,8 @@ function App() {
         </a>
       </Empty>
     );
+  else if (section === "announcements")
+    page = <AnnouncementsPage user={user} config={config.data} />;
   else if (section === "profile")
     page = <Profile user={user} accountUrl={config.data?.accountUrl} />;
   else if (section === "help")

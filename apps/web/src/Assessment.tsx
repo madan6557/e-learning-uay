@@ -686,7 +686,13 @@ export function QuizPage({
   }, [quiz?.path]);
   if (info.loading && !quiz) return <Loading />;
   if (info.error) return <Notice error={info.error} />;
-  if (!quiz) return null;
+  const isDeptAdminForClass = user.role === "DEPARTMENT_ADMIN" && quiz.canManage;
+  const canEdit =
+    (user.role === "INSTRUCTOR" || isDeptAdminForClass) &&
+    quiz.canManage &&
+    !quiz.isClassArchived;
+  const canGrade =
+    user.role === "INSTRUCTOR" && quiz.canManage && !quiz.isClassArchived;
   const current =
     active ??
     quiz.attempts.find(
@@ -728,13 +734,16 @@ export function QuizPage({
           ) : (
             <Badge value={quiz.isVisible ? quiz.status : "DRAFT"} />
           )}
-          {quiz.canManage && (
+          {canEdit && (
             <button className="secondary" onClick={() => setEditing(true)}>
               {t.edit}
             </button>
           )}
         </div>
       </div>
+      {quiz.isClassArchived && quiz.canManage && (
+        <div className="callout note">Kelas diarsipkan. Kuis dapat dilihat, tetapi tidak dapat diubah atau dinilai.</div>
+      )}
       <div className="assessment-meta">
         <span>
           <Clock3 size={17} />
@@ -751,6 +760,81 @@ export function QuizPage({
           </span>
         )}
       </div>
+      {!quiz.canManage && quiz.attempts?.length > 0 && !current && (() => {
+        const latestAttempt = quiz.attempts[0];
+        const hasScore = latestAttempt.score !== undefined && latestAttempt.score !== null;
+        return (
+          <div
+            className="card"
+            style={{
+              background: "linear-gradient(135deg, rgba(2, 132, 199, 0.08), rgba(2, 132, 199, 0.02))",
+              border: "1px solid rgba(2, 132, 199, 0.25)",
+              borderRadius: 12,
+              padding: "20px 24px",
+              marginBottom: 20,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 16,
+            }}
+          >
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <span className="eyebrow" style={{ color: "#0284c7", fontWeight: 700 }}>
+                  HASIL &amp; NILAI KUIS
+                </span>
+                <Badge value={latestAttempt.status} />
+              </div>
+              <h3 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 700 }}>
+                {hasScore ? (
+                  <>Nilai Anda: <span style={{ color: "#0284c7" }}>{Number.isInteger(latestAttempt.score) ? latestAttempt.score : latestAttempt.score.toFixed(1)}</span> / 100</>
+                ) : (
+                  "Nilai Sedang Dalam Proses Penilaian / Belum Dipublikasikan"
+                )}
+              </h3>
+              <p style={{ margin: "4px 0 0", fontSize: "0.88rem", color: "var(--muted, #64748b)" }}>
+                Dikerjakan pada: {date(latestAttempt.submittedAt || latestAttempt.startedAt)} · Percobaan ke-{latestAttempt.attemptNum} dari {quiz.attemptLimit}
+              </p>
+            </div>
+            <div>
+              {hasScore ? (
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "6px 14px",
+                    borderRadius: 20,
+                    fontSize: "0.85rem",
+                    fontWeight: 600,
+                    background: "rgba(22, 163, 74, 0.12)",
+                    color: "#16a34a",
+                  }}
+                >
+                  <CheckCircle2 size={16} /> Nilai Resmi Terbit
+                </span>
+              ) : (
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "6px 14px",
+                    borderRadius: 20,
+                    fontSize: "0.85rem",
+                    fontWeight: 600,
+                    background: "rgba(234, 179, 8, 0.12)",
+                    color: "#ca8a04",
+                  }}
+                >
+                  <Clock3 size={16} /> Menunggu Publikasi Nilai
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      })()}
       {!quiz.canManage &&
         (current ? (
           <AttemptRunner
@@ -840,7 +924,7 @@ export function QuizPage({
         ))}
       <div className="section-heading" style={{ flexWrap: "wrap", gap: 12 }}>
         <h2>{quiz.canManage ? t.gradeAnswer : t.attemptHistory}</h2>
-        {quiz.canManage && (
+        {canGrade && (
           <div className="toolbar" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
             {quiz.questions.some((q: any) => ["ESSAY", "FILE_UPLOAD"].includes(q.type)) && (
               <label style={{ display: "inline-flex", alignItems: "center", gap: 8, margin: 0, fontWeight: "normal", fontSize: 13, color: "var(--muted)" }}>
@@ -930,12 +1014,12 @@ export function QuizPage({
                 </td>
                 <td>
                   <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", flexWrap: "wrap", alignItems: "center" }}>
-                    {quiz.canManage && a.status !== "IN_PROGRESS" && (
+                    {canGrade && a.status !== "IN_PROGRESS" && (
                       <button className="secondary" onClick={() => setGrading(a)}>
                         {t.gradeAnswer}
                       </button>
                     )}
-                    {quiz.canManage && a.status === "GRADED_COMPLETE" && !a.publishedAt && (
+                    {canGrade && a.status === "GRADED_COMPLETE" && !a.publishedAt && (
                       <Action
                         className="primary"
                         run={async () => {
@@ -1012,7 +1096,8 @@ function AttemptRunner({
     [status, setStatus] = useState(t.answerSaved),
     [error, setError] = useState<Error | null>(null),
     [recovery, setRecovery] = useState<any>(null),
-    [submitting, setSubmitting] = useState(false);
+    [submitting, setSubmitting] = useState(false),
+    [successSubmitted, setSuccessSubmitted] = useState(false);
   const answerRef = useRef(answers),
     revision = useRef(attempt.revision),
     dirty = useRef(false),
@@ -1075,7 +1160,11 @@ function AttemptRunner({
       closed.current = true;
       if (localTimer.current) clearTimeout(localTimer.current);
       await removeDraft(user.id, attempt.id);
-      onDone();
+      if (forced) {
+        onDone();
+      } else {
+        setSuccessSubmitted(true);
+      }
     } catch (e) {
       setError(e as Error);
     } finally {
@@ -1244,6 +1333,41 @@ function AttemptRunner({
           {t.submitQuiz}
         </button>
       </div>
+      {successSubmitted && (
+        <Modal title="Kuis Berhasil Dikumpulkan" onClose={onDone}>
+          <div style={{ textAlign: "center", padding: "16px 8px" }}>
+            <div
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: "50%",
+                background: "rgba(22, 163, 74, 0.12)",
+                color: "#16a34a",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 16,
+              }}
+            >
+              <CheckCircle2 size={36} />
+            </div>
+            <h3 style={{ margin: "0 0 8px", fontSize: "1.25rem" }}>
+              Jawaban Kuis Berhasil Disimpan!
+            </h3>
+            <p style={{ color: "var(--muted, #64748b)", margin: "0 0 24px", lineHeight: 1.5 }}>
+              Seluruh lembar jawaban Anda telah diterima oleh sistem E-Learning UAY. Anda dapat memeriksa riwayat pengerjaan dan status penilaian pada halaman kuis.
+            </p>
+            <button
+              type="button"
+              className="button primary"
+              onClick={onDone}
+              style={{ minWidth: 160 }}
+            >
+              Selesai &amp; Lihat Ringkasan
+            </button>
+          </div>
+        </Modal>
+      )}
     </section>
   );
 }
@@ -1797,7 +1921,8 @@ export function AssignmentPage({
     [file, setFile] = useState<any>(null),
     [body, setBody] = useState(""),
     [link, setLink] = useState(""),
-    [receipt, setReceipt] = useState<any>(null);
+    [receipt, setReceipt] = useState<any>(null),
+    [showSuccessModal, setShowSuccessModal] = useState(false);
   const a = info.data;
   const pagination = usePagination(a?.submissions ?? [], 10);
   useEffect(() => {
@@ -1807,6 +1932,13 @@ export function AssignmentPage({
   if (info.loading && !a) return <Loading />;
   if (info.error) return <Notice error={info.error} />;
   if (!a) return null;
+  const isDeptAdminForClass = user.role === "DEPARTMENT_ADMIN" && a.canManage;
+  const canEdit =
+    (user.role === "INSTRUCTOR" || isDeptAdminForClass) &&
+    a.canManage &&
+    !a.isClassArchived;
+  const canGrade =
+    user.role === "INSTRUCTOR" && a.canManage && !a.isClassArchived;
   return (
     <DraftRouteContext.Provider value={`#/assignments/${id}`}>
       <a className="back-link" href={a.classPath ?? backHref}>
@@ -1832,13 +1964,16 @@ export function AssignmentPage({
           ) : (
             <Badge value={a.isVisible ? "PUBLISHED" : "DRAFT"} />
           )}
-          {a.canManage && (
+          {canEdit && (
             <button className="secondary" onClick={() => setEditing(true)}>
               {t.edit}
             </button>
           )}
         </div>
       </div>
+      {a.isClassArchived && a.canManage && (
+        <div className="callout note">Kelas diarsipkan. Tugas dapat dilihat, tetapi tidak dapat diubah atau dinilai.</div>
+      )}
       <div className="assessment-layout">
         <article className="card">
           <h2>{t.instructions}</h2>
@@ -1862,6 +1997,89 @@ export function AssignmentPage({
           </Field>
         </aside>
       </div>
+      {!a.canManage && a.submissions?.length > 0 && (() => {
+        const latestSubmission = a.submissions.find((s: any) => s.status !== "SUPERSEDED") || a.submissions[0];
+        const hasScore = latestSubmission.score !== undefined && latestSubmission.score !== null;
+        return (
+          <div
+            className="card"
+            style={{
+              background: "linear-gradient(135deg, rgba(2, 132, 199, 0.08), rgba(2, 132, 199, 0.02))",
+              border: "1px solid rgba(2, 132, 199, 0.25)",
+              borderRadius: 12,
+              padding: "20px 24px",
+              marginBottom: 20,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 16,
+            }}
+          >
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <span className="eyebrow" style={{ color: "#0284c7", fontWeight: 700 }}>
+                  HASIL PENILAIAN TUGAS
+                </span>
+                <Badge value={latestSubmission.status} />
+                {latestSubmission.status === "LATE" && (
+                  <span style={{ fontSize: "0.75rem", color: "#dc2626", fontWeight: 600 }}>Terlambat</span>
+                )}
+              </div>
+              <h3 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 700 }}>
+                {hasScore ? (
+                  <>Nilai Anda: <span style={{ color: "#0284c7" }}>{Number.isInteger(latestSubmission.score) ? latestSubmission.score : latestSubmission.score.toFixed(1)}</span> / {a.maxScore}</>
+                ) : (
+                  "Tugas Terkirim · Menunggu Penilaian / Publikasi Dosen"
+                )}
+              </h3>
+              {latestSubmission.feedback && (
+                <p style={{ margin: "6px 0 0", fontSize: "0.9rem", color: "var(--foreground, #1e293b)", fontStyle: "italic" }}>
+                  Catatan Dosen: &ldquo;{latestSubmission.feedback}&rdquo;
+                </p>
+              )}
+              <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "var(--muted, #64748b)" }}>
+                Dikumpulkan pada: {date(latestSubmission.submittedAt)} (Versi {latestSubmission.version})
+              </p>
+            </div>
+            <div>
+              {hasScore ? (
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "6px 14px",
+                    borderRadius: 20,
+                    fontSize: "0.85rem",
+                    fontWeight: 600,
+                    background: "rgba(22, 163, 74, 0.12)",
+                    color: "#16a34a",
+                  }}
+                >
+                  <CheckCircle2 size={16} /> Sudah Dinilai &amp; Terbit
+                </span>
+              ) : (
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "6px 14px",
+                    borderRadius: 20,
+                    fontSize: "0.85rem",
+                    fontWeight: 600,
+                    background: "rgba(234, 179, 8, 0.12)",
+                    color: "#ca8a04",
+                  }}
+                >
+                  <Clock3 size={16} /> Menunggu Nilai Dosen
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      })()}
       {!a.canManage &&
         (a.isClosed ? (
           <div className="card assignment-closed-card">
@@ -1937,6 +2155,7 @@ export function AssignmentPage({
                 },
               );
               setReceipt(result);
+              setShowSuccessModal(true);
               info.reload();
             }}
           >
@@ -1983,7 +2202,7 @@ export function AssignmentPage({
       ))}
       <div className="section-heading" style={{ flexWrap: "wrap", gap: 12 }}>
         <h2>{t.submissionHistory}</h2>
-        {a.canManage && (
+        {canGrade && (
           <Action
             className="primary"
             disabled={!a.submissions.some((s: any) => s.status !== "SUPERSEDED" && s.score !== null && !s.isPublished)}
@@ -2051,12 +2270,12 @@ export function AssignmentPage({
                 )}
               </span>
               <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                {a.canManage && s.status !== "SUPERSEDED" && (
+                {canGrade && s.status !== "SUPERSEDED" && (
                   <button className="secondary" onClick={() => setGrading(s)}>
                     {t.gradeSubmission}
                   </button>
                 )}
-                {a.canManage && s.status !== "SUPERSEDED" && s.score !== null && !s.isPublished && (
+                {canGrade && s.status !== "SUPERSEDED" && s.score !== null && !s.isPublished && (
                   <Action
                     className="primary"
                     run={async () => {
@@ -2145,6 +2364,41 @@ export function AssignmentPage({
               </Field>
             )}
           </Form>
+        </Modal>
+      )}
+      {showSuccessModal && (
+        <Modal title="Tugas Berhasil Dikumpulkan" onClose={() => setShowSuccessModal(false)}>
+          <div style={{ textAlign: "center", padding: "16px 8px" }}>
+            <div
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: "50%",
+                background: "rgba(22, 163, 74, 0.12)",
+                color: "#16a34a",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 16,
+              }}
+            >
+              <CheckCircle2 size={36} />
+            </div>
+            <h3 style={{ margin: "0 0 8px", fontSize: "1.25rem" }}>
+              Tugas Anda Telah Berhasil Dikumpulkan!
+            </h3>
+            <p style={{ color: "var(--muted, #64748b)", margin: "0 0 24px", lineHeight: 1.5 }}>
+              Berkas / jawaban tugas Anda telah tercatat dengan aman pada sistem E-Learning UAY. Dosen pengampu dapat memeriksa dan mempublikasikan nilai tugas Anda.
+            </p>
+            <button
+              type="button"
+              className="button primary"
+              onClick={() => setShowSuccessModal(false)}
+              style={{ minWidth: 160 }}
+            >
+              Tutup &amp; Lihat Ringkasan
+            </button>
+          </div>
         </Modal>
       )}
     </DraftRouteContext.Provider>

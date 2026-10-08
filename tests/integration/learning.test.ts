@@ -26,7 +26,7 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
     });
   };
   const admin = await makeUser("SUPER_ADMIN"),
-    teacher = await makeUser("INSTRUCTOR"),
+    teacher = await makeUser("INSTRUCTOR", ["IF"]),
     student = await makeUser("STUDENT"),
     outsider = await makeUser("STUDENT", ["OTHER"]),
     department = await makeUser("DEPARTMENT_ADMIN", ["OTHER"]);
@@ -83,8 +83,30 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
     submission: any,
     categories: any[] = [];
   try {
+    await suite.test("department admin can create, update, archive, and delete an unused course", async () => {
+      const ownCourse = await request(department, "/courses", "POST", {
+        code: `OWN-${suffix}`,
+        title: "Mata kuliah prodi",
+        departmentCode: "OTHER",
+        status: "DRAFT",
+      }, 201);
+      await request(department, `/courses/${ownCourse.id}`, "PATCH", {
+        code: ownCourse.code,
+        title: "Mata kuliah diperbarui",
+        departmentCode: "OTHER",
+        status: "ARCHIVED",
+      });
+      await request(department, `/courses/${ownCourse.id}`, "PATCH", {
+        code: ownCourse.code,
+        title: "Mata kuliah aktif kembali",
+        departmentCode: "OTHER",
+        status: "PUBLISHED",
+      });
+      await request(department, `/courses/${ownCourse.id}`, "DELETE", undefined);
+      assert.equal(await db.course.findUnique({ where: { id: ownCourse.id } }), null);
+    });
     await suite.test(
-      "admin creates course and class; department and outsider scopes are enforced",
+      "admin manages catalogue, lecturer creates class, and scopes are enforced",
       async () => {
         course = await request(
           admin,
@@ -109,8 +131,14 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
           },
           403,
         );
+        await request(admin, "/course-classes", "POST", {
+          courseId: course.id,
+          name: "Not permitted",
+          academicYear: "2026/2027",
+          instructorIds: [teacher.id],
+        }, 403);
         cls = await request(
-          admin,
+          teacher,
           "/course-classes",
           "POST",
           {
@@ -128,6 +156,7 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
           "POST",
           { userId: student.id },
         );
+        await request(admin, `/course-classes/${cls.id}/sections`, "POST", { title: "Tidak boleh" }, 403);
         await request(
           outsider,
           `/course-classes/${cls.id}`,
@@ -568,9 +597,11 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
         const correction = audit.find(
           (a: any) => a.action === "CORRECT_FINAL_GRADE",
         );
-        assert.equal(correction.beforeState.finalScore, 32.2);
-        assert.equal(correction.afterState.finalScore, 34.7);
-        assert.equal(correction.metadata.reason, "Corrected report assessment");
+        assert.equal(correction.reason, "Corrected report assessment");
+        assert.equal(correction.beforeState, undefined);
+        assert.equal(correction.afterState, undefined);
+        assert.equal(correction.ipAddress, undefined);
+        assert.equal(correction.requestId, undefined);
         await request(
           student,
           `/course-classes/${cls.id}/audit`,
@@ -713,6 +744,24 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
         );
         const history = await request(student, `/course-classes/${cls.id}`);
         assert.equal(history.status, "ARCHIVED");
+        await request(teacher, `/course-classes/${copy.id}`, "PATCH", {
+          name: "Next Semester",
+          academicYear: "2027/2028",
+          status: "ARCHIVED",
+        });
+        await request(teacher, `/course-classes/${copy.id}/sections`, "POST", { title: "Ditolak saat arsip" }, 423);
+        await request(admin, `/course-classes/${copy.id}`, "PATCH", {
+          name: "Next Semester",
+          academicYear: "2027/2028",
+          status: "PUBLISHED",
+        }, 403);
+        await request(teacher, `/course-classes/${copy.id}`, "PATCH", {
+          name: "Next Semester",
+          academicYear: "2027/2028",
+          status: "PUBLISHED",
+        });
+        assert.equal((await request(teacher, `/course-classes/${copy.id}`)).status, "PUBLISHED");
+        await request(teacher, `/course-classes/${copy.id}/sections`, "POST", { title: "Lanjut setelah arsip" }, 201);
       },
     );
     await suite.test(

@@ -1,3 +1,22 @@
+/**
+ * ============================================================================
+ * E-LEARNING UNIVERSITAS ACHMAD YANI (UAY) - GRADEBOOK & ASSESSMENT SCORING
+ * ============================================================================
+ * @module apps/api/src/grades.ts
+ *
+ * Mesin kalkulasi nilai akhir, pembobotan kategori, dan publikasi rekap nilai.
+ *
+ * Prinsip & Wewenang Ketat:
+ * 1. HAK EKSKLUSIF DOSEN: Seluruh mutasi bobot kategori (`PUT /grade-categories`),
+ *    kalkulasi draf/publikasi (`POST /gradebook/:action`), dan koreksi manual
+ *    (`POST /manual-grades`) HANYA dapat dilakukan oleh INSTRUCTOR yang mengampu kelas.
+ * 2. Admin Prodi (`DEPARTMENT_ADMIN`) dilarang keras mengubah atau mempublikasikan nilai (403).
+ * 3. Total bobot kategori wajib bernilai tepat 100%.
+ * 4. Rekap nilai yang telah diterbitkan dikunci permanen (`isLocked = true`). Koreksi
+ *    nilai susulan mewajibkan pengisian alasan minimal 5 karakter dan dicatat ke jejak audit.
+ * ============================================================================
+ */
+
 import type { Express } from "express";
 import type { Prisma } from "@prisma/client";
 import { z } from "zod";
@@ -638,6 +657,11 @@ export function registerGrades(app: Express) {
           true,
         );
         ensure(
+          req.context.user.role === "INSTRUCTOR",
+          403,
+          "ONLY_INSTRUCTOR_CAN_GRADE",
+        );
+        ensure(
           (await tx.finalGradeRecord.count({
             where: { classId: cls.id, isLocked: true },
           })) === 0,
@@ -773,6 +797,11 @@ export function registerGrades(app: Express) {
               String(req.params.id),
               true,
             );
+            ensure(
+              req.context.user.role === "INSTRUCTOR",
+              403,
+              "ONLY_INSTRUCTOR_CAN_GRADE",
+            );
             const result = await calculateGradebook(tx, cls.id);
             ensure(result.weightsValid, 400, "WEIGHTS_TOTAL");
             ensure(result.rows.length, 409, "NO_PARTICIPANTS");
@@ -848,6 +877,11 @@ export function registerGrades(app: Express) {
             req.context.user,
             String(req.params.id),
             true,
+          );
+          ensure(
+            req.context.user.role === "INSTRUCTOR",
+            403,
+            "ONLY_INSTRUCTOR_CAN_GRADE",
           );
           const item = z.object({
             userId: z.string().uuid(),

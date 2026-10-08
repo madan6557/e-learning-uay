@@ -1761,6 +1761,13 @@
   font-size: 16px;
   color: #6c8193;
 }
+.rector-dashboard .session-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
 .rector-dashboard .waterfall-scroll {
   overflow-x: auto;
 }

@@ -23,6 +23,7 @@ test("batch grading validates, commits and audits one atomic operation", async (
     });
   };
   const admin = await user("SUPER_ADMIN"),
+    teacher = await user("INSTRUCTOR"),
     student = await user("STUDENT"),
     peer = await user("STUDENT");
   const course = await db.course.create({
@@ -39,6 +40,7 @@ test("batch grading validates, commits and audits one atomic operation", async (
       name: "Batch A",
       academicYear: "2026",
       status: "PUBLISHED",
+      instructors: { create: { userId: teacher.id } },
       enrollments: { create: [{ userId: student.id }, { userId: peer.id }] },
     },
   });
@@ -92,8 +94,9 @@ test("batch grading validates, commits and audits one atomic operation", async (
     assert.equal(r.status, 200);
     return r.headers.get("set-cookie")!.split(";")[0];
   };
-  const cookie = await login(admin.id),
+  const cookie = await login(teacher.id),
     learnerCookie = await login(student.id);
+  const adminCookie = await login(admin.id);
   const request = async (
     path: string,
     body: any,
@@ -119,6 +122,9 @@ test("batch grading validates, commits and audits one atomic operation", async (
   const manual = `/course-classes/${cls.id}/manual-grades/batch`,
     answers = `/attempts/${attempt.id}/grades/batch`;
   try {
+    await suite.test("super admin cannot grade a class", async () => {
+      await request(manual, { changes: [] }, 403, randomUUID(), adminCookie);
+    });
     await suite.test(
       "invalid second row leaves both rows and audit unchanged",
       async () => {

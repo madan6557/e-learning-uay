@@ -3,6 +3,12 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { GRADE_SCALE_PRESETS, gradeScaleLabel, gradeLetterWithPolicy } from "../packages/shared/src/domain.js";
 import { UPLOAD_LIMITS, validateUploadSize } from "../packages/shared/src/files.js";
+import { formatClock, formatDateTime } from "../packages/shared/src/time.js";
+
+test("invalid saved timestamps show a readable fallback instead of crashing a form", () => {
+  assert.equal(formatDateTime("invalid"), "Waktu tidak tersedia");
+  assert.equal(formatClock("invalid"), "Waktu tidak tersedia");
+});
 
 test("preset labels agree with production conversion at grade boundaries", () => {
   const policy = GRADE_SCALE_PRESETS["2026.1"];

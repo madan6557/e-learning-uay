@@ -66,7 +66,8 @@ export function sessionChartCalendar(
     .filter(Number.isFinite);
   const first = from ?? (times.length ? localDateInput(Math.min(...times)) : "");
   const last = to ?? (times.length ? localDateInput(Math.max(...times)) : "");
-  if (!first || !last) return { days: [], defaultDay: "" };
+  if (!first || !last)
+    return { days: [], defaultDay: "", latestSessionDay: "" };
   const start = Date.parse(`${first}T00:00:00Z`);
   const end = Date.parse(`${last}T00:00:00Z`);
   if (
@@ -75,13 +76,15 @@ export function sessionChartCalendar(
     end < start ||
     end - start > 730 * DAY
   )
-    return { days: [], defaultDay: "" };
+    return { days: [], defaultDay: "", latestSessionDay: "" };
   const days: string[] = [];
   for (let time = end; time >= start; time -= DAY) days.push(new Date(time).toISOString().slice(0, 10));
   return {
     days,
-    defaultDay:
-      days.find((day) => dailySessionSegments(sessions, day).length > 0) ??
-      days[0],
+    // Start on the report's latest day, even if no one logged in that day.
+    // A separate shortcut lets readers inspect the last recorded session.
+    defaultDay: days[0],
+    latestSessionDay:
+      days.find((day) => dailySessionSegments(sessions, day).length > 0) ?? "",
   };
 }

@@ -61,6 +61,6 @@ export function readTtl(path: string) {
     )
   )
     return 15000;
-  if (path.startsWith("/notifications")) return 10000;
+  if (path.startsWith("/notifications")) return 0;
   return 0;
 }

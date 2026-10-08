@@ -119,7 +119,11 @@ export function SessionChart({
   from?: string;
   to?: string;
 }) {
-  const { days, defaultDay } = sessionChartCalendar(sessions, from, to);
+  const { days, defaultDay, latestSessionDay } = sessionChartCalendar(
+    sessions,
+    from,
+    to,
+  );
   const [chosenDay, setDay] = useState("");
   const day = days.includes(chosenDay) ? chosenDay : defaultDay;
   const rows = day ? dailySessionSegments(sessions, day) : [];
@@ -200,8 +204,13 @@ export function SessionChart({
               );
             })}
             {!rows.length && (
-              <p className="empty-line">
-                Tidak ada sesi tercatat pada tanggal ini.
+              <p className="empty-line session-empty">
+                Tidak ada sesi login tercatat pada {date(day + "T00:00:00")}.
+                {latestSessionDay && latestSessionDay !== day && (
+                  <button type="button" onClick={() => setDay(latestSessionDay)}>
+                    Lihat sesi terakhir: {date(latestSessionDay + "T00:00:00")}
+                  </button>
+                )}
               </p>
             )}
           </div>

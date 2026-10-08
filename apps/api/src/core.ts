@@ -1,3 +1,23 @@
+/**
+ * ============================================================================
+ * E-LEARNING UNIVERSITAS ACHMAD YANI (UAY) - CORE UTILITIES & DATABASE LAYER
+ * ============================================================================
+ * @module apps/api/src/core.ts
+ *
+ * Lapisan fondasi backend: koneksi database Prisma, caching Redis, utilitas
+ * transaksi, penegakan integritas hak akses, audit logging, dan notifikasi.
+ *
+ * Fungsi & Primitif Kunci:
+ * - `db`: PrismaClient singleton untuk transaksi database PostgreSQL.
+ * - `ensure(condition, status, code, extra)`: Guard assertion pemutus request dengan HttpError.
+ * - `mutate(req, callback)`: Wrapper mutasi ACID dengan audit logging otomatis.
+ * - `classAccess(tx, user, classId, write, studentWrite)`: Pengendali otorisasi akses kelas
+ *    terpusat untuk INSTRUCTOR, DEPARTMENT_ADMIN (dalam scope prodi), dan STUDENT.
+ * - `audit(tx, context, action, entityType, ...)`: Pencatat jejak audit permanen.
+ * - `notify(tx, classId, type, title, ...)`: Pengirim notifikasi in-app kepada mahasiswa/dosen.
+ * ============================================================================
+ */
+
 import { classPath } from "../../../packages/shared/src/urls.js";
 import { Prisma, PrismaClient, type User } from "@prisma/client";
 import { Redis } from "ioredis";
@@ -599,6 +619,14 @@ export async function classAccess(
     "CLASS_ACCESS_DENIED",
   );
   if (write) {
+    const isDeptAdmin =
+      user.role === "DEPARTMENT_ADMIN" &&
+      user.departmentScopes.includes(item.course.departmentCode);
+    ensure(
+      user.role === "INSTRUCTOR" || isDeptAdmin || (studentWrite && user.role === "STUDENT"),
+      403,
+      "CLASS_READ_ONLY",
+    );
     ensure(manage || (studentWrite && enrolled), 403, "WRITE_ACCESS_DENIED");
     ensure(
       item.status !== "ARCHIVED" && item.course.status !== "ARCHIVED",

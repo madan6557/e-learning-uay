@@ -1,3 +1,24 @@
+/**
+ * ============================================================================
+ * E-LEARNING UNIVERSITAS ACHMAD YANI (UAY) - BACKEND API GATEWAY
+ * ============================================================================
+ * @module apps/api/src/index.ts
+ *
+ * Titik masuk utama (server entrypoint) untuk REST API E-Learning UAY.
+ *
+ * Tanggung Jawab & Arsitektur:
+ * 1. Express 5 server initialization dengan middleware keamanan (Helmet, CORS, CookieParser).
+ * 2. Autentikasi sesi OIDC Keycloak dan injeksi req.context.user.
+ * 3. Middleware RBAC Gateway & Defense-in-Depth:
+ *    - RECTOR: Khusus analitika dan baca pengumuman.
+ *    - DEPARTMENT_ADMIN: Dapat membantu mengelola materi & draf kelas prodi, tetapi
+ *      DILARANG KERAS menilai / mengubah nilai (403 ONLY_INSTRUCTOR_CAN_GRADE).
+ *    - SUPER_ADMIN: Pengelolaan katalog dan pengaturan universitas (CLASS_READ_ONLY).
+ * 4. Pendaftaran sub-router: learning, assessment, grades, attendance, files, dll.
+ * 5. Background cron tasks: kadaluwarsa kuis otomatis & snapshot berkala.
+ * ============================================================================
+ */
+
 import express from "express";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
@@ -25,6 +46,7 @@ import { registerGrades } from "./grades.js";
 import { registerFiles } from "./files.js";
 import { registerImports } from "./imports.js";
 import { registerAttendanceRoutes } from "./attendance.js";
+import { registerSystemAnnouncements } from "./system-announcements.js";
 import { registerRectorBridgeRoutes } from "./rector-bridge.js";
 import { rectorReporting } from "./rector/routes.js";
 import { FixtureDataSource } from "./rector/fixture.js";
@@ -187,8 +209,52 @@ export function createApp() {
   app.use(rectorReporting(new DynamicReportingDataSource(isDemo), isDemo));
   app.use("/api/v1", authenticate);
   app.use("/api/v1", (req, _res, next) => {
-    // Rector reporting is aggregate-only. Classroom and student endpoints stay closed.
-    ensure(req.context.user.role !== "RECTOR" || req.path === "/me", 403, "FORBIDDEN");
+    // Rector reporting is aggregate-only. Classroom and student endpoints stay closed,
+    // but announcements and /me are accessible for the Rector.
+    const rectorAllowed =
+      req.path === "/me" ||
+      (req.path.startsWith("/system-announcements") && req.method === "GET");
+    ensure(req.context.user.role !== "RECTOR" || rectorAllowed, 403, "FORBIDDEN");
+    next();
+  });
+  app.use("/api/v1", (req, _res, next) => {
+    const role = req.context.user.role;
+    if (
+      !["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(role) ||
+      ["GET", "HEAD", "OPTIONS"].includes(req.method)
+    ) {
+      next();
+      return;
+    }
+
+    // Department Administrators can help fill class content within their department scope,
+    // but grading and score publications are strictly reserved for assigned instructors.
+    if (role === "DEPARTMENT_ADMIN") {
+      const isGradingPath =
+        /^\/attempts\/[^/]+\/grades/.test(req.path) ||
+        /^\/submissions\/[^/]+\/grade/.test(req.path) ||
+        /^\/quizzes\/[^/]+\/publish-grades/.test(req.path) ||
+        /^\/assignments\/[^/]+\/publish-grades/.test(req.path) ||
+        /^\/course-classes\/[^/]+\/manual-grades/.test(req.path) ||
+        /^\/course-classes\/[^/]+\/grade-categories/.test(req.path) ||
+        /^\/course-classes\/[^/]+\/gradebook\/(calculate|publish|lock)/.test(req.path);
+      ensure(!isGradingPath, 403, "ONLY_INSTRUCTOR_CAN_GRADE");
+      next();
+      return;
+    }
+
+    // Super Administrators manage the catalogue, university policy, and broadcasts.
+    // Classroom content belongs to assigned instructors or department admins.
+    const allowed =
+      req.path === "/courses" ||
+      req.path.startsWith("/courses/") ||
+      req.path === "/system/settings" ||
+      req.path.startsWith("/notifications/") ||
+      req.path === "/system-announcements" ||
+      req.path.startsWith("/system-announcements/") ||
+      /^\/files\/[^/]+\/download-ticket$/.test(req.path) ||
+      /^\/resources\/[^/]+\/confirm-download$/.test(req.path);
+    ensure(allowed, 403, "CLASS_READ_ONLY");
     next();
   });
   registerLearning(app);
@@ -198,6 +264,7 @@ export function createApp() {
   registerFiles(app);
   registerImports(app);
   registerAttendanceRoutes(app);
+  registerSystemAnnouncements(app);
   app.use("/api", (_req, res) =>
     res.status(404).json({ error: { code: "NOT_FOUND" } }),
   );

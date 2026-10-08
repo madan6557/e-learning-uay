@@ -574,52 +574,56 @@ export function Attendance({
                     {canManage ? (
                       <>
                         {/* Tombol Cepat Buka/Tutup Sesi Langsung */}
-                        <button
-                          type="button"
-                          className="button"
-                          title={s.isOpen ? "Tutup sesi presensi sekarang" : "Buka sesi presensi sekarang"}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 5,
-                            fontSize: "0.82rem",
-                            padding: "7px 12px",
-                            borderRadius: 8,
-                            cursor: "pointer",
-                            background: s.isOpen ? "#fee2e2" : "#f0fdf4",
-                            color: s.isOpen ? "#991b1b" : "#166534",
-                            border: `1px solid ${s.isOpen ? "#fecaca" : "#bbf7d0"}`,
-                            fontWeight: 600,
-                          }}
-                          onClick={async () => {
-                            await api(`/attendance/${s.id}`, "PATCH", { isOpen: !s.isOpen });
-                            sessionsApi.reload();
-                            setMessage(`Sesi "${s.title}" berhasil ${!s.isOpen ? "dibuka" : "ditutup"}.`);
-                          }}
-                        >
-                          {s.isOpen ? <Lock size={13} /> : <Unlock size={13} />}
-                          <span>{s.isOpen ? "Tutup Sesi" : "Buka Sesi"}</span>
-                        </button>
+                        {writable && (
+                          <button
+                            type="button"
+                            className="button"
+                            title={s.isOpen ? "Tutup sesi presensi sekarang" : "Buka sesi presensi sekarang"}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 5,
+                              fontSize: "0.82rem",
+                              padding: "7px 12px",
+                              borderRadius: 8,
+                              cursor: "pointer",
+                              background: s.isOpen ? "#fee2e2" : "#f0fdf4",
+                              color: s.isOpen ? "#991b1b" : "#166534",
+                              border: `1px solid ${s.isOpen ? "#fecaca" : "#bbf7d0"}`,
+                              fontWeight: 600,
+                            }}
+                            onClick={async () => {
+                              await api(`/attendance/${s.id}`, "PATCH", { isOpen: !s.isOpen });
+                              sessionsApi.reload();
+                              setMessage(`Sesi "${s.title}" berhasil ${!s.isOpen ? "dibuka" : "ditutup"}.`);
+                            }}
+                          >
+                            {s.isOpen ? <Lock size={13} /> : <Unlock size={13} />}
+                            <span>{s.isOpen ? "Tutup Sesi" : "Buka Sesi"}</span>
+                          </button>
+                        )}
 
-                        <button
-                          type="button"
-                          className="button secondary"
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 6,
-                            fontSize: "0.84rem",
-                            cursor: "pointer",
-                            padding: "7px 12px",
-                            borderRadius: 8,
-                          }}
-                          onClick={() => setModal({ kind: "schedule", session: s })}
-                        >
-                          <Sliders size={14} />
-                          <span>Atur Jadwal</span>
-                        </button>
+                        {writable && (
+                          <button
+                            type="button"
+                            className="button secondary"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                              fontSize: "0.84rem",
+                              cursor: "pointer",
+                              padding: "7px 12px",
+                              borderRadius: 8,
+                            }}
+                            onClick={() => setModal({ kind: "schedule", session: s })}
+                          >
+                            <Sliders size={14} />
+                            <span>Atur Jadwal</span>
+                          </button>
+                        )}
 
-                        {s.checkInCode && (
+                        {writable && s.checkInCode && (
                           <button
                             type="button"
                             className="button secondary"
@@ -641,7 +645,7 @@ export function Attendance({
 
                         <button
                           type="button"
-                          className="button primary"
+                          className={writable ? "button primary" : "button secondary"}
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
@@ -655,7 +659,7 @@ export function Attendance({
                           onClick={() => setModal({ kind: "manual", session: s })}
                         >
                           <UserCheck size={14} />
-                          <span>Lembar Presensi</span>
+                          <span>{writable ? "Lembar Presensi" : "Lihat Presensi"}</span>
                         </button>
                       </>
                     ) : (
@@ -831,6 +835,7 @@ export function Attendance({
       {modal?.kind === "manual" && (
         <ManualAttendanceModal
           session={modal.session}
+          readOnly={!writable}
           onClose={() => setModal(null)}
           onSaved={() => {
             sessionsApi.reload();
@@ -1374,10 +1379,12 @@ export function ScheduleSessionModal({
 // ---------------------------------------------------------------------------
 function ManualAttendanceModal({
   session,
+  readOnly = false,
   onClose,
   onSaved,
 }: {
   session: any;
+  readOnly?: boolean;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -1390,21 +1397,25 @@ function ManualAttendanceModal({
   const pagination = usePagination(list, 15);
 
   const updateStudentStatus = (userId: string, status: AttendanceStatus) => {
+    if (readOnly) return;
     const updated = list.map((item) => (item.userId === userId ? { ...item, status } : item));
     setRoster(updated);
   };
 
   const updateStudentNotes = (userId: string, notes: string) => {
+    if (readOnly) return;
     const updated = list.map((item) => (item.userId === userId ? { ...item, notes } : item));
     setRoster(updated);
   };
 
   const markAllPresent = () => {
+    if (readOnly) return;
     const updated = list.map((item) => ({ ...item, status: "PRESENT" as AttendanceStatus }));
     setRoster(updated);
   };
 
   const handleSave = async () => {
+    if (readOnly) return;
     setSaving(true);
     try {
       await api(`/attendance/${session.id}/records/batch`, "PUT", {
@@ -1424,22 +1435,24 @@ function ManualAttendanceModal({
   if (rosterApi.loading && !rosterApi.data) return <Loading />;
 
   return (
-    <Modal title={`Lembar Presensi: ${session.title}`} onClose={onClose} wide>
+    <Modal title={readOnly ? `Detail Presensi Pertemuan (Hanya-Baca): ${session.title}` : `Lembar Presensi: ${session.title}`} onClose={onClose} wide>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <div>
           <span style={{ fontSize: "0.85rem", color: "var(--muted, #64748b)" }}>
             Total Mahasiswa Terdaftar: <strong>{list.length}</strong>
           </span>
         </div>
-        <button
-          type="button"
-          className="button secondary"
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.85rem", cursor: "pointer" }}
-          onClick={markAllPresent}
-        >
-          <CheckCircle2 size={16} style={{ color: "#10b981" }} />
-          <span>Tandai Semua Hadir</span>
-        </button>
+        {!readOnly && (
+          <button
+            type="button"
+            className="button secondary"
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.85rem", cursor: "pointer" }}
+            onClick={markAllPresent}
+          >
+            <CheckCircle2 size={16} style={{ color: "#10b981" }} />
+            <span>Tandai Semua Hadir</span>
+          </button>
+        )}
       </div>
 
       <div className="card table-wrap" style={{ maxHeight: "55vh", overflowY: "auto", marginBottom: 20 }}>
@@ -1459,41 +1472,51 @@ function ManualAttendanceModal({
                   <small style={{ color: "var(--muted, #64748b)" }}>NIM: {m.identifierValue}</small>
                 </td>
                 <td>
-                  <div style={{ display: "inline-flex", gap: 4, flexWrap: "wrap" }}>
-                    {(["PRESENT", "EXCUSED", "SICK", "ABSENT", "LATE"] as AttendanceStatus[]).map((st) => {
-                      const isSelected = m.status === st;
-                      const conf = statusLabels[st];
-                      return (
-                        <button
-                          key={st}
-                          type="button"
-                          onClick={() => updateStudentStatus(m.userId, st)}
-                          style={{
-                            border: "none",
-                            borderRadius: 6,
-                            padding: "4px 8px",
-                            fontSize: "0.75rem",
-                            fontWeight: isSelected ? 700 : 500,
-                            cursor: "pointer",
-                            background: isSelected ? conf.color : "#f1f5f9",
-                            color: isSelected ? "#ffffff" : "#475569",
-                            transition: "all 0.1s ease",
-                          }}
-                        >
-                          {conf.label}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  {readOnly ? (
+                    <AttendanceStatusBadge status={m.status} isOpen={false} />
+                  ) : (
+                    <div style={{ display: "inline-flex", gap: 4, flexWrap: "wrap" }}>
+                      {(["PRESENT", "EXCUSED", "SICK", "ABSENT", "LATE"] as AttendanceStatus[]).map((st) => {
+                        const isSelected = m.status === st;
+                        const conf = statusLabels[st];
+                        return (
+                          <button
+                            key={st}
+                            type="button"
+                            onClick={() => updateStudentStatus(m.userId, st)}
+                            style={{
+                              border: "none",
+                              borderRadius: 6,
+                              padding: "4px 8px",
+                              fontSize: "0.75rem",
+                              fontWeight: isSelected ? 700 : 500,
+                              cursor: "pointer",
+                              background: isSelected ? conf.color : "#f1f5f9",
+                              color: isSelected ? "#ffffff" : "#475569",
+                              transition: "all 0.1s ease",
+                            }}
+                          >
+                            {conf.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </td>
                 <td>
-                  <input
-                    type="text"
-                    placeholder="Alasan izin / nomor surat..."
-                    defaultValue={m.notes || ""}
-                    onChange={(e) => updateStudentNotes(m.userId, e.target.value)}
-                    style={{ fontSize: "0.82rem", padding: "4px 8px", width: "100%" }}
-                  />
+                  {readOnly ? (
+                    <span style={{ fontSize: "0.82rem", color: m.notes ? "inherit" : "var(--muted, #64748b)", fontStyle: m.notes ? "normal" : "italic" }}>
+                      {m.notes || "—"}
+                    </span>
+                  ) : (
+                    <input
+                      type="text"
+                      placeholder="Alasan izin / nomor surat..."
+                      defaultValue={m.notes || ""}
+                      onChange={(e) => updateStudentNotes(m.userId, e.target.value)}
+                      style={{ fontSize: "0.82rem", padding: "4px 8px", width: "100%" }}
+                    />
+                  )}
                 </td>
               </tr>
             ))}
@@ -1517,11 +1540,13 @@ function ManualAttendanceModal({
 
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
         <button type="button" className="button secondary" onClick={onClose} disabled={saving}>
-          Batal
+          {readOnly ? "Tutup" : "Batal"}
         </button>
-        <button type="button" className="button primary" onClick={handleSave} disabled={saving}>
-          {saving ? "Menyimpan..." : "Simpan Semua Perubahan"}
-        </button>
+        {!readOnly && (
+          <button type="button" className="button primary" onClick={handleSave} disabled={saving}>
+            {saving ? "Menyimpan..." : "Simpan Semua Perubahan"}
+          </button>
+        )}
       </div>
     </Modal>
   );

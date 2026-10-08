@@ -267,6 +267,13 @@ export function registerLearning(app: Express) {
         ? {}
         : user.role === "DEPARTMENT_ADMIN"
           ? { departmentCode: { in: user.departmentScopes } }
+          : user.role === "INSTRUCTOR"
+            ? {
+                OR: [
+                  { departmentCode: { in: user.departmentScopes } },
+                  { classes: { some: { instructors: { some: { userId: user.id } } } } },
+                ],
+              }
           : {
               classes: {
                 some: {
@@ -282,7 +289,11 @@ export function registerLearning(app: Express) {
               },
             };
     res.json(
-      await db.course.findMany({ where: scope, orderBy: { code: "asc" } }),
+      await db.course.findMany({
+        where: scope,
+        orderBy: { code: "asc" },
+        include: { _count: { select: { classes: true, questionBanks: true } } },
+      }),
     );
   });
   app.post("/api/v1/courses", async (req, res) =>
@@ -294,6 +305,10 @@ export function registerLearning(app: Express) {
           403,
           "WRITE_ACCESS_DENIED",
         );
+        const existing = await tx.course.findUnique({
+          where: { code: data.code },
+        });
+        ensure(!existing, 409, "COURSE_CODE_EXISTS");
         const after = await tx.course.create({ data });
         await audit(
           tx,
@@ -323,7 +338,12 @@ export function registerLearning(app: Express) {
           403,
           "WRITE_ACCESS_DENIED",
         );
-        ensure(before.status !== "ARCHIVED", 423, "CLASS_ARCHIVED");
+        if (data.code !== before.code) {
+          const existing = await tx.course.findUnique({
+            where: { code: data.code },
+          });
+          ensure(!existing, 409, "COURSE_CODE_EXISTS");
+        }
         const after = await tx.course.update({
           where: { id: before.id },
           data,
@@ -331,7 +351,11 @@ export function registerLearning(app: Express) {
         await audit(
           tx,
           req.context,
-          "UPDATE",
+          before.status === "ARCHIVED" && data.status !== "ARCHIVED"
+            ? "UNARCHIVE_COURSE"
+            : data.status === "ARCHIVED" && before.status !== "ARCHIVED"
+              ? "ARCHIVE_COURSE"
+              : "UPDATE",
           "COURSE",
           after.id,
           null,
@@ -339,6 +363,30 @@ export function registerLearning(app: Express) {
           after,
         );
         return after;
+      }),
+    ),
+  );
+  app.delete("/api/v1/courses/:id", async (req, res) =>
+    res.json(
+      await mutate(req, async (tx) => {
+        const course = await tx.course.findUnique({
+          where: { id: String(req.params.id) },
+          include: { _count: { select: { classes: true, questionBanks: true } } },
+        });
+        ensure(course, 404, "NOT_FOUND");
+        ensure(
+          canManageDepartment(req.context.user, course.departmentCode),
+          403,
+          "WRITE_ACCESS_DENIED",
+        );
+        ensure(
+          course._count.classes === 0 && course._count.questionBanks === 0,
+          409,
+          "COURSE_IN_USE",
+        );
+        await tx.course.delete({ where: { id: course.id } });
+        await audit(tx, req.context, "DELETE", "COURSE", course.id, null, course, null);
+        return { id: course.id };
       }),
     ),
   );
@@ -505,9 +553,17 @@ export function registerLearning(app: Express) {
         const course = await tx.course.findUnique({
           where: { id: data.courseId },
         });
+        ensure(course, 404, "NOT_FOUND");
+        const isManager = canManageDepartment(
+          req.context.user,
+          course.departmentCode,
+        );
+        const isInstructor =
+          req.context.user.role === "INSTRUCTOR" &&
+          req.context.user.departmentScopes.includes(course.departmentCode) &&
+          data.instructorIds.includes(req.context.user.id);
         ensure(
-          course &&
-            canManageDepartment(req.context.user, course.departmentCode),
+          isManager || isInstructor,
           403,
           "WRITE_ACCESS_DENIED",
         );
@@ -516,7 +572,7 @@ export function registerLearning(app: Express) {
           where: {
             id: { in: data.instructorIds },
             status: "ACTIVE",
-            role: { in: ["INSTRUCTOR", "DEPARTMENT_ADMIN", "SUPER_ADMIN"] },
+            role: "INSTRUCTOR",
           },
         });
         ensure(
@@ -845,7 +901,7 @@ export function registerLearning(app: Express) {
           String(req.params.id),
         );
         ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
-        ensure(cls.course.status !== "ARCHIVED", 423, "CLASS_ARCHIVED");
+        ensure(cls.course.status !== "ARCHIVED", 423, "COURSE_ARCHIVED");
         const data = z
           .object({
             name: title,
@@ -854,6 +910,7 @@ export function registerLearning(app: Express) {
             enrollmentKey: z.string().min(6).nullable().optional(),
           })
           .parse(req.body);
+        ensure(cls.status !== "ARCHIVED" || data.status !== "ARCHIVED", 423, "CLASS_ARCHIVED");
         const after = await tx.courseClass.update({
           where: { id: cls.id },
           data: {
@@ -1020,7 +1077,7 @@ export function registerLearning(app: Express) {
             `enrollment-disabled:${cls.id}:${userId}:${Date.now()}`,
             userId,
             classPath(cls),
-            `Hak partisipasi Anda pada kelas ${cls.course.code} - ${cls.name} telah dinonaktifkan oleh pengajar atau administrator.`,
+            `Hak partisipasi Anda pada kelas ${cls.course.code} - ${cls.name} telah dinonaktifkan oleh dosen pengampu.`,
           );
         } else if (isActive && before?.isActive === false) {
           await notify(
@@ -1057,19 +1114,20 @@ export function registerLearning(app: Express) {
           String(req.params.id),
           true,
         );
-        ensure(
-          canManageDepartment(req.context.user, cls.course.departmentCode),
-          403,
-          "WRITE_ACCESS_DENIED",
-        );
         const { userIds } = z
           .object({ userIds: z.array(z.string().uuid()).min(1) })
           .parse(req.body);
+        ensure(
+          req.context.user.role === "INSTRUCTOR" &&
+            userIds.includes(req.context.user.id),
+          403,
+          "WRITE_ACCESS_DENIED",
+        );
         const users = await tx.user.findMany({
           where: {
             id: { in: userIds },
             status: "ACTIVE",
-            role: { in: ["INSTRUCTOR", "DEPARTMENT_ADMIN", "SUPER_ADMIN"] },
+            role: "INSTRUCTOR",
           },
         });
         ensure(
@@ -1670,15 +1728,58 @@ export function registerLearning(app: Express) {
     ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
     const cursor =
       typeof req.query.cursor === "string" ? req.query.cursor : undefined;
-    res.json(
-      await db.auditLog.findMany({
+    const entries = await db.auditLog.findMany({
         where: { classId: cls.id },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: 50,
         ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
         include: { user: { select: { name: true } } },
-      }),
-    );
+      });
+    const descriptiveEntities = new Set([
+      "COURSE", "CLASS", "SECTION", "RESOURCE", "ASSIGNMENT",
+      "QUIZ", "ANNOUNCEMENT", "QUESTION_BANK",
+    ]);
+    const visibleFields = [
+      "status", "isVisible", "isPublished", "academicYear", "credits",
+      "departmentCode", "deadline", "availableFrom", "availableUntil",
+      "startDate", "endDate",
+    ];
+    const record = (value: unknown): Record<string, unknown> =>
+      value && typeof value === "object" && !Array.isArray(value)
+        ? value as Record<string, unknown>
+        : {};
+    res.json(entries.map((entry) => {
+      const before = record(entry.beforeState);
+      const after = record(entry.afterState);
+      const fields = descriptiveEntities.has(entry.entity)
+        ? [...visibleFields, "title", "name"]
+        : visibleFields;
+      const safe = (value: unknown) =>
+        value === null || ["string", "number", "boolean"].includes(typeof value)
+          ? value
+          : undefined;
+      const changes = fields.flatMap((field) => {
+        const oldValue = safe(before[field]);
+        const newValue = safe(after[field]);
+        return JSON.stringify(oldValue) === JSON.stringify(newValue)
+          ? []
+          : [{ field, before: oldValue, after: newValue }];
+      });
+      const title = descriptiveEntities.has(entry.entity)
+        ? safe(after.title ?? after.name ?? before.title ?? before.name)
+        : null;
+      return {
+        id: entry.id,
+        action: entry.action,
+        entity: entry.entity,
+        actorRole: entry.actorRole,
+        user: entry.user,
+        createdAt: entry.createdAt,
+        reason: entry.reason,
+        objectTitle: typeof title === "string" ? title : null,
+        changes,
+      };
+    }));
   });
   app.post("/api/v1/course-classes/:id/clone", async (req, res) =>
     res.json(

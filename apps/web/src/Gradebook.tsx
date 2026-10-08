@@ -579,9 +579,11 @@ function StudentGradeReviewModal({
 export function Gradebook({
   classId,
   writable,
+  user,
 }: {
   classId: string;
   writable: boolean;
+  user?: any;
 }) {
   const info = useApi(`/course-classes/${classId}/gradebook`);
   const [modal, setModal] = useState<any>(null),
@@ -755,6 +757,11 @@ export function Gradebook({
         </div>
       </div>
       {message && <Notice>{message}</Notice>}
+      {user?.role === "DEPARTMENT_ADMIN" && (
+        <div className="callout note">
+          Mode pratinjau rekap nilai: Anda dapat memantau capaian mahasiswa dan mengekspor berkas nilai. Pengaturan bobot, koreksi nilai manual, dan publikasi nilai akhir merupakan wewenang dosen pengampu.
+        </div>
+      )}
       {!data.weightsValid && (
         <div className="error">{t.errors.WEIGHTS_TOTAL}</div>
       )}

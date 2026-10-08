@@ -67,30 +67,49 @@ export const newBlock = (type: string): ContentBlock =>
     type,
     data: structuredClone(defaults[type]),
   }) as ContentBlock;
-export function Html({ text }: { text: string }) {
-  return (
-    <span
-      dangerouslySetInnerHTML={{
-        __html: DOMPurify.sanitize(text, {
-          ALLOWED_TAGS: [
-            "p",
-            "br",
-            "strong",
-            "b",
-            "em",
-            "i",
-            "u",
-            "s",
-            "code",
-            "a",
-            "mark",
-            "span",
-          ],
-          ALLOWED_ATTR: ["href", "title"],
-        }),
-      }}
-    />
-  );
+export function Html({
+  text,
+  inline = true,
+}: {
+  text: string;
+  inline?: boolean;
+}) {
+  const sanitized = DOMPurify.sanitize(text, {
+    ALLOWED_TAGS: [
+      "p",
+      "br",
+      "strong",
+      "b",
+      "em",
+      "i",
+      "u",
+      "s",
+      "code",
+      "a",
+      "mark",
+      "span",
+      "h2",
+      "h3",
+      "h4",
+      "ul",
+      "ol",
+      "li",
+      "blockquote",
+      "hr",
+      "table",
+      "thead",
+      "tbody",
+      "tr",
+      "th",
+      "td",
+    ],
+    ALLOWED_ATTR: ["href", "title", "target", "rel", "class", "style"],
+  });
+
+  if (inline) {
+    return <span dangerouslySetInnerHTML={{ __html: sanitized }} />;
+  }
+  return <div className="html-content" dangerouslySetInnerHTML={{ __html: sanitized }} />;
 }
 export function BlockEditor({
   blocks,
@@ -773,23 +792,31 @@ export function DownloadButton({
   return (
     <Action
       run={async () => {
-        const ticket = await api(`/files/${fileId}/download-ticket`, "POST", {
-          resourceId,
-        });
-        const response = await fetch(ticket.url);
-        if (!response.ok) throw new Error(t.connectionError);
-        const blob = await response.blob(),
-          url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = ticket.name;
-        link.click();
-        setTimeout(() => URL.revokeObjectURL(url), 60000);
-        if (resourceId && onComplete) {
-          await api(`/resources/${resourceId}/confirm-download`, "POST", {
-            fileObjectId: fileId,
+        try {
+          const ticket = await api(`/files/${fileId}/download-ticket`, "POST", {
+            resourceId,
           });
-          onComplete();
+          const response = await fetch(ticket.url);
+          if (!response.ok) throw new Error(t.connectionError);
+          const blob = await response.blob(),
+            url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = ticket.name;
+          link.click();
+          setTimeout(() => URL.revokeObjectURL(url), 60000);
+          if (resourceId && onComplete) {
+            await api(`/resources/${resourceId}/confirm-download`, "POST", {
+              fileObjectId: fileId,
+            });
+            onComplete();
+          }
+        } catch (e: any) {
+          const msg = e?.message || "";
+          if (msg.includes("menolak") || msg.includes("FILE_SERVICE") || msg.includes("502")) {
+            throw new Error("Layanan berkas sedang dalam proses sinkronisasi sistem. Silakan coba unduh kembali beberapa saat lagi.");
+          }
+          throw e;
         }
       }}
     >
@@ -1208,7 +1235,14 @@ function PdfViewer({
         </button>
       </div>
       <canvas ref={canvas} aria-label={`${t.page} ${page}`} />
-      {error && <Notice error={error} />}
+      {error && (
+        <div className="callout note" style={{ margin: "16px 0", textAlign: "left" }}>
+          <strong>Pratinjau Berkas Sedang Disinkronkan</strong>
+          <p style={{ margin: "4px 0 0" }}>
+            Layanan berkas sedang dalam proses sinkronisasi dengan server penyimpanan. Anda dapat mengunduh berkas langsung menggunakan tombol di bawah.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

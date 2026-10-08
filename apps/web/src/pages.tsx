@@ -21,6 +21,12 @@ import {
   Download,
   AlertTriangle,
   CheckCircle,
+  Check,
+  Camera,
+  Clock,
+  ExternalLink,
+  Megaphone,
+  ArrowRight,
 } from "lucide-react";
 
 function getTimeGreeting(): string {
@@ -68,7 +74,13 @@ type UserSearchResult = {
   identifierValue: string | null;
   role: "SUPER_ADMIN" | "DEPARTMENT_ADMIN" | "RECTOR" | "INSTRUCTOR" | "STUDENT";
 };
-type CourseOption = { id: string; code: string; title: string; status: string };
+type CourseOption = {
+  id: string;
+  code: string;
+  title: string;
+  status: string;
+  departmentCode?: string;
+};
 export interface AcademicPolicySettings {
   academicYear: string;
   academicYears: string[];
@@ -156,14 +168,22 @@ export function Dashboard({
   const courses = useApi<any[]>(
     admin && page === "dashboard" ? "/courses" : null,
   );
-  const details = needsSummary ? (classes.data ?? []) : [];
+  const systemAnnouncements = useApi<any[]>(
+    page === "dashboard" ? "/system-announcements" : null,
+  );
   const [search, setSearch] = useState(""),
     [filter, setFilter] = useState("ALL"),
+    [departmentFilter, setDepartmentFilter] = useState(""),
     [modal, setModal] = useState(false);
   const teacher = user.role === "INSTRUCTOR";
   if (classes.loading && !classes.data) return <Loading />;
   if (classes.error) return <Notice error={classes.error} />;
-  const items = (classes.data ?? []).filter(
+  const departments = [...new Set((classes.data ?? []).map((c) => c.course.departmentCode as string))].sort();
+  const scopedClasses = (classes.data ?? []).filter(
+    (c) => user.role !== "SUPER_ADMIN" || !departmentFilter || c.course.departmentCode === departmentFilter,
+  );
+  const details = needsSummary ? scopedClasses : [];
+  const items = scopedClasses.filter(
     (c) =>
       (filter === "ALL" || c.status === filter) &&
       `${c.course.title} ${c.course.code} ${c.name}`
@@ -174,11 +194,14 @@ export function Dashboard({
     return (
       <AdminOverview
         user={user}
-        classes={classes.data ?? []}
+        classes={scopedClasses}
         courses={courses}
         reload={classes.reload}
         config={config}
         onConfigChange={onConfigChange}
+        departmentFilter={departmentFilter}
+        onDepartmentFilter={setDepartmentFilter}
+        departments={departments}
       />
     );
   const activities = details
@@ -308,7 +331,7 @@ export function Dashboard({
                     <small>{date(n.createdAt)}</small>
                   </a>
                 </div>
-                {!n.isRead && (
+                {!n.isRead ? (
                   <Action
                     run={async () => {
                       await api(`/notifications/${n.id}/read`, "POST", {});
@@ -316,8 +339,28 @@ export function Dashboard({
                       notifications.reload();
                     }}
                   >
+                    <Check size={14} style={{ marginRight: 4 }} />
                     {t.markRead}
                   </Action>
+                ) : (
+                  <span
+                    className="read-status-badge"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                      color: "var(--success, #16a34a)",
+                      fontSize: "0.82rem",
+                      fontWeight: 600,
+                      background: "rgba(22, 163, 74, 0.08)",
+                      padding: "4px 10px",
+                      borderRadius: 16,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    <CheckCircle size={14} />
+                    Sudah dibaca
+                  </span>
                 )}
               </article>
             ))}
@@ -334,6 +377,19 @@ export function Dashboard({
           <div className="eyebrow">{t.eyebrow}</div>
           <h1>{admin ? t.gradeOverview : t.grades}</h1>
         </div>
+        {user.role === "SUPER_ADMIN" && departments.length > 0 && (
+          <div className="toolbar" style={{ marginBottom: 16 }}>
+            <label className="department-filter">
+              Program studi
+              <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)}>
+                <option value="">Semua prodi</option>
+                {departments.map((department) => (
+                  <option key={department} value={department}>{formatDepartmentScope(department)}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+        )}
         <div className="cards">
           {items.map((c) => (
             <a key={c.id} href={`${classPath(c)}/gradebook`} className="card">
@@ -367,7 +423,7 @@ export function Dashboard({
                 ? admin
                   ? t.academicAgenda
                   : t.agenda
-                : admin
+              : admin
                   ? t.manageClasses
                   : t.myClasses}
           </h1>
@@ -407,12 +463,210 @@ export function Dashboard({
               <span>{t.appName || "E-Learning UAY"}</span>
             </div>
           </section>
+          <div
+            className="dashboard-quick-bar"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 12,
+              margin: "12px 0 16px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.86rem", color: "var(--muted, #64748b)" }}>
+              <Clock size={16} />
+              <span>
+                {new Intl.DateTimeFormat("id-ID", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                }).format(new Date())}
+              </span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <a
+                href="https://siakad.uay.ac.id"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="button secondary sm"
+                style={{ fontSize: "0.82rem", display: "inline-flex", alignItems: "center", gap: 6 }}
+              >
+                <GraduationCap size={15} />
+                SIAKAD UAY
+                <ExternalLink size={12} />
+              </a>
+              <a
+                href="https://uay.ac.id"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="button secondary sm"
+                style={{ fontSize: "0.82rem", display: "inline-flex", alignItems: "center", gap: 6 }}
+              >
+                <BookOpen size={15} />
+                Website Utama UAY
+                <ExternalLink size={12} />
+              </a>
+            </div>
+          </div>
+          {(() => {
+            if (user.role !== "STUDENT") return null;
+            const now = Date.now();
+            const urgentAssignments = activities.filter((act: any) => {
+              if (act.kind !== "assignment" || !act.date) return false;
+              const diff = Date.parse(act.date) - now;
+              return diff > 0 && diff <= 3 * 24 * 60 * 60 * 1000;
+            });
+            if (!urgentAssignments.length) return null;
+            return (
+              <div
+                className="card deadline-reminder-card"
+                style={{
+                  marginBottom: 16,
+                  padding: "12px 18px",
+                  borderRadius: 10,
+                  background: "rgba(245, 158, 11, 0.08)",
+                  border: "1px solid rgba(245, 158, 11, 0.3)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 14,
+                  flexWrap: "wrap",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <span
+                    style={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: "50%",
+                      background: "rgba(245, 158, 11, 0.15)",
+                      color: "#d97706",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <AlertTriangle size={18} />
+                  </span>
+                  <div>
+                    <strong style={{ fontSize: "0.92rem", color: "#92400e" }}>
+                      Pengingat Batas Waktu Tugas ({urgentAssignments.length} tugas mendekati deadline)
+                    </strong>
+                    <p style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "#78350f" }}>
+                      {urgentAssignments[0].classTitle}: <strong>{urgentAssignments[0].title}</strong> (Batas: {date(urgentAssignments[0].date)})
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href="/agenda"
+                  className="button secondary sm"
+                  style={{
+                    borderColor: "#d97706",
+                    color: "#b45309",
+                    fontWeight: 600,
+                    fontSize: "0.82rem",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Buka Agenda &rarr;
+                </a>
+              </div>
+            );
+          })()}
+          {(() => {
+            const latestNotice =
+              systemAnnouncements.data?.find((a: any) => a.isImportant) ??
+              systemAnnouncements.data?.[0];
+            if (!latestNotice) return null;
+            return (
+              <div
+                className="card system-announcement-banner"
+                style={{
+                  marginBottom: 16,
+                  padding: "14px 20px",
+                  borderRadius: 10,
+                  background: latestNotice.isImportant
+                    ? "linear-gradient(135deg, rgba(220, 38, 38, 0.06), rgba(239, 68, 68, 0.02))"
+                    : "rgba(2, 132, 199, 0.05)",
+                  border: latestNotice.isImportant
+                    ? "1px solid rgba(220, 38, 38, 0.25)"
+                    : "1px solid rgba(2, 132, 199, 0.2)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 16,
+                  flexWrap: "wrap",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 260 }}>
+                  <div
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 10,
+                      background: latestNotice.isImportant ? "rgba(220, 38, 38, 0.12)" : "rgba(2, 132, 199, 0.12)",
+                      color: latestNotice.isImportant ? "#dc2626" : "#0284c7",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Megaphone size={19} />
+                  </div>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+                      <span
+                        style={{
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          textTransform: "uppercase",
+                          color: latestNotice.isImportant ? "#b91c1c" : "#0369a1",
+                        }}
+                      >
+                        {latestNotice.isImportant ? "Surat Edaran Penting" : "Pengumuman Resmi"}
+                      </span>
+                      {latestNotice.referenceNumber && (
+                        <span className="mono" style={{ fontSize: "0.74rem", color: "var(--muted, #64748b)" }}>
+                          {latestNotice.referenceNumber}
+                        </span>
+                      )}
+                    </div>
+                    <strong style={{ fontSize: "0.93rem", color: "var(--foreground, #0f172a)" }}>
+                      {latestNotice.title}
+                    </strong>
+                    <p style={{ margin: "2px 0 0", fontSize: "0.83rem", color: "var(--muted, #475569)", lineHeight: 1.4 }}>
+                      {(latestNotice.content || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 120)}...
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href={`/announcements#announcement-${latestNotice.id}`}
+                  className="button secondary sm"
+                  style={{
+                    fontWeight: 600,
+                    fontSize: "0.82rem",
+                    whiteSpace: "nowrap",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  Baca Edaran <ArrowRight size={14} />
+                </a>
+              </div>
+            );
+          })()}
           <div className="stats-grid">
             {[
               [
                 BookOpen,
                 t.activeClasses,
                 items.filter((c) => c.status === "PUBLISHED").length,
+                "/classes",
               ],
               [
                 Users,
@@ -420,11 +674,13 @@ export function Dashboard({
                 teacher
                   ? items.reduce((sum, c) => sum + c._count.enrollments, 0)
                   : `${Math.round(materialProgress.reduce((sum, p) => sum + p, 0) / (materialProgress.length || 1))}%`,
+                teacher ? "/classes" : "/grades",
               ],
               [
                 CalendarDays,
                 t.meetings,
                 items.reduce((sum, c) => sum + c._count.sections, 0),
+                "/classes",
               ],
               [
                 ClipboardCheck,
@@ -432,9 +688,16 @@ export function Dashboard({
                 teacher
                   ? gradingQueue.reduce((sum, item) => sum + item.count, 0)
                   : activities.length,
+                teacher ? "/agenda" : "/agenda",
               ],
-            ].map(([Icon, label, value]: any) => (
-              <div className="stat" key={label}>
+            ].map(([Icon, label, value, href]: any) => (
+              <a
+                href={href}
+                className="stat stat-clickable"
+                key={label}
+                style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
+                title={`Buka menu ${label}`}
+              >
                 <span className="stat-icon">
                   <Icon size={19} />
                 </span>
@@ -442,7 +705,7 @@ export function Dashboard({
                   <span>{label}</span>
                   <strong>{value.toString().padStart(2, "0")}</strong>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
           {teacher && gradingQueue.length > 0 && (
@@ -504,16 +767,29 @@ export function Dashboard({
             )}
           </div>
           {page === "classes" && (
-            <Tabs
-              value={filter}
-              onChange={setFilter}
-              items={[
-                ["ALL", t.all],
-                ["PUBLISHED", t.active],
-                ["DRAFT", t.draft],
-                ["ARCHIVED", t.archived],
-              ].map(([id, label]) => ({ id, label }))}
-            />
+            <>
+              {user.role === "SUPER_ADMIN" && departments.length > 0 && (
+                <label className="department-filter">
+                  Program studi
+                  <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)}>
+                    <option value="">Semua prodi</option>
+                    {departments.map((department) => (
+                      <option key={department} value={department}>{formatDepartmentScope(department)}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              <Tabs
+                value={filter}
+                onChange={setFilter}
+                items={[
+                  ["ALL", t.all],
+                  ["PUBLISHED", t.active],
+                  ["DRAFT", t.draft],
+                  ["ARCHIVED", t.archived],
+                ].map(([id, label]) => ({ id, label }))}
+              />
+            </>
           )}
           <div className="cards">
             {items.map((item, index) => (
@@ -523,7 +799,7 @@ export function Dashboard({
           {!items.length && (
             <Empty>
               <h3>{t.emptyClasses}</h3>
-              <p>{admin ? t.adminEmptyClasses : t.emptyDescription}</p>
+              <p>{admin ? "Belum ada kelas pada cakupan yang dipilih." : t.emptyDescription}</p>
             </Empty>
           )}
         </>
@@ -539,6 +815,19 @@ export function Dashboard({
               </a>
             )}
           </div>
+          {page === "agenda" && user.role === "SUPER_ADMIN" && departments.length > 0 && (
+            <div className="toolbar" style={{ marginBottom: 16 }}>
+              <label className="department-filter">
+                Program studi
+                <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)}>
+                  <option value="">Semua prodi</option>
+                  {departments.map((department) => (
+                    <option key={department} value={department}>{formatDepartmentScope(department)}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          )}
           <div className="agenda-list card">
             {activities.length ? (
               activities
@@ -642,6 +931,9 @@ function AdminOverview({
   reload,
   config,
   onConfigChange,
+  departmentFilter,
+  onDepartmentFilter,
+  departments,
 }: {
   user: any;
   classes: any[];
@@ -649,8 +941,10 @@ function AdminOverview({
   reload: () => void;
   config?: any;
   onConfigChange?: () => void;
+  departmentFilter: string;
+  onDepartmentFilter: (value: string) => void;
+  departments: string[];
 }) {
-  const [creating, setCreating] = useState(false);
   const [governanceModal, setGovernanceModal] = useState(false);
   const departmentAdmin = user.role === "DEPARTMENT_ADMIN";
   const drafts = classes.filter((c) => c.status === "DRAFT");
@@ -660,7 +954,9 @@ function AdminOverview({
           .map((c: string) => formatDepartmentScope(c))
           .join(", ")
       : t.noDepartmentScope
-    : t.allDepartments;
+    : departmentFilter
+      ? formatDepartmentScope(departmentFilter)
+      : t.allDepartments;
   return (
     <>
       <div className="page-heading heading-with-action">
@@ -681,19 +977,26 @@ function AdminOverview({
             <Sliders size={16} />
             Kebijakan &amp; Tahun Ajaran
           </button>
-          <button className="primary" onClick={() => setCreating(true)}>
-            <Plus size={16} />
-            {t.newClass}
-          </button>
         </div>
       </div>
+      {user.role === "SUPER_ADMIN" && departments.length > 1 && (
+        <label className="department-filter">
+          Program studi
+          <select value={departmentFilter} onChange={(e) => onDepartmentFilter(e.target.value)}>
+            <option value="">Semua prodi</option>
+            {departments.map((department) => (
+              <option key={department} value={department}>{formatDepartmentScope(department)}</option>
+            ))}
+          </select>
+        </label>
+      )}
       <section className="welcome-panel compact">
         <div>
           <span className="pill">{t.semester}</span>
           <h2>
             {departmentAdmin ? t.departmentManagement : t.academicManagement}
           </h2>
-          <p>{t.adminDashboardDescription}</p>
+          <p>Lihat kondisi kelas dan aktivitas akademik. Pengelolaan isi kelas dilakukan oleh dosen pengampu.</p>
           <a className="button light" href="/catalog">
             {t.catalog}
             <ArrowUpRight size={18} />
@@ -712,21 +1015,30 @@ function AdminOverview({
             t.courses,
             (courses.loading && !courses.data) || courses.error
               ? "—"
-              : (courses.data?.length ?? 0),
+              : (courses.data?.filter((course) => !departmentFilter || course.departmentCode === departmentFilter).length ?? 0),
+            "/catalog",
           ],
           [
             BookOpen,
             t.activeClasses,
             classes.filter((c) => c.status === "PUBLISHED").length,
+            "/classes",
           ],
-          [FileText, t.draftClasses, drafts.length],
+          [FileText, t.draftClasses, drafts.length, "/classes"],
           [
             Users,
             t.activeEnrollments,
             classes.reduce((sum, c) => sum + c._count.enrollments, 0),
+            "/classes",
           ],
-        ].map(([Icon, label, value]: any) => (
-          <div className="stat" key={label}>
+        ].map(([Icon, label, value, href]: any) => (
+          <a
+            href={href}
+            className="stat stat-clickable"
+            key={label}
+            style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
+            title={`Buka menu ${label}`}
+          >
             <span className="stat-icon">
               <Icon size={19} />
             </span>
@@ -734,7 +1046,7 @@ function AdminOverview({
               <span>{label}</span>
               <strong>{String(value).padStart(2, "0")}</strong>
             </div>
-          </div>
+          </a>
         ))}
       </div>
       <div className="section-heading">
@@ -743,7 +1055,12 @@ function AdminOverview({
       <div className="cards">
         {[
           ["/catalog", Database, t.catalog, t.manageCatalogDescription],
-          ["/classes", BookOpen, t.manageClasses, t.manageClassesDescription],
+          [
+            "/classes",
+            BookOpen,
+            t.manageClasses,
+            t.manageClassesDescription,
+          ],
           [
             "/grades",
             ClipboardCheck,
@@ -807,15 +1124,6 @@ function AdminOverview({
           <Empty>{t.noDraftClasses}</Empty>
         )}
       </div>
-      {creating && (
-        <ClassForm
-          onClose={() => setCreating(false)}
-          onSaved={() => {
-            setCreating(false);
-            reload();
-          }}
-        />
-      )}
       {governanceModal && (
         <AcademicGovernanceModal
           config={config}
@@ -1011,6 +1319,10 @@ export function ClassForm({
         }}
         onCancel={onClose}
         onSubmit={async (f) => {
+          if (!selected.length) {
+            setError(Error("Pilih minimal satu dosen pengampu."));
+            return;
+          }
           await api("/course-classes", "POST", {
             courseId: textValue(f, "courseId"),
             name: textValue(f, "name"),
@@ -1024,6 +1336,7 @@ export function ClassForm({
           onSaved();
         }}
       >
+        {error && <Notice error={error} />}
         <Field label={t.course}>
           <select required name="courseId">
             <option value="">{t.choose}</option>
@@ -1031,7 +1344,7 @@ export function ClassForm({
               ?.filter((c) => c.status !== "ARCHIVED")
               .map((c) => (
                 <option value={c.id} key={c.id}>
-                  {c.code} · {c.title}
+                  {c.departmentCode ? `[${c.departmentCode}] ` : ""}{c.code} · {c.title}
                 </option>
               ))}
           </select>
@@ -1100,10 +1413,10 @@ export function ClassForm({
                 Ketik minimal 2 karakter untuk mencari dosen...
               </small>
             )}
-            {search.trim().length >= 2 && users.filter((u) => u.role !== "STUDENT").length > 0 && (
+            {search.trim().length >= 2 && users.filter((u) => u.role === "INSTRUCTOR").length > 0 && (
               <div className="instructor-results" aria-label="Hasil pencarian dosen">
                 {users
-                  .filter((u) => u.role !== "STUDENT")
+                  .filter((u) => u.role === "INSTRUCTOR")
                   .map((u) => {
                     const isPicked = selected.includes(u.id);
                     return (
@@ -1190,7 +1503,7 @@ export function ClassForm({
         {users
           .filter(
             (u) =>
-              u.role !== "STUDENT" &&
+              u.role === "INSTRUCTOR" &&
               !selectedUsers.some((su) => su.id === u.id),
           )
           .map((u) => (
@@ -1448,7 +1761,7 @@ export function AcademicGovernanceModal({
                           Aktif
                         </span>
                       )}
-                      {!isActive && (
+                      {!readOnly && !isActive && (
                         <button
                           type="button"
                           onClick={() => handleRemoveYear(y)}
@@ -1471,29 +1784,31 @@ export function AcademicGovernanceModal({
                 })}
               </div>
 
-              <div style={{ display: "flex", gap: 8, maxWidth: 440 }}>
-                <input
-                  type="text"
-                  placeholder="Tambah tahun ajaran (cth: 2027/2028 Ganjil)"
-                  value={newYearInput}
-                  onChange={(e) => setNewYearInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddYear();
-                    }
-                  }}
-                  style={{ fontSize: "0.85rem", padding: "6px 12px" }}
-                />
-                <button
-                  type="button"
-                  className="button secondary"
-                  onClick={handleAddYear}
-                  style={{ fontSize: "0.85rem", whiteSpace: "nowrap" }}
-                >
-                  + Tambah Semester
-                </button>
-              </div>
+              {!readOnly && (
+                <div style={{ display: "flex", gap: 8, maxWidth: 440 }}>
+                  <input
+                    type="text"
+                    placeholder="Tambah tahun ajaran (cth: 2027/2028 Ganjil)"
+                    value={newYearInput}
+                    onChange={(e) => setNewYearInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddYear();
+                      }
+                    }}
+                    style={{ fontSize: "0.85rem", padding: "6px 12px" }}
+                  />
+                  <button
+                    type="button"
+                    className="button secondary"
+                    onClick={handleAddYear}
+                    style={{ fontSize: "0.85rem", whiteSpace: "nowrap" }}
+                  >
+                    + Tambah Semester
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         ) : (
@@ -1638,9 +1953,30 @@ export function Catalog({
 }) {
   const courses = useApi<any[]>("/courses");
   const [editing, setEditing] = useState<any>(null),
-    [classModal, setClassModal] = useState(false),
     [governanceModal, setGovernanceModal] = useState(false),
-    [importModal, setImportModal] = useState(false);
+    [importModal, setImportModal] = useState(false),
+    [departmentFilter, setDepartmentFilter] = useState(""),
+    [deletingId, setDeletingId] = useState<string | null>(null),
+    [deleteError, setDeleteError] = useState<Error | null>(null);
+  const superAdmin = user.role === "SUPER_ADMIN";
+  const canCreateCatalog = superAdmin || (user.role === "DEPARTMENT_ADMIN" && user.departmentScopes?.length > 0);
+  const departments = [...new Set((courses.data ?? []).map((c) => c.departmentCode))].sort();
+  const visibleCourses = (courses.data ?? []).filter(
+    (c) => !superAdmin || !departmentFilter || c.departmentCode === departmentFilter,
+  );
+  const deleteCourse = async (course: any) => {
+    if (!(await confirmAction(`Hapus mata kuliah ${course.code} · ${course.title}? Tindakan ini tidak dapat dibatalkan.`))) return;
+    setDeletingId(course.id);
+    setDeleteError(null);
+    try {
+      await api(`/courses/${course.id}`, "DELETE");
+      courses.reload();
+    } catch (error) {
+      setDeleteError(error as Error);
+    } finally {
+      setDeletingId(null);
+    }
+  };
   return (
     <>
       <div className="page-heading heading-with-action">
@@ -1656,20 +1992,33 @@ export function Catalog({
             </button>
           )}
           {["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(user.role) && (
-            <button className="secondary" onClick={() => setImportModal(true)}>
+            <button className="secondary" onClick={() => setImportModal(true)} disabled={!canCreateCatalog}>
               <UploadCloud size={16} />
               Impor Katalog
             </button>
           )}
-          <button className="secondary" onClick={() => setClassModal(true)}>
-            {t.newClass}
-          </button>
-          <button className="primary" onClick={() => setEditing({})}>
-            <Plus size={16} />
-            {t.newCourse}
-          </button>
+          {["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(user.role) && (
+            <button className="primary" onClick={() => setEditing({})} disabled={!canCreateCatalog}>
+              <Plus size={16} />
+              {t.newCourse}
+            </button>
+          )}
         </div>
       </div>
+      {superAdmin && departments.length > 0 && (
+        <div className="toolbar" style={{ marginBottom: 16 }}>
+          <label>
+            Program studi
+            <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)}>
+              <option value="">Semua prodi</option>
+              {departments.map((department) => (
+                <option key={department} value={department}>{formatDepartmentScope(department)}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
+      {deleteError && <Notice error={deleteError} />}
       {courses.error ? (
         <Notice error={courses.error} />
       ) : courses.loading && !courses.data ? (
@@ -1687,7 +2036,7 @@ export function Catalog({
               </tr>
             </thead>
             <tbody>
-              {courses.data?.map((c) => (
+              {visibleCourses.map((c) => (
                 <tr key={c.id}>
                   <td>{c.code}</td>
                   <td>
@@ -1700,13 +2049,41 @@ export function Catalog({
                     <Badge value={c.status} />
                   </td>
                   <td>
-                    <button
-                      disabled={c.status === "ARCHIVED"}
-                      className="secondary"
-                      onClick={() => setEditing(c)}
-                    >
-                      {t.edit}
-                    </button>
+                    {(() => {
+                      const canManageCourse =
+                        superAdmin ||
+                        (user.role === "DEPARTMENT_ADMIN" &&
+                          user.departmentScopes?.includes(c.departmentCode));
+                      if (!canManageCourse) {
+                        return (
+                          <span
+                            className="text-muted"
+                            style={{ fontSize: "0.82rem", color: "var(--muted, #64748b)" }}
+                          >
+                            Hanya-baca
+                          </span>
+                        );
+                      }
+                      return (
+                        <div className="toolbar">
+                          <button className="secondary" onClick={() => setEditing(c)}>
+                            {c.status === "ARCHIVED" ? "Aktifkan atau ubah" : t.edit}
+                          </button>
+                          {c._count?.classes === 0 && c._count?.questionBanks === 0 ? (
+                            <button
+                              type="button"
+                              className="danger"
+                              disabled={deletingId === c.id}
+                              onClick={() => void deleteCourse(c)}
+                            >
+                              {deletingId === c.id ? "Menghapus…" : "Hapus"}
+                            </button>
+                          ) : (
+                            <small>Kelas atau bank soal terkait; gunakan status Arsip.</small>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </td>
                 </tr>
               ))}
@@ -1743,13 +2120,33 @@ export function Catalog({
                 <input name="code" required defaultValue={editing.code} />
               </Field>
               <Field label={t.department}>
-                <input
-                  name="departmentCode"
-                  required
-                  defaultValue={
-                    editing.departmentCode ?? user.departmentScopes[0] ?? "IF"
-                  }
-                />
+                {superAdmin ? (
+                  <select
+                    name="departmentCode"
+                    required
+                    defaultValue={editing.departmentCode ?? "IF"}
+                  >
+                    {[
+                      ...new Set([
+                        ...departments,
+                        ...Object.keys(DEPARTMENT_NAMES),
+                      ]),
+                    ]
+                      .filter((c) => !["IH", "MH", "MN", "FARM"].includes(c))
+                      .sort()
+                      .map((dept) => (
+                        <option key={dept} value={dept}>
+                          {formatDepartmentScope(dept)}
+                        </option>
+                      ))}
+                  </select>
+                ) : (
+                  <select name="departmentCode" required defaultValue={editing.departmentCode ?? user.departmentScopes?.[0] ?? ""}>
+                    {(user.departmentScopes ?? []).map((department: string) => (
+                      <option key={department} value={department}>{formatDepartmentScope(department)}</option>
+                    ))}
+                  </select>
+                )}
               </Field>
             </div>
             <Field label={t.title}>
@@ -1781,13 +2178,6 @@ export function Catalog({
             </div>
           </Form>
         </Modal>
-      )}
-      {classModal && (
-        <ClassForm
-          defaultAcademicYear={config?.academicYear}
-          onClose={() => setClassModal(false)}
-          onSaved={() => setClassModal(false)}
-        />
       )}
       {governanceModal && (
         <AcademicGovernanceModal
@@ -2188,7 +2578,60 @@ export function Profile({
       <div className="profile-layout">
         <section className="card" aria-label="Identitas akun">
           <div className="profile-identity">
-            <Avatar name={user.name} large />
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+              <Avatar name={user.name} userId={user.id} large />
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
+                <label
+                  className="button secondary sm"
+                  style={{
+                    cursor: "pointer",
+                    fontSize: "0.78rem",
+                    padding: "4px 8px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
+                  }}
+                >
+                  <Camera size={13} />
+                  Ubah Foto
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (file.size > 5 * 1024 * 1024) {
+                        alert("Ukuran foto maksimal 5 MB.");
+                        return;
+                      }
+                      const reader = new FileReader();
+                      reader.onload = (ev) => {
+                        const dataUrl = String(ev.target?.result ?? "");
+                        try {
+                          localStorage.setItem(`user_photo_${user.id}`, dataUrl);
+                          window.dispatchEvent(new Event("user-photo-changed"));
+                        } catch {
+                          alert("Gagal menyimpan foto ke penyimpanan peramban.");
+                        }
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="button secondary sm"
+                  style={{ fontSize: "0.78rem", padding: "4px 8px" }}
+                  onClick={() => {
+                    localStorage.removeItem(`user_photo_${user.id}`);
+                    window.dispatchEvent(new Event("user-photo-changed"));
+                  }}
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
             <div>
               <h2>{user.name}</h2>
               <p>{user.email}</p>

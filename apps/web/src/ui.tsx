@@ -1,6 +1,7 @@
 import {
   forwardRef,
   useState,
+  useEffect,
   useMemo,
   type ButtonHTMLAttributes,
   type ReactNode,
@@ -57,13 +58,54 @@ export function initials(name = "") {
 export function Avatar({
   name,
   large = false,
+  imageUrl,
+  userId,
 }: {
   name: string;
   large?: boolean;
+  imageUrl?: string | null;
+  userId?: string;
 }) {
+  const [photo, setPhoto] = useState<string | null>(imageUrl ?? null);
+
+  useEffect(() => {
+    if (imageUrl !== undefined) {
+      setPhoto(imageUrl);
+      return;
+    }
+    if (userId) {
+      try {
+        const stored = localStorage.getItem(`user_photo_${userId}`);
+        if (stored) setPhoto(stored);
+      } catch {}
+    }
+    const handler = () => {
+      if (userId) {
+        try {
+          const stored = localStorage.getItem(`user_photo_${userId}`);
+          setPhoto(stored ?? null);
+        } catch {}
+      }
+    };
+    window.addEventListener("user-photo-changed", handler);
+    return () => window.removeEventListener("user-photo-changed", handler);
+  }, [imageUrl, userId]);
+
   return (
-    <span aria-hidden="true" className={large ? "large-avatar" : "avatar"}>
-      {initials(name)}
+    <span
+      aria-hidden="true"
+      className={large ? "large-avatar" : "avatar"}
+      style={{ overflow: "hidden", display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+    >
+      {photo ? (
+        <img
+          src={photo}
+          alt={name}
+          style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+        />
+      ) : (
+        initials(name)
+      )}
     </span>
   );
 }
@@ -74,7 +116,7 @@ export function UserChip({ user, role }: { user: any; role: string }) {
       className="user-chip"
       aria-label={`Profil akun ${user.name}`}
     >
-      <Avatar name={user.name} />
+      <Avatar name={user.name} userId={user.id} />
       <span className="user-chip-details">
         <span className="user-chip-name">{user.name}</span>
         <small className="user-chip-role">{role}</small>
@@ -151,244 +193,6 @@ export function Skeleton() {
   );
 }
 
-export function usePagination<T>(
-  items: T[] = [],
-  initialPageSize: number = 10,
-) {
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState<number>(initialPageSize);
+export { usePagination } from "./hooks/usePagination";
+export { Pagination, type PaginationProps } from "./components/ui/Pagination";
 
-  const totalItems = items.length;
-  const totalPages =
-    pageSize > 0 ? Math.max(1, Math.ceil(totalItems / pageSize)) : 1;
-
-  const currentPage = Math.min(page, totalPages);
-  if (currentPage !== page && totalPages > 0) {
-    setPage(currentPage);
-  }
-
-  const paginatedItems = useMemo(() => {
-    if (pageSize <= 0) return items;
-    const start = (currentPage - 1) * pageSize;
-    return items.slice(start, start + pageSize);
-  }, [items, currentPage, pageSize]);
-
-  const startIndex =
-    totalItems === 0
-      ? 0
-      : (currentPage - 1) * (pageSize > 0 ? pageSize : totalItems) + 1;
-  const endIndex =
-    pageSize > 0 ? Math.min(currentPage * pageSize, totalItems) : totalItems;
-
-  return {
-    page: currentPage,
-    setPage,
-    pageSize,
-    setPageSize,
-    totalPages,
-    totalItems,
-    paginatedItems,
-    startIndex,
-    endIndex,
-    rangeText: `Menampilkan ${startIndex}–${endIndex} dari ${totalItems} data`,
-  };
-}
-
-export interface PaginationProps {
-  page: number;
-  totalPages: number;
-  totalItems: number;
-  pageSize?: number;
-  onPageChange: (newPage: number) => void;
-  onPageSizeChange?: (newPageSize: number) => void;
-  pageSizeOptions?: number[];
-  showPageSizeSelector?: boolean;
-}
-
-export function Pagination({
-  page,
-  totalPages,
-  totalItems,
-  pageSize = 10,
-  onPageChange,
-  onPageSizeChange,
-  pageSizeOptions = [10, 25, 50],
-  showPageSizeSelector = true,
-}: PaginationProps) {
-  if (totalItems <= 0) return null;
-
-  const startIndex =
-    (page - 1) * (pageSize > 0 ? pageSize : totalItems) + 1;
-  const endIndex =
-    pageSize > 0 ? Math.min(page * pageSize, totalItems) : totalItems;
-
-  const getPageNumbers = () => {
-    if (totalPages <= 7) {
-      return Array.from({ length: totalPages }, (_, i) => i + 1);
-    }
-    if (page <= 4) {
-      return [1, 2, 3, 4, 5, "...", totalPages];
-    }
-    if (page >= totalPages - 3) {
-      return [
-        1,
-        "...",
-        totalPages - 4,
-        totalPages - 3,
-        totalPages - 2,
-        totalPages - 1,
-        totalPages,
-      ];
-    }
-    return [1, "...", page - 1, page, page + 1, "...", totalPages];
-  };
-
-  return (
-    <div
-      className="pagination-bar"
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        flexWrap: "wrap",
-        gap: 16,
-        padding: "14px 4px 6px 4px",
-        marginTop: 16,
-        fontSize: "0.86rem",
-        color: "var(--muted, #64748b)",
-        borderTop: "1px solid var(--border, #f1f5f9)",
-      }}
-    >
-      {/* Sisi Kiri: Rekap Data */}
-      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
-        <span>
-          Menampilkan <strong style={{ color: "var(--foreground, #0f172a)", fontWeight: 600 }}>{startIndex}–{endIndex}</strong> dari{" "}
-          <strong style={{ color: "var(--foreground, #0f172a)", fontWeight: 600 }}>{totalItems}</strong> data
-        </span>
-      </div>
-
-      {/* Sisi Kanan: Kontrol (Baris per halaman & Navigasi Tombol) */}
-      <div
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 16,
-          flexWrap: "wrap",
-          marginLeft: "auto",
-        }}
-      >
-        {showPageSizeSelector && onPageSizeChange && (
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, whiteSpace: "nowrap" }}>
-            <span style={{ fontSize: "0.82rem", color: "var(--muted, #64748b)", whiteSpace: "nowrap" }}>
-              Baris per halaman:
-            </span>
-            <select
-              aria-label="Jumlah baris per halaman"
-              value={pageSize}
-              onChange={(e) => {
-                const newSize = Number(e.target.value);
-                onPageSizeChange(newSize);
-                onPageChange(1);
-              }}
-              style={{
-                fontSize: "0.82rem",
-                fontWeight: 500,
-                padding: "4px 8px",
-                borderRadius: 6,
-                border: "1px solid var(--border, #cbd5e1)",
-                background: "var(--card-bg, #ffffff)",
-                color: "var(--foreground, #0f172a)",
-                cursor: "pointer",
-                outline: "none",
-              }}
-            >
-              {pageSizeOptions.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt === -1 ? "Semua" : opt}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {totalPages > 1 && (
-          <nav
-            aria-label="Navigasi Halaman"
-            style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
-          >
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() => onPageChange(page - 1)}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                padding: "5px 12px",
-                fontSize: "0.82rem",
-                fontWeight: 500,
-                borderRadius: 6,
-                border: "1px solid var(--border, #cbd5e1)",
-                background: page <= 1 ? "var(--neutral-soft, #f8fafc)" : "var(--card-bg, #ffffff)",
-                color: page <= 1 ? "var(--muted, #94a3b8)" : "var(--foreground, #0f172a)",
-                cursor: page <= 1 ? "not-allowed" : "pointer",
-                transition: "all 0.15s ease",
-              }}
-            >
-              Sebelumnya
-            </button>
-
-            {getPageNumbers().map((p, idx) =>
-              p === "..." ? (
-                <span key={`dots-${idx}`} style={{ padding: "0 6px", color: "var(--muted, #94a3b8)" }}>
-                  …
-                </span>
-              ) : (
-                <button
-                  key={`page-${p}`}
-                  type="button"
-                  onClick={() => onPageChange(Number(p))}
-                  style={{
-                    minWidth: 32,
-                    height: 30,
-                    padding: "0 6px",
-                    fontSize: "0.82rem",
-                    borderRadius: 6,
-                    fontWeight: page === p ? 700 : 500,
-                    border: page === p ? "1px solid var(--primary, #0284c7)" : "1px solid var(--border, #cbd5e1)",
-                    background: page === p ? "var(--primary, #0284c7)" : "var(--card-bg, #ffffff)",
-                    color: page === p ? "#ffffff" : "var(--foreground, #0f172a)",
-                    cursor: "pointer",
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  {p}
-                </button>
-              ),
-            )}
-
-            <button
-              type="button"
-              disabled={page >= totalPages}
-              onClick={() => onPageChange(page + 1)}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                padding: "5px 12px",
-                fontSize: "0.82rem",
-                fontWeight: 500,
-                borderRadius: 6,
-                border: "1px solid var(--border, #cbd5e1)",
-                background: page >= totalPages ? "var(--neutral-soft, #f8fafc)" : "var(--card-bg, #ffffff)",
-                color: page >= totalPages ? "var(--muted, #94a3b8)" : "var(--foreground, #0f172a)",
-                cursor: page >= totalPages ? "not-allowed" : "pointer",
-                transition: "all 0.15s ease",
-              }}
-            >
-              Selanjutnya
-            </button>
-          </nav>
-        )}
-      </div>
-    </div>
-  );
-}

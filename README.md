@@ -2,6 +2,9 @@
 
 Aplikasi pembelajaran berdasarkan **Presentation – Technical Design E-Learning UAY v4.0**. React 19 + TypeScript, Express 5, Prisma, PostgreSQL 16, Redis 7. Antarmuka berbahasa Indonesia; jadwal mengikuti waktu perangkat dengan label offset zona sebenarnya (misalnya GMT+7 atau GMT+8).
 
+> 📘 **Panduan Pengembang & Handover (Wajib Dibaca Developer):**  
+> Bagi pengembang baru yang akan memelihara atau melanjutkan sistem ini, silakan baca dokumen serah terima teknis lengkap di **[HANDOVER.md](HANDOVER.md)** dan indeks dokumentasi teknis di **[docs/README.md](docs/README.md)**. Dokumen tersebut merinci arsitektur monorepo, matriks RBAC 5-peran, pembatasan wewenang penilaian dosen, tata kelola berkas, dan panduan pemecahan kendala.
+
 Implementasi lokal sudah tersedia: pengelolaan mata kuliah/kelas/peserta, editor 11 blok, materi dan progres belajar, kuis 8 tipe, tugas berversi, penilaian dan publikasi, impor dengan rekonsiliasi, pengumuman, notifikasi, serta audit. Rincian cakupan dan bukti verifikasi ada di [status implementasi](docs/IMPLEMENTATION.md).
 
 **Pemantauan Akademik untuk rektor** tersedia di `/rector` melalui login e-learning yang sama. Akun `RECTOR` hanya membaca laporan dan mengunduh CSV/PDF. Petunjuk demo, aktivasi role kampus, sumber data, dan batas pencatatan ada di [panduan akses rektor](docs/RECTOR-INTEGRATION.md).
@@ -32,11 +35,13 @@ Buka **http://127.0.0.1:5173/** untuk landing publik. Klik **Masuk dengan SSO UA
 
 `Ctrl+C` menghentikan launcher. Database yang sudah berjalan sebelum launcher tetap merupakan proses terpisah. Data tidak direset saat restart atau seed ulang. Landing menggunakan tombol SSO tanpa pemilih akun. `DEMO_MODE` mengatur ketersediaan fixture demonstrasi. Pada Railway, `DEMO_MODE=true` secara eksplisit menyalakan fixture OIDC dan File Service untuk demonstrasi tanpa layanan kampus; mode ini tidak menggunakan kredensial kampus. Jika frontend staging memakai Vercel, gunakan gateway same-origin `/api/*` dan konfigurasi `APP_ORIGIN`, `API_ORIGIN`, serta `RAILWAY_API_ORIGIN` seperti di [panduan Railway](deployment/RAILWAY.md). Production VPS menggunakan satu domain dan gateway Nginx seperti di [panduan VPS](deployment/README.md). Saat `DEMO_MODE=false`, konfigurasi SSO, Redis, File Service, dan webhook production wajib diisi. Endpoint login development hanya tersedia pada mode pengujian backend yang secara eksplisit memakai `AUTH_MODE=development`; UI tidak menggunakannya.
 
-## Pemeriksaan
+## Pemeriksaan & Kualitas Kode
 
 ```powershell
-npm run check
-npm run test:integration
+npm run typecheck       # Verifikasi tipe TypeScript (API & Web) tanpa emit
+npm test                # Menjalankan 87+ unit dan domain test suites
+npm run check           # Kompilasi build penuh dan pengujian aturan domain
+npm run test:integration # Tes integrasi HTTP dengan mock DB terpisah
 npm audit
 ```
 

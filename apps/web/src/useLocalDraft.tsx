@@ -73,7 +73,7 @@ export function useNavigationGuard() {
         target.origin === location.origin &&
         (legacyRoute ||
           target.pathname === "/" ||
-          /^\/(classes|courses|quizzes|assignments|catalog|profile|help|dashboard|agenda|grades|notifications)(\/|$)/.test(
+          /^\/(classes|courses|quizzes|assignments|catalog|profile|help|dashboard|agenda|grades|notifications|announcements)(\/|$)/.test(
             target.pathname,
           ));
       if (!appRoute) return;
