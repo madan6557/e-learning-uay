@@ -1,4 +1,4 @@
-import { db } from "../core.js";
+import { db, cache } from "../core.js";
 import type {
   Activity,
   ActivityCategory,
@@ -47,10 +47,12 @@ export class UniversityReportingDataSource implements ReportingDataSource {
   static invalidateCache() {
     UniversityReportingDataSource.cachedSnapshot = null;
     UniversityReportingDataSource.inFlight = null;
+    cache.del("rector:reporting:snapshot").catch(() => {});
   }
 
   async readSnapshot(options?: { forceRefresh?: boolean }): Promise<ReportingSnapshot> {
     const now = Date.now();
+    // L1: In-memory Process RAM
     if (!options?.forceRefresh && this.ttlMs > 0 && UniversityReportingDataSource.cachedSnapshot) {
       if (UniversityReportingDataSource.cachedSnapshot.expires > now) {
         return UniversityReportingDataSource.cachedSnapshot.snapshot;
@@ -59,6 +61,21 @@ export class UniversityReportingDataSource implements ReportingDataSource {
 
     if (UniversityReportingDataSource.inFlight) {
       return UniversityReportingDataSource.inFlight;
+    }
+
+    // L2: Redis Cache (if available and not in test environment)
+    if (!options?.forceRefresh && this.ttlMs > 0 && process.env.NODE_ENV !== "test") {
+      try {
+        const raw = await cache.get("rector:reporting:snapshot");
+        if (raw) {
+          const parsed = JSON.parse(raw) as ReportingSnapshot;
+          UniversityReportingDataSource.cachedSnapshot = {
+            snapshot: parsed,
+            expires: Date.now() + this.ttlMs,
+          };
+          return parsed;
+        }
+      } catch {}
     }
 
     const promise = this.fetchSnapshot();
@@ -70,6 +87,15 @@ export class UniversityReportingDataSource implements ReportingDataSource {
           snapshot: result,
           expires: Date.now() + this.ttlMs,
         };
+        if (process.env.NODE_ENV !== "test") {
+          cache
+            .set(
+              "rector:reporting:snapshot",
+              JSON.stringify(result),
+              Math.ceil(this.ttlMs / 1000),
+            )
+            .catch(() => {});
+        }
       }
       return result;
     } finally {
