@@ -55,7 +55,7 @@ import {
 import { countDrafts, removeDraft } from "./drafts";
 import { Avatar, Tabs } from "./ui";
 import { classPath, contentPath } from "./router";
-import { parseCsv } from "./Gradebook";
+import { parseCsv } from "./csv";
 export interface ClassCardData {
   id: string;
   slug?: string;

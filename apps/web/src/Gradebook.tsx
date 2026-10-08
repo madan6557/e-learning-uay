@@ -30,6 +30,8 @@ import {
 } from "./lib";
 import { confirmAction } from "./confirm";
 import { GRADE_SCALE_PRESETS, gradeScaleLabel } from "../../../packages/shared/src/domain";
+import { parseCsv } from "./csv";
+export { parseCsv };
 
 export function GradeScoreInput({
   value,
@@ -1261,34 +1263,6 @@ export function Gradebook({
       )}
     </>
   );
-}
-export function parseCsv(source: string) {
-  const rows: string[][] = [];
-  let row: string[] = [],
-    cell = "",
-    quoted = false;
-  for (let i = 0; i < source.length; i++) {
-    const char = source[i];
-    if (char === '"') {
-      if (quoted && source[i + 1] === '"') {
-        cell += '"';
-        i++;
-      } else quoted = !quoted;
-    } else if (char === "," && !quoted) {
-      row.push(cell);
-      cell = "";
-    } else if ((char === "\n" || char === "\r") && !quoted) {
-      if (char === "\r" && source[i + 1] === "\n") i++;
-      row.push(cell);
-      if (row.some((c) => c.trim())) rows.push(row);
-      row = [];
-      cell = "";
-    } else cell += char;
-  }
-  if (quoted) throw new Error(t.errors.VALIDATION_ERROR);
-  row.push(cell);
-  if (row.some((c) => c.trim())) rows.push(row);
-  return rows;
 }
 function normalizeRow(headers: string[], row: any[]) {
   return Object.fromEntries(

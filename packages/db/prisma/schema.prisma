@@ -643,6 +643,8 @@ model AuditLog {
   @@index([classId, createdAt])
   @@index([action])
   @@index([requestId])
+  @@index([result, createdAt])
+  @@index([createdAt])
   @@map("audit_logs")
 }
 

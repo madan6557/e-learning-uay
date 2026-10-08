@@ -49,6 +49,7 @@ import {
   type Summary,
 } from "../../../../packages/shared/src/rector";
 import { formatDateTime, localTimeZone } from "../../../../packages/shared/src/time";
+import { readCache } from "../readCache";
 import "./styles.css";
 const API = "/api/rector/v1";
 const formatDate = (v: string | null) =>
@@ -71,21 +72,32 @@ type View =
   | "activities"
   | "definitions";
 function useReport<T>(path: string | null, onUnauthorized: () => void) {
-  const [data, setData] = useState<ReportResponse<T> | null>(null);
+  const cacheKey = path ? `/rector${path}` : null;
+  const initialData = cacheKey ? readCache.peek<ReportResponse<T>>(cacheKey) ?? null : null;
+  const [data, setData] = useState<ReportResponse<T> | null>(initialData);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(Boolean(path && !initialData));
   const [version, setVersion] = useState(0);
+
   useEffect(() => {
-    if (!path) {
+    if (!path || !cacheKey) {
       setData(null);
+      setLoading(false);
       return;
     }
-    const controller = new AbortController();
-    setData(null);
+    const cached = readCache.peek<ReportResponse<T>>(cacheKey);
+    if (cached) {
+      setData(cached);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
     setError("");
-    setLoading(true);
-    fetch(API + path, { signal: controller.signal })
-      .then(async (r) => {
+
+    let active = true;
+    readCache
+      .load<ReportResponse<T>>(cacheKey, 60000, async () => {
+        const r = await fetch(API + path);
         if (r.status === 401) {
           onUnauthorized();
           throw new Error("Sesi berakhir. Silakan masuk kembali.");
@@ -96,23 +108,44 @@ function useReport<T>(path: string | null, onUnauthorized: () => void) {
               ? "Filter tidak valid. Periksa tanggal dan rentang maksimal dua tahun."
               : "Data belum dapat dimuat. Silakan coba kembali.",
           );
-        return r.json();
+        return (await r.json()) as ReportResponse<T>;
       })
-      .then(setData)
+      .then((res) => {
+        if (active) {
+          setData(res);
+          setLoading(false);
+        }
+      })
       .catch((e) => {
-        if (e.name !== "AbortError") setError(e.message);
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
+        if (active) {
+          setError(e.message);
+          setLoading(false);
+        }
       });
-    return () => controller.abort();
-  }, [path, version, onUnauthorized]);
+
+    return () => {
+      active = false;
+    };
+  }, [path, cacheKey, version, onUnauthorized]);
+
   useEffect(() => {
     if (!path) return;
-    const timer = setInterval(() => setVersion((v) => v + 1), 300000);
+    const timer = setInterval(() => {
+      if (cacheKey) readCache.evict(cacheKey);
+      setVersion((v) => v + 1);
+    }, 300000);
     return () => clearInterval(timer);
-  }, [path]);
-  return { data, error, loading, reload: () => setVersion((v) => v + 1) };
+  }, [path, cacheKey]);
+
+  return {
+    data,
+    error,
+    loading,
+    reload: () => {
+      if (cacheKey) readCache.evict(cacheKey);
+      setVersion((v) => v + 1);
+    },
+  };
 }
 function Empty({
   children = "Tidak ada data yang cocok dengan filter.",

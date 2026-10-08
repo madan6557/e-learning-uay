@@ -33,7 +33,51 @@ const latest = (dates: (Date | null)[]) =>
 
 /** Only aggregates leave this projection. Student names, scores and answers are never selected. */
 export class UniversityReportingDataSource implements ReportingDataSource {
-  async readSnapshot(): Promise<ReportingSnapshot> {
+  private static cachedSnapshot: { snapshot: ReportingSnapshot; expires: number } | null = null;
+  private static inFlight: Promise<ReportingSnapshot> | null = null;
+  private readonly ttlMs: number;
+
+  constructor(options?: { ttlMs?: number }) {
+    // In test environment, default ttl is 0 so tests with sequential db mutations see fresh data.
+    // In production and dev, default ttl is 60 seconds (60_000ms).
+    const defaultTtl = process.env.NODE_ENV === "test" ? 0 : 60_000;
+    this.ttlMs = options?.ttlMs ?? defaultTtl;
+  }
+
+  static invalidateCache() {
+    UniversityReportingDataSource.cachedSnapshot = null;
+    UniversityReportingDataSource.inFlight = null;
+  }
+
+  async readSnapshot(options?: { forceRefresh?: boolean }): Promise<ReportingSnapshot> {
+    const now = Date.now();
+    if (!options?.forceRefresh && this.ttlMs > 0 && UniversityReportingDataSource.cachedSnapshot) {
+      if (UniversityReportingDataSource.cachedSnapshot.expires > now) {
+        return UniversityReportingDataSource.cachedSnapshot.snapshot;
+      }
+    }
+
+    if (UniversityReportingDataSource.inFlight) {
+      return UniversityReportingDataSource.inFlight;
+    }
+
+    const promise = this.fetchSnapshot();
+    UniversityReportingDataSource.inFlight = promise;
+    try {
+      const result = await promise;
+      if (this.ttlMs > 0) {
+        UniversityReportingDataSource.cachedSnapshot = {
+          snapshot: result,
+          expires: Date.now() + this.ttlMs,
+        };
+      }
+      return result;
+    } finally {
+      UniversityReportingDataSource.inFlight = null;
+    }
+  }
+
+  private async fetchSnapshot(): Promise<ReportingSnapshot> {
     return db.$transaction(
       async (tx) => {
         const now = new Date();
@@ -243,6 +287,7 @@ export class UniversityReportingDataSource implements ReportingDataSource {
         const logs = await tx.auditLog.findMany({
           where: {
             result: "SUCCESS",
+            actorRole: { notIn: ["STUDENT", "RECTOR"] },
             createdAt: { gte: new Date(+now - 730 * 86400000) },
             OR: [
               { classId: { not: null } },

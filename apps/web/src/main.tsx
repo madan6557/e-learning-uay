@@ -17,7 +17,7 @@
 
 import { ConfirmationHost } from "./confirm";
 import { createRoot } from "react-dom/client";
-import { lazy, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import {
   t,
@@ -30,16 +30,12 @@ import {
 } from "./lib";
 import { handleOidcCallback, logoutOidc } from "./oidc";
 import { readCache } from "./readCache";
-import { Dashboard, Catalog, Profile } from "./pages";
-import { AnnouncementsPage } from "./AnnouncementsPage";
 import {
   DraftUserContext,
   confirmUnsaved,
   useNavigationGuard,
 } from "./useLocalDraft";
 import { routeFromLocation } from "./router";
-import { HelpPage } from "./HelpPage";
-import { GuidePage } from "./GuidePage";
 import "./guide.css";
 import { useSessionExpiry } from "./useSessionExpiry";
 import "./styles.css";
@@ -49,10 +45,30 @@ import "./experience.css";
 import { PublicShell, AuthShell } from "./components/layout";
 import { Landing } from "./pages/Landing";
 
+const Dashboard = lazy(() =>
+  import("./pages").then((m) => ({ default: m.Dashboard })),
+);
+const Catalog = lazy(() =>
+  import("./pages").then((m) => ({ default: m.Catalog })),
+);
+const Profile = lazy(() =>
+  import("./pages").then((m) => ({ default: m.Profile })),
+);
+const AnnouncementsPage = lazy(() =>
+  import("./AnnouncementsPage").then((m) => ({ default: m.AnnouncementsPage })),
+);
+const HelpPage = lazy(() =>
+  import("./HelpPage").then((m) => ({ default: m.HelpPage })),
+);
+const GuidePage = lazy(() =>
+  import("./GuidePage").then((m) => ({ default: m.GuidePage })),
+);
 const ClassPage = lazy(() =>
   import("./ClassPage").then((m) => ({ default: m.ClassPage })),
 );
-const RectorDashboard = lazy(() => import('./rector/RectorDashboard').then(m=>({default:m.RectorDashboard})));
+const RectorDashboard = lazy(() =>
+  import("./rector/RectorDashboard").then((m) => ({ default: m.RectorDashboard })),
+);
 const QuizPage = lazy(() =>
   import("./Assessment").then((m) => ({ default: m.QuizPage })),
 );
@@ -360,7 +376,12 @@ function App() {
   const parsedRoute = new URL(route, location.origin);
   const pathname = parsedRoute.pathname;
   const params = parsedRoute.searchParams;
-  if (pathname === '/Panduan/panduan.html') return <GuidePage user={user} />;
+  if (pathname === '/Panduan/panduan.html')
+    return (
+      <Suspense fallback={<Loading />}>
+        <GuidePage user={user} />
+      </Suspense>
+    );
   const [, section, id, itemKind, itemSlug] = pathname.split("/");
   let page;
   if (section === 'rector' && ['RECTOR','SUPER_ADMIN'].includes(user.role))
