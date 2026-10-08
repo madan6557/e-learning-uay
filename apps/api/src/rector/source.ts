@@ -441,16 +441,24 @@ export function classify(
 }
 
 export class DynamicReportingDataSource implements ReportingDataSource {
-  private universitySource = new UniversityReportingDataSource();
-  private fixtureSource = new FixtureDataSource();
+  constructor(
+    private readonly allowFixtureFallback: boolean,
+    private readonly universitySource: ReportingDataSource = new UniversityReportingDataSource(),
+    private readonly fixtureSource: ReportingDataSource = new FixtureDataSource(),
+  ) {}
 
   async readSnapshot(): Promise<ReportingSnapshot> {
     try {
       const snapshot = await this.universitySource.readSnapshot();
-      if (snapshot.lecturers.length > 0 || snapshot.classes.length > 0) {
+      if (
+        !this.allowFixtureFallback ||
+        snapshot.lecturers.length > 0 ||
+        snapshot.classes.length > 0
+      ) {
         return snapshot;
       }
     } catch (err) {
+      if (!this.allowFixtureFallback) throw err;
       console.warn("[rector] UniversityReportingDataSource failed, fallback to fixture:", err);
     }
     return this.fixtureSource.readSnapshot();

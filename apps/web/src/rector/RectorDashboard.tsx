@@ -464,13 +464,6 @@ export function RectorDashboard({ demo }: { demo: boolean }) {
     if (params.get("timeZone") !== timeZone) update({ timeZone }, true);
   }, [params, timeZone]);
   const opts = filters.data?.data;
-  useEffect(() => {
-    if (!opts) return;
-    const defaults: Record<string, string> = {};
-    for (const [k, v] of Object.entries(opts.defaultFilters))
-      if (!new URLSearchParams(location.search).has(k)) defaults[k] = v!;
-    if (Object.keys(defaults).length) update(defaults, true);
-  }, [opts]);
   const requestedView = params.get("view") ?? "overview";
   const view: View = [
     "overview",
@@ -500,9 +493,13 @@ export function RectorDashboard({ demo }: { demo: boolean }) {
       // Search belongs to the lecturer list, not to another actor's evidence
       // when drilling into a jointly taught class.
       if (key === "search" && view !== "lecturers") continue;
+      // An omitted date follows the latest snapshot on every refresh. A date
+      // the reader selected remains fixed in the URL and in exported reports.
       const value =
         params.get(key) ??
-        opts?.defaultFilters[key as keyof typeof opts.defaultFilters];
+        (key === "from" || key === "to"
+          ? null
+          : opts?.defaultFilters[key as keyof typeof opts.defaultFilters]);
       if (value) q.set(key, value);
     }
     if (view === "lecturer") q.set("lecturer", id);
@@ -541,7 +538,10 @@ export function RectorDashboard({ demo }: { demo: boolean }) {
     }
     update(changes);
   };
-  const get = (key: string) => query.get(key) ?? "";
+  const get = (key: string) =>
+    params.get(key) ??
+    opts?.defaultFilters[key as keyof typeof opts.defaultFilters] ??
+    "";
   const exportReport = async (format: "csv" | "pdf") => {
     setExporting(true);
     setExportError("");
@@ -671,7 +671,10 @@ export function RectorDashboard({ demo }: { demo: boolean }) {
                 <button
                   title="Muat ulang data"
                   aria-label="Muat ulang data"
-                  onClick={() => setRefreshKey((v) => v + 1)}
+                  onClick={() => {
+                    filters.reload();
+                    setRefreshKey((v) => v + 1);
+                  }}
                 >
                   <RefreshCw size={14} />
                 </button>
@@ -710,7 +713,7 @@ export function RectorDashboard({ demo }: { demo: boolean }) {
                     onClick={() => {
                       const next = new URLSearchParams({
                         view: "overview",
-                        ...(opts.defaultFilters as Record<string, string>),
+                        timeZone,
                       });
                       history.pushState(history.state, "", "/rector?" + next);
                       setParams(next);
@@ -718,6 +721,11 @@ export function RectorDashboard({ demo }: { demo: boolean }) {
                   >
                     Reset filter
                   </button>
+                  {params.has("to") && (
+                    <button onClick={() => editFilter("to", "")}>
+                      Ikuti tanggal terbaru
+                    </button>
+                  )}
                 </div>
                 {moreFilters && (
                   <div className="filter-fields">
@@ -802,6 +810,7 @@ export function RectorDashboard({ demo }: { demo: boolean }) {
                   · {get("department") || "Semua prodi"} · Periode:{" "}
                   {shortDay(get("from"))} – {shortDay(get("to"))}{" "}
                   {get("to").slice(0, 4)}
+                  {!params.has("to") && " · Tanggal akhir otomatis"}
                   {get("lecturer") &&
                     ` · ${opts.lecturers.find((l) => l.id === get("lecturer"))?.name ?? ""}`}
                   {get("classId") &&

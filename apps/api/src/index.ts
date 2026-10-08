@@ -184,7 +184,7 @@ export function createApp() {
   registerAuth(app);
   // This read-only integration accepts its dedicated token or a Super Admin session.
   registerRectorBridgeRoutes(app);
-  app.use(rectorReporting(new DynamicReportingDataSource(), isDemo));
+  app.use(rectorReporting(new DynamicReportingDataSource(isDemo), isDemo));
   app.use("/api/v1", authenticate);
   app.use("/api/v1", (req, _res, next) => {
     // Rector reporting is aggregate-only. Classroom and student endpoints stay closed.
