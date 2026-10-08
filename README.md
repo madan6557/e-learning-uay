@@ -5,11 +5,15 @@ Aplikasi pembelajaran berdasarkan **Presentation – Technical Design E-Learning
 > 📘 **Panduan Pengembang & Handover (Wajib Dibaca Developer):**  
 > Bagi pengembang baru yang akan memelihara atau melanjutkan sistem ini, silakan baca dokumen serah terima teknis lengkap di **[HANDOVER.md](HANDOVER.md)** dan indeks dokumentasi teknis di **[docs/README.md](docs/README.md)**. Dokumen tersebut merinci arsitektur monorepo, matriks RBAC 5-peran, pembatasan wewenang penilaian dosen, tata kelola berkas, dan panduan pemecahan kendala.
 
-Implementasi lokal sudah tersedia: pengelolaan mata kuliah/kelas/peserta, editor 11 blok, materi dan progres belajar, kuis 8 tipe, tugas berversi, penilaian dan publikasi, impor dengan rekonsiliasi, pengumuman, notifikasi, serta audit. Rincian cakupan dan bukti verifikasi ada di [status implementasi](docs/IMPLEMENTATION.md).
+Implementasi lokal sudah tersedia: pengelolaan mata kuliah/kelas/peserta, editor 11 blok, materi dan progres belajar, kuis 8 tipe, tugas berversi, penilaian dan publikasi, impor dengan rekonsiliasi, pengumuman, notifikasi, serta audit. Rincian cakupan dan bukti verifikasi ada di [status implementasi](docs/architecture/IMPLEMENTATION.md).
 
-**Pemantauan Akademik untuk rektor** tersedia di `/rector` melalui login e-learning yang sama. Akun `RECTOR` hanya membaca laporan dan mengunduh CSV/PDF. Petunjuk demo, aktivasi role kampus, sumber data, dan batas pencatatan ada di [panduan akses rektor](docs/RECTOR-INTEGRATION.md).
+**Pemantauan Akademik untuk rektor** tersedia di `/rector` melalui login e-learning yang sama. Akun `RECTOR` hanya membaca laporan dan mengunduh CSV/PDF. Petunjuk demo, aktivasi role kampus, sumber data, dan batas pencatatan ada di [panduan akses rektor](docs/integrations/rector/RECTOR-INTEGRATION.md).
 
 ## Menjalankan di komputer ini
+
+Untuk audit dengan akun lima peran dan data terpisah, jalankan `npm run dev:test` setelah PostgreSQL lokal aktif (`npm run db:local`). Mode ini memakai `elearning_visual_test`, menerapkan migrasi, dan mengisi fixture hanya saat database tersebut kosong. Data aplikasi dan database integrasi `elearning_test` tetap terpisah. Gunakan satu launcher pada port lokal yang sama.
+
+Bukti perbaikan, pemeriksaan per peran, serta pekerjaan staging yang masih menunggu akses tercatat pada [laporan kesiapan](docs/qa/PRODUCTION-READINESS.md).
 
 Prasyarat: **Node.js 22.12 atau lebih baru**, npm, koneksi internet untuk instalasi awal. Docker tidak diperlukan untuk mode lokal.
 
@@ -47,11 +51,11 @@ npm audit
 
 `check` menghasilkan build web/API dan menjalankan tes aturan domain. Tes integrasi membutuhkan PostgreSQL lokal aktif (`npm run dev` atau `npm run db:local` pada terminal lain), memakai database terpisah `elearning_test`, dan menjalankan fixture HTTP untuk OIDC dan File Service. Override dengan `TEST_DATABASE_URL` yang nama databasenya berakhiran `_test`. Tes tidak membersihkan database aplikasi. Data pengujian memakai ID unik dan tersimpan hanya di database uji.
 
-Untuk pengujian manual, [panduan pengujian](docs/PANDUAN-PENGUJIAN.md) memuat daftar periksa langkah demi langkah per modul beserta hasil yang diharapkan.
+Untuk pengujian manual, [panduan pengujian](docs/qa/PANDUAN-PENGUJIAN.md) memuat daftar periksa langkah demi langkah per modul beserta hasil yang diharapkan.
 
 **Portal pengujian interaktif v5:** jalankan `npm run qa`, lalu buka **http://127.0.0.1:5174/**. Katalog 354 kasus disusun **P0/P1/P2 → Role**, dengan langkah, hasil manual, bukti otomatis, ringkasan progres, serta perbandingan hasil. Jalankan `npm run qa:run` atau tombol **Jalankan otomatis** untuk memperbarui bukti. Lihat [panduan portal QA](docs/qa/README.md).
 
-Menu **Bantuan** memuat tutorial, gambar, dan solusi kendala sesuai lima peran akun, termasuk Rektor. Tautan **Buka buku panduan (tab baru)** membuka `/Panduan/panduan.html` dengan isi mengikuti sesi akun dan langkah bernomor tanpa checklist. [Panduan penggunaan utama](docs/BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md) diekspor dari konten Bantuan dan definisi skala nilai yang sama. Jalankan `npm run docs:guide` setelah memperbarui konten, lalu `npm run docs:guide:check` untuk memastikan dokumen masih sesuai.
+Menu **Bantuan** memuat tutorial, gambar, dan solusi kendala sesuai lima peran akun, termasuk Rektor. Tautan **Buka buku panduan (tab baru)** membuka `/Panduan/panduan.html` dengan isi mengikuti sesi akun dan langkah bernomor tanpa checklist. [Panduan penggunaan utama](docs/guides/BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md) diekspor dari konten Bantuan dan definisi skala nilai yang sama. Jalankan `npm run docs:guide` setelah memperbarui konten, lalu `npm run docs:guide:check` untuk memastikan dokumen masih sesuai.
 
 Panduan 11 blok dan tag teks, prompt AI, serta contoh JSON artikel tersedia pada
 **Panduan & artikel AI** di editor Materi teks/Praktikum. Berkas sumber yang bisa

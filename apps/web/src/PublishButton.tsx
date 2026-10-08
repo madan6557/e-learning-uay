@@ -15,6 +15,12 @@ export function PublishButton({
   return (
     <Action
       className="secondary publish-content-button"
+      successMessage={
+        published
+          ? "Publikasi berhasil ditarik."
+          : "Konten berhasil diterbitkan."
+      }
+      busyLabel={published ? "Menarik publikasi…" : "Menerbitkan…"}
       label={`${published ? "Tarik Publikasi" : t.publish} ${title}`}
       run={async () => {
         await api(`${path}/${published ? "unpublish" : "publish"}`, "POST", {});

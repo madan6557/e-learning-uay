@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense, type ReactNode } from "react";
+import { useState, useEffect, useRef, Suspense, type ReactNode } from "react";
 import {
   LayoutDashboard,
   BookOpen,
@@ -39,11 +39,10 @@ export function AuthShell({
   logout,
   children,
 }: AuthShellProps) {
-  const drawerQuery = pathname.startsWith('/rector') ? '(max-width:1024px)' : '(max-width:760px)';
+  const drawerQuery = "(max-width:1024px)";
+  const menuTrigger = useRef<HTMLElement | null>(null);
   const [menuOpen, setMenuOpen] = useState(false),
-    [mobile, setMobile] = useState(
-      () => matchMedia(drawerQuery).matches,
-    );
+    [mobile, setMobile] = useState(() => matchMedia(drawerQuery).matches);
   useEffect(() => {
     const media = matchMedia(drawerQuery);
     const update = () => {
@@ -80,7 +79,10 @@ export function AuthShell({
       if (e.key === "Escape") {
         setMenuOpen(false);
         setTimeout(
-          () => document.getElementById("open-mobile-menu")?.focus(),
+          () =>
+            (
+              menuTrigger.current ?? document.getElementById("open-mobile-menu")
+            )?.focus(),
           0,
         );
       }
@@ -95,7 +97,9 @@ export function AuthShell({
   useEffect(() => setMenuOpen(false), [pathname]);
   // Sidebar width preference is per-device, like the SSO console's.
   const [collapsed, setCollapsed] = useState(
-    () => user.role !== 'RECTOR' && localStorage.getItem("uay-nav-collapsed") === "1",
+    () =>
+      user.role !== "RECTOR" &&
+      localStorage.getItem("uay-nav-collapsed") === "1",
   );
   useEffect(() => {
     localStorage.setItem("uay-nav-collapsed", collapsed ? "1" : "0");
@@ -103,7 +107,7 @@ export function AuthShell({
   const displayCollapsed = collapsed && !mobile;
   const [unread, setUnread] = useState(0);
   useEffect(() => {
-    if (user.role === 'RECTOR') return;
+    if (user.role === "RECTOR") return;
     let active = true;
     const load = () =>
       api<{ count: number }>("/notifications/unread-count")
@@ -121,24 +125,28 @@ export function AuthShell({
     };
   }, []);
   const admin = ["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(user.role);
-  const rector = user.role === 'RECTOR';
-  const links = rector ? [
-    ['/rector', LayoutDashboard, 'Pemantauan Akademik'],
-    ["/announcements", Megaphone, "Pengumuman"],
-    ['/profile', ShieldCheck, t.profile],
-    ['/help', CircleHelp, t.help],
-  ] : [
-    ["/dashboard", LayoutDashboard, t.dashboard],
-    ...(user.role === 'SUPER_ADMIN' ? [['/rector', ClipboardCheck, 'Pemantauan Akademik']] : []),
-    ...(admin ? [["/catalog", LibraryBig, t.catalog]] : []),
-    ["/classes", BookOpen, admin ? t.manageClasses : t.myClasses],
-    ["/agenda", CalendarDays, admin ? t.academicAgenda : t.agenda],
-    ["/grades", GraduationCap, admin ? t.gradeOverview : t.grades],
-    ["/announcements", Megaphone, "Pengumuman"],
-    ["/notifications", Bell, t.notifications],
-    ["/profile", ShieldCheck, t.profile],
-    ["/help", CircleHelp, t.help],
-  ];
+  const rector = user.role === "RECTOR";
+  const links = rector
+    ? [
+        ["/rector", LayoutDashboard, "Pemantauan Akademik"],
+        ["/announcements", Megaphone, "Pengumuman"],
+        ["/profile", ShieldCheck, t.profile],
+        ["/help", CircleHelp, t.help],
+      ]
+    : [
+        ["/dashboard", LayoutDashboard, t.dashboard],
+        ...(user.role === "SUPER_ADMIN"
+          ? [["/rector", ClipboardCheck, "Pemantauan Akademik"]]
+          : []),
+        ...(admin ? [["/catalog", LibraryBig, t.catalog]] : []),
+        ["/classes", BookOpen, admin ? t.manageClasses : t.myClasses],
+        ["/agenda", CalendarDays, admin ? t.academicAgenda : t.agenda],
+        ["/grades", GraduationCap, admin ? t.gradeOverview : t.grades],
+        ["/announcements", Megaphone, "Pengumuman"],
+        ["/notifications", Bell, t.notifications],
+        ["/profile", ShieldCheck, t.profile],
+        ["/help", CircleHelp, t.help],
+      ];
   const current = String(
     links.find(
       ([href]) => pathname === href || pathname.startsWith(`${href}/`),
@@ -149,9 +157,24 @@ export function AuthShell({
           ? "Tugas"
           : t.learningSpace),
   );
+  const phoneLinks = rector
+    ? [
+        ["/rector", LayoutDashboard, "Ringkasan"],
+        ["/announcements", Megaphone, "Info"],
+        ["/profile", ShieldCheck, "Profil"],
+        ["/help", CircleHelp, "Panduan"],
+      ]
+    : [
+        ["/dashboard", LayoutDashboard, "Beranda"],
+        ["/classes", BookOpen, "Kelas"],
+        admin
+          ? ["/catalog", LibraryBig, "Katalog"]
+          : ["/agenda", CalendarDays, "Agenda"],
+        ["/notifications", Bell, "Notifikasi"],
+      ];
   return (
     <div
-      className={`app-shell ${pathname.startsWith('/rector') ? "rector-workspace" : ""} ${menuOpen ? "menu-open" : ""} ${
+      className={`app-shell ${pathname.startsWith("/rector") ? "rector-workspace" : ""} ${menuOpen ? "menu-open" : ""} ${
         displayCollapsed ? "nav-collapsed" : ""
       }`}
     >
@@ -161,7 +184,10 @@ export function AuthShell({
       {menuOpen && (
         <button
           className="nav-scrim"
-          onClick={() => setMenuOpen(false)}
+          onClick={() => {
+            setMenuOpen(false);
+            menuTrigger.current?.focus();
+          }}
           aria-label="Tutup navigasi"
         />
       )}
@@ -171,7 +197,10 @@ export function AuthShell({
         inert={mobile && !menuOpen}
       >
         <div className="sidebar-brand">
-        <Brand home={rector ? '/rector' : '/dashboard'} collapsed={displayCollapsed} />
+          <Brand
+            home={rector ? "/rector" : "/dashboard"}
+            collapsed={displayCollapsed}
+          />
         </div>
         {!displayCollapsed && <p className="nav-caption">MENU</p>}
         <nav aria-label="Navigasi utama">
@@ -187,7 +216,9 @@ export function AuthShell({
                 title={displayCollapsed ? label : undefined}
               >
                 <Icon size={22} />
-                {!displayCollapsed && <span className="nav-label">{label}</span>}
+                {!displayCollapsed && (
+                  <span className="nav-label">{label}</span>
+                )}
                 {badge > 0 && (
                   <span className="nav-badge">
                     {badge > 99 ? "99+" : badge}
@@ -227,14 +258,27 @@ export function AuthShell({
               className="mobile-menu"
               aria-expanded={menuOpen}
               aria-controls="academic-navigation"
-              onClick={() => setMenuOpen(true)}
+              onClick={(event) => {
+                menuTrigger.current = event.currentTarget;
+                setMenuOpen(true);
+              }}
             >
               <Menu size={22} />
             </IconButton>
+            <a
+              className="phone-brand"
+              href={rector ? "/rector" : "/dashboard"}
+              aria-label="Beranda E-Learning UAY"
+            >
+              <img src="/uay-logo.webp" alt="" width="28" height="28" />
+              <span>
+                E-Learning <strong>UAY</strong>
+              </span>
+            </a>
             {/* The SSO console shows the same mark once its rail is hidden. */}
             <a
               className="brand-mark topbar-mark"
-              href={rector ? '/rector' : '/dashboard'}
+              href={rector ? "/rector" : "/dashboard"}
               aria-label="UAY E-Learning beranda"
             >
               <picture>
@@ -253,9 +297,19 @@ export function AuthShell({
             <Breadcrumbs
               items={
                 pathname === "/dashboard" || pathname === "/rector"
-                  ? [{ label: pathname === "/rector" ? "Pemantauan Akademik" : "Beranda" }]
+                  ? [
+                      {
+                        label:
+                          pathname === "/rector"
+                            ? "Pemantauan Akademik"
+                            : "Beranda",
+                      },
+                    ]
                   : [
-                      { label: rector ? "Pemantauan Akademik" : "Beranda", href: rector ? '/rector' : '/dashboard' },
+                      {
+                        label: rector ? "Pemantauan Akademik" : "Beranda",
+                        href: rector ? "/rector" : "/dashboard",
+                      },
                       { label: current },
                     ]
               }
@@ -265,7 +319,9 @@ export function AuthShell({
             {demo && (
               <span className="environment-badge">
                 <span className="badge-dot" />
-                {pathname.startsWith('/rector') ? 'Demo — data simulasi' : 'Mode Uji'}
+                {pathname.startsWith("/rector")
+                  ? "Demo — data simulasi"
+                  : "Mode Uji"}
               </span>
             )}
             <div className="user-nav-group">
@@ -282,16 +338,64 @@ export function AuthShell({
             </div>
           </div>
         </header>
+        {demo && (
+          <div className="phone-environment" role="status">
+            Mode uji · Data simulasi
+          </div>
+        )}
         <main id="main-content">
           <ErrorBoundary key={pathname}>
             <Suspense fallback={<Loading />}>{children}</Suspense>
           </ErrorBoundary>
         </main>
         <footer>
-          <span>© {new Date().getFullYear()} {t.university}</span>
+          <span>
+            © {new Date().getFullYear()} {t.university}
+          </span>
           <a href="/help">{t.help}</a>
         </footer>
       </div>
+      <nav
+        className="phone-navigation"
+        aria-label="Navigasi ponsel"
+        inert={mobile && menuOpen}
+      >
+        {phoneLinks.map(([href, Icon, label]: any) => {
+          const active = pathname === href || pathname.startsWith(`${href}/`);
+          const badge = href === "/notifications" ? unread : 0;
+          return (
+            <a
+              key={href}
+              href={href}
+              aria-current={active ? "page" : undefined}
+            >
+              <span className="phone-nav-icon">
+                <Icon size={21} />
+                {badge > 0 && (
+                  <span className="phone-nav-badge">
+                    {badge > 99 ? "99+" : badge}
+                    <span className="sr-only"> notifikasi belum dibaca</span>
+                  </span>
+                )}
+              </span>
+              <span>{label}</span>
+            </a>
+          );
+        })}
+        <button
+          type="button"
+          aria-label="Menu lainnya"
+          aria-expanded={menuOpen}
+          aria-controls="academic-navigation"
+          onClick={(event) => {
+            menuTrigger.current = event.currentTarget;
+            setMenuOpen(true);
+          }}
+        >
+          <Menu size={21} />
+          <span>Menu</span>
+        </button>
+      </nav>
     </div>
   );
 }

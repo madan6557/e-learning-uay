@@ -16,9 +16,15 @@ import {
 } from "../../lib";
 import { confirmAction } from "../../confirm";
 import { ImportPanel } from "../../Gradebook";
-import { formatClock, formatDateTime } from "../../../../../packages/shared/src/time";
+import {
+  formatClock,
+  formatDateTime,
+} from "../../../../../packages/shared/src/time";
 
-export function formatLastActive(isoString?: string | null, isOnline?: boolean) {
+export function formatLastActive(
+  isoString?: string | null,
+  isOnline?: boolean,
+) {
   if (isOnline) {
     return (
       <span
@@ -51,7 +57,13 @@ export function formatLastActive(isoString?: string | null, isOnline?: boolean) 
 
   if (!isoString) {
     return (
-      <span style={{ fontSize: "0.82rem", color: "var(--muted, #94a3b8)", fontStyle: "italic" }}>
+      <span
+        style={{
+          fontSize: "0.82rem",
+          color: "var(--muted, #94a3b8)",
+          fontStyle: "italic",
+        }}
+      >
         Belum pernah aktif
       </span>
     );
@@ -60,22 +72,17 @@ export function formatLastActive(isoString?: string | null, isOnline?: boolean) 
   const d = new Date(isoString);
   const diffSec = Math.floor((Date.now() - d.getTime()) / 1000);
 
-  if (diffSec < 60) return <span style={{ color: "#15803d", fontWeight: 600 }}>Baru saja</span>;
-  if (diffSec < 3600) return <span>{Math.floor(diffSec / 60)} menit yang lalu</span>;
-  if (diffSec < 86400) return <span>{Math.floor(diffSec / 3600)} jam yang lalu</span>;
+  if (diffSec < 60)
+    return <span style={{ color: "#15803d", fontWeight: 600 }}>Baru saja</span>;
+  if (diffSec < 3600)
+    return <span>{Math.floor(diffSec / 60)} menit yang lalu</span>;
+  if (diffSec < 86400)
+    return <span>{Math.floor(diffSec / 3600)} jam yang lalu</span>;
   if (diffSec < 172800) {
-    return (
-      <span>
-        Kemarin, {formatClock(d)}
-      </span>
-    );
+    return <span>Kemarin, {formatClock(d)}</span>;
   }
 
-  return (
-    <span title={formatDateTime(d)}>
-      {formatDateTime(d)}
-    </span>
-  );
+  return <span title={formatDateTime(d)}>{formatDateTime(d)}</span>;
 }
 
 export function Participants({
@@ -90,22 +97,38 @@ export function Participants({
     [query, setQuery] = useState(""),
     [users, setUsers] = useState<any[]>([]),
     [selected, setSelected] = useState<any[]>([]);
+  const [searchError, setSearchError] = useState<Error | null>(null);
+  const [searching, setSearching] = useState(false);
 
   const pagination = usePagination(members.data ?? [], 25);
 
   useEffect(() => {
+    let active = true;
     const trimmed = query.trim();
+    setSearchError(null);
     if (trimmed.length < 2) {
       setUsers([]);
+      setSearching(false);
       return;
     }
     const timer = setTimeout(async () => {
+      setSearching(true);
       try {
         const results = await api(`/users?q=${encodeURIComponent(trimmed)}`);
-        setUsers(results);
-      } catch {}
+        if (active) setUsers(results);
+      } catch (error) {
+        if (active) {
+          setSearchError(error as Error);
+          setUsers([]);
+        }
+      } finally {
+        if (active) setSearching(false);
+      }
     }, 300);
-    return () => clearTimeout(timer);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
   }, [query]);
 
   return (
@@ -129,7 +152,7 @@ export function Participants({
       ) : members.loading && !members.data ? (
         <Loading />
       ) : (
-        <div className="card table-wrap">
+        <div className="card table-wrap phone-record-table">
           <table>
             <thead>
               <tr>
@@ -144,16 +167,19 @@ export function Participants({
             <tbody>
               {pagination.paginatedItems.map((m) => (
                 <tr key={m.id}>
-                  <td>{m.user.name}</td>
-                  <td>{m.user.identifierValue}</td>
-                  <td>{m.user.email}</td>
-                  <td style={{ whiteSpace: "nowrap" }}>
+                  <td className="record-title">{m.user.name}</td>
+                  <td data-label={t.studentNumber}>{m.user.identifierValue}</td>
+                  <td data-label={t.email}>{m.user.email}</td>
+                  <td
+                    data-label="Terakhir online"
+                    style={{ whiteSpace: "nowrap" }}
+                  >
                     {formatLastActive(m.user.lastActiveAt, m.user.isOnline)}
                   </td>
-                  <td>
+                  <td data-label={t.status}>
                     <Badge value={m.isActive ? "ACTIVE" : "INACTIVE"} />
                   </td>
-                  <td>
+                  <td className="record-actions">
                     {writable && (
                       <Action
                         className={m.isActive ? "danger" : "secondary"}
@@ -164,7 +190,7 @@ export function Participants({
                               "Nonaktifkan kepesertaan " + m.user.name + "?",
                             ))
                           )
-                            return;
+                            return false;
                           await api(
                             `/course-classes/${classId}/participants`,
                             "POST",
@@ -235,6 +261,8 @@ export function Participants({
               setModal("");
             }}
           >
+            {searching && <p role="status">Mencari mahasiswa…</p>}
+            {searchError && <Notice error={searchError} />}
             <div className="inline-form">
               <input
                 aria-label={t.searchUsers}
@@ -279,10 +307,11 @@ export function Participants({
                   </label>
                 </div>
               ))}
-            {!users.length && (
+            {!users.length && !searching && !searchError && (
               <p>
-                Cari mahasiswa melalui nama, nomor mahasiswa, atau email, lalu
-                pilih peserta yang akan ditambahkan.
+                {query.trim().length >= 2
+                  ? "Tidak ada mahasiswa yang cocok dengan pencarian ini."
+                  : "Cari mahasiswa melalui nama, nomor mahasiswa, atau email, lalu pilih peserta yang akan ditambahkan."}
               </p>
             )}
             {selected.length > 0 && <p>{selected.length} mahasiswa dipilih.</p>}

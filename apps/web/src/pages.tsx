@@ -1,4 +1,7 @@
-import { GRADE_SCALE_PRESETS, gradeScaleLabel } from "../../../packages/shared/src/domain";
+import {
+  GRADE_SCALE_PRESETS,
+  gradeScaleLabel,
+} from "../../../packages/shared/src/domain";
 import { confirmAction } from "./confirm";
 import { useEffect, useState } from "react";
 import {
@@ -72,7 +75,8 @@ type UserSearchResult = {
   id: string;
   name: string;
   identifierValue: string | null;
-  role: "SUPER_ADMIN" | "DEPARTMENT_ADMIN" | "RECTOR" | "INSTRUCTOR" | "STUDENT";
+  role:
+    "SUPER_ADMIN" | "DEPARTMENT_ADMIN" | "RECTOR" | "INSTRUCTOR" | "STUDENT";
 };
 type CourseOption = {
   id: string;
@@ -88,7 +92,13 @@ export interface AcademicPolicySettings {
   defaultGradeScaleVersion: string;
   minAttendancePercentage: number;
 }
-export function ClassCard({ item, index = 0 }: { item: ClassCardData; index?: number }) {
+export function ClassCard({
+  item,
+  index = 0,
+}: {
+  item: ClassCardData;
+  index?: number;
+}) {
   const isInactive =
     Boolean(item.isInactiveParticipant) ||
     item.enrollments?.[0]?.isActive === false;
@@ -178,9 +188,16 @@ export function Dashboard({
   const teacher = user.role === "INSTRUCTOR";
   if (classes.loading && !classes.data) return <Loading />;
   if (classes.error) return <Notice error={classes.error} />;
-  const departments = [...new Set((classes.data ?? []).map((c) => c.course.departmentCode as string))].sort();
+  const departments = [
+    ...new Set(
+      (classes.data ?? []).map((c) => c.course.departmentCode as string),
+    ),
+  ].sort();
   const scopedClasses = (classes.data ?? []).filter(
-    (c) => user.role !== "SUPER_ADMIN" || !departmentFilter || c.course.departmentCode === departmentFilter,
+    (c) =>
+      user.role !== "SUPER_ADMIN" ||
+      !departmentFilter ||
+      c.course.departmentCode === departmentFilter,
   );
   const details = needsSummary ? scopedClasses : [];
   const items = scopedClasses.filter(
@@ -311,12 +328,18 @@ export function Dashboard({
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <a
                     href={n.linkUrl ?? "/"}
-                    style={{ textDecoration: "none", color: "inherit", display: "block" }}
+                    style={{
+                      textDecoration: "none",
+                      color: "inherit",
+                      display: "block",
+                    }}
                     onClick={() => {
                       if (!n.isRead) {
                         api(`/notifications/${n.id}/read`, "POST", {})
                           .then(() => {
-                            window.dispatchEvent(new Event("notifications-changed"));
+                            window.dispatchEvent(
+                              new Event("notifications-changed"),
+                            );
                           })
                           .catch(() => {});
                       }
@@ -381,10 +404,15 @@ export function Dashboard({
           <div className="toolbar" style={{ marginBottom: 16 }}>
             <label className="department-filter">
               Program studi
-              <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)}>
+              <select
+                value={departmentFilter}
+                onChange={(e) => setDepartmentFilter(e.target.value)}
+              >
                 <option value="">Semua prodi</option>
                 {departments.map((department) => (
-                  <option key={department} value={department}>{formatDepartmentScope(department)}</option>
+                  <option key={department} value={department}>
+                    {formatDepartmentScope(department)}
+                  </option>
                 ))}
               </select>
             </label>
@@ -423,7 +451,7 @@ export function Dashboard({
                 ? admin
                   ? t.academicAgenda
                   : t.agenda
-              : admin
+                : admin
                   ? t.manageClasses
                   : t.myClasses}
           </h1>
@@ -474,7 +502,15 @@ export function Dashboard({
               margin: "12px 0 16px",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.86rem", color: "var(--muted, #64748b)" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: "0.86rem",
+                color: "var(--muted, #64748b)",
+              }}
+            >
               <Clock size={16} />
               <span>
                 {new Intl.DateTimeFormat("id-ID", {
@@ -485,13 +521,25 @@ export function Dashboard({
                 }).format(new Date())}
               </span>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                flexWrap: "wrap",
+              }}
+            >
               <a
                 href="https://siakad.uay.ac.id"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="button secondary sm"
-                style={{ fontSize: "0.82rem", display: "inline-flex", alignItems: "center", gap: 6 }}
+                style={{
+                  fontSize: "0.82rem",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
               >
                 <GraduationCap size={15} />
                 SIAKAD UAY
@@ -502,7 +550,12 @@ export function Dashboard({
                 target="_blank"
                 rel="noopener noreferrer"
                 className="button secondary sm"
-                style={{ fontSize: "0.82rem", display: "inline-flex", alignItems: "center", gap: 6 }}
+                style={{
+                  fontSize: "0.82rem",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
               >
                 <BookOpen size={15} />
                 Website Utama UAY
@@ -553,10 +606,19 @@ export function Dashboard({
                   </span>
                   <div>
                     <strong style={{ fontSize: "0.92rem", color: "#92400e" }}>
-                      Pengingat Batas Waktu Tugas ({urgentAssignments.length} tugas mendekati deadline)
+                      Pengingat Batas Waktu Tugas ({urgentAssignments.length}{" "}
+                      tugas mendekati deadline)
                     </strong>
-                    <p style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "#78350f" }}>
-                      {urgentAssignments[0].classTitle}: <strong>{urgentAssignments[0].title}</strong> (Batas: {date(urgentAssignments[0].date)})
+                    <p
+                      style={{
+                        margin: "2px 0 0",
+                        fontSize: "0.82rem",
+                        color: "#78350f",
+                      }}
+                    >
+                      {urgentAssignments[0].classTitle}:{" "}
+                      <strong>{urgentAssignments[0].title}</strong> (Batas:{" "}
+                      {date(urgentAssignments[0].date)})
                     </p>
                   </div>
                 </div>
@@ -601,13 +663,24 @@ export function Dashboard({
                   flexWrap: "wrap",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 260 }}>
+                <div
+                  className="dashboard-announcement-summary"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    flex: 1,
+                    minWidth: 260,
+                  }}
+                >
                   <div
                     style={{
                       width: 36,
                       height: 36,
                       borderRadius: 10,
-                      background: latestNotice.isImportant ? "rgba(220, 38, 38, 0.12)" : "rgba(2, 132, 199, 0.12)",
+                      background: latestNotice.isImportant
+                        ? "rgba(220, 38, 38, 0.12)"
+                        : "rgba(2, 132, 199, 0.12)",
                       color: latestNotice.isImportant ? "#dc2626" : "#0284c7",
                       display: "flex",
                       alignItems: "center",
@@ -618,28 +691,64 @@ export function Dashboard({
                     <Megaphone size={19} />
                   </div>
                   <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        marginBottom: 2,
+                      }}
+                    >
                       <span
                         style={{
                           fontSize: "0.72rem",
                           fontWeight: 700,
                           textTransform: "uppercase",
-                          color: latestNotice.isImportant ? "#b91c1c" : "#0369a1",
+                          color: latestNotice.isImportant
+                            ? "#b91c1c"
+                            : "#0369a1",
                         }}
                       >
-                        {latestNotice.isImportant ? "Surat Edaran Penting" : "Pengumuman Resmi"}
+                        {latestNotice.isImportant
+                          ? "Surat Edaran Penting"
+                          : "Pengumuman Resmi"}
                       </span>
                       {latestNotice.referenceNumber && (
-                        <span className="mono" style={{ fontSize: "0.74rem", color: "var(--muted, #64748b)" }}>
+                        <span
+                          className="mono"
+                          style={{
+                            fontSize: "0.74rem",
+                            color: "var(--muted, #64748b)",
+                          }}
+                        >
                           {latestNotice.referenceNumber}
                         </span>
                       )}
                     </div>
-                    <strong style={{ fontSize: "0.93rem", color: "var(--foreground, #0f172a)" }}>
+                    <strong
+                      className="dashboard-announcement-title"
+                      style={{
+                        fontSize: "0.93rem",
+                        color: "var(--foreground, #0f172a)",
+                      }}
+                    >
                       {latestNotice.title}
                     </strong>
-                    <p style={{ margin: "2px 0 0", fontSize: "0.83rem", color: "var(--muted, #475569)", lineHeight: 1.4 }}>
-                      {(latestNotice.content || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 120)}...
+                    <p
+                      className="dashboard-announcement-preview"
+                      style={{
+                        margin: "2px 0 0",
+                        fontSize: "0.83rem",
+                        color: "var(--muted, #475569)",
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {(latestNotice.content || "")
+                        .replace(/<[^>]+>/g, " ")
+                        .replace(/\s+/g, " ")
+                        .trim()
+                        .slice(0, 120)}
+                      ...
                     </p>
                   </div>
                 </div>
@@ -695,7 +804,11 @@ export function Dashboard({
                 href={href}
                 className="stat stat-clickable"
                 key={label}
-                style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
+                style={{
+                  textDecoration: "none",
+                  color: "inherit",
+                  cursor: "pointer",
+                }}
                 title={`Buka menu ${label}`}
               >
                 <span className="stat-icon">
@@ -771,10 +884,15 @@ export function Dashboard({
               {user.role === "SUPER_ADMIN" && departments.length > 0 && (
                 <label className="department-filter">
                   Program studi
-                  <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)}>
+                  <select
+                    value={departmentFilter}
+                    onChange={(e) => setDepartmentFilter(e.target.value)}
+                  >
                     <option value="">Semua prodi</option>
                     {departments.map((department) => (
-                      <option key={department} value={department}>{formatDepartmentScope(department)}</option>
+                      <option key={department} value={department}>
+                        {formatDepartmentScope(department)}
+                      </option>
                     ))}
                   </select>
                 </label>
@@ -799,7 +917,11 @@ export function Dashboard({
           {!items.length && (
             <Empty>
               <h3>{t.emptyClasses}</h3>
-              <p>{admin ? "Belum ada kelas pada cakupan yang dipilih." : t.emptyDescription}</p>
+              <p>
+                {admin
+                  ? "Belum ada kelas pada cakupan yang dipilih."
+                  : t.emptyDescription}
+              </p>
             </Empty>
           )}
         </>
@@ -815,19 +937,26 @@ export function Dashboard({
               </a>
             )}
           </div>
-          {page === "agenda" && user.role === "SUPER_ADMIN" && departments.length > 0 && (
-            <div className="toolbar" style={{ marginBottom: 16 }}>
-              <label className="department-filter">
-                Program studi
-                <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)}>
-                  <option value="">Semua prodi</option>
-                  {departments.map((department) => (
-                    <option key={department} value={department}>{formatDepartmentScope(department)}</option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          )}
+          {page === "agenda" &&
+            user.role === "SUPER_ADMIN" &&
+            departments.length > 0 && (
+              <div className="toolbar" style={{ marginBottom: 16 }}>
+                <label className="department-filter">
+                  Program studi
+                  <select
+                    value={departmentFilter}
+                    onChange={(e) => setDepartmentFilter(e.target.value)}
+                  >
+                    <option value="">Semua prodi</option>
+                    {departments.map((department) => (
+                      <option key={department} value={department}>
+                        {formatDepartmentScope(department)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            )}
           <div className="agenda-list card">
             {activities.length ? (
               activities
@@ -972,8 +1101,14 @@ function AdminOverview({
             {user.name} · {t.managementScope}: {scope}
           </p>
         </div>
-        <div className="toolbar" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button className="secondary" onClick={() => setGovernanceModal(true)}>
+        <div
+          className="toolbar"
+          style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
+        >
+          <button
+            className="secondary"
+            onClick={() => setGovernanceModal(true)}
+          >
             <Sliders size={16} />
             Kebijakan &amp; Tahun Ajaran
           </button>
@@ -982,10 +1117,15 @@ function AdminOverview({
       {user.role === "SUPER_ADMIN" && departments.length > 1 && (
         <label className="department-filter">
           Program studi
-          <select value={departmentFilter} onChange={(e) => onDepartmentFilter(e.target.value)}>
+          <select
+            value={departmentFilter}
+            onChange={(e) => onDepartmentFilter(e.target.value)}
+          >
             <option value="">Semua prodi</option>
             {departments.map((department) => (
-              <option key={department} value={department}>{formatDepartmentScope(department)}</option>
+              <option key={department} value={department}>
+                {formatDepartmentScope(department)}
+              </option>
             ))}
           </select>
         </label>
@@ -996,7 +1136,10 @@ function AdminOverview({
           <h2>
             {departmentAdmin ? t.departmentManagement : t.academicManagement}
           </h2>
-          <p>Lihat kondisi kelas dan aktivitas akademik. Pengelolaan isi kelas dilakukan oleh dosen pengampu.</p>
+          <p>
+            Lihat kondisi kelas dan aktivitas akademik. Pengelolaan isi kelas
+            dilakukan oleh dosen pengampu.
+          </p>
           <a className="button light" href="/catalog">
             {t.catalog}
             <ArrowUpRight size={18} />
@@ -1015,7 +1158,11 @@ function AdminOverview({
             t.courses,
             (courses.loading && !courses.data) || courses.error
               ? "—"
-              : (courses.data?.filter((course) => !departmentFilter || course.departmentCode === departmentFilter).length ?? 0),
+              : (courses.data?.filter(
+                  (course) =>
+                    !departmentFilter ||
+                    course.departmentCode === departmentFilter,
+                ).length ?? 0),
             "/catalog",
           ],
           [
@@ -1036,7 +1183,11 @@ function AdminOverview({
             href={href}
             className="stat stat-clickable"
             key={label}
-            style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
+            style={{
+              textDecoration: "none",
+              color: "inherit",
+              cursor: "pointer",
+            }}
             title={`Buka menu ${label}`}
           >
             <span className="stat-icon">
@@ -1055,12 +1206,7 @@ function AdminOverview({
       <div className="cards">
         {[
           ["/catalog", Database, t.catalog, t.manageCatalogDescription],
-          [
-            "/classes",
-            BookOpen,
-            t.manageClasses,
-            t.manageClassesDescription,
-          ],
+          ["/classes", BookOpen, t.manageClasses, t.manageClassesDescription],
           [
             "/grades",
             ClipboardCheck,
@@ -1086,10 +1232,14 @@ function AdminOverview({
           <Sliders size={24} aria-hidden="true" />
           <h3>Kebijakan &amp; Tahun Ajaran</h3>
           <p>
-            Lihat tahun akademik aktif ({config?.academicYear || "2026/2027 Ganjil"}), daftar semester, dan standar kebijakan bobot huruf mutu.
+            Lihat tahun akademik aktif (
+            {config?.academicYear || "2026/2027 Ganjil"}), daftar semester, dan
+            standar kebijakan bobot huruf mutu.
           </p>
           <span className="text-link">
-            {user.role === "SUPER_ADMIN" ? "Kelola Kebijakan" : "Lihat Kebijakan"}
+            {user.role === "SUPER_ADMIN"
+              ? "Kelola Kebijakan"
+              : "Lihat Kebijakan"}
             <ChevronRight size={16} />
           </span>
         </button>
@@ -1171,7 +1321,7 @@ function JoinClassModal({
         onSubmit={async (f) => {
           const classTarget = manualMode
             ? textValue(f, "manualClassId")
-            : (selectedClassId || textValue(f, "classId"));
+            : selectedClassId || textValue(f, "classId");
           if (!classTarget)
             throw new Error("Pilih kelas yang ingin diikuti terlebih dahulu.");
           await api(
@@ -1217,7 +1367,9 @@ function JoinClassModal({
                 </p>
               )}
             </Field>
-            <div style={{ textAlign: "right", marginTop: -6, marginBottom: 12 }}>
+            <div
+              style={{ textAlign: "right", marginTop: -6, marginBottom: 12 }}
+            >
               <button
                 type="button"
                 className="text-button"
@@ -1237,7 +1389,9 @@ function JoinClassModal({
                 placeholder="Masukkan kode MK (mis. IF202) atau slug kelas"
               />
             </Field>
-            <div style={{ textAlign: "right", marginTop: -6, marginBottom: 12 }}>
+            <div
+              style={{ textAlign: "right", marginTop: -6, marginBottom: 12 }}
+            >
               <button
                 type="button"
                 className="text-button"
@@ -1296,7 +1450,9 @@ export function ClassForm({
     }
     const timer = setTimeout(async () => {
       try {
-        const results = await api<UserSearchResult[]>(`/users?q=${encodeURIComponent(trimmed)}`);
+        const results = await api<UserSearchResult[]>(
+          `/users?q=${encodeURIComponent(trimmed)}`,
+        );
         setUsers(results);
         setError(null);
       } catch (e) {
@@ -1321,7 +1477,7 @@ export function ClassForm({
         onSubmit={async (f) => {
           if (!selected.length) {
             setError(Error("Pilih minimal satu dosen pengampu."));
-            return;
+            return false;
           }
           await api("/course-classes", "POST", {
             courseId: textValue(f, "courseId"),
@@ -1344,7 +1500,8 @@ export function ClassForm({
               ?.filter((c) => c.status !== "ARCHIVED")
               .map((c) => (
                 <option value={c.id} key={c.id}>
-                  {c.departmentCode ? `[${c.departmentCode}] ` : ""}{c.code} · {c.title}
+                  {c.departmentCode ? `[${c.departmentCode}] ` : ""}
+                  {c.code} · {c.title}
                 </option>
               ))}
           </select>
@@ -1398,7 +1555,11 @@ export function ClassForm({
                 onClick={async () => {
                   if (search.trim().length < 2) return;
                   try {
-                    setUsers(await api(`/users?q=${encodeURIComponent(search.trim())}`));
+                    setUsers(
+                      await api(
+                        `/users?q=${encodeURIComponent(search.trim())}`,
+                      ),
+                    );
                     setError(null);
                   } catch (e) {
                     setError(e as Error);
@@ -1409,58 +1570,69 @@ export function ClassForm({
               </button>
             </div>
             {search.trim().length > 0 && search.trim().length < 2 && (
-              <small style={{ display: "block", marginTop: 4, color: "#64748b" }}>
+              <small
+                style={{ display: "block", marginTop: 4, color: "#64748b" }}
+              >
                 Ketik minimal 2 karakter untuk mencari dosen...
               </small>
             )}
-            {search.trim().length >= 2 && users.filter((u) => u.role === "INSTRUCTOR").length > 0 && (
-              <div className="instructor-results" aria-label="Hasil pencarian dosen">
-                {users
-                  .filter((u) => u.role === "INSTRUCTOR")
-                  .map((u) => {
-                    const isPicked = selected.includes(u.id);
-                    return (
-                      <button
-                        type="button"
-                        className="instructor-result"
-                        key={u.id}
-                        aria-pressed={isPicked}
-                        onClick={() => {
-                          if (!isPicked) {
-                            setSelected((prev) => [...prev, u.id]);
-                            setSelectedUsers((prev) => [
-                              ...prev.filter((x) => x.id !== u.id),
-                              u,
-                            ]);
-                          } else {
-                            setSelected((prev) => prev.filter((id) => id !== u.id));
-                            setSelectedUsers((prev) =>
-                              prev.filter((x) => x.id !== u.id),
-                            );
-                          }
-                          setSearch("");
-                        }}
-                      >
-                        <span>
-                          <strong>
-                            {u.name}
-                          </strong>
-                          <small>
-                            {u.identifierValue ?? "Dosen"}
-                          </small>
-                        </span>
-                        <span className="instructor-result-action">
-                          {isPicked ? "Terpilih ✓" : "+ Tambah"}
-                        </span>
-                      </button>
-                    );
-                  })}
-              </div>
-            )}
+            {search.trim().length >= 2 &&
+              users.filter((u) => u.role === "INSTRUCTOR").length > 0 && (
+                <div
+                  className="instructor-results"
+                  aria-label="Hasil pencarian dosen"
+                >
+                  {users
+                    .filter((u) => u.role === "INSTRUCTOR")
+                    .map((u) => {
+                      const isPicked = selected.includes(u.id);
+                      return (
+                        <button
+                          type="button"
+                          className="instructor-result"
+                          key={u.id}
+                          aria-pressed={isPicked}
+                          onClick={() => {
+                            if (!isPicked) {
+                              setSelected((prev) => [...prev, u.id]);
+                              setSelectedUsers((prev) => [
+                                ...prev.filter((x) => x.id !== u.id),
+                                u,
+                              ]);
+                            } else {
+                              setSelected((prev) =>
+                                prev.filter((id) => id !== u.id),
+                              );
+                              setSelectedUsers((prev) =>
+                                prev.filter((x) => x.id !== u.id),
+                              );
+                            }
+                            setSearch("");
+                          }}
+                        >
+                          <span>
+                            <strong>{u.name}</strong>
+                            <small>{u.identifierValue ?? "Dosen"}</small>
+                          </span>
+                          <span className="instructor-result-action">
+                            {isPicked ? "Terpilih ✓" : "+ Tambah"}
+                          </span>
+                        </button>
+                      );
+                    })}
+                </div>
+              )}
           </div>
         </Field>
         {selectedUsers.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, margin: "6px 0 12px" }}>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 6,
+              margin: "6px 0 12px",
+            }}
+          >
             {selectedUsers.map((u) => (
               <span
                 key={u.id}
@@ -1490,7 +1662,9 @@ export function ClassForm({
                   }}
                   onClick={() => {
                     setSelected((prev) => prev.filter((id) => id !== u.id));
-                    setSelectedUsers((prev) => prev.filter((x) => x.id !== u.id));
+                    setSelectedUsers((prev) =>
+                      prev.filter((x) => x.id !== u.id),
+                    );
                   }}
                   aria-label={`Hapus ${u.name}`}
                 >
@@ -1640,7 +1814,12 @@ export function AcademicGovernanceModal({
           <button
             type="button"
             className={tab === "YEAR" ? "button primary" : "button secondary"}
-            style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.88rem" }}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: "0.88rem",
+            }}
             onClick={() => setTab("YEAR")}
           >
             <CalendarDays size={16} />
@@ -1649,7 +1828,12 @@ export function AcademicGovernanceModal({
           <button
             type="button"
             className={tab === "POLICY" ? "button primary" : "button secondary"}
-            style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.88rem" }}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: "0.88rem",
+            }}
             onClick={() => setTab("POLICY")}
           >
             <GraduationCap size={16} />
@@ -1673,269 +1857,323 @@ export function AcademicGovernanceModal({
           </div>
         )}
 
-        {readOnly && <p>Pengaturan global hanya dapat diubah oleh Super Admin.</p>}
+        {readOnly && (
+          <p>Pengaturan global hanya dapat diubah oleh Super Admin.</p>
+        )}
         {saveError && <Notice error={saveError} />}
-        <fieldset disabled={readOnly || saving} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
-        {tab === "YEAR" ? (
-          <div>
-            <div style={{ marginBottom: 18 }}>
-              <Field
-                label="Tahun Akademik Aktif Berjalan"
-                hint="Tahun akademik ini terpilih sebagai default saat pengelola membuat kelas baru dan ditampilkan di beranda portal."
-              >
-                <select
-                  value={academicYear}
-                  onChange={(e) => {
-                    setAcademicYear(e.target.value);
-                    setSemesterLabel(`SEMESTER ${e.target.value.toUpperCase()}`);
-                  }}
-                  required
+        <fieldset
+          disabled={readOnly || saving}
+          style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}
+        >
+          {tab === "YEAR" ? (
+            <div>
+              <div style={{ marginBottom: 18 }}>
+                <Field
+                  label="Tahun Akademik Aktif Berjalan"
+                  hint="Tahun akademik ini terpilih sebagai default saat pengelola membuat kelas baru dan ditampilkan di beranda portal."
                 >
-                  {years.map((y) => (
-                    <option key={y} value={y}>
-                      {y}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
-
-            <div style={{ marginBottom: 20 }}>
-              <Field
-                label="Label Banner Portal Landing"
-                hint="Teks semester yang terpampang di halaman portal publik & login (contoh: SEMESTER GANJIL 2026/2027)."
-              >
-                <input
-                  required
-                  value={semesterLabel}
-                  onChange={(e) => setSemesterLabel(e.target.value)}
-                />
-              </Field>
-            </div>
-
-            <div
-              style={{
-                background: "#f8fafc",
-                border: "1px solid #e2e8f0",
-                borderRadius: 10,
-                padding: "16px 18px",
-                marginBottom: 20,
-              }}
-            >
-              <h4 style={{ margin: "0 0 6px 0", fontSize: "0.95rem", fontWeight: 700 }}>
-                Daftar Semester &amp; Tahun Ajaran Tersedia
-              </h4>
-              <p style={{ margin: "0 0 14px 0", fontSize: "0.84rem", color: "#64748b" }}>
-                Daftar tahun akademik yang dapat dipilih dosen/admin saat menduplikasi kelas (clone) atau menyelenggarakan kelas baru.
-              </p>
-
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
-                {years.map((y) => {
-                  const isActive = y === academicYear;
-                  return (
-                    <span
-                      key={y}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 8,
-                        background: isActive ? "#0284c7" : "#ffffff",
-                        color: isActive ? "#ffffff" : "#1e293b",
-                        border: isActive ? "1px solid #0284c7" : "1px solid #cbd5e1",
-                        padding: "4px 12px",
-                        borderRadius: 20,
-                        fontSize: "0.84rem",
-                        fontWeight: 600,
-                      }}
-                    >
-                      <span>{y}</span>
-                      {isActive && (
-                        <span
-                          style={{
-                            background: "rgba(255,255,255,0.25)",
-                            padding: "1px 6px",
-                            borderRadius: 10,
-                            fontSize: "0.72rem",
-                          }}
-                        >
-                          Aktif
-                        </span>
-                      )}
-                      {!readOnly && !isActive && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveYear(y)}
-                          title="Hapus semester dari daftar"
-                          style={{
-                            background: "transparent",
-                            border: "none",
-                            cursor: "pointer",
-                            color: "#94a3b8",
-                            padding: 0,
-                            display: "inline-flex",
-                            alignItems: "center",
-                          }}
-                        >
-                          &times;
-                        </button>
-                      )}
-                    </span>
-                  );
-                })}
+                  <select
+                    value={academicYear}
+                    onChange={(e) => {
+                      setAcademicYear(e.target.value);
+                      setSemesterLabel(
+                        `SEMESTER ${e.target.value.toUpperCase()}`,
+                      );
+                    }}
+                    required
+                  >
+                    {years.map((y) => (
+                      <option key={y} value={y}>
+                        {y}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
               </div>
 
-              {!readOnly && (
-                <div style={{ display: "flex", gap: 8, maxWidth: 440 }}>
-                  <input
-                    type="text"
-                    placeholder="Tambah tahun ajaran (cth: 2027/2028 Ganjil)"
-                    value={newYearInput}
-                    onChange={(e) => setNewYearInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleAddYear();
-                      }
-                    }}
-                    style={{ fontSize: "0.85rem", padding: "6px 12px" }}
-                  />
-                  <button
-                    type="button"
-                    className="button secondary"
-                    onClick={handleAddYear}
-                    style={{ fontSize: "0.85rem", whiteSpace: "nowrap" }}
-                  >
-                    + Tambah Semester
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div>
-            <div style={{ marginBottom: 18 }}>
-              <Field
-                label="Kebijakan Konversi Huruf Mutu Aktif (Grade Scale Policy)"
-                hint="Menentukan pemetaan skor nilai akhir (0-100) ke huruf mutu dan bobot huruf mutu."
-              >
-                <select
-                  value={scaleVersion}
-                  onChange={(e) => setScaleVersion(e.target.value)}
+              <div style={{ marginBottom: 20 }}>
+                <Field
+                  label="Label Banner Portal Landing"
+                  hint="Teks semester yang terpampang di halaman portal publik & login (contoh: SEMESTER GANJIL 2026/2027)."
                 >
-                  {Object.values(GRADE_SCALE_PRESETS).map(policy => (
-                    <option key={policy.version} value={policy.version}>{gradeScaleLabel(policy)}</option>
-                  ))}
-                </select>
-              </Field>
-            </div>
+                  <input
+                    required
+                    value={semesterLabel}
+                    onChange={(e) => setSemesterLabel(e.target.value)}
+                  />
+                </Field>
+              </div>
 
-            <div style={{ marginBottom: 20 }}>
-              <Field
-                label="Ambang Batas Kehadiran Mengikuti Ujian (%)"
-                hint="Ambang penanda kelayakan pada rekap kehadiran. Akses kuis dan tugas tetap mengikuti jadwal aktivitas."
-              >
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={1}
-                  required
-                  value={minAttendance}
-                  onChange={(e) => setMinAttendance(Number(e.target.value))}
-                  style={{ maxWidth: 160 }}
-                />
-              </Field>
-            </div>
-
-            <div
-              style={{
-                border: "1px solid #e2e8f0",
-                borderRadius: 10,
-                overflow: "hidden",
-                marginBottom: 20,
-              }}
-            >
               <div
                 style={{
                   background: "#f8fafc",
-                  padding: "10px 16px",
-                  borderBottom: "1px solid #e2e8f0",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: 10,
+                  padding: "16px 18px",
+                  marginBottom: 20,
                 }}
               >
-                <strong style={{ fontSize: "0.9rem" }}>
-                  Tabel Konversi Skala Nilai: {currentScale.name}
-                </strong>
-                <span
+                <h4
                   style={{
-                    fontSize: "0.75rem",
-                    background: "#e0f2fe",
-                    color: "#0369a1",
-                    padding: "2px 8px",
-                    borderRadius: 12,
-                    fontWeight: 600,
+                    margin: "0 0 6px 0",
+                    fontSize: "0.95rem",
+                    fontWeight: 700,
                   }}
                 >
-                  Versi {currentScale.version}
-                </span>
+                  Daftar Semester &amp; Tahun Ajaran Tersedia
+                </h4>
+                <p
+                  style={{
+                    margin: "0 0 14px 0",
+                    fontSize: "0.84rem",
+                    color: "#64748b",
+                  }}
+                >
+                  Daftar tahun akademik yang dapat dipilih dosen/admin saat
+                  menduplikasi kelas (clone) atau menyelenggarakan kelas baru.
+                </p>
+
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 8,
+                    marginBottom: 16,
+                  }}
+                >
+                  {years.map((y) => {
+                    const isActive = y === academicYear;
+                    return (
+                      <span
+                        key={y}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 8,
+                          background: isActive ? "#0284c7" : "#ffffff",
+                          color: isActive ? "#ffffff" : "#1e293b",
+                          border: isActive
+                            ? "1px solid #0284c7"
+                            : "1px solid #cbd5e1",
+                          padding: "4px 12px",
+                          borderRadius: 20,
+                          fontSize: "0.84rem",
+                          fontWeight: 600,
+                        }}
+                      >
+                        <span>{y}</span>
+                        {isActive && (
+                          <span
+                            style={{
+                              background: "rgba(255,255,255,0.25)",
+                              padding: "1px 6px",
+                              borderRadius: 10,
+                              fontSize: "0.72rem",
+                            }}
+                          >
+                            Aktif
+                          </span>
+                        )}
+                        {!readOnly && !isActive && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveYear(y)}
+                            title="Hapus semester dari daftar"
+                            style={{
+                              background: "transparent",
+                              border: "none",
+                              cursor: "pointer",
+                              color: "#94a3b8",
+                              padding: 0,
+                              display: "inline-flex",
+                              alignItems: "center",
+                            }}
+                          >
+                            &times;
+                          </button>
+                        )}
+                      </span>
+                    );
+                  })}
+                </div>
+
+                {!readOnly && (
+                  <div style={{ display: "flex", gap: 8, maxWidth: 440 }}>
+                    <input
+                      type="text"
+                      placeholder="Tambah tahun ajaran (cth: 2027/2028 Ganjil)"
+                      value={newYearInput}
+                      onChange={(e) => setNewYearInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddYear();
+                        }
+                      }}
+                      style={{ fontSize: "0.85rem", padding: "6px 12px" }}
+                    />
+                    <button
+                      type="button"
+                      className="button secondary"
+                      onClick={handleAddYear}
+                      style={{ fontSize: "0.85rem", whiteSpace: "nowrap" }}
+                    >
+                      + Tambah Semester
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div>
+              <div style={{ marginBottom: 18 }}>
+                <Field
+                  label="Kebijakan Konversi Huruf Mutu Aktif (Grade Scale Policy)"
+                  hint="Menentukan pemetaan skor nilai akhir (0-100) ke huruf mutu dan bobot huruf mutu."
+                >
+                  <select
+                    value={scaleVersion}
+                    onChange={(e) => setScaleVersion(e.target.value)}
+                  >
+                    {Object.values(GRADE_SCALE_PRESETS).map((policy) => (
+                      <option key={policy.version} value={policy.version}>
+                        {gradeScaleLabel(policy)}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
               </div>
 
-              <table style={{ margin: 0, fontSize: "0.84rem" }}>
-                <thead>
-                  <tr style={{ background: "#f1f5f9" }}>
-                    <th style={{ padding: "8px 12px" }}>Huruf Mutu</th>
-                    <th style={{ padding: "8px 12px" }}>Batas Nilai Riil</th>
-                    <th style={{ padding: "8px 12px" }}>Bobot IP</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentScale.bands.map((b: any) => (
-                    <tr key={b.letter}>
-                      <td style={{ padding: "8px 12px" }}>
-                        <span className="letter-badge">{b.letter}</span>
-                      </td>
-                      <td style={{ padding: "8px 12px", fontWeight: 600 }}>
-                        &ge; {b.minScore}.00
-                      </td>
-                      <td style={{ padding: "8px 12px", fontWeight: 700, color: "#0284c7" }}>
-                        {b.point.toFixed(2)}
-                      </td>
+              <div style={{ marginBottom: 20 }}>
+                <Field
+                  label="Ambang Batas Kehadiran Mengikuti Ujian (%)"
+                  hint="Ambang penanda kelayakan pada rekap kehadiran. Akses kuis dan tugas tetap mengikuti jadwal aktivitas."
+                >
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={1}
+                    required
+                    value={minAttendance}
+                    onChange={(e) => setMinAttendance(Number(e.target.value))}
+                    style={{ maxWidth: 160 }}
+                  />
+                </Field>
+              </div>
+
+              <div
+                style={{
+                  border: "1px solid #e2e8f0",
+                  borderRadius: 10,
+                  overflow: "hidden",
+                  marginBottom: 20,
+                }}
+              >
+                <div
+                  style={{
+                    background: "#f8fafc",
+                    padding: "10px 16px",
+                    borderBottom: "1px solid #e2e8f0",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <strong style={{ fontSize: "0.9rem" }}>
+                    Tabel Konversi Skala Nilai: {currentScale.name}
+                  </strong>
+                  <span
+                    style={{
+                      fontSize: "0.75rem",
+                      background: "#e0f2fe",
+                      color: "#0369a1",
+                      padding: "2px 8px",
+                      borderRadius: 12,
+                      fontWeight: 600,
+                    }}
+                  >
+                    Versi {currentScale.version}
+                  </span>
+                </div>
+
+                <table style={{ margin: 0, fontSize: "0.84rem" }}>
+                  <thead>
+                    <tr style={{ background: "#f1f5f9" }}>
+                      <th style={{ padding: "8px 12px" }}>Huruf Mutu</th>
+                      <th style={{ padding: "8px 12px" }}>Batas Nilai Riil</th>
+                      <th style={{ padding: "8px 12px" }}>Bobot IP</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {currentScale.bands.map((b: any) => (
+                      <tr key={b.letter}>
+                        <td style={{ padding: "8px 12px" }}>
+                          <span className="letter-badge">{b.letter}</span>
+                        </td>
+                        <td style={{ padding: "8px 12px", fontWeight: 600 }}>
+                          &ge; {b.minScore}.00
+                        </td>
+                        <td
+                          style={{
+                            padding: "8px 12px",
+                            fontWeight: 700,
+                            color: "#0284c7",
+                          }}
+                        >
+                          {b.point.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-            <div
-              style={{
-                background: "rgba(2, 132, 199, 0.05)",
-                border: "1px solid rgba(2, 132, 199, 0.2)",
-                borderRadius: 8,
-                padding: "12px 16px",
-                fontSize: "0.84rem",
-                lineHeight: 1.5,
-                color: "var(--foreground, #1e293b)",
-                marginBottom: 20,
-              }}
-            >
-              <strong>Pengaruh perubahan skala:</strong>
-              <p style={{ margin: "4px 0 0 0" }}>
-                Pengaturan skala ini menjadi default untuk kelas baru, termasuk hasil duplikasi. Skala kelas yang sudah ada dan nilai yang telah diterbitkan tidak dihitung ulang. Revisi nilai terbit mengikuti alur koreksi nilai pada kelas.
-              </p>
+              <div
+                style={{
+                  background: "rgba(2, 132, 199, 0.05)",
+                  border: "1px solid rgba(2, 132, 199, 0.2)",
+                  borderRadius: 8,
+                  padding: "12px 16px",
+                  fontSize: "0.84rem",
+                  lineHeight: 1.5,
+                  color: "var(--foreground, #1e293b)",
+                  marginBottom: 20,
+                }}
+              >
+                <strong>Pengaruh perubahan skala:</strong>
+                <p style={{ margin: "4px 0 0 0" }}>
+                  Pengaturan skala ini menjadi default untuk kelas baru,
+                  termasuk hasil duplikasi. Skala kelas yang sudah ada dan nilai
+                  yang telah diterbitkan tidak dihitung ulang. Revisi nilai
+                  terbit mengikuti alur koreksi nilai pada kelas.
+                </p>
+              </div>
             </div>
-          </div>
-        )}
-
+          )}
         </fieldset>
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, borderTop: "1px solid #e2e8f0", paddingTop: 16 }}>
-          <button type="button" className="button secondary" onClick={onClose} disabled={saving}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 10,
+            borderTop: "1px solid #e2e8f0",
+            paddingTop: 16,
+          }}
+        >
+          <button
+            type="button"
+            className="button secondary"
+            onClick={onClose}
+            disabled={saving}
+          >
             {readOnly ? "Tutup" : "Batal"}
           </button>
-          {!readOnly && <button type="submit" className="button primary" disabled={saving}>
-            {saving ? "Menyimpan..." : "Simpan Perubahan Kebijakan"}
-          </button>}
+          {!readOnly && (
+            <button type="submit" className="button primary" disabled={saving}>
+              {saving ? "Menyimpan..." : "Simpan Perubahan Kebijakan"}
+            </button>
+          )}
         </div>
       </form>
     </Modal>
@@ -1959,13 +2197,23 @@ export function Catalog({
     [deletingId, setDeletingId] = useState<string | null>(null),
     [deleteError, setDeleteError] = useState<Error | null>(null);
   const superAdmin = user.role === "SUPER_ADMIN";
-  const canCreateCatalog = superAdmin || (user.role === "DEPARTMENT_ADMIN" && user.departmentScopes?.length > 0);
-  const departments = [...new Set((courses.data ?? []).map((c) => c.departmentCode))].sort();
+  const canCreateCatalog =
+    superAdmin ||
+    (user.role === "DEPARTMENT_ADMIN" && user.departmentScopes?.length > 0);
+  const departments = [
+    ...new Set((courses.data ?? []).map((c) => c.departmentCode)),
+  ].sort();
   const visibleCourses = (courses.data ?? []).filter(
-    (c) => !superAdmin || !departmentFilter || c.departmentCode === departmentFilter,
+    (c) =>
+      !superAdmin || !departmentFilter || c.departmentCode === departmentFilter,
   );
   const deleteCourse = async (course: any) => {
-    if (!(await confirmAction(`Hapus mata kuliah ${course.code} · ${course.title}? Tindakan ini tidak dapat dibatalkan.`))) return;
+    if (
+      !(await confirmAction(
+        `Hapus mata kuliah ${course.code} · ${course.title}? Tindakan ini tidak dapat dibatalkan.`,
+      ))
+    )
+      return;
     setDeletingId(course.id);
     setDeleteError(null);
     try {
@@ -1986,19 +2234,30 @@ export function Catalog({
         </div>
         <div className="toolbar">
           {["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(user.role) && (
-            <button className="secondary" onClick={() => setGovernanceModal(true)}>
+            <button
+              className="secondary"
+              onClick={() => setGovernanceModal(true)}
+            >
               <CalendarDays size={16} />
               Tahun Ajaran: {config?.academicYear || "2026/2027 Ganjil"}
             </button>
           )}
           {["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(user.role) && (
-            <button className="secondary" onClick={() => setImportModal(true)} disabled={!canCreateCatalog}>
+            <button
+              className="secondary"
+              onClick={() => setImportModal(true)}
+              disabled={!canCreateCatalog}
+            >
               <UploadCloud size={16} />
               Impor Katalog
             </button>
           )}
           {["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(user.role) && (
-            <button className="primary" onClick={() => setEditing({})} disabled={!canCreateCatalog}>
+            <button
+              className="primary"
+              onClick={() => setEditing({})}
+              disabled={!canCreateCatalog}
+            >
               <Plus size={16} />
               {t.newCourse}
             </button>
@@ -2009,10 +2268,15 @@ export function Catalog({
         <div className="toolbar" style={{ marginBottom: 16 }}>
           <label>
             Program studi
-            <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)}>
+            <select
+              value={departmentFilter}
+              onChange={(e) => setDepartmentFilter(e.target.value)}
+            >
               <option value="">Semua prodi</option>
               {departments.map((department) => (
-                <option key={department} value={department}>{formatDepartmentScope(department)}</option>
+                <option key={department} value={department}>
+                  {formatDepartmentScope(department)}
+                </option>
               ))}
             </select>
           </label>
@@ -2058,7 +2322,10 @@ export function Catalog({
                         return (
                           <span
                             className="text-muted"
-                            style={{ fontSize: "0.82rem", color: "var(--muted, #64748b)" }}
+                            style={{
+                              fontSize: "0.82rem",
+                              color: "var(--muted, #64748b)",
+                            }}
                           >
                             Hanya-baca
                           </span>
@@ -2066,10 +2333,16 @@ export function Catalog({
                       }
                       return (
                         <div className="toolbar">
-                          <button className="secondary" onClick={() => setEditing(c)}>
-                            {c.status === "ARCHIVED" ? "Aktifkan atau ubah" : t.edit}
+                          <button
+                            className="secondary"
+                            onClick={() => setEditing(c)}
+                          >
+                            {c.status === "ARCHIVED"
+                              ? "Aktifkan atau ubah"
+                              : t.edit}
                           </button>
-                          {c._count?.classes === 0 && c._count?.questionBanks === 0 ? (
+                          {c._count?.classes === 0 &&
+                          c._count?.questionBanks === 0 ? (
                             <button
                               type="button"
                               className="danger"
@@ -2079,7 +2352,10 @@ export function Catalog({
                               {deletingId === c.id ? "Menghapus…" : "Hapus"}
                             </button>
                           ) : (
-                            <small>Kelas atau bank soal terkait; gunakan status Arsip.</small>
+                            <small>
+                              Kelas atau bank soal terkait; gunakan status
+                              Arsip.
+                            </small>
                           )}
                         </div>
                       );
@@ -2141,9 +2417,17 @@ export function Catalog({
                       ))}
                   </select>
                 ) : (
-                  <select name="departmentCode" required defaultValue={editing.departmentCode ?? user.departmentScopes?.[0] ?? ""}>
+                  <select
+                    name="departmentCode"
+                    required
+                    defaultValue={
+                      editing.departmentCode ?? user.departmentScopes?.[0] ?? ""
+                    }
+                  >
                     {(user.departmentScopes ?? []).map((department: string) => (
-                      <option key={department} value={department}>{formatDepartmentScope(department)}</option>
+                      <option key={department} value={department}>
+                        {formatDepartmentScope(department)}
+                      </option>
                     ))}
                   </select>
                 )}
@@ -2234,19 +2518,42 @@ export function CourseImportModal({
       if (parsed.length < 2) {
         setRows([]);
         setReview(null);
-        setError("Format CSV minimal harus memiliki 1 baris judul kolom (header) dan 1 baris data.");
+        setError(
+          "Format CSV minimal harus memiliki 1 baris judul kolom (header) dan 1 baris data.",
+        );
         return;
       }
       const headerRow = parsed[0].map((h) => h.trim().toLowerCase());
-      const codeIdx = headerRow.findIndex((h) => ["code", "kode", "kodemk", "kode_mk"].includes(h));
-      const titleIdx = headerRow.findIndex((h) => ["title", "nama", "namamk", "nama_mk", "matakuliah", "mata_kuliah"].includes(h));
-      const creditsIdx = headerRow.findIndex((h) => ["credits", "sks", "bobot"].includes(h));
-      const deptIdx = headerRow.findIndex((h) => ["departmentcode", "department", "prodi", "jurusan", "dept"].includes(h));
-      const descIdx = headerRow.findIndex((h) => ["description", "deskripsi", "keterangan"].includes(h));
+      const codeIdx = headerRow.findIndex((h) =>
+        ["code", "kode", "kodemk", "kode_mk"].includes(h),
+      );
+      const titleIdx = headerRow.findIndex((h) =>
+        [
+          "title",
+          "nama",
+          "namamk",
+          "nama_mk",
+          "matakuliah",
+          "mata_kuliah",
+        ].includes(h),
+      );
+      const creditsIdx = headerRow.findIndex((h) =>
+        ["credits", "sks", "bobot"].includes(h),
+      );
+      const deptIdx = headerRow.findIndex((h) =>
+        ["departmentcode", "department", "prodi", "jurusan", "dept"].includes(
+          h,
+        ),
+      );
+      const descIdx = headerRow.findIndex((h) =>
+        ["description", "deskripsi", "keterangan"].includes(h),
+      );
       const statusIdx = headerRow.findIndex((h) => ["status"].includes(h));
 
       if (codeIdx === -1 || titleIdx === -1) {
-        setError("Kolom header 'kode' (atau 'code') dan 'nama' (atau 'title') wajib ada pada baris pertama CSV.");
+        setError(
+          "Kolom header 'kode' (atau 'code') dan 'nama' (atau 'title') wajib ada pada baris pertama CSV.",
+        );
         return;
       }
 
@@ -2254,9 +2561,16 @@ export function CourseImportModal({
         const code = codeIdx !== -1 ? String(r[codeIdx] ?? "").trim() : "";
         const title = titleIdx !== -1 ? String(r[titleIdx] ?? "").trim() : "";
         const credits = creditsIdx !== -1 ? Number(r[creditsIdx] || 3) : 3;
-        const departmentCode = deptIdx !== -1 && r[deptIdx] ? String(r[deptIdx]).trim().toUpperCase() : defaultDept;
-        const description = descIdx !== -1 ? String(r[descIdx] ?? "").trim() : "";
-        const status = statusIdx !== -1 && r[statusIdx] ? String(r[statusIdx]).trim().toUpperCase() : "PUBLISHED";
+        const departmentCode =
+          deptIdx !== -1 && r[deptIdx]
+            ? String(r[deptIdx]).trim().toUpperCase()
+            : defaultDept;
+        const description =
+          descIdx !== -1 ? String(r[descIdx] ?? "").trim() : "";
+        const status =
+          statusIdx !== -1 && r[statusIdx]
+            ? String(r[statusIdx]).trim().toUpperCase()
+            : "PUBLISHED";
 
         return {
           values: {
@@ -2265,7 +2579,9 @@ export function CourseImportModal({
             credits: isNaN(credits) ? 3 : credits,
             departmentCode,
             description,
-            status: ["DRAFT", "PUBLISHED", "ARCHIVED"].includes(status) ? status : "PUBLISHED",
+            status: ["DRAFT", "PUBLISHED", "ARCHIVED"].includes(status)
+              ? status
+              : "PUBLISHED",
           },
           exclude: false,
           override: forceOverride,
@@ -2316,9 +2632,7 @@ export function CourseImportModal({
 
   const handleOverrideToggle = (checked: boolean) => {
     setOverrideAll(checked);
-    setRows((prev) =>
-      prev.map((r) => ({ ...r, override: checked })),
-    );
+    setRows((prev) => prev.map((r) => ({ ...r, override: checked })));
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -2368,18 +2682,30 @@ export function CourseImportModal({
   return (
     <Modal title="Impor Massal Katalog Mata Kuliah" wide onClose={onClose}>
       <p style={{ marginTop: 0, color: "var(--muted-foreground)" }}>
-        Tambahkan banyak mata kuliah sekaligus ke kurikulum program studi menggunakan format CSV.
-        Sistem memverifikasi kode mata kuliah unik, kewenangan prodi, dan bobot SKS.
+        Tambahkan banyak mata kuliah sekaligus ke kurikulum program studi
+        menggunakan format CSV. Sistem memverifikasi kode mata kuliah unik,
+        kewenangan prodi, dan bobot SKS.
       </p>
 
       {successInfo ? (
         <div style={{ padding: "24px 0", textAlign: "center" }}>
-          <div style={{ display: "inline-flex", padding: 12, borderRadius: "50%", background: "rgba(34, 197, 94, 0.1)", color: "#16a34a", marginBottom: 12 }}>
+          <div
+            style={{
+              display: "inline-flex",
+              padding: 12,
+              borderRadius: "50%",
+              background: "rgba(34, 197, 94, 0.1)",
+              color: "#16a34a",
+              marginBottom: 12,
+            }}
+          >
             <CheckCircle size={36} />
           </div>
           <h3 style={{ margin: "0 0 8px" }}>Impor Katalog Berhasil!</h3>
           <p style={{ color: "var(--muted-foreground)", margin: "0 0 20px" }}>
-            Total <strong>{successInfo.imported}</strong> mata kuliah diproses ({successInfo.created} dibuat baru, {successInfo.updated} diperbarui).
+            Total <strong>{successInfo.imported}</strong> mata kuliah diproses (
+            {successInfo.created} dibuat baru, {successInfo.updated}{" "}
+            diperbarui).
           </p>
           <button className="primary" onClick={onClose}>
             Selesai
@@ -2387,8 +2713,24 @@ export function CourseImportModal({
         </div>
       ) : (
         <>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
-            <label className="button secondary" style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, margin: 0 }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 10,
+              flexWrap: "wrap",
+              marginBottom: 14,
+            }}
+          >
+            <label
+              className="button secondary"
+              style={{
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                margin: 0,
+              }}
+            >
               <UploadCloud size={15} />
               Pilih Berkas CSV
               <input
@@ -2398,11 +2740,19 @@ export function CourseImportModal({
                 style={{ display: "none" }}
               />
             </label>
-            <button type="button" className="secondary" onClick={handleDownloadTemplate}>
+            <button
+              type="button"
+              className="secondary"
+              onClick={handleDownloadTemplate}
+            >
               <Download size={15} />
               Unduh Template CSV
             </button>
-            <button type="button" className="secondary" onClick={handleLoadSample}>
+            <button
+              type="button"
+              className="secondary"
+              onClick={handleLoadSample}
+            >
               Isi Contoh Data
             </button>
           </div>
@@ -2415,21 +2765,34 @@ export function CourseImportModal({
                 setCsvText(e.target.value);
                 handleParse(e.target.value);
               }}
-              placeholder={"kode,nama,sks,prodi,deskripsi,status\nIF101,Algoritma dan Pemrograman I,3,IF,Dasar pemrograman,PUBLISHED\n..."}
+              placeholder={
+                "kode,nama,sks,prodi,deskripsi,status\nIF101,Algoritma dan Pemrograman I,3,IF,Dasar pemrograman,PUBLISHED\n..."
+              }
               style={{ fontFamily: "monospace", fontSize: "0.82rem" }}
             />
           </Field>
 
           {rows.length > 0 && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "10px 0 16px" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                margin: "10px 0 16px",
+              }}
+            >
               <input
                 type="checkbox"
                 id="override-all"
                 checked={overrideAll}
                 onChange={(e) => handleOverrideToggle(e.target.checked)}
               />
-              <label htmlFor="override-all" style={{ fontSize: "0.88rem", cursor: "pointer" }}>
-                Perbarui (timpa) data jika kode mata kuliah sudah terdaftar di database
+              <label
+                htmlFor="override-all"
+                style={{ fontSize: "0.88rem", cursor: "pointer" }}
+              >
+                Perbarui (timpa) data jika kode mata kuliah sudah terdaftar di
+                database
               </label>
             </div>
           )}
@@ -2440,7 +2803,14 @@ export function CourseImportModal({
 
           {review && !loading && (
             <div style={{ marginTop: 14 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 10,
+                }}
+              >
                 <div style={{ fontSize: "0.88rem", fontWeight: 600 }}>
                   Pratinjau Impor:{" "}
                   <span style={{ color: "#16a34a" }}>{review.ready} Siap</span>
@@ -2448,12 +2818,15 @@ export function CourseImportModal({
                     <span style={{ color: "#dc2626", marginLeft: 8 }}>
                       • {review.issues} Perlu Diperiksa
                     </span>
-                  )}
-                  {" "}dari {review.rows.length} Baris
+                  )}{" "}
+                  dari {review.rows.length} Baris
                 </div>
               </div>
 
-              <div className="table-wrap card" style={{ maxHeight: 280, overflowY: "auto" }}>
+              <div
+                className="table-wrap card"
+                style={{ maxHeight: 280, overflowY: "auto" }}
+              >
                 <table>
                   <thead>
                     <tr>
@@ -2470,7 +2843,8 @@ export function CourseImportModal({
                     {review.rows.map((row: any, idx: number) => {
                       const isReady = row.status === "READY";
                       const isExcluded = row.status === "EXCLUDED";
-                      const hasConflict = row.issues?.includes("DATABASE_CONFLICT");
+                      const hasConflict =
+                        row.issues?.includes("DATABASE_CONFLICT");
                       const issuesList = row.issues ?? [];
 
                       return (
@@ -2496,22 +2870,40 @@ export function CourseImportModal({
                           <td>{row.values?.departmentCode}</td>
                           <td>
                             {isExcluded ? (
-                              <span style={{ color: "var(--muted-foreground)" }}>Diabaikan</span>
+                              <span
+                                style={{ color: "var(--muted-foreground)" }}
+                              >
+                                Diabaikan
+                              </span>
                             ) : isReady ? (
-                              <span style={{ color: "#16a34a", fontWeight: 600 }}>
-                                {row.existingId ? "Siap Ditimpa" : "Siap Dibuat"}
+                              <span
+                                style={{ color: "#16a34a", fontWeight: 600 }}
+                              >
+                                {row.existingId
+                                  ? "Siap Ditimpa"
+                                  : "Siap Dibuat"}
                               </span>
                             ) : (
-                              <span style={{ color: "#dc2626", fontSize: "0.8rem" }}>
-                                {issuesList.map((issue: string) => {
-                                  if (issue === "DATABASE_CONFLICT") return "Sudah terdaftar di DB (centang timpa untuk update)";
-                                  if (issue === "DUPLICATE_FILE") return "Duplikat di berkas";
-                                  if (issue === "WRITE_ACCESS_DENIED") return "Bukan prodi wewenang Anda";
-                                  if (issue === "INVALID_CREDITS") return "SKS tidak valid (1-12)";
-                                  if (issue === "MISSING_CODE") return "Kode wajib diisi";
-                                  if (issue === "MISSING_TITLE") return "Nama MK wajib diisi";
-                                  return issue;
-                                }).join("; ")}
+                              <span
+                                style={{ color: "#dc2626", fontSize: "0.8rem" }}
+                              >
+                                {issuesList
+                                  .map((issue: string) => {
+                                    if (issue === "DATABASE_CONFLICT")
+                                      return "Sudah terdaftar di DB (centang timpa untuk update)";
+                                    if (issue === "DUPLICATE_FILE")
+                                      return "Duplikat di berkas";
+                                    if (issue === "WRITE_ACCESS_DENIED")
+                                      return "Bukan prodi wewenang Anda";
+                                    if (issue === "INVALID_CREDITS")
+                                      return "SKS tidak valid (1-12)";
+                                    if (issue === "MISSING_CODE")
+                                      return "Kode wajib diisi";
+                                    if (issue === "MISSING_TITLE")
+                                      return "Nama MK wajib diisi";
+                                    return issue;
+                                  })
+                                  .join("; ")}
                               </span>
                             )}
                           </td>
@@ -2519,7 +2911,10 @@ export function CourseImportModal({
                             <button
                               type="button"
                               className="secondary"
-                              style={{ padding: "3px 8px", fontSize: "0.78rem" }}
+                              style={{
+                                padding: "3px 8px",
+                                fontSize: "0.78rem",
+                              }}
                               onClick={() => toggleExclude(idx)}
                             >
                               {isExcluded ? "Sertakan" : "Abaikan"}
@@ -2534,17 +2929,33 @@ export function CourseImportModal({
             </div>
           )}
 
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 20 }}>
-            <button type="button" className="secondary" onClick={onClose} disabled={submitting}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 10,
+              marginTop: 20,
+            }}
+          >
+            <button
+              type="button"
+              className="secondary"
+              onClick={onClose}
+              disabled={submitting}
+            >
               Batal
             </button>
             <button
               type="button"
               className="primary"
-              disabled={!review || review.ready === 0 || review.issues > 0 || submitting}
+              disabled={
+                !review || review.ready === 0 || review.issues > 0 || submitting
+              }
               onClick={handleCommit}
             >
-              {submitting ? "Menyimpan..." : `Impor ${review?.ready ?? 0} Mata Kuliah`}
+              {submitting
+                ? "Menyimpan..."
+                : `Impor ${review?.ready ?? 0} Mata Kuliah`}
             </button>
           </div>
         </>
@@ -2578,9 +2989,23 @@ export function Profile({
       <div className="profile-layout">
         <section className="card" aria-label="Identitas akun">
           <div className="profile-identity">
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
               <Avatar name={user.name} userId={user.id} large />
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: 6,
+                  flexWrap: "wrap",
+                  justifyContent: "center",
+                }}
+              >
                 <label
                   className="button secondary sm"
                   style={{
@@ -2609,10 +3034,15 @@ export function Profile({
                       reader.onload = (ev) => {
                         const dataUrl = String(ev.target?.result ?? "");
                         try {
-                          localStorage.setItem(`user_photo_${user.id}`, dataUrl);
+                          localStorage.setItem(
+                            `user_photo_${user.id}`,
+                            dataUrl,
+                          );
                           window.dispatchEvent(new Event("user-photo-changed"));
                         } catch {
-                          alert("Gagal menyimpan foto ke penyimpanan peramban.");
+                          alert(
+                            "Gagal menyimpan foto ke penyimpanan peramban.",
+                          );
                         }
                       };
                       reader.readAsDataURL(file);

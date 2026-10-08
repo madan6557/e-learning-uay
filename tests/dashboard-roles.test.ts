@@ -2,7 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import React, { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { Dashboard, Catalog, AcademicGovernanceModal } from "../apps/web/src/pages.js";
+import {
+  Dashboard,
+  Catalog,
+  AcademicGovernanceModal,
+} from "../apps/web/src/pages.js";
 import { readCache } from "../apps/web/src/readCache.js";
 
 Object.assign(globalThis, { React });
@@ -11,7 +15,13 @@ const cls = {
   name: "Kelas A",
   academicYear: "2026/2027",
   status: "DRAFT",
-  course: { id: "course-id", code: "IF101", title: "Pemrograman", credits: 3 },
+  course: {
+    id: "course-id",
+    code: "IF101",
+    title: "Pemrograman",
+    credits: 3,
+    departmentCode: "IF",
+  },
   instructors: [{ user: { name: "Dosen Contoh" } }],
   _count: { sections: 2, enrollments: 4 },
   sections: [],
@@ -149,4 +159,3 @@ test("unauthorized actions are hidden or disabled across catalog and academic go
   assert.match(govModalHtml, /Tutup/);
   readCache.clear();
 });
-

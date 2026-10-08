@@ -19,7 +19,7 @@ Materi rektor menjelaskan akses satu pintu, laporan hanya baca, filter, kondisi 
 ## Pemeliharaan untuk pengembang
 
 1. Ubah sumber tutorial aplikasi, lalu jalankan `npm run docs:guide` dan `npm run docs:guide:check`.
-2. Bangun Word menggunakan `scripts/generate_guide_docx.py` dengan Python dari workspace dependencies Codex. Skala nilai berasal dari `docs/guide-grade-scales.json`, yang diekspor dari definisi aplikasi.
+2. Bangun Word menggunakan `scripts/generate_guide_docx.py` dengan Python dari workspace dependencies Codex. Skala nilai berasal dari `docs/guides/guide-grade-scales.json`, yang diekspor dari definisi aplikasi.
 3. Render Word memakai `render_docx.py --emit_pdf` dari skill Documents; periksa seluruh halaman sebelum mengganti Word/PDF yang dibagikan.
 4. Bangun slide menggunakan `scripts/generate-guide-slides.mjs` dengan Node dan Artifact Tool dari workspace dependencies Codex. Tetapkan `UAY_ARTIFACT_NODE_MODULES`, lalu berikan direktori kerja sementara absolut sebagai argumen. Generator memperbarui 24 slide utama dan 4 slide rektor; sumber dapat berupa deck 24 atau 28 slide.
 5. Validasi PPT dengan finalizer skill Presentations dan periksa seluruh slide sebelum mengganti PPT yang dibagikan. Presentasi HTML diekspor dari isi slide yang sama.

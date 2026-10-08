@@ -47,7 +47,7 @@ function localRunner(): Plugin {
           res.setHeader("Content-Type", "text/plain; charset=utf-8");
           res.end(
             readFileSync(
-              resolve(root, "docs/Technical Design - E-Learning UAY - v5.0.md"),
+              resolve(root, "docs/requirements/Technical Design - E-Learning UAY - v5.0.md"),
             ),
           );
           return;

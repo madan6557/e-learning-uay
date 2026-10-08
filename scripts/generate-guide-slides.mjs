@@ -17,7 +17,7 @@ if (!workspace || !path.isAbsolute(workspace))
   throw Error("Provide an absolute private workspace directory");
 const source = path.join(
   root,
-  "docs/Sosialisasi dan Panduan Penggunaan E-Learning UAY.pptx",
+  "docs/presentations/Sosialisasi dan Panduan Penggunaan E-Learning UAY.pptx",
 );
 const deck = await PresentationFile.importPptx(await FileBlob.load(source));
 await fs.mkdir(workspace, { recursive: true });
@@ -780,6 +780,6 @@ const slidesHtml = allSlides
   )
   .join("");
 await fs.writeFile(
-  path.join(root, "docs/SLIDE-PRESENTASI-SOSIALISASI-ELEARNING-UAY.html"),
+  path.join(root, "docs/presentations/SLIDE-PRESENTASI-SOSIALISASI-ELEARNING-UAY.html"),
   `<!doctype html><html lang="id"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Panduan presentasi E-Learning UAY</title><style>body{margin:0;background:#eef3f7;color:#173e61;font:20px/1.6 Arial,sans-serif}nav{position:sticky;top:0;background:#173e61;color:white;padding:14px 24px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}nav a{color:white;font-size:17px}button,select{font:inherit;padding:8px;border-radius:6px}section{max-width:1200px;padding:48px;margin:24px auto;background:white;border-radius:12px;min-height:560px}small{color:#166534;font-weight:bold}h1{font-size:34px}h2{font-size:24px}.cards{display:flex;gap:24px}.cards article{flex:1;border:1px solid #dbe4ec;border-top:5px solid #166534;padding:24px;border-radius:8px}footer{font-size:15px;margin-top:32px;color:#64748b}@media(max-width:800px){section{padding:24px}.cards{flex-direction:column}}@media print{nav{display:none}section{break-before:page;margin:0;border:0}body{background:white}}[hidden]{display:none!important}</style><nav><button id="prev">Sebelumnya</button><label>Slide <select id="page">${allSlides.map((s, i) => `<option value="${i}">${i + 1} — ${esc(i ? s[1] : "Pengantar")}</option>`).join("")}</select></label><button id="next">Selanjutnya</button><a href="Sosialisasi dan Panduan Penggunaan E-Learning UAY.pptx">Unduh PPT</a></nav>${slidesHtml}<script>const pages=[...document.querySelectorAll('section')], select=document.getElementById('page');function show(n){n=Math.max(0,Math.min(pages.length-1,n));pages.forEach((p,i)=>p.hidden=i!==n);select.value=n;document.getElementById('prev').disabled=n===0;document.getElementById('next').disabled=n===pages.length-1}select.onchange=()=>show(Number(select.value));document.getElementById('prev').onclick=()=>show(Number(select.value)-1);document.getElementById('next').onclick=()=>show(Number(select.value)+1);show(0);</script></html>`,
 );

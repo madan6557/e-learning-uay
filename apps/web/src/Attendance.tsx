@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
+import { Action } from "./components/ui/Action";
 import {
   CalendarCheck,
   CalendarClock,
@@ -16,19 +17,76 @@ import {
   Sliders,
   Calendar,
 } from "lucide-react";
-import { clock, localDateInput, localInput, isoInput, api, useApi, Loading, Notice, Modal, Field, Form, textValue, Pagination, usePagination } from "./lib";
+import {
+  clock,
+  localDateInput,
+  localInput,
+  isoInput,
+  api,
+  useApi,
+  Loading,
+  Notice,
+  Modal,
+  Field,
+  Form,
+  textValue,
+  Pagination,
+  usePagination,
+} from "./lib";
 
 type AttendanceStatus = "PRESENT" | "EXCUSED" | "SICK" | "ABSENT" | "LATE";
 
 const statusLabels: Record<
   AttendanceStatus,
-  { label: string; bg: string; text: string; border: string; dot: string; color: string }
+  {
+    label: string;
+    bg: string;
+    text: string;
+    border: string;
+    dot: string;
+    color: string;
+  }
 > = {
-  PRESENT: { label: "Hadir", bg: "#ecfdf5", text: "#065f46", border: "#a7f3d0", dot: "#10b981", color: "#10b981" },
-  EXCUSED: { label: "Izin", bg: "#fef3c7", text: "#92400e", border: "#fde68a", dot: "#f59e0b", color: "#f59e0b" },
-  SICK: { label: "Sakit", bg: "#eff6ff", text: "#1d4ed8", border: "#bfdbfe", dot: "#3b82f6", color: "#3b82f6" },
-  ABSENT: { label: "Tidak Hadir (Alpa)", bg: "#fef2f2", text: "#991b1b", border: "#fecaca", dot: "#ef4444", color: "#ef4444" },
-  LATE: { label: "Terlambat", bg: "#f5f3ff", text: "#6b21a8", border: "#ddd6fe", dot: "#8b5cf6", color: "#8b5cf6" },
+  PRESENT: {
+    label: "Hadir",
+    bg: "#ecfdf5",
+    text: "#065f46",
+    border: "#a7f3d0",
+    dot: "#10b981",
+    color: "#10b981",
+  },
+  EXCUSED: {
+    label: "Izin",
+    bg: "#fef3c7",
+    text: "#92400e",
+    border: "#fde68a",
+    dot: "#f59e0b",
+    color: "#f59e0b",
+  },
+  SICK: {
+    label: "Sakit",
+    bg: "#eff6ff",
+    text: "#1d4ed8",
+    border: "#bfdbfe",
+    dot: "#3b82f6",
+    color: "#3b82f6",
+  },
+  ABSENT: {
+    label: "Tidak Hadir (Alpa)",
+    bg: "#fef2f2",
+    text: "#991b1b",
+    border: "#fecaca",
+    dot: "#ef4444",
+    color: "#ef4444",
+  },
+  LATE: {
+    label: "Terlambat",
+    bg: "#f5f3ff",
+    text: "#6b21a8",
+    border: "#ddd6fe",
+    dot: "#8b5cf6",
+    color: "#8b5cf6",
+  },
 };
 
 function formatSchedule(startTime?: string | null, endTime?: string | null) {
@@ -79,7 +137,13 @@ function AttendanceStatusBadge({
     );
   }
 
-  const fallback = { label: "Belum Ada Data", bg: "#f8fafc", text: "#64748b", border: "#e2e8f0", dot: "#94a3b8" };
+  const fallback = {
+    label: "Belum Ada Data",
+    bg: "#f8fafc",
+    text: "#64748b",
+    border: "#e2e8f0",
+    dot: "#94a3b8",
+  };
   const cfg = (status && statusLabels[status]) || fallback;
 
   return (
@@ -97,7 +161,14 @@ function AttendanceStatusBadge({
         borderRadius: 999,
       }}
     >
-      <span style={{ width: 6, height: 6, borderRadius: "50%", background: cfg.dot }} />
+      <span
+        style={{
+          width: 6,
+          height: 6,
+          borderRadius: "50%",
+          background: cfg.dot,
+        }}
+      />
       {cfg.label}
     </span>
   );
@@ -131,14 +202,19 @@ export function Attendance({
   // Cari sesi aktif yang sedang dibuka untuk notifikasi mahasiswa
   const activeOpenSession = useMemo(() => {
     if (canManage) return null;
-    return sessions.find((s) => s.isOpen && s.myRecord?.status !== "PRESENT");
+    return sessions.find(
+      (s) => s.isOpen && s.allowSelfCheckIn && s.myRecord?.status !== "PRESENT",
+    );
   }, [sessions, canManage]);
 
   if (sessionsApi.loading && !sessionsApi.data) return <Loading />;
   if (sessionsApi.error) return <Notice error={sessionsApi.error} />;
 
   return (
-    <div className="attendance-view" style={{ maxWidth: 1040, margin: "0 auto", paddingBottom: 40 }}>
+    <div
+      className="attendance-view"
+      style={{ maxWidth: 1040, margin: "0 auto", paddingBottom: 40 }}
+    >
       {message && (
         <div
           className="notice"
@@ -178,7 +254,14 @@ export function Attendance({
           }}
         >
           <div style={{ flex: 1, minWidth: 280 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 8,
+              }}
+            >
               <span
                 style={{
                   display: "inline-flex",
@@ -207,10 +290,25 @@ export function Attendance({
                 Sedang Berlangsung
               </span>
             </div>
-            <h3 style={{ margin: "0 0 6px 0", fontSize: "1.25rem", fontWeight: 700, color: "#ffffff", letterSpacing: "-0.01em" }}>
+            <h3
+              style={{
+                margin: "0 0 6px 0",
+                fontSize: "1.25rem",
+                fontWeight: 700,
+                color: "#ffffff",
+                letterSpacing: "-0.01em",
+              }}
+            >
               {activeOpenSession.title}
             </h3>
-            <p style={{ margin: 0, color: "rgba(255, 255, 255, 0.92)", fontSize: "0.88rem", lineHeight: 1.5 }}>
+            <p
+              style={{
+                margin: 0,
+                color: "rgba(255, 255, 255, 0.92)",
+                fontSize: "0.88rem",
+                lineHeight: 1.5,
+              }}
+            >
               {activeOpenSession.requiresCode
                 ? "Dosen telah membuka sesi presensi dengan verifikasi kode. Masukkan kode 6 karakter dari layar proyektor kelas."
                 : "Dosen telah membuka sesi presensi mandiri (bebas kode). Anda dapat langsung mengonfirmasi kehadiran dengan 1 klik."}
@@ -234,10 +332,20 @@ export function Attendance({
               whiteSpace: "nowrap",
               transition: "all 0.15s ease",
             }}
-            onClick={() => setModal({ kind: "checkin", session: activeOpenSession })}
+            onClick={() =>
+              setModal({ kind: "checkin", session: activeOpenSession })
+            }
           >
-            {activeOpenSession.requiresCode ? <KeyRound size={16} /> : <CheckCircle2 size={16} />}
-            <span>{activeOpenSession.requiresCode ? "Isi Presensi (Kode)" : "Konfirmasi Hadir (1-Klik)"}</span>
+            {activeOpenSession.requiresCode ? (
+              <KeyRound size={16} />
+            ) : (
+              <CheckCircle2 size={16} />
+            )}
+            <span>
+              {activeOpenSession.requiresCode
+                ? "Isi Presensi (Kode)"
+                : "Konfirmasi Hadir (1-Klik)"}
+            </span>
           </button>
         </div>
       )}
@@ -254,8 +362,16 @@ export function Attendance({
         }}
       >
         <div>
-          <h2 style={{ fontSize: "1.4rem", fontWeight: 700, margin: 0 }}>Presensi Perkuliahan</h2>
-          <p style={{ color: "var(--muted, #64748b)", margin: "4px 0 0 0", fontSize: "0.9rem" }}>
+          <h2 style={{ fontSize: "1.4rem", fontWeight: 700, margin: 0 }}>
+            Presensi Perkuliahan
+          </h2>
+          <p
+            style={{
+              color: "var(--muted, #64748b)",
+              margin: "4px 0 0 0",
+              fontSize: "0.9rem",
+            }}
+          >
             {canManage
               ? "Kelola kehadiran mahasiswa tatap muka per pertemuan dan pantau rekapitulasi kelayakan ujian."
               : "Riwayat status kehadiran dan pengisian presensi mandiri perkuliahan."}
@@ -264,7 +380,14 @@ export function Attendance({
 
         {canManage && (
           <div style={{ display: "flex", gap: 8 }}>
-            <div style={{ display: "inline-flex", background: "var(--chip-bg, #f1f5f9)", padding: 3, borderRadius: 8 }}>
+            <div
+              style={{
+                display: "inline-flex",
+                background: "var(--chip-bg, #f1f5f9)",
+                padding: 3,
+                borderRadius: 8,
+              }}
+            >
               <button
                 type="button"
                 onClick={() => setActiveTab("sessions")}
@@ -274,10 +397,14 @@ export function Attendance({
                   borderRadius: 6,
                   fontSize: "0.85rem",
                   fontWeight: activeTab === "sessions" ? 700 : 500,
-                  background: activeTab === "sessions" ? "#ffffff" : "transparent",
+                  background:
+                    activeTab === "sessions" ? "#ffffff" : "transparent",
                   color: activeTab === "sessions" ? "#0f172a" : "#64748b",
                   cursor: "pointer",
-                  boxShadow: activeTab === "sessions" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                  boxShadow:
+                    activeTab === "sessions"
+                      ? "0 1px 3px rgba(0,0,0,0.1)"
+                      : "none",
                 }}
               >
                 Daftar Sesi
@@ -294,7 +421,10 @@ export function Attendance({
                   background: activeTab === "recap" ? "#ffffff" : "transparent",
                   color: activeTab === "recap" ? "#0f172a" : "#64748b",
                   cursor: "pointer",
-                  boxShadow: activeTab === "recap" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                  boxShadow:
+                    activeTab === "recap"
+                      ? "0 1px 3px rgba(0,0,0,0.1)"
+                      : "none",
                 }}
               >
                 Rekapitulasi Kehadiran
@@ -305,7 +435,12 @@ export function Attendance({
               <button
                 type="button"
                 className="button primary"
-                style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  cursor: "pointer",
+                }}
                 onClick={() => setModal({ kind: "create" })}
               >
                 <CalendarCheck size={16} />
@@ -321,14 +456,18 @@ export function Attendance({
         <div style={{ display: "grid", gap: 14 }}>
           {sessions.length > 0 ? (
             sessionsPagination.paginatedItems.map((s) => {
-              const dateStr = new Date(s.sessionDate).toLocaleDateString("id-ID", {
-                weekday: "long",
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              });
+              const dateStr = new Date(s.sessionDate).toLocaleDateString(
+                "id-ID",
+                {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                },
+              );
               const isCurrentlyOpen = s.isOpen;
-              const isScheduledFuture = !s.isOpen && s.startTime && new Date(s.startTime) > new Date();
+              const isScheduledFuture =
+                !s.isOpen && s.startTime && new Date(s.startTime) > new Date();
 
               return (
                 <div
@@ -353,8 +492,22 @@ export function Attendance({
                   }}
                 >
                   <div style={{ flex: 1, minWidth: 260 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
-                      <span style={{ fontSize: "0.82rem", color: "var(--muted, #64748b)", fontWeight: 500 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        marginBottom: 8,
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: "0.82rem",
+                          color: "var(--muted, #64748b)",
+                          fontWeight: 500,
+                        }}
+                      >
                         {dateStr}
                       </span>
 
@@ -374,7 +527,14 @@ export function Attendance({
                             gap: 5,
                           }}
                         >
-                          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e" }} />
+                          <span
+                            style={{
+                              width: 6,
+                              height: 6,
+                              borderRadius: "50%",
+                              background: "#22c55e",
+                            }}
+                          />
                           Sesi Dibuka
                         </span>
                       ) : isScheduledFuture ? (
@@ -465,7 +625,8 @@ export function Attendance({
                             borderRadius: 6,
                           }}
                         >
-                          <Clock size={11} /> {formatSchedule(s.startTime, s.endTime)}
+                          <Clock size={11} />{" "}
+                          {formatSchedule(s.startTime, s.endTime)}
                         </span>
                       ) : isCurrentlyOpen ? (
                         <span
@@ -502,11 +663,25 @@ export function Attendance({
                       )}
                     </div>
 
-                    <h3 style={{ margin: "0 0 6px 0", fontSize: "1.08rem", fontWeight: 700, color: "var(--foreground, #0f172a)" }}>
+                    <h3
+                      style={{
+                        margin: "0 0 6px 0",
+                        fontSize: "1.08rem",
+                        fontWeight: 700,
+                        color: "var(--foreground, #0f172a)",
+                      }}
+                    >
                       {s.title}
                     </h3>
                     {s.description && (
-                      <p style={{ margin: "0 0 8px 0", color: "var(--muted, #64748b)", fontSize: "0.86rem", lineHeight: 1.5 }}>
+                      <p
+                        style={{
+                          margin: "0 0 8px 0",
+                          color: "var(--muted, #64748b)",
+                          fontSize: "0.86rem",
+                          lineHeight: 1.5,
+                        }}
+                      >
                         {s.description}
                       </p>
                     )}
@@ -542,7 +717,13 @@ export function Attendance({
                         <span style={{ color: "#b91c1c", fontWeight: 500 }}>
                           Alpa: {s.stats.absentCount}
                         </span>
-                        <span style={{ color: "var(--muted, #64748b)", borderLeft: "1px solid var(--border, #cbd5e1)", paddingLeft: 8 }}>
+                        <span
+                          style={{
+                            color: "var(--muted, #64748b)",
+                            borderLeft: "1px solid var(--border, #cbd5e1)",
+                            paddingLeft: 8,
+                          }}
+                        >
                           Total: {s.stats.totalStudents} Mhs
                         </span>
                       </div>
@@ -550,18 +731,52 @@ export function Attendance({
 
                     {/* Status untuk Mahasiswa */}
                     {!canManage && (
-                      <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                        <span style={{ fontSize: "0.85rem", color: "var(--muted, #64748b)", fontWeight: 500 }}>
+                      <div
+                        style={{
+                          marginTop: 8,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: "0.85rem",
+                            color: "var(--muted, #64748b)",
+                            fontWeight: 500,
+                          }}
+                        >
                           Status Kehadiran:
                         </span>
-                        <AttendanceStatusBadge status={s.myRecord?.status} isOpen={s.isOpen} />
+                        <AttendanceStatusBadge
+                          status={s.myRecord?.status}
+                          isOpen={s.isOpen}
+                        />
                         {s.myRecord?.checkedInAt && (
-                          <span style={{ fontSize: "0.8rem", color: "var(--muted, #64748b)" }}>
+                          <span
+                            style={{
+                              fontSize: "0.8rem",
+                              color: "var(--muted, #64748b)",
+                            }}
+                          >
                             (Presensi pukul {clock(s.myRecord.checkedInAt)})
                           </span>
                         )}
+                        {!canManage && !s.allowSelfCheckIn && (
+                          <p className="muted">
+                            Presensi mandiri tidak diaktifkan. Kehadiran dicatat
+                            oleh dosen pengampu.
+                          </p>
+                        )}
                         {s.myRecord?.notes && (
-                          <span style={{ fontSize: "0.8rem", color: "var(--muted, #64748b)", fontStyle: "italic" }}>
+                          <span
+                            style={{
+                              fontSize: "0.8rem",
+                              color: "var(--muted, #64748b)",
+                              fontStyle: "italic",
+                            }}
+                          >
                             — {s.myRecord.notes}
                           </span>
                         )}
@@ -570,15 +785,26 @@ export function Attendance({
                   </div>
 
                   {/* Tombol Aksi */}
-                  <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 8,
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                    }}
+                  >
                     {canManage ? (
                       <>
                         {/* Tombol Cepat Buka/Tutup Sesi Langsung */}
                         {writable && (
-                          <button
+                          <Action
                             type="button"
                             className="button"
-                            title={s.isOpen ? "Tutup sesi presensi sekarang" : "Buka sesi presensi sekarang"}
+                            title={
+                              s.isOpen
+                                ? "Tutup sesi presensi sekarang"
+                                : "Buka sesi presensi sekarang"
+                            }
                             style={{
                               display: "inline-flex",
                               alignItems: "center",
@@ -592,15 +818,23 @@ export function Attendance({
                               border: `1px solid ${s.isOpen ? "#fecaca" : "#bbf7d0"}`,
                               fontWeight: 600,
                             }}
-                            onClick={async () => {
-                              await api(`/attendance/${s.id}`, "PATCH", { isOpen: !s.isOpen });
+                            run={async () => {
+                              await api(`/attendance/${s.id}`, "PATCH", {
+                                isOpen: !s.isOpen,
+                              });
                               sessionsApi.reload();
-                              setMessage(`Sesi "${s.title}" berhasil ${!s.isOpen ? "dibuka" : "ditutup"}.`);
+                              setMessage(
+                                `Sesi "${s.title}" berhasil ${!s.isOpen ? "dibuka" : "ditutup"}.`,
+                              );
                             }}
                           >
-                            {s.isOpen ? <Lock size={13} /> : <Unlock size={13} />}
+                            {s.isOpen ? (
+                              <Lock size={13} />
+                            ) : (
+                              <Unlock size={13} />
+                            )}
                             <span>{s.isOpen ? "Tutup Sesi" : "Buka Sesi"}</span>
-                          </button>
+                          </Action>
                         )}
 
                         {writable && (
@@ -616,7 +850,9 @@ export function Attendance({
                               padding: "7px 12px",
                               borderRadius: 8,
                             }}
-                            onClick={() => setModal({ kind: "schedule", session: s })}
+                            onClick={() =>
+                              setModal({ kind: "schedule", session: s })
+                            }
                           >
                             <Sliders size={14} />
                             <span>Atur Jadwal</span>
@@ -636,7 +872,9 @@ export function Attendance({
                               padding: "7px 12px",
                               borderRadius: 8,
                             }}
-                            onClick={() => setModal({ kind: "code", session: s })}
+                            onClick={() =>
+                              setModal({ kind: "code", session: s })
+                            }
                           >
                             <QrCode size={14} />
                             <span>Kode Proyektor</span>
@@ -645,7 +883,9 @@ export function Attendance({
 
                         <button
                           type="button"
-                          className={writable ? "button primary" : "button secondary"}
+                          className={
+                            writable ? "button primary" : "button secondary"
+                          }
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
@@ -656,14 +896,19 @@ export function Attendance({
                             padding: "7px 14px",
                             cursor: "pointer",
                           }}
-                          onClick={() => setModal({ kind: "manual", session: s })}
+                          onClick={() =>
+                            setModal({ kind: "manual", session: s })
+                          }
                         >
                           <UserCheck size={14} />
-                          <span>{writable ? "Lembar Presensi" : "Lihat Presensi"}</span>
+                          <span>
+                            {writable ? "Lembar Presensi" : "Lihat Presensi"}
+                          </span>
                         </button>
                       </>
                     ) : (
                       s.isOpen &&
+                      s.allowSelfCheckIn &&
                       s.myRecord?.status !== "PRESENT" && (
                         <button
                           type="button"
@@ -678,10 +923,20 @@ export function Attendance({
                             padding: "8px 16px",
                             cursor: "pointer",
                           }}
-                          onClick={() => setModal({ kind: "checkin", session: s })}
+                          onClick={() =>
+                            setModal({ kind: "checkin", session: s })
+                          }
                         >
-                          {s.requiresCode ? <KeyRound size={14} /> : <CheckCircle2 size={14} />}
-                          <span>{s.requiresCode ? "Isi Presensi (Kode)" : "Konfirmasi Hadir (1-Klik)"}</span>
+                          {s.requiresCode ? (
+                            <KeyRound size={14} />
+                          ) : (
+                            <CheckCircle2 size={14} />
+                          )}
+                          <span>
+                            {s.requiresCode
+                              ? "Isi Presensi (Kode)"
+                              : "Konfirmasi Hadir (1-Klik)"}
+                          </span>
                         </button>
                       )
                     )}
@@ -690,9 +945,21 @@ export function Attendance({
               );
             })
           ) : (
-            <div className="card" style={{ padding: 32, textAlign: "center", color: "var(--muted, #64748b)" }}>
-              <Clock size={32} style={{ margin: "0 auto 8px auto", opacity: 0.6 }} />
-              <p style={{ margin: 0 }}>Belum ada sesi presensi yang dibuat pada kelas ini.</p>
+            <div
+              className="card"
+              style={{
+                padding: 32,
+                textAlign: "center",
+                color: "var(--muted, #64748b)",
+              }}
+            >
+              <Clock
+                size={32}
+                style={{ margin: "0 auto 8px auto", opacity: 0.6 }}
+              />
+              <p style={{ margin: 0 }}>
+                Belum ada sesi presensi yang dibuat pada kelas ini.
+              </p>
             </div>
           )}
 
@@ -751,13 +1018,30 @@ export function Attendance({
 
       {/* ================= MODAL KODE PROYEKTOR / QR ================= */}
       {modal?.kind === "code" && (
-        <Modal title="Kode Presensi Layar Proyektor" onClose={() => setModal(null)} wide>
+        <Modal
+          title="Kode Presensi Layar Proyektor"
+          onClose={() => setModal(null)}
+          wide
+        >
           <div style={{ textAlign: "center", padding: "16px 0" }}>
-            <h3 style={{ margin: "0 0 6px 0", color: "var(--muted, #64748b)", fontSize: "1rem" }}>
+            <h3
+              style={{
+                margin: "0 0 6px 0",
+                color: "var(--muted, #64748b)",
+                fontSize: "1rem",
+              }}
+            >
               {modal.session.title}
             </h3>
-            <p style={{ fontSize: "0.9rem", color: "var(--muted, #64748b)", marginBottom: 24 }}>
-              Tampilkan kode ini di layar proyektor kelas agar mahasiswa dapat melakukan presensi mandiri.
+            <p
+              style={{
+                fontSize: "0.9rem",
+                color: "var(--muted, #64748b)",
+                marginBottom: 24,
+              }}
+            >
+              Tampilkan kode ini di layar proyektor kelas agar mahasiswa dapat
+              melakukan presensi mandiri.
             </p>
 
             <div
@@ -770,7 +1054,16 @@ export function Attendance({
                 marginBottom: 24,
               }}
             >
-              <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#0369a1", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
+              <div
+                style={{
+                  fontSize: "0.85rem",
+                  fontWeight: 700,
+                  color: "#0369a1",
+                  textTransform: "uppercase",
+                  letterSpacing: 1,
+                  marginBottom: 4,
+                }}
+              >
                 Kode Presensi 6 Karakter
               </div>
               <div
@@ -787,7 +1080,7 @@ export function Attendance({
             </div>
 
             <div style={{ display: "flex", justifyContent: "center", gap: 12 }}>
-              <button
+              <Action
                 type="button"
                 className="button"
                 style={{
@@ -798,34 +1091,48 @@ export function Attendance({
                   gap: 6,
                   cursor: "pointer",
                 }}
-                onClick={async () => {
+                run={async () => {
                   await api(`/attendance/${modal.session.id}`, "PATCH", {
                     isOpen: !modal.session.isOpen,
                   });
                   sessionsApi.reload();
                   setModal(null);
-                  setMessage(`Sesi presensi berhasil ${!modal.session.isOpen ? "dibuka" : "ditutup"}.`);
+                  setMessage(
+                    `Sesi presensi berhasil ${!modal.session.isOpen ? "dibuka" : "ditutup"}.`,
+                  );
                 }}
               >
-                {modal.session.isOpen ? <Lock size={16} /> : <Unlock size={16} />}
-                <span>{modal.session.isOpen ? "Tutup Sesi Sekarang" : "Buka Sesi Presensi"}</span>
-              </button>
+                {modal.session.isOpen ? (
+                  <Lock size={16} />
+                ) : (
+                  <Unlock size={16} />
+                )}
+                <span>
+                  {modal.session.isOpen
+                    ? "Tutup Sesi Sekarang"
+                    : "Buka Sesi Presensi"}
+                </span>
+              </Action>
 
-              <button
+              <Action
                 type="button"
                 className="button secondary"
                 style={{ cursor: "pointer" }}
-                onClick={async () => {
-                  const res = await api(`/attendance/${modal.session.id}`, "PATCH", {
-                    regenerateCode: true,
-                  });
+                run={async () => {
+                  const res = await api(
+                    `/attendance/${modal.session.id}`,
+                    "PATCH",
+                    {
+                      regenerateCode: true,
+                    },
+                  );
                   setModal({ kind: "code", session: res });
                   sessionsApi.reload();
                   setMessage("Kode presensi baru berhasil dibuat.");
                 }}
               >
                 Acak Ulang Kode
-              </button>
+              </Action>
             </div>
           </div>
         </Modal>
@@ -846,23 +1153,47 @@ export function Attendance({
 
       {/* ================= MODAL SELF CHECK-IN MAHASISWA ================= */}
       {modal?.kind === "checkin" && (
-        <Modal title="Presensi Mandiri Mahasiswa" onClose={() => setModal(null)}>
+        <Modal
+          title="Presensi Mandiri Mahasiswa"
+          onClose={() => setModal(null)}
+        >
           {modal.session.requiresCode ? (
             <Form
+              submitLabel="Kirim presensi"
+              busyLabel="Mencatat presensi…"
+              successMessage="Presensi berhasil dicatat. Status Anda kini Hadir."
               onSubmit={async (f) => {
                 const code = textValue(f, "code");
-                await api(`/attendance/${modal.session.id}/check-in`, "POST", { code });
+                await api(`/attendance/${modal.session.id}/check-in`, "POST", {
+                  code,
+                });
                 setModal(null);
-                setMessage("Presensi berhasil dicatat! Status Anda kini Hadir.");
+                setMessage(
+                  "Presensi berhasil dicatat! Status Anda kini Hadir.",
+                );
                 sessionsApi.reload();
               }}
             >
               <div style={{ marginBottom: 16 }}>
-                <p style={{ margin: 0, fontSize: "0.95rem", color: "var(--foreground, #1e293b)" }}>
-                  Anda melakukan presensi untuk: <strong>{modal.session.title}</strong>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: "0.95rem",
+                    color: "var(--foreground, #1e293b)",
+                  }}
+                >
+                  Anda melakukan presensi untuk:{" "}
+                  <strong>{modal.session.title}</strong>
                 </p>
-                <p style={{ margin: "4px 0 0 0", fontSize: "0.85rem", color: "var(--muted, #64748b)" }}>
-                  Masukkan kode akses 6 karakter yang ditampilkan oleh dosen di ruang kelas.
+                <p
+                  style={{
+                    margin: "4px 0 0 0",
+                    fontSize: "0.85rem",
+                    color: "var(--muted, #64748b)",
+                  }}
+                >
+                  Masukkan kode akses 6 karakter yang ditampilkan oleh dosen di
+                  ruang kelas.
                 </p>
               </div>
 
@@ -899,30 +1230,66 @@ export function Attendance({
               >
                 <CheckCircle2 size={32} />
               </div>
-              <h3 style={{ margin: "0 0 8px 0", fontSize: "1.15rem", fontWeight: 700 }}>
+              <h3
+                style={{
+                  margin: "0 0 8px 0",
+                  fontSize: "1.15rem",
+                  fontWeight: 700,
+                }}
+              >
                 Konfirmasi Kehadiran Bebas Kode
               </h3>
-              <p style={{ margin: "0 0 20px 0", color: "var(--muted, #64748b)", fontSize: "0.9rem", lineHeight: 1.5 }}>
-                Sesi perkuliahan <strong>{modal.session.title}</strong> menggunakan sistem presensi 1-klik tanpa memerlukan kode. Pastikan Anda telah hadir di ruang perkuliahan.
+              <p
+                style={{
+                  margin: "0 0 20px 0",
+                  color: "var(--muted, #64748b)",
+                  fontSize: "0.9rem",
+                  lineHeight: 1.5,
+                }}
+              >
+                Sesi perkuliahan <strong>{modal.session.title}</strong>{" "}
+                menggunakan sistem presensi 1-klik tanpa memerlukan kode.
+                Pastikan Anda telah hadir di ruang perkuliahan.
               </p>
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 20 }}>
-                <button type="button" className="button secondary" onClick={() => setModal(null)}>
-                  Batal
-                </button>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: 10,
+                  marginTop: 20,
+                }}
+              >
                 <button
                   type="button"
+                  className="button secondary"
+                  onClick={() => setModal(null)}
+                >
+                  Batal
+                </button>
+                <Action
+                  type="button"
                   className="button primary"
-                  style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
-                  onClick={async () => {
-                    await api(`/attendance/${modal.session.id}/check-in`, "POST", { code: "" });
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                  run={async () => {
+                    await api(
+                      `/attendance/${modal.session.id}/check-in`,
+                      "POST",
+                      { code: "" },
+                    );
                     setModal(null);
-                    setMessage("Presensi berhasil dicatat! Status Anda kini Hadir.");
+                    setMessage(
+                      "Presensi berhasil dicatat! Status Anda kini Hadir.",
+                    );
                     sessionsApi.reload();
                   }}
                 >
                   <CheckCircle2 size={16} />
                   <span>Konfirmasi Hadir Saya (1-Klik)</span>
-                </button>
+                </Action>
               </div>
             </div>
           )}
@@ -953,13 +1320,19 @@ export function CreateSessionModal({
   const [hasSchedule, setHasSchedule] = useState(false);
 
   const [startTime, setStartTime] = useState(() => localInput(now));
-  const [endTime, setEndTime] = useState(() => localInput(now.getTime() + 2 * 60 * 60 * 1000));
+  const [endTime, setEndTime] = useState(() =>
+    localInput(now.getTime() + 2 * 60 * 60 * 1000),
+  );
   const [requireCode, setRequireCode] = useState(false); // DEFAULT FALSE (Bebas Kode / 1-Klik)
+  const [allowSelfCheckIn, setAllowSelfCheckIn] = useState(true);
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const [error, setError] = useState<Error | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     setError(null);
     try {
@@ -979,8 +1352,10 @@ export function CreateSessionModal({
         sessionDate: isoInput(sessionDate),
         startTime: finalStartTime,
         endTime: finalEndTime,
-        isOpen: !hasSchedule || (finalStartTime ? new Date(finalStartTime) <= new Date() : true),
-        allowSelfCheckIn: true,
+        isOpen:
+          !hasSchedule ||
+          (finalStartTime ? new Date(finalStartTime) <= new Date() : true),
+        allowSelfCheckIn,
         requireCode, // false by default
       });
       onCreated();
@@ -988,102 +1363,203 @@ export function CreateSessionModal({
     } catch (err) {
       setError(err as Error);
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };
 
   return (
-    <Modal title="Buat Sesi Presensi Baru" onClose={onClose}>
-      <form onSubmit={handleSubmit} style={{ display: "grid", gap: 16 }}>
-        {error && <Notice error={error} />}
-        <Field label="Judul Sesi Presensi">
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            placeholder="Contoh: Pertemuan 1 - Pengantar Web"
-          />
-        </Field>
-
-        <Field label="Keterangan / Topik (Opsional)">
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={2}
-            placeholder="Materi perkuliahan atau pengumuman ruangan..."
-          />
-        </Field>
-
-        <Field label="Tanggal Perkuliahan">
-          <input
-            type="date"
-            value={sessionDate}
-            onChange={(e) => setSessionDate(e.target.value)}
-            required
-          />
-        </Field>
-
-        {/* Jadwal Waktu Presensi */}
-        <div style={{ borderTop: "1px solid var(--border, #f1f5f9)", paddingTop: 12 }}>
-          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontWeight: 600, fontSize: "0.9rem" }}>
+    <Modal title="Buat Sesi Presensi Baru" onClose={onClose} busy={saving}>
+      <form onSubmit={handleSubmit} aria-busy={saving}>
+        <fieldset
+          disabled={saving}
+          style={{
+            display: "grid",
+            gap: 16,
+            border: 0,
+            padding: 0,
+            margin: 0,
+            minWidth: 0,
+          }}
+        >
+          {error && <Notice error={error} />}
+          <label className="checkbox-line">
             <input
               type="checkbox"
-              checked={hasSchedule}
-              onChange={(e) => setHasSchedule(e.target.checked)}
+              checked={allowSelfCheckIn}
+              onChange={(e) => setAllowSelfCheckIn(e.target.checked)}
             />
-            <span>Jadwalkan Waktu Presensi (Mulai &amp; Selesai)</span>
+            Izinkan presensi mandiri mahasiswa
           </label>
-          <p style={{ margin: "4px 0 10px 24px", fontSize: "0.8rem", color: "var(--muted, #64748b)" }}>
-            Bila diaktifkan, sesi presensi otomatis dibuka saat jam mulai dan ditutup saat jam selesai. <strong>Jika tidak dicentang (default)</strong>, sesi akan langsung dibuka dan tetap aktif (<em>always open</em>) sampai Anda menutupnya secara manual.
-          </p>
-
-          {hasSchedule && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginLeft: 24 }}>
-              <Field label="Waktu Mulai">
-                <input
-                  type="datetime-local"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  required={hasSchedule}
-                />
-              </Field>
-              <Field label="Waktu Selesai">
-                <input
-                  type="datetime-local"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  min={startTime || undefined}
-                  required={hasSchedule}
-                />
-              </Field>
-            </div>
-          )}
-          {hasSchedule && <small>Tanggal dan jam mengikuti perangkat. Untuk sesi melewati tengah malam, pilih tanggal selesai pada hari berikutnya.</small>}
-        </div>
-
-        {/* Opsi kode (Default: Bebas Kode / 1-Klik) */}
-        <div style={{ borderTop: "1px solid var(--border, #f1f5f9)", paddingTop: 12 }}>
-          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontWeight: 600, fontSize: "0.9rem" }}>
+          <small>
+            Jika dinonaktifkan, kehadiran dicatat melalui lembar presensi dosen.
+          </small>
+          <Field label="Judul Sesi Presensi">
             <input
-              type="checkbox"
-              checked={requireCode}
-              onChange={(e) => setRequireCode(e.target.checked)}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              placeholder="Contoh: Pertemuan 1 - Pengantar Web"
             />
-            <span>Wajibkan Kode 6 Karakter (Proyektor)</span>
-          </label>
-          <p style={{ margin: "4px 0 0 24px", fontSize: "0.8rem", color: "var(--muted, #64748b)" }}>
-            <strong>Default tidak dicentang (Bebas Kode / 1-Klik)</strong>. Mahasiswa cukup klik tombol Hadir. Centang opsi ini jika Anda ingin mahasiswa wajib memasukkan kode acak 6 karakter yang diproyeksikan di ruang kelas.
-          </p>
-        </div>
+          </Field>
 
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 12, borderTop: "1px solid var(--border, #f1f5f9)", paddingTop: 14 }}>
-          <button type="button" className="button secondary" onClick={onClose} disabled={saving}>
-            Batal
-          </button>
-          <button type="submit" className="button primary" disabled={saving}>
-            {saving ? "Membuat Sesi..." : "Buat & Buka Sesi"}
-          </button>
-        </div>
+          <Field label="Keterangan / Topik (Opsional)">
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+              placeholder="Materi perkuliahan atau pengumuman ruangan..."
+            />
+          </Field>
+
+          <Field label="Tanggal Perkuliahan">
+            <input
+              type="date"
+              value={sessionDate}
+              onChange={(e) => setSessionDate(e.target.value)}
+              required
+            />
+          </Field>
+
+          {/* Jadwal Waktu Presensi */}
+          <div
+            style={{
+              borderTop: "1px solid var(--border, #f1f5f9)",
+              paddingTop: 12,
+            }}
+          >
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                cursor: "pointer",
+                fontWeight: 600,
+                fontSize: "0.9rem",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={hasSchedule}
+                onChange={(e) => setHasSchedule(e.target.checked)}
+              />
+              <span>Jadwalkan Waktu Presensi (Mulai &amp; Selesai)</span>
+            </label>
+            <p
+              style={{
+                margin: "4px 0 10px 24px",
+                fontSize: "0.8rem",
+                color: "var(--muted, #64748b)",
+              }}
+            >
+              Bila diaktifkan, sesi presensi otomatis dibuka saat jam mulai dan
+              ditutup saat jam selesai.{" "}
+              <strong>Jika tidak dicentang (default)</strong>, sesi akan
+              langsung dibuka dan tetap aktif (<em>always open</em>) sampai Anda
+              menutupnya secara manual.
+            </p>
+
+            {hasSchedule && (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "var(--session-time-columns, 1fr 1fr)",
+                  gap: 12,
+                  marginLeft: 24,
+                }}
+              >
+                <Field label="Waktu Mulai">
+                  <input
+                    type="datetime-local"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    required={hasSchedule}
+                  />
+                </Field>
+                <Field label="Waktu Selesai">
+                  <input
+                    type="datetime-local"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    min={startTime || undefined}
+                    required={hasSchedule}
+                  />
+                </Field>
+              </div>
+            )}
+            {hasSchedule && (
+              <small>
+                Tanggal dan jam mengikuti perangkat. Untuk sesi melewati tengah
+                malam, pilih tanggal selesai pada hari berikutnya.
+              </small>
+            )}
+          </div>
+
+          {/* Opsi kode (Default: Bebas Kode / 1-Klik) */}
+          <div
+            style={{
+              borderTop: "1px solid var(--border, #f1f5f9)",
+              paddingTop: 12,
+            }}
+          >
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                cursor: "pointer",
+                fontWeight: 600,
+                fontSize: "0.9rem",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={requireCode}
+                onChange={(e) => setRequireCode(e.target.checked)}
+              />
+              <span>Wajibkan Kode 6 Karakter (Proyektor)</span>
+            </label>
+            <p
+              style={{
+                margin: "4px 0 0 24px",
+                fontSize: "0.8rem",
+                color: "var(--muted, #64748b)",
+              }}
+            >
+              <strong>Default tidak dicentang (Bebas Kode / 1-Klik)</strong>.
+              Mahasiswa cukup klik tombol Hadir. Centang opsi ini jika Anda
+              ingin mahasiswa wajib memasukkan kode acak 6 karakter yang
+              diproyeksikan di ruang kelas.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 10,
+              marginTop: 12,
+              borderTop: "1px solid var(--border, #f1f5f9)",
+              paddingTop: 14,
+            }}
+          >
+            <button
+              type="button"
+              className="button secondary"
+              onClick={onClose}
+              disabled={saving}
+            >
+              Batal
+            </button>
+            <button type="submit" className="button primary" disabled={saving}>
+              {saving
+                ? "Membuat sesi…"
+                : hasSchedule
+                  ? "Buat Sesi Terjadwal"
+                  : "Buat & Buka Sesi"}
+            </button>
+          </div>
+        </fieldset>
       </form>
     </Modal>
   );
@@ -1102,6 +1578,9 @@ export function ScheduleSessionModal({
   onSaved: () => void;
 }) {
   const [isOpen, setIsOpen] = useState(Boolean(session.isOpen));
+  const [allowSelfCheckIn, setAllowSelfCheckIn] = useState(
+    Boolean(session.allowSelfCheckIn),
+  );
   const [requireCode, setRequireCode] = useState(Boolean(session.checkInCode));
   const [title, setTitle] = useState(session.title || "");
   const [description, setDescription] = useState(session.description || "");
@@ -1114,23 +1593,30 @@ export function ScheduleSessionModal({
   const initialStartTime = session.startTime
     ? localInput(session.startTime)
     : "";
-  const initialEndTime = session.endTime
-    ? localInput(session.endTime)
-    : "";
+  const initialEndTime = session.endTime ? localInput(session.endTime) : "";
 
-  const [hasSchedule, setHasSchedule] = useState(Boolean(session.startTime || session.endTime));
+  const [hasSchedule, setHasSchedule] = useState(
+    Boolean(session.startTime || session.endTime),
+  );
   const [startTime, setStartTime] = useState(initialStartTime);
   const [endTime, setEndTime] = useState(initialEndTime);
   const [checkInCode, setCheckInCode] = useState(session.checkInCode || "");
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const [error, setError] = useState<Error | null>(null);
 
   const handleQuickExtend = async (minutes: number) => {
+    if (savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     setError(null);
     try {
-      const currentEnd = session.endTime ? new Date(session.endTime).getTime() : Date.now();
-      const newEnd = new Date(Math.max(Date.now(), currentEnd) + minutes * 60000).toISOString();
+      const currentEnd = session.endTime
+        ? new Date(session.endTime).getTime()
+        : Date.now();
+      const newEnd = new Date(
+        Math.max(Date.now(), currentEnd) + minutes * 60000,
+      ).toISOString();
       await api(`/attendance/${session.id}`, "PATCH", {
         endTime: newEnd,
         isOpen: true,
@@ -1140,12 +1626,15 @@ export function ScheduleSessionModal({
     } catch (err) {
       setError(err as Error);
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     setError(null);
     try {
@@ -1153,222 +1642,378 @@ export function ScheduleSessionModal({
       let finalEndTime: string | null = null;
 
       if (hasSchedule && startTime) {
-        finalStartTime = startTime === initialStartTime ? session.startTime : isoInput(startTime);
+        finalStartTime =
+          startTime === initialStartTime
+            ? session.startTime
+            : isoInput(startTime);
       }
       if (hasSchedule && endTime) {
-        finalEndTime = endTime === initialEndTime ? session.endTime : isoInput(endTime);
+        finalEndTime =
+          endTime === initialEndTime ? session.endTime : isoInput(endTime);
       }
 
       await api(`/attendance/${session.id}`, "PATCH", {
         title,
         description: description || null,
-        sessionDate: sessionDate === initialDate && session.sessionDate ? session.sessionDate : isoInput(sessionDate),
+        sessionDate:
+          sessionDate === initialDate && session.sessionDate
+            ? session.sessionDate
+            : isoInput(sessionDate),
         startTime: hasSchedule ? finalStartTime : null,
         endTime: hasSchedule ? finalEndTime : null,
         isOpen,
+        allowSelfCheckIn,
         requireCode,
-        checkInCode: requireCode ? (checkInCode || undefined) : null,
+        checkInCode: requireCode ? checkInCode || undefined : null,
       });
       onSaved();
       onClose();
     } catch (err) {
       setError(err as Error);
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };
 
   return (
-    <Modal title={`Pengaturan & Jadwal Sesi: ${session.title}`} onClose={onClose}>
-      <form onSubmit={handleSave} style={{ display: "grid", gap: 16 }}>
-        {error && <Notice error={error} />}
-        {/* Banner Status & Perpanjang Cepat */}
-        <div
+    <Modal
+      title={`Pengaturan & Jadwal Sesi: ${session.title}`}
+      onClose={onClose}
+      busy={saving}
+    >
+      <form onSubmit={handleSave} aria-busy={saving}>
+        <fieldset
+          disabled={saving}
           style={{
-            background: "var(--neutral-soft, #f8fafc)",
-            border: "1px solid var(--border, #e2e8f0)",
-            borderRadius: 10,
-            padding: "14px 16px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 12,
+            display: "grid",
+            gap: 16,
+            border: 0,
+            padding: 0,
+            margin: 0,
+            minWidth: 0,
           }}
         >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-            <div>
-              <span style={{ fontSize: "0.82rem", color: "var(--muted, #64748b)", fontWeight: 500 }}>
-                Status Sesi Saat Ini:
-              </span>
-              <div style={{ fontWeight: 700, fontSize: "0.95rem", color: isOpen ? "#15803d" : "#64748b", marginTop: 2 }}>
-                {isOpen ? "🟢 Terbuka (Menerima Presensi)" : "🔒 Ditutup (Tidak Menerima Presensi)"}
-              </div>
-            </div>
-            <button
-              type="button"
-              className="button"
+          {error && <Notice error={error} />}
+          <label className="checkbox-line">
+            <input
+              type="checkbox"
+              checked={allowSelfCheckIn}
+              onChange={(e) => setAllowSelfCheckIn(e.target.checked)}
+            />
+            Izinkan presensi mandiri mahasiswa
+          </label>
+          <small>
+            Jika dinonaktifkan, kehadiran dicatat melalui lembar presensi dosen.
+          </small>
+          {/* Banner Status & Perpanjang Cepat */}
+          <div
+            style={{
+              background: "var(--neutral-soft, #f8fafc)",
+              border: "1px solid var(--border, #e2e8f0)",
+              borderRadius: 10,
+              padding: "14px 16px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+            }}
+          >
+            <div
               style={{
-                background: isOpen ? "#fee2e2" : "#dcfce7",
-                color: isOpen ? "#991b1b" : "#15803d",
-                border: `1px solid ${isOpen ? "#fecaca" : "#bbf7d0"}`,
-                fontSize: "0.82rem",
-                padding: "6px 14px",
-                borderRadius: 8,
-                cursor: "pointer",
-                fontWeight: 600,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: 10,
               }}
-              onClick={() => setIsOpen(!isOpen)}
             >
-              {isOpen ? "Tutup Sesi" : "Buka Sesi Sekarang"}
-            </button>
-          </div>
-
-          <div style={{ borderTop: "1px dashed var(--border, #e2e8f0)", paddingTop: 10, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <span style={{ fontSize: "0.8rem", color: "var(--muted, #64748b)" }}>
-              Perpanjang Waktu Cepat:
-            </span>
-            <button
-              type="button"
-              className="button secondary"
-              style={{ fontSize: "0.78rem", padding: "4px 10px", borderRadius: 6 }}
-              disabled={saving}
-              onClick={() => handleQuickExtend(15)}
-            >
-              +15 Menit
-            </button>
-            <button
-              type="button"
-              className="button secondary"
-              style={{ fontSize: "0.78rem", padding: "4px 10px", borderRadius: 6 }}
-              disabled={saving}
-              onClick={() => handleQuickExtend(30)}
-            >
-              +30 Menit
-            </button>
-          </div>
-        </div>
-
-        <Field label="Judul Sesi">
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            placeholder="Judul Sesi Pertemuan"
-          />
-        </Field>
-
-        <Field label="Keterangan / Topik">
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={2}
-            placeholder="Materi atau catatan perkuliahan..."
-          />
-        </Field>
-
-        <Field label="Tanggal Perkuliahan">
-          <input
-            type="date"
-            value={sessionDate}
-            onChange={(e) => setSessionDate(e.target.value)}
-            required
-          />
-        </Field>
-
-        {/* Jadwal otomatis */}
-        <div style={{ borderTop: "1px solid var(--border, #f1f5f9)", paddingTop: 12 }}>
-          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontWeight: 600, fontSize: "0.9rem" }}>
-            <input
-              type="checkbox"
-              checked={hasSchedule}
-              onChange={(e) => setHasSchedule(e.target.checked)}
-            />
-            <span>Terapkan Jadwal Otomatis (Mulai &amp; Selesai)</span>
-          </label>
-          <p style={{ margin: "4px 0 10px 24px", fontSize: "0.8rem", color: "var(--muted, #64748b)" }}>
-            Sistem otomatis membuka sesi saat waktu mulai tercapai dan menutupnya saat batas selesai lewat.
-          </p>
-
-          {hasSchedule && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginLeft: 24 }}>
-              <Field label="Waktu Mulai">
-                <input
-                  type="datetime-local"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  required={hasSchedule}
-                />
-              </Field>
-              <Field label="Waktu Selesai">
-                <input
-                  type="datetime-local"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  min={startTime || undefined}
-                  required={hasSchedule}
-                />
-              </Field>
-            </div>
-          )}
-          {hasSchedule && <small>Tanggal dan jam mengikuti perangkat. Untuk sesi melewati tengah malam, pilih tanggal selesai pada hari berikutnya.</small>}
-        </div>
-
-        {/* Kebijakan kode presensi */}
-        <div style={{ borderTop: "1px solid var(--border, #f1f5f9)", paddingTop: 12 }}>
-          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontWeight: 600, fontSize: "0.9rem" }}>
-            <input
-              type="checkbox"
-              checked={requireCode}
-              onChange={(e) => setRequireCode(e.target.checked)}
-            />
-            <span>Wajibkan Kode 6 Karakter (Proyektor)</span>
-          </label>
-          <p style={{ margin: "4px 0 8px 24px", fontSize: "0.8rem", color: "var(--muted, #64748b)" }}>
-            {requireCode
-              ? "Mahasiswa wajib memasukkan kode acak 6 karakter yang ditampilkan oleh dosen."
-              : "Default aktif: Presensi bebas kode (1-klik). Mahasiswa cukup klik konfirmasi kehadiran."}
-          </p>
-
-          {requireCode && (
-            <div style={{ marginLeft: 24, display: "flex", alignItems: "center", gap: 10, marginTop: 8 }}>
-              <input
-                type="text"
-                value={checkInCode}
-                onChange={(e) => setCheckInCode(e.target.value.toUpperCase())}
-                placeholder="Auto jika kosong"
-                maxLength={6}
+              <div>
+                <span
+                  style={{
+                    fontSize: "0.82rem",
+                    color: "var(--muted, #64748b)",
+                    fontWeight: 500,
+                  }}
+                >
+                  Status Sesi Saat Ini:
+                </span>
+                <div
+                  style={{
+                    fontWeight: 700,
+                    fontSize: "0.95rem",
+                    color: isOpen ? "#15803d" : "#64748b",
+                    marginTop: 2,
+                  }}
+                >
+                  {isOpen
+                    ? "🟢 Terbuka (Menerima Presensi)"
+                    : "🔒 Ditutup (Tidak Menerima Presensi)"}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="button"
                 style={{
-                  width: 140,
-                  fontWeight: 700,
-                  letterSpacing: 2,
-                  textTransform: "uppercase",
-                  textAlign: "center",
+                  background: isOpen ? "#fee2e2" : "#dcfce7",
+                  color: isOpen ? "#991b1b" : "#15803d",
+                  border: `1px solid ${isOpen ? "#fecaca" : "#bbf7d0"}`,
+                  fontSize: "0.82rem",
+                  padding: "6px 14px",
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  fontWeight: 600,
                 }}
-              />
+                onClick={() => setIsOpen(!isOpen)}
+              >
+                {isOpen ? "Tutup Sesi" : "Buka Sesi Sekarang"}
+              </button>
+            </div>
+
+            <div
+              style={{
+                borderTop: "1px dashed var(--border, #e2e8f0)",
+                paddingTop: 10,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                flexWrap: "wrap",
+              }}
+            >
+              <span
+                style={{ fontSize: "0.8rem", color: "var(--muted, #64748b)" }}
+              >
+                Perpanjang Waktu Cepat:
+              </span>
               <button
                 type="button"
                 className="button secondary"
-                style={{ fontSize: "0.8rem", padding: "6px 12px" }}
-                onClick={() => {
-                  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-                  let code = "";
-                  for (let i = 0; i < 6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
-                  setCheckInCode(code);
+                style={{
+                  fontSize: "0.78rem",
+                  padding: "4px 10px",
+                  borderRadius: 6,
                 }}
+                disabled={saving}
+                onClick={() => handleQuickExtend(15)}
               >
-                Acak Ulang Kode
+                +15 Menit
+              </button>
+              <button
+                type="button"
+                className="button secondary"
+                style={{
+                  fontSize: "0.78rem",
+                  padding: "4px 10px",
+                  borderRadius: 6,
+                }}
+                disabled={saving}
+                onClick={() => handleQuickExtend(30)}
+              >
+                +30 Menit
               </button>
             </div>
-          )}
-        </div>
+          </div>
 
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 12, borderTop: "1px solid var(--border, #f1f5f9)", paddingTop: 14 }}>
-          <button type="button" className="button secondary" onClick={onClose} disabled={saving}>
-            Batal
-          </button>
-          <button type="submit" className="button primary" disabled={saving}>
-            {saving ? "Menyimpan..." : "Simpan Pengaturan"}
-          </button>
-        </div>
+          <Field label="Judul Sesi">
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              placeholder="Judul Sesi Pertemuan"
+            />
+          </Field>
+
+          <Field label="Keterangan / Topik">
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+              placeholder="Materi atau catatan perkuliahan..."
+            />
+          </Field>
+
+          <Field label="Tanggal Perkuliahan">
+            <input
+              type="date"
+              value={sessionDate}
+              onChange={(e) => setSessionDate(e.target.value)}
+              required
+            />
+          </Field>
+
+          {/* Jadwal otomatis */}
+          <div
+            style={{
+              borderTop: "1px solid var(--border, #f1f5f9)",
+              paddingTop: 12,
+            }}
+          >
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                cursor: "pointer",
+                fontWeight: 600,
+                fontSize: "0.9rem",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={hasSchedule}
+                onChange={(e) => setHasSchedule(e.target.checked)}
+              />
+              <span>Terapkan Jadwal Otomatis (Mulai &amp; Selesai)</span>
+            </label>
+            <p
+              style={{
+                margin: "4px 0 10px 24px",
+                fontSize: "0.8rem",
+                color: "var(--muted, #64748b)",
+              }}
+            >
+              Sistem otomatis membuka sesi saat waktu mulai tercapai dan
+              menutupnya saat batas selesai lewat.
+            </p>
+
+            {hasSchedule && (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "var(--session-time-columns, 1fr 1fr)",
+                  gap: 12,
+                  marginLeft: 24,
+                }}
+              >
+                <Field label="Waktu Mulai">
+                  <input
+                    type="datetime-local"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    required={hasSchedule}
+                  />
+                </Field>
+                <Field label="Waktu Selesai">
+                  <input
+                    type="datetime-local"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    min={startTime || undefined}
+                    required={hasSchedule}
+                  />
+                </Field>
+              </div>
+            )}
+            {hasSchedule && (
+              <small>
+                Tanggal dan jam mengikuti perangkat. Untuk sesi melewati tengah
+                malam, pilih tanggal selesai pada hari berikutnya.
+              </small>
+            )}
+          </div>
+
+          {/* Kebijakan kode presensi */}
+          <div
+            style={{
+              borderTop: "1px solid var(--border, #f1f5f9)",
+              paddingTop: 12,
+            }}
+          >
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                cursor: "pointer",
+                fontWeight: 600,
+                fontSize: "0.9rem",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={requireCode}
+                onChange={(e) => setRequireCode(e.target.checked)}
+              />
+              <span>Wajibkan Kode 6 Karakter (Proyektor)</span>
+            </label>
+            <p
+              style={{
+                margin: "4px 0 8px 24px",
+                fontSize: "0.8rem",
+                color: "var(--muted, #64748b)",
+              }}
+            >
+              {requireCode
+                ? "Mahasiswa wajib memasukkan kode acak 6 karakter yang ditampilkan oleh dosen."
+                : "Default aktif: Presensi bebas kode (1-klik). Mahasiswa cukup klik konfirmasi kehadiran."}
+            </p>
+
+            {requireCode && (
+              <div
+                style={{
+                  marginLeft: 24,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  marginTop: 8,
+                }}
+              >
+                <input
+                  type="text"
+                  value={checkInCode}
+                  onChange={(e) => setCheckInCode(e.target.value.toUpperCase())}
+                  placeholder="Auto jika kosong"
+                  maxLength={6}
+                  style={{
+                    width: 140,
+                    fontWeight: 700,
+                    letterSpacing: 2,
+                    textTransform: "uppercase",
+                    textAlign: "center",
+                  }}
+                />
+                <button
+                  type="button"
+                  className="button secondary"
+                  style={{ fontSize: "0.8rem", padding: "6px 12px" }}
+                  onClick={() => {
+                    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+                    let code = "";
+                    for (let i = 0; i < 6; i++)
+                      code += chars.charAt(
+                        Math.floor(Math.random() * chars.length),
+                      );
+                    setCheckInCode(code);
+                  }}
+                >
+                  Acak Ulang Kode
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 10,
+              marginTop: 12,
+              borderTop: "1px solid var(--border, #f1f5f9)",
+              paddingTop: 14,
+            }}
+          >
+            <button
+              type="button"
+              className="button secondary"
+              onClick={onClose}
+              disabled={saving}
+            >
+              Batal
+            </button>
+            <button type="submit" className="button primary" disabled={saving}>
+              {saving ? "Menyimpan..." : "Simpan Pengaturan"}
+            </button>
+          </div>
+        </fieldset>
       </form>
     </Modal>
   );
@@ -1388,9 +2033,13 @@ function ManualAttendanceModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const rosterApi = useApi<{ session: any; roster: any[] }>(`/attendance/${session.id}/records`);
+  const rosterApi = useApi<{ session: any; roster: any[] }>(
+    `/attendance/${session.id}/records`,
+  );
   const [roster, setRoster] = useState<any[] | null>(null);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const savingRef = useRef(false);
 
   // Inisialisasi roster dari API
   const list = roster || rosterApi.data?.roster || [];
@@ -1398,24 +2047,33 @@ function ManualAttendanceModal({
 
   const updateStudentStatus = (userId: string, status: AttendanceStatus) => {
     if (readOnly) return;
-    const updated = list.map((item) => (item.userId === userId ? { ...item, status } : item));
+    const updated = list.map((item) =>
+      item.userId === userId ? { ...item, status } : item,
+    );
     setRoster(updated);
   };
 
   const updateStudentNotes = (userId: string, notes: string) => {
     if (readOnly) return;
-    const updated = list.map((item) => (item.userId === userId ? { ...item, notes } : item));
+    const updated = list.map((item) =>
+      item.userId === userId ? { ...item, notes } : item,
+    );
     setRoster(updated);
   };
 
   const markAllPresent = () => {
     if (readOnly) return;
-    const updated = list.map((item) => ({ ...item, status: "PRESENT" as AttendanceStatus }));
+    const updated = list.map((item) => ({
+      ...item,
+      status: "PRESENT" as AttendanceStatus,
+    }));
     setRoster(updated);
   };
 
   const handleSave = async () => {
-    if (readOnly) return;
+    if (readOnly || savingRef.current) return;
+    savingRef.current = true;
+    setError(null);
     setSaving(true);
     try {
       await api(`/attendance/${session.id}/records/batch`, "PUT", {
@@ -1427,16 +2085,37 @@ function ManualAttendanceModal({
       });
       onSaved();
       onClose();
+    } catch (error) {
+      setError(error as Error);
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };
 
   if (rosterApi.loading && !rosterApi.data) return <Loading />;
+  if (rosterApi.error && !rosterApi.data)
+    return <Notice error={rosterApi.error} />;
 
   return (
-    <Modal title={readOnly ? `Detail Presensi Pertemuan (Hanya-Baca): ${session.title}` : `Lembar Presensi: ${session.title}`} onClose={onClose} wide>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+    <Modal
+      title={
+        readOnly
+          ? `Detail Presensi Pertemuan (Hanya-Baca): ${session.title}`
+          : `Lembar Presensi: ${session.title}`
+      }
+      onClose={onClose}
+      wide
+    >
+      {error && <Notice error={error} />}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 16,
+        }}
+      >
         <div>
           <span style={{ fontSize: "0.85rem", color: "var(--muted, #64748b)" }}>
             Total Mahasiswa Terdaftar: <strong>{list.length}</strong>
@@ -1446,7 +2125,13 @@ function ManualAttendanceModal({
           <button
             type="button"
             className="button secondary"
-            style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.85rem", cursor: "pointer" }}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: "0.85rem",
+              cursor: "pointer",
+            }}
             onClick={markAllPresent}
           >
             <CheckCircle2 size={16} style={{ color: "#10b981" }} />
@@ -1455,7 +2140,10 @@ function ManualAttendanceModal({
         )}
       </div>
 
-      <div className="card table-wrap" style={{ maxHeight: "55vh", overflowY: "auto", marginBottom: 20 }}>
+      <div
+        className="card table-wrap"
+        style={{ maxHeight: "55vh", overflowY: "auto", marginBottom: 20 }}
+      >
         <table>
           <thead>
             <tr>
@@ -1469,14 +2157,30 @@ function ManualAttendanceModal({
               <tr key={m.userId}>
                 <td>
                   <div style={{ fontWeight: 600 }}>{m.name}</div>
-                  <small style={{ color: "var(--muted, #64748b)" }}>NIM: {m.identifierValue}</small>
+                  <small style={{ color: "var(--muted, #64748b)" }}>
+                    NIM: {m.identifierValue}
+                  </small>
                 </td>
                 <td>
                   {readOnly ? (
                     <AttendanceStatusBadge status={m.status} isOpen={false} />
                   ) : (
-                    <div style={{ display: "inline-flex", gap: 4, flexWrap: "wrap" }}>
-                      {(["PRESENT", "EXCUSED", "SICK", "ABSENT", "LATE"] as AttendanceStatus[]).map((st) => {
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        gap: 4,
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      {(
+                        [
+                          "PRESENT",
+                          "EXCUSED",
+                          "SICK",
+                          "ABSENT",
+                          "LATE",
+                        ] as AttendanceStatus[]
+                      ).map((st) => {
                         const isSelected = m.status === st;
                         const conf = statusLabels[st];
                         return (
@@ -1505,7 +2209,13 @@ function ManualAttendanceModal({
                 </td>
                 <td>
                   {readOnly ? (
-                    <span style={{ fontSize: "0.82rem", color: m.notes ? "inherit" : "var(--muted, #64748b)", fontStyle: m.notes ? "normal" : "italic" }}>
+                    <span
+                      style={{
+                        fontSize: "0.82rem",
+                        color: m.notes ? "inherit" : "var(--muted, #64748b)",
+                        fontStyle: m.notes ? "normal" : "italic",
+                      }}
+                    >
                       {m.notes || "—"}
                     </span>
                   ) : (
@@ -1513,8 +2223,14 @@ function ManualAttendanceModal({
                       type="text"
                       placeholder="Alasan izin / nomor surat..."
                       defaultValue={m.notes || ""}
-                      onChange={(e) => updateStudentNotes(m.userId, e.target.value)}
-                      style={{ fontSize: "0.82rem", padding: "4px 8px", width: "100%" }}
+                      onChange={(e) =>
+                        updateStudentNotes(m.userId, e.target.value)
+                      }
+                      style={{
+                        fontSize: "0.82rem",
+                        padding: "4px 8px",
+                        width: "100%",
+                      }}
                     />
                   )}
                 </td>
@@ -1539,11 +2255,21 @@ function ManualAttendanceModal({
       )}
 
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-        <button type="button" className="button secondary" onClick={onClose} disabled={saving}>
+        <button
+          type="button"
+          className="button secondary"
+          onClick={onClose}
+          disabled={saving}
+        >
           {readOnly ? "Tutup" : "Batal"}
         </button>
         {!readOnly && (
-          <button type="button" className="button primary" onClick={handleSave} disabled={saving}>
+          <button
+            type="button"
+            className="button primary"
+            onClick={handleSave}
+            disabled={saving}
+          >
             {saving ? "Menyimpan..." : "Simpan Semua Perubahan"}
           </button>
         )}
@@ -1571,7 +2297,8 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
   const data = recapApi.data!;
 
   const exportCsv = () => {
-    let csv = "NIM,Nama Mahasiswa,Email,Total Sesi,Hadir,Izin,Sakit,Alpa,Terlambat,Persentase,Status Ujian\n";
+    let csv =
+      "NIM,Nama Mahasiswa,Email,Total Sesi,Hadir,Izin,Sakit,Alpa,Terlambat,Persentase,Status Ujian\n";
     for (const s of students) {
       csv += `"${s.user.identifierValue}","${s.user.name}","${s.user.email}",${data.totalSessions},${s.presentCount},${s.excusedCount},${s.sickCount},${s.absentCount},${s.lateCount},${s.percentage}%,${s.isEligibleForExam ? "Memenuhi Syarat" : "Gugur Ujian"}\n`;
     }
@@ -1586,16 +2313,31 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
 
   return (
     <div className="attendance-recap">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 14,
+        }}
+      >
         <div>
           <span style={{ fontSize: "0.9rem", color: "var(--muted, #64748b)" }}>
-            Total Pertemuan Berlangsung: <strong>{data.totalSessions} Sesi</strong> | Ambang Batas Ujian: <strong>{data.minAttendancePercentage}%</strong>
+            Total Pertemuan Berlangsung:{" "}
+            <strong>{data.totalSessions} Sesi</strong> | Ambang Batas Ujian:{" "}
+            <strong>{data.minAttendancePercentage}%</strong>
           </span>
         </div>
         <button
           type="button"
           className="button secondary"
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.85rem", cursor: "pointer" }}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: "0.85rem",
+            cursor: "pointer",
+          }}
           onClick={exportCsv}
         >
           <FileSpreadsheet size={16} />
@@ -1623,14 +2365,58 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
                 <tr key={item.user.id}>
                   <td>
                     <div style={{ fontWeight: 600 }}>{item.user.name}</div>
-                    <small style={{ color: "var(--muted, #64748b)" }}>NIM: {item.user.identifierValue}</small>
+                    <small style={{ color: "var(--muted, #64748b)" }}>
+                      NIM: {item.user.identifierValue}
+                    </small>
                   </td>
-                  <td style={{ textAlign: "center", color: "#10b981", fontWeight: 600 }}>{item.presentCount}</td>
-                  <td style={{ textAlign: "center", color: "#f59e0b", fontWeight: 600 }}>{item.excusedCount}</td>
-                  <td style={{ textAlign: "center", color: "#3b82f6", fontWeight: 600 }}>{item.sickCount}</td>
-                  <td style={{ textAlign: "center", color: "#ef4444", fontWeight: 600 }}>{item.absentCount}</td>
-                  <td style={{ textAlign: "center", color: "#8b5cf6", fontWeight: 600 }}>{item.lateCount}</td>
-                  <td style={{ textAlign: "center", fontWeight: 700 }}>{item.percentage}%</td>
+                  <td
+                    style={{
+                      textAlign: "center",
+                      color: "#10b981",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {item.presentCount}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: "center",
+                      color: "#f59e0b",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {item.excusedCount}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: "center",
+                      color: "#3b82f6",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {item.sickCount}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: "center",
+                      color: "#ef4444",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {item.absentCount}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: "center",
+                      color: "#8b5cf6",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {item.lateCount}
+                  </td>
+                  <td style={{ textAlign: "center", fontWeight: 700 }}>
+                    {item.percentage}%
+                  </td>
                   <td style={{ textAlign: "center" }}>
                     {item.isEligibleForExam ? (
                       <span
@@ -1664,7 +2450,14 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
               ))
             ) : (
               <tr>
-                <td colSpan={8} style={{ textAlign: "center", color: "var(--muted, #64748b)", padding: 24 }}>
+                <td
+                  colSpan={8}
+                  style={{
+                    textAlign: "center",
+                    color: "var(--muted, #64748b)",
+                    padding: 24,
+                  }}
+                >
                   Belum ada data mahasiswa terdaftar pada kelas ini.
                 </td>
               </tr>

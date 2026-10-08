@@ -1,6 +1,6 @@
 # Penyelarasan penamaan data SSO ↔ E-Learning
 
-Tanggal: 18 September 2026. Sumber SSO: `docs/SSO DB.txt` dan skema Prisma pada
+Tanggal: 18 September 2026. Sumber SSO: `docs/integrations/sso/SSO DB.txt` dan skema Prisma pada
 repositori [UAY-System/SSO](https://github.com/UAY-System/SSO)
 (`apps/api/prisma/schema.prisma`).
 

@@ -16,7 +16,7 @@ E-Learning UAY adalah platform pembelajaran terpadu berbasis web yang dirancang 
 | **Frontend** | React 19, TypeScript 5.9, Vite 7 | Single Page Application (SPA), Lucide icons |
 | **Backend API** | Express 5, TypeScript 5.9 | REST API `/api/v1`, Zod validation |
 | **Database ORM** | Prisma Client 6.19 | PostgreSQL 16 (Embedded untuk dev lokal) |
-| **Cache & Realtime** | Redis 7 / In-memory Fallback | Token blacklist, rate limiting, pub-sub |
+| **Cache & Realtime** | Redis 7 wajib di production kampus | Sesi, pencabutan token, pembatasan akses; memori hanya untuk lokal/demo |
 | **Autentikasi** | Keycloak OpenID Connect (OIDC) | PKCE + Auth Code Flow, cookie berbasis sesi opaque |
 | **File Storage** | UAY File Service API (M2M) | Arsitektur *Zero-Binary* di database utama |
 | **Dokumen & Ekspor** | ExcelJS, PDFKit | Pembuatan laporan PDF Rektor & rekap nilai Excel |
@@ -347,7 +347,7 @@ taskkill /F /PID <PID_TERSEBUT>
 - Jangan pernah melakukan *hardcode* penambahan jam manual (`+ 8 jam`) pada logika query backend, karena fungsi utilitas di [`packages/shared/src/time.ts`](file:///e:/UVAYA/Project/E%20-%20Learning%20UAY/packages/shared/src/time.ts) telah mengelola konversi IANA time zone secara presisi.
 
 ### ⚠️ 4. Mode Redis (In-Memory Fallback)
-Aplikasi tidak akan mengalami *crash* apabila server Redis tidak terdeteksi di lingkungan lokal. Modul [`core.ts`](file:///e:/UVAYA/Project/E%20-%20Learning%20UAY/apps/api/src/core.ts) secara otomatis mengalihkan *cache store* ke penyimpanan memori lokal (in-memory LRU) disertai pesan log informatif.
+Fallback memori tersedia hanya pada lingkungan lokal atau demo. Dengan `NODE_ENV=production` dan `DEMO_MODE=false`, Redis wajib dikonfigurasi; gangguan operasi sesi atau pembatasan akses menghasilkan HTTP 503 `CACHE_UNAVAILABLE`. Health endpoint juga menghasilkan 503 saat PostgreSQL atau Redis wajib tidak tersedia. Rincian konfigurasi dan bukti penerimaan ada di [laporan kesiapan](docs/qa/PRODUCTION-READINESS.md).
 
 ---
 
@@ -391,9 +391,9 @@ pg_restore -U uay_admin -d elearning -v "/backup/nama_file_backup.dump"
 
 ## 11. Kontak & Referensi Dokumen Terkait
 
-- **Dokumen Matriks Hak Akses Resmi (PDF)**: [`docs/Hirarki-Role-dan-Akses-Fitur-E-Learning-UAY.pdf`](file:///e:/UVAYA/Project/E%20-%20Learning%20UAY/docs/Hirarki-Role-dan-Akses-Fitur-E-Learning-UAY.pdf)
-- **Buku Panduan Penggunaan Lengkap**: [`docs/BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md`](file:///e:/UVAYA/Project/E%20-%20Learning%20UAY/docs/BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md)
-- **Panduan Integrasi Telemetri Rektor**: [`docs/RECTOR-INTEGRATION.md`](file:///e:/UVAYA/Project/E%20-%20Learning%20UAY/docs/RECTOR-INTEGRATION.md)
-- **Status & Bukti Implementasi Teknis**: [`docs/IMPLEMENTATION.md`](file:///e:/UVAYA/Project/E%20-%20Learning%20UAY/docs/IMPLEMENTATION.md)
+- **Dokumen Matriks Hak Akses Resmi (PDF)**: [`docs/architecture/Hirarki-Role-dan-Akses-Fitur-E-Learning-UAY.pdf`](file:///e:/UVAYA/Project/E%20-%20Learning%20UAY/docs/architecture/Hirarki-Role-dan-Akses-Fitur-E-Learning-UAY.pdf)
+- **Buku Panduan Penggunaan Lengkap**: [`docs/guides/BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md`](file:///e:/UVAYA/Project/E%20-%20Learning%20UAY/docs/guides/BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md)
+- **Panduan Integrasi Telemetri Rektor**: [`docs/integrations/rector/RECTOR-INTEGRATION.md`](file:///e:/UVAYA/Project/E%20-%20Learning%20UAY/docs/integrations/rector/RECTOR-INTEGRATION.md)
+- **Status & Bukti Implementasi Teknis**: [`docs/architecture/IMPLEMENTATION.md`](file:///e:/UVAYA/Project/E%20-%20Learning%20UAY/docs/architecture/IMPLEMENTATION.md)
 
 *(Dokumen ini diperbarui secara berkala seiring penambahan kapabilitas sistem E-Learning UAY)*

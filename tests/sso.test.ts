@@ -9,14 +9,28 @@ const base = {
   identifier_value: "202600001",
 };
 
-test('rector identity is a separate read-only role, including Indonesian alias',()=>{
-  assert.equal(normalizeRole('rektor'),'RECTOR');
-  const rector=identityClaims.parse({...base,roles:['RECTOR']});
-  assert.equal(rector.role,'RECTOR');assert.equal(rector.userType,'STAFF');
-  assert.equal(identityClaims.parse({...base,roles:['INSTRUCTOR','RECTOR']}).role,'RECTOR');
-  assert.equal(identityClaims.parse({...base,roles:['DEPARTMENT_ADMIN','RECTOR']}).role,'RECTOR');
-  assert.equal(identityClaims.parse({...base,roles:['STAFF','RECTOR']}).role,'RECTOR');
-  assert.equal(identityClaims.parse({...base,roles:['RECTOR','SUPER_ADMIN']}).role,'SUPER_ADMIN');
+test("rector identity is a separate read-only role, including Indonesian alias", () => {
+  assert.equal(normalizeRole("rektor"), "RECTOR");
+  const rector = identityClaims.parse({ ...base, roles: ["RECTOR"] });
+  assert.equal(rector.role, "RECTOR");
+  assert.equal(rector.userType, "STAFF");
+  assert.equal(
+    identityClaims.parse({ ...base, roles: ["INSTRUCTOR", "RECTOR"] }).role,
+    "RECTOR",
+  );
+  assert.equal(
+    identityClaims.parse({ ...base, roles: ["DEPARTMENT_ADMIN", "RECTOR"] })
+      .role,
+    "RECTOR",
+  );
+  assert.equal(
+    identityClaims.parse({ ...base, roles: ["STAFF", "RECTOR"] }).role,
+    "RECTOR",
+  );
+  assert.equal(
+    identityClaims.parse({ ...base, roles: ["RECTOR", "SUPER_ADMIN"] }).role,
+    "SUPER_ADMIN",
+  );
 });
 
 test("SSO roles take precedence over the legacy role claim", () => {
@@ -93,6 +107,33 @@ test("getEffectiveRedirectUri extracts dynamic host or falls back", async () => 
   assert.ok(fallbackUri.includes("/api/v1/auth/callback"));
 });
 
+test("backend authorization retains its callback and rejects untrusted redirect hosts", async () => {
+  const { getEffectiveRedirectUri, getEffectiveOrigin } =
+    await import("../apps/api/src/auth.js");
+  const { config } = await import("../apps/api/src/core.js");
+  const approved = config.allowedOrigins.find((origin) =>
+    origin.startsWith("http://127.0.0.1:"),
+  )!;
+  assert.ok(approved);
+  const request: any = {
+    headers: { host: new URL(approved).host },
+    secure: false,
+  };
+  assert.equal(
+    getEffectiveRedirectUri(request),
+    approved + "/api/v1/auth/callback",
+  );
+  const hostile: any = {
+    headers: {
+      origin: "https://evil.example",
+      "x-forwarded-host": "evil.example",
+      "x-forwarded-proto": "https",
+    },
+  };
+  assert.equal(getEffectiveRedirectUri(hostile), config.redirectUri);
+  assert.equal(getEffectiveOrigin(hostile), config.origin);
+});
+
 test("SSO identity accepts non-UUID sub and synthesizes fallback email", () => {
   const minimalClaims = {
     sub: "uay-sub-12345",
@@ -124,10 +165,10 @@ test("normalizeRole recognizes various Keycloak super admin aliases and group fo
     "sysadmin",
   ];
   for (const alias of adminAliases) {
-    assert.equal(normalizeRole(alias), "SUPER_ADMIN", `Failed for alias: ${alias}`);
+    assert.equal(
+      normalizeRole(alias),
+      "SUPER_ADMIN",
+      `Failed for alias: ${alias}`,
+    );
   }
 });
-
-
-
-

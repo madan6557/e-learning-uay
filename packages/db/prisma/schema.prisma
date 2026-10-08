@@ -23,6 +23,30 @@ generator client {
 }
 
 /// Global policy defaults. Published grade records keep their own snapshots.
+model SystemAnnouncement {
+  id             String   @id @default(uuid()) @map("system_announcement_id")
+  title          String
+  content        String
+  category       String
+  referenceNumber String? @map("reference_number")
+  authorId       String   @map("author_id")
+  authorName     String   @map("author_name")
+  authorRole     String   @map("author_role")
+  targetRole     String   @default("ALL") @map("target_role")
+  departmentCode String?  @map("department_code")
+  isImportant    Boolean  @default(false) @map("is_important")
+  isPublished    Boolean  @default(true) @map("is_published")
+  attachmentUrl  String?  @map("attachment_url")
+  attachmentName String?  @map("attachment_name")
+  publishedAt    DateTime @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("published_at")
+  createdAt      DateTime @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@index([departmentCode, isPublished])
+  @@index([isImportant, publishedAt])
+  @@map("system_announcements")
+}
+
 model AcademicSettings {
   id                       String   @id @default("global") @map("academic_settings_id")
   academicYear             String   @map("academic_year")

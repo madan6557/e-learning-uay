@@ -9,7 +9,10 @@ import {
   timingSafeEqual,
 } from "node:crypto";
 import { z } from "zod";
-import { identityClaims, normalizeRole } from "../../../packages/shared/src/sso.js";
+import {
+  identityClaims,
+  normalizeRole,
+} from "../../../packages/shared/src/sso.js";
 import {
   db,
   cache,
@@ -90,21 +93,20 @@ export function clearAllAuthCookies(res: Response, req?: Request) {
 
 export function getEffectiveRedirectUri(req?: Request): string {
   if (req) {
-    const forwardedHost = (req.headers["x-forwarded-host"] as string)?.split(",")[0]?.trim();
-    const host = forwardedHost || req.headers.host;
-    const proto =
-      (req.headers["x-forwarded-proto"] as string)?.split(",")[0]?.trim() ||
-      (req.secure ? "https" : "http");
-    if (host) {
-      const apiHost = config.apiOrigin ? new URL(config.apiOrigin).host : null;
-      if (apiHost && host === apiHost && config.redirectUri) {
-        return config.redirectUri;
-      }
-      const isFrontendDomain =
-        host.endsWith(".vercel.app") ||
-        (process.env.APP_ORIGIN && host === new URL(process.env.APP_ORIGIN).host);
-      const callbackPath = isFrontendDomain ? "/auth/callback" : "/api/v1/auth/callback";
-      return `${proto}://${host}${callbackPath}`;
+    const host = String(
+      req.headers["x-forwarded-host"] ?? req.headers.host ?? "",
+    )
+      .split(",")[0]
+      .trim();
+    const proto = String(
+      req.headers["x-forwarded-proto"] ?? (req.secure ? "https" : "http"),
+    )
+      .split(",")[0]
+      .trim();
+    const origin = proto + "://" + host;
+    if (host && config.allowedOrigins.includes(origin)) {
+      // This endpoint owns its PKCE state in the backend, so it must also own the callback.
+      return origin + "/api/v1/auth/callback";
     }
   }
   return config.redirectUri;
@@ -113,10 +115,15 @@ export function getEffectiveRedirectUri(req?: Request): string {
 export function getEffectiveOrigin(req?: Request): string {
   if (req) {
     const originHeader = req.headers.origin;
-    if (typeof originHeader === "string" && originHeader.trim().length > 0) {
+    if (
+      typeof originHeader === "string" &&
+      config.allowedOrigins.includes(originHeader.trim().replace(/\/$/, ""))
+    ) {
       return originHeader.trim().replace(/\/$/, "");
     }
-    const forwardedHost = (req.headers["x-forwarded-host"] as string)?.split(",")[0]?.trim();
+    const forwardedHost = (req.headers["x-forwarded-host"] as string)
+      ?.split(",")[0]
+      ?.trim();
     const host = forwardedHost || req.headers.host;
     const proto =
       (req.headers["x-forwarded-proto"] as string)?.split(",")[0]?.trim() ||
@@ -126,7 +133,8 @@ export function getEffectiveOrigin(req?: Request): string {
       if (apiHost && host === apiHost && config.origin) {
         return config.origin;
       }
-      return `${proto}://${host}`;
+      const requestOrigin = `${proto}://${host}`;
+      if (config.allowedOrigins.includes(requestOrigin)) return requestOrigin;
     }
   }
   return config.origin;
@@ -454,8 +462,8 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
     adminIdentifiers.length > 0 &&
     Boolean(
       (username && adminIdentifiers.includes(username.toLowerCase())) ||
-        (rawEmail && adminIdentifiers.includes(rawEmail.toLowerCase())) ||
-        (ssoUserId && adminIdentifiers.includes(ssoUserId.toLowerCase())),
+      (rawEmail && adminIdentifiers.includes(rawEmail.toLowerCase())) ||
+      (ssoUserId && adminIdentifiers.includes(ssoUserId.toLowerCase())),
     );
 
   if (isAdminIdentifier) {
@@ -473,30 +481,29 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
         ...(username
           ? [
               { username: { equals: username, mode: "insensitive" as const } },
-              { identifierValue: { equals: username, mode: "insensitive" as const } },
+              {
+                identifierValue: {
+                  equals: username,
+                  mode: "insensitive" as const,
+                },
+              },
             ]
           : []),
         ...(identifierVal
-          ? [{ identifierValue: { equals: identifierVal, mode: "insensitive" as const } }]
+          ? [
+              {
+                identifierValue: {
+                  equals: identifierVal,
+                  mode: "insensitive" as const,
+                },
+              },
+            ]
           : []),
         ...(rawEmail
           ? [{ email: { equals: rawEmail, mode: "insensitive" as const } }]
           : []),
       ],
     },
-  });
-
-  console.log("[Auth OIDC] syncUser identity details:", {
-    ssoUserId,
-    username,
-    email: rawEmail,
-    candidateCount: candidateRoles.length,
-    validRoles,
-    existingUserFound: !!existingUser,
-    existingUserRole: existingUser?.role,
-    realmRoles: (rawClaims as any).realm_access?.roles,
-    groups: (rawClaims as any).groups,
-    userType: rawClaims.user_type,
   });
 
   // 3. Populate missing/fallback claims
@@ -509,8 +516,10 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
     if (!claims.user_type) claims.user_type = existingUser.userType;
     if (!claims.name) claims.name = existingUser.name;
     if (!claims.email) claims.email = existingUser.email;
-    if (!claims.identifier_value) claims.identifier_value = existingUser.identifierValue;
-    if (!claims.department_scopes) claims.department_scopes = existingUser.departmentScopes;
+    if (!claims.identifier_value)
+      claims.identifier_value = existingUser.identifierValue;
+    if (!claims.department_scopes)
+      claims.department_scopes = existingUser.departmentScopes;
   } else {
     claims.roles = ["STUDENT"];
     claims.role = "STUDENT";
@@ -666,25 +675,20 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
 async function tokenRequest(values: Record<string, string>) {
   const metadata = await oidcMetadata();
   const tokenEndpoint = oidcServerEndpoint(metadata.token_endpoint);
-  const response = await serviceFetch(
-    "sso",
-    tokenEndpoint,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        ...values,
-        client_id: config.clientId,
-        ...(config.clientSecret ? { client_secret: config.clientSecret } : {}),
-      }),
-    },
-  );
+  const response = await serviceFetch("sso", tokenEndpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      ...values,
+      client_id: config.clientId,
+      ...(config.clientSecret ? { client_secret: config.clientSecret } : {}),
+    }),
+  });
   if (!response.ok) {
-    const errorBody = await response.text().catch(() => "");
+    await response.body?.cancel();
     console.error("[Auth OIDC] Token request failed at token_endpoint:", {
       status: response.status,
       statusText: response.statusText,
-      errorBody,
       sentRedirectUri: values.redirect_uri,
       clientId: config.clientId,
       hasClientSecret: Boolean(config.clientSecret),
@@ -802,11 +806,7 @@ export function registerAuth(app: Express) {
     );
   });
   app.post("/api/v1/auth/development-login", async (req, res) => {
-    ensure(
-      !production && config.authMode === "development",
-      404,
-      "NOT_FOUND",
-    );
+    ensure(!production && config.authMode === "development", 404, "NOT_FOUND");
     const { userId } = z.object({ userId: z.string().uuid() }).parse(req.body);
     const user = await db.user.findUnique({ where: { id: userId } });
     ensure(user && user.status === "ACTIVE", 403, "ACCOUNT_DISABLED");
@@ -876,7 +876,6 @@ export function registerAuth(app: Express) {
       },
       req,
     );
-
 
     res.json({
       ok: true,
@@ -1010,8 +1009,7 @@ export function registerAuth(app: Express) {
 
       ensure(stateValid && nonce && verifier, 401, "INVALID_STATE");
 
-      const effectiveRedirectUri =
-        redirectUri || getEffectiveRedirectUri(req);
+      const effectiveRedirectUri = redirectUri || getEffectiveRedirectUri(req);
 
       const tokens = await tokenRequest({
         grant_type: "authorization_code",
@@ -1053,7 +1051,9 @@ export function registerAuth(app: Express) {
       clearAllAuthCookies(res, req);
       const code =
         err?.code ||
-        (err?.name === "ZodError" ? "INVALID_CALLBACK_PARAMS" : "SESSION_EXPIRED");
+        (err?.name === "ZodError"
+          ? "INVALID_CALLBACK_PARAMS"
+          : "SESSION_EXPIRED");
       return res.redirect(`/?auth_error=${encodeURIComponent(code)}`);
     }
   });
@@ -1139,7 +1139,10 @@ export function registerAuth(app: Express) {
                 backchannelLoggedOut = true;
               }
             } catch (err) {
-              console.warn("[Auth OIDC] Backchannel logout request failed:", err);
+              console.warn(
+                "[Auth OIDC] Backchannel logout request failed:",
+                err,
+              );
             }
           }
 
@@ -1181,14 +1184,17 @@ export async function authenticate(
           user = await syncUser({ ...claims, ...(ssoMe ?? {}) }, true);
         }
         ensure(
-          user && user.status === "ACTIVE" && !(await cache.get(`revoked:${user.ssoUserId}`)),
+          user &&
+            user.status === "ACTIVE" &&
+            !(await cache.get(`revoked:${user.ssoUserId}`)),
           403,
           "ACCOUNT_DISABLED",
         );
         req.context = {
           user,
           requestId:
-            req.get("X-Request-ID")?.slice(0, 100) ?? randomBytes(16).toString("hex"),
+            req.get("X-Request-ID")?.slice(0, 100) ??
+            randomBytes(16).toString("hex"),
           ip: req.ip ?? "",
           userAgent: req.get("User-Agent")?.slice(0, 500) ?? "",
         };
@@ -1206,7 +1212,11 @@ export async function authenticate(
         }
         return next();
       } catch (err: any) {
-        if (err?.code === "ACCOUNT_DISABLED" || err?.status === 403) {
+        if (
+          err?.code === "ACCOUNT_DISABLED" ||
+          err?.status === 403 ||
+          err?.status === 503
+        ) {
           return next(err);
         }
       }
@@ -1298,17 +1308,20 @@ export async function authenticate(
     userAgent: req.get("User-Agent")?.slice(0, 500) ?? "",
   };
   const activeKey = `active:${user.id}`;
-  cache.get(activeKey).then((recent) => {
-    if (!recent) {
-      cache.set(activeKey, "1", 60).catch(() => {});
-      db.user
-        .update({
-          where: { id: user.id },
-          data: { lastActiveAt: new Date() },
-        })
-        .catch(() => {});
-    }
-  }).catch(() => {});
+  cache
+    .get(activeKey)
+    .then((recent) => {
+      if (!recent) {
+        cache.set(activeKey, "1", 60).catch(() => {});
+        db.user
+          .update({
+            where: { id: user.id },
+            data: { lastActiveAt: new Date() },
+          })
+          .catch(() => {});
+      }
+    })
+    .catch(() => {});
   _res.setHeader(
     "Server-Timing",
     `auth;dur=${(performance.now() - authStarted).toFixed(1)}`,

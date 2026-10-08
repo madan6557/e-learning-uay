@@ -1,4 +1,7 @@
-import { uploadLimit, validateUploadSize } from "../../../../packages/shared/src/files";
+import {
+  uploadLimit,
+  validateUploadSize,
+} from "../../../../packages/shared/src/files";
 import { formatDateTime } from "../../../../packages/shared/src/time";
 import { readCache, readTtl } from "../readCache";
 import labels from "../../../../packages/shared/src/id.json";
@@ -11,7 +14,9 @@ export class ApiError extends Error {
     public details?: any,
     public requestId?: string,
   ) {
-    const base = (t.errors as Record<string, string>)[code] ?? code;
+    const base =
+      (t.errors as Record<string, string>)[code] ??
+      "Tindakan belum berhasil. Coba lagi; jika tetap gagal, hubungi administrator dengan ID permintaan di bawah.";
     super(details?.at ? `${base} ${formatDateTime(details.at)}.` : base);
   }
 }
@@ -44,7 +49,9 @@ export function getAuthToken(): string | null {
   return currentAuthToken;
 }
 
-export function parseJwtPayload(token: string | null | undefined): Record<string, any> | null {
+export function parseJwtPayload(
+  token: string | null | undefined,
+): Record<string, any> | null {
   if (!token || typeof token !== "string") return null;
   try {
     const parts = token.split(".");
@@ -133,20 +140,16 @@ async function requestApi<T>(
         await new Promise((r) => setTimeout(r, 1500));
         continue;
       }
-      if (response.status === 401) {
+      if (
+        response.status === 401 &&
+        !(path === "/me" && !token && data.error?.code === "LOGIN_REQUIRED")
+      ) {
         uncertainWrites.clear();
         readCache.clear();
         setAuthToken(null);
         if (typeof sessionStorage !== "undefined") {
           sessionStorage.removeItem("uay-return-path");
-          try {
-            for (let i = sessionStorage.length - 1; i >= 0; i--) {
-              const k = sessionStorage.key(i);
-              if (k && (k.startsWith("oidc.") || k.startsWith("authority."))) {
-                sessionStorage.removeItem(k);
-              }
-            }
-          } catch {}
+          // OIDC state belongs to an in-progress sign-in and must survive unrelated 401s.
         }
         window.dispatchEvent(new Event("session-expired"));
       }
@@ -213,4 +216,3 @@ export async function uploadFile(
   });
   return api(`/files/${ticket.fileObjectId}/confirm`, "POST", {});
 }
-

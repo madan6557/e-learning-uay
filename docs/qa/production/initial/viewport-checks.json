@@ -1,0 +1,78 @@
+{
+  "environment": "Lokal — elearning_visual_test, fixture OIDC/File Service",
+  "capturedAt": "2026-10-08T15:53:04.849Z",
+  "checks": [
+    {
+      "label": "super-admin-announcements",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "title": "Pengumuman & Surat Edaran",
+      "url": "/announcements",
+      "width": 1440
+    },
+    {
+      "label": "super-admin-announcements",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "title": "Pengumuman & Surat Edaran",
+      "url": "/announcements",
+      "width": 768
+    },
+    {
+      "label": "super-admin-announcements",
+      "viewport": 390,
+      "scrollWidth": 375,
+      "title": "Pengumuman & Surat Edaran",
+      "url": "/announcements",
+      "width": 375
+    },
+    {
+      "label": "admin-prodi-dashboard",
+      "viewport": 1440,
+      "scrollWidth": 1425,
+      "title": "Dashboard administrasi",
+      "url": "/dashboard",
+      "width": 1425
+    },
+    {
+      "label": "admin-prodi-dashboard",
+      "viewport": 768,
+      "scrollWidth": 753,
+      "title": "Dashboard administrasi",
+      "url": "/dashboard",
+      "width": 753
+    },
+    {
+      "label": "admin-prodi-dashboard",
+      "viewport": 390,
+      "scrollWidth": 375,
+      "title": "Dashboard administrasi",
+      "url": "/dashboard",
+      "width": 375
+    },
+    {
+      "label": "dosen-dashboard",
+      "viewport": 1440,
+      "scrollWidth": 1425,
+      "title": "Selamat Malam, Aruna.",
+      "url": "/dashboard",
+      "width": 1425
+    },
+    {
+      "label": "dosen-dashboard",
+      "viewport": 768,
+      "scrollWidth": 753,
+      "title": "Selamat Malam, Aruna.",
+      "url": "/dashboard",
+      "width": 753
+    },
+    {
+      "label": "dosen-dashboard",
+      "viewport": 390,
+      "scrollWidth": 375,
+      "title": "Selamat Malam, Aruna.",
+      "url": "/dashboard",
+      "width": 375
+    }
+  ]
+}

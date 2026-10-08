@@ -10,6 +10,7 @@ export interface ModalProps {
   wide?: boolean;
   fullScreen?: boolean;
   extraActions?: ReactNode;
+  busy?: boolean;
 }
 
 export function Modal({
@@ -19,11 +20,16 @@ export function Modal({
   wide = false,
   fullScreen = false,
   extraActions,
+  busy = false,
 }: ModalProps) {
   const ref = useRef<HTMLDialogElement>(null);
+  const busyRef = useRef(busy);
+  busyRef.current = busy;
   const titleId = useId();
 
   const close = async () => {
+    if (busyRef.current) return;
+    if (ref.current?.querySelector('[aria-busy="true"]')) return;
     if (
       ref.current?.querySelector('[data-dirty="true"]') &&
       !(await confirmAction(
@@ -45,7 +51,11 @@ export function Modal({
     return () => el.removeEventListener("cancel", cancel);
   }, []);
 
-  const modalClass = fullScreen ? "modal fullscreen" : wide ? "modal wide" : "modal";
+  const modalClass = fullScreen
+    ? "modal fullscreen"
+    : wide
+      ? "modal wide"
+      : "modal";
 
   return (
     <dialog
@@ -59,12 +69,20 @@ export function Modal({
       <div className="modal-scroll">
         <div className="modal-heading">
           <h2 id={titleId}>{title}</h2>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              marginLeft: "auto",
+            }}
+          >
             {extraActions}
             <button
               type="button"
               className="icon-button"
               onClick={close}
+              disabled={busy}
               aria-label={labels.close}
             >
               <X size={20} />

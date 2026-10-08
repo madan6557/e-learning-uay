@@ -71,7 +71,7 @@ Langkah disajikan sebagai daftar bernomor tanpa checklist. Tanggal dan jam mengi
 
 **Periksa hasil:** Beranda tampil dengan identitas yang benar. Menu sesuai kewenangan akun.
 
-![Masuk dengan akun kampus dengan penanda merah](images/tutorial/01-masuk.png)
+![Masuk dengan akun kampus dengan penanda merah](../images/tutorial/01-masuk.png)
 
 Penanda gambar: 1 Masuk SSO
 
@@ -111,7 +111,7 @@ Bila login gagal, periksa identitas di SSO dan gunakan layanan bantuan akun kamp
 
 **Periksa hasil:** Halaman yang dibuka sesuai kebutuhan. Perubahan penting memiliki pesan berhasil tersimpan.
 
-![Navigasi menu dan pemulihan draf dengan penanda merah](images/tutorial/11-dosen-kelas.png)
+![Navigasi menu dan pemulihan draf dengan penanda merah](../images/tutorial/11-dosen-kelas.png)
 
 Penanda gambar: 1 Pengaturan kelas; 2 Tambah pertemuan; 3 Tab presensi
 
@@ -158,7 +158,7 @@ Draf lokal hanya tersedia pada perangkat dan browser yang menyimpannya. Pesan dr
 
 **Periksa hasil:** Identitas dikenali, notifikasi sudah ditinjau, dan sesi berakhir.
 
-![Profil notifikasi bantuan dan keluar dengan penanda merah](images/tutorial/51-profil.png)
+![Profil notifikasi bantuan dan keluar dengan penanda merah](../images/tutorial/51-profil.png)
 
 Penanda gambar: 1 Keluar
 
@@ -199,7 +199,7 @@ Tanggal dan jam mengikuti zona perangkat dengan offset sebenarnya, misalnya GMT+
 
 **Periksa hasil:** Kartu kelas tersedia pada Kelas saya dan dapat dibuka.
 
-![Menemukan dan bergabung ke kelas dengan penanda merah](images/tutorial/41-gabung-kelas.png)
+![Menemukan dan bergabung ke kelas dengan penanda merah](../images/tutorial/41-gabung-kelas.png)
 
 Penanda gambar: 2 Kunci; 3 Gabung
 
@@ -239,7 +239,7 @@ Kelas yang tidak menerima pendaftaran mandiri perlu didaftarkan oleh dosen/admin
 
 **Periksa hasil:** Status Hadir tampil pada sesi yang dipilih.
 
-![Mengisi presensi satu klik atau kode dengan penanda merah](images/tutorial/44-mahasiswa-pin.png)
+![Mengisi presensi satu klik atau kode dengan penanda merah](../images/tutorial/44-mahasiswa-pin.png)
 
 Penanda gambar: 1 Kode; 2 Kirim
 
@@ -283,7 +283,7 @@ Gunakan isian kode yang tersedia. Tampilan Kode Proyektor pada versi ini tidak m
 
 **Periksa hasil:** Progres materi tersimpan dan status selesai/unduhan sesuai syarat tampil.
 
-![Mempelajari materi teks PDF dan video dengan penanda merah](images/tutorial/46-materi-pdf.png)
+![Mempelajari materi teks PDF dan video dengan penanda merah](../images/tutorial/46-materi-pdf.png)
 
 Penanda gambar: 1 Nomor halaman; 2 Berikutnya
 
@@ -325,7 +325,7 @@ Modul yang ditampilkan pada pembaca dokumen adalah PDF. Ubah bahan Word atau Pow
 
 **Periksa hasil:** Versi baru tercatat pada Riwayat pengumpulan. Bukti unggah saja belum berarti tugas dikumpulkan.
 
-![Mengumpulkan tugas dan memeriksa versi dengan penanda merah](images/tutorial/47-kumpulkan-tugas.png)
+![Mengumpulkan tugas dan memeriksa versi dengan penanda merah](../images/tutorial/47-kumpulkan-tugas.png)
 
 Penanda gambar: 1 Jawaban
 
@@ -368,7 +368,7 @@ Jika tombol pengumpulan ditutup, periksa tenggat, toleransi, jumlah versi, statu
 
 **Periksa hasil:** Pengerjaan berstatus selesai/terkumpul pada riwayat. Nilai terlihat sesuai kebijakan publikasi hasil.
 
-![Mengerjakan kuis sampai terkumpul dengan penanda merah](images/tutorial/48-kerjakan-kuis.png)
+![Mengerjakan kuis sampai terkumpul dengan penanda merah](../images/tutorial/48-kerjakan-kuis.png)
 
 Penanda gambar: 1 Mulai
 
@@ -410,7 +410,7 @@ Nilai yang belum terlihat tidak selalu berarti jawaban hilang. Jawaban uraian/be
 
 **Periksa hasil:** Anda mengetahui status nilai dan sesi kehadiran yang perlu diklarifikasi.
 
-![Memeriksa nilai dan kehadiran dengan penanda merah](images/tutorial/49-mahasiswa-nilai.png)
+![Memeriksa nilai dan kehadiran dengan penanda merah](../images/tutorial/49-mahasiswa-nilai.png)
 
 Penanda gambar: 1 Status publikasi
 
@@ -450,7 +450,7 @@ Jangan menyimpulkan kelayakan hanya dari warna lencana. Periksa data sesi dan ke
 
 **Periksa hasil:** Section tersusun dengan jenis, jadwal, dan status yang sesuai.
 
-![Menyiapkan kelas dan Section dengan penanda merah](images/tutorial/12-section.png)
+![Menyiapkan kelas dan Section dengan penanda merah](../images/tutorial/12-section.png)
 
 Penanda gambar: 1 Judul; 2 Jenis; 3 Jadwal; 4 Publikasi
 
@@ -493,7 +493,7 @@ Konten terbit di dalam Section draf tetap belum dapat diakses mahasiswa. Periksa
 
 **Periksa hasil:** Materi terbit dalam Section yang tepat dan berkas dapat dibaca/diunduh sesuai syarat.
 
-![Mengunggah Modul PDF dan bahan praktikum dengan penanda merah](images/tutorial/13-materi-pdf.png)
+![Mengunggah Modul PDF dan bahan praktikum dengan penanda merah](../images/tutorial/13-materi-pdf.png)
 
 Penanda gambar: 1 Jenis materi; 2 Unggah; 3 Jumlah halaman; 4 Publikasi
 
@@ -536,7 +536,7 @@ Bahan PPTX/DOCX yang ingin dibaca sebagai Modul PDF perlu dikonversi ke PDF terl
 
 **Periksa hasil:** Video atau tautan tersedia dengan jadwal dan syarat penyelesaian yang benar.
 
-![Mengatur video dan tautan pembelajaran dengan penanda merah](images/tutorial/14-materi-video.png)
+![Mengatur video dan tautan pembelajaran dengan penanda merah](../images/tutorial/14-materi-video.png)
 
 Penanda gambar: 1 URL video; 2 Durasi; 3 Ambang tonton
 
@@ -578,7 +578,7 @@ Video sematan memiliki tombol Tandai Selesai Menonton dan tidak menggunakan peng
 
 **Periksa hasil:** Artikel tersusun, tersimpan, dan tampil sesuai status publikasi.
 
-![Menyusun artikel teks dan impor artikel dengan penanda merah](images/tutorial/34-artikel.png)
+![Menyusun artikel teks dan impor artikel dengan penanda merah](../images/tutorial/34-artikel.png)
 
 Penanda gambar: 1 Isi artikel; 2 Sisipkan lampiran; 3 Artikel AI
 
@@ -624,7 +624,7 @@ Periksa hasil impor sebelum menerbitkan. Artikel dari AI tetap membutuhkan pemer
 
 **Periksa hasil:** Tugas muncul dengan instruksi, kategori, format, dan jadwal yang benar.
 
-![Membuat tugas dengan tenggat dan toleransi dengan penanda merah](images/tutorial/15-tugas-editor.png)
+![Membuat tugas dengan tenggat dan toleransi dengan penanda merah](../images/tutorial/15-tugas-editor.png)
 
 Penanda gambar: 1 Instruksi; 2 Tenggat; 3 Batas toleransi; 4 Versi
 
@@ -670,7 +670,7 @@ Contoh nilai pada tutorial adalah bahan latihan. Sesuaikan dengan ketentuan kela
 
 **Periksa hasil:** Skor dan umpan balik tersimpan serta tersedia bagi mahasiswa setelah publikasi.
 
-![Memeriksa menilai dan menerbitkan tugas dengan penanda merah](images/tutorial/26-koreksi-tugas.png)
+![Memeriksa menilai dan menerbitkan tugas dengan penanda merah](../images/tutorial/26-koreksi-tugas.png)
 
 Penanda gambar: 1 Skor; 2 Umpan balik
 
@@ -712,7 +712,7 @@ Selesaikan penilaian pengumpulan yang masuk sebelum menerbitkan nilai akhir kela
 
 **Periksa hasil:** Kuis memiliki soal valid dan pengaturan waktu/hasil yang sesuai.
 
-![Membuat kuis dan mengatur waktu hasil dengan penanda merah](images/tutorial/17-kuis-editor.png)
+![Membuat kuis dan mengatur waktu hasil dengan penanda merah](../images/tutorial/17-kuis-editor.png)
 
 Penanda gambar: 1 Perhitungan poin; 2 Durasi menit; 3 Mode waktu; 4 Publikasi hasil
 
@@ -761,7 +761,7 @@ Contoh: mahasiswa mulai 09.50, durasi 30 menit, waktu tutup 10.00. Pengerjaan ha
 
 **Periksa hasil:** Soal objektif memiliki opsi, kunci, dan poin sesuai maksud penilaian.
 
-![Menyusun kunci soal objektif dengan penanda merah](images/tutorial/35-soal-objektif.png)
+![Menyusun kunci soal objektif dengan penanda merah](../images/tutorial/35-soal-objektif.png)
 
 Penanda gambar: 1 Jenis soal; 2 Poin soal; 3 Kunci jawaban
 
@@ -807,7 +807,7 @@ Coba baca soal sebagai mahasiswa. Pertanyaan, pilihan, dan kunci harus saling ko
 
 **Periksa hasil:** Pasangan/urutan lengkap dan soal manual mempunyai rubrik yang dapat digunakan pengajar.
 
-![Menyusun pasangan urutan uraian dan unggahan dengan penanda merah](images/tutorial/36-soal-manual.png)
+![Menyusun pasangan urutan uraian dan unggahan dengan penanda merah](../images/tutorial/36-soal-manual.png)
 
 Penanda gambar: 2 Rubrik; 3 Batas kata
 
@@ -849,7 +849,7 @@ Nilai uraian dan unggahan menunggu penilaian pengajar. Publikasi hasil otomatis 
 
 **Periksa hasil:** Jawaban manual sudah dinilai dan soal dapat digunakan kembali melalui bank.
 
-![Menilai kuis dan mengelola bank soal dengan penanda merah](images/tutorial/27-koreksi-kuis.png)
+![Menilai kuis dan mengelola bank soal dengan penanda merah](../images/tutorial/27-koreksi-kuis.png)
 
 Penanda gambar: 1 Nilai soal; 2 Umpan balik
 
@@ -892,7 +892,7 @@ Bank soal tersimpan per kelas. Saat menggunakan soal bank, tinjau kembali poin d
 
 **Periksa hasil:** Sesi benar tersedia dan menerima presensi sesuai mode/jadwal yang dipilih.
 
-![Membuka sesi presensi dengan jadwal atau kode dengan penanda merah](images/tutorial/20-presensi-baru.png)
+![Membuka sesi presensi dengan jadwal atau kode dengan penanda merah](../images/tutorial/20-presensi-baru.png)
 
 Penanda gambar: 1 Judul sesi; 2 Jadwal ON; 3 kode ON
 
@@ -936,7 +936,7 @@ Default sesi baru adalah tanpa kode dan tanpa jadwal. Periksa kedua checkbox seb
 
 **Periksa hasil:** Status, jadwal, dan kode terbaru berlaku pada sesi yang sama.
 
-![Mengubah jadwal menutup dan memperpanjang presensi dengan penanda merah](images/tutorial/21-presensi-jadwal.png)
+![Mengubah jadwal menutup dan memperpanjang presensi dengan penanda merah](../images/tutorial/21-presensi-jadwal.png)
 
 Penanda gambar: 1 Buka atau tutup sesi; 2 Perpanjang 15 menit; 3 Kebijakan kode; 4 Simpan pengaturan
 
@@ -980,7 +980,7 @@ Mengganti kode membuat kode lama tidak berlaku bagi pengisian berikutnya. Beri t
 
 **Periksa hasil:** Status manual tersimpan dan rekap/CSV sesuai data sesi.
 
-![Mengoreksi kehadiran manual dan ekspor rekap dengan penanda merah](images/tutorial/22-presensi-roster.png)
+![Mengoreksi kehadiran manual dan ekspor rekap dengan penanda merah](../images/tutorial/22-presensi-roster.png)
 
 Penanda gambar: 1 Semua hadir; 2 Status; 3 Simpan
 
@@ -1023,7 +1023,7 @@ Contoh: 6 Hadir + 1 Terlambat dari 8 sesi = 87,5 persen. Ambang kelayakan pada r
 
 **Periksa hasil:** Bobot valid 100 persen dan sumber nilai tiap kategori sesuai rancangan.
 
-![Mengatur bobot dan sumber nilai kategori dengan penanda merah](images/tutorial/25-bobot-nilai.png)
+![Mengatur bobot dan sumber nilai kategori dengan penanda merah](../images/tutorial/25-bobot-nilai.png)
 
 Penanda gambar: 1 Versi; 2 Bobot; 3 Sumber
 
@@ -1067,7 +1067,7 @@ Bobot penilaian dinonaktifkan setelah nilai akhir dikunci. Tentukan bobot sebelu
 
 **Periksa hasil:** Nilai akhir terbit, komponen telah ditinjau, dan ekspor sesuai hasil kelas.
 
-![Meninjau menghitung dan mempublikasikan nilai akhir dengan penanda merah](images/tutorial/24-rekap-nilai.png)
+![Meninjau menghitung dan mempublikasikan nilai akhir dengan penanda merah](../images/tutorial/24-rekap-nilai.png)
 
 Penanda gambar: 1 Bobot; 2 Ekspor
 
@@ -1113,7 +1113,7 @@ Contoh nilai kategori 80, 90, 70, 75, 85 dengan bobot 10, 20, 10, 25, 35 menghas
 
 **Periksa hasil:** Peserta dan komunikasi sesuai kelas. Kelas hasil duplikasi siap ditata untuk semester baru.
 
-![Mengelola peserta pengumuman berkas dan duplikasi dengan penanda merah](images/tutorial/30-duplikasi.png)
+![Mengelola peserta pengumuman berkas dan duplikasi dengan penanda merah](../images/tutorial/30-duplikasi.png)
 
 Penanda gambar: 1 Nama; 2 Semester
 
@@ -1157,7 +1157,7 @@ Untuk pendaftaran dan impor peserta secara lengkap, ikuti A3 dan A4. Duplikasi t
 
 **Periksa hasil:** Data yang ditinjau sesuai program studi dalam cakupan akun.
 
-![Memeriksa cakupan program studi dengan penanda merah](images/tutorial/60-admin-beranda.png)
+![Memeriksa cakupan program studi dengan penanda merah](../images/tutorial/60-admin-beranda.png)
 
 Penanda gambar: 1 Katalog; 2 Kelas
 
@@ -1196,7 +1196,7 @@ Dosen lintas prodi perlu afiliasi/penugasan yang sesuai. Pemilihan pengajar tida
 
 **Periksa hasil:** Mata kuliah dan rombel tersedia dengan pengampu serta periode yang benar.
 
-![Menambahkan mata kuliah dan rombel dengan penanda merah](images/tutorial/62-tambah-kelas.png)
+![Menambahkan mata kuliah dan rombel dengan penanda merah](../images/tutorial/62-tambah-kelas.png)
 
 Penanda gambar: 1 Mata kuliah; 2 Tahun; 3 Kunci; 4 Pengampu
 
@@ -1242,7 +1242,7 @@ Satu mata kuliah dapat memiliki beberapa rombel. Periksa periode dan nama rombel
 
 **Periksa hasil:** Peserta aktif sesuai daftar yang disetujui dan aksesnya benar.
 
-![Mendaftarkan dan mengaktifkan peserta dengan penanda merah](images/tutorial/63-daftar-peserta.png)
+![Mendaftarkan dan mengaktifkan peserta dengan penanda merah](../images/tutorial/63-daftar-peserta.png)
 
 Penanda gambar: 1 Cari; 2 Pencarian
 
@@ -1284,7 +1284,7 @@ Periksa NIM, bukan hanya kemiripan nama. Mahasiswa di luar cakupan dapat tidak m
 
 **Periksa hasil:** Baris yang disetujui masuk ke sasaran yang benar dan baris bermasalah telah ditangani.
 
-![Impor peserta nilai atau bank soal dengan penanda merah](images/tutorial/29-impor.png)
+![Impor peserta nilai atau bank soal dengan penanda merah](../images/tutorial/29-impor.png)
 
 Penanda gambar: 1 Jenis; 2 Template; 3 Berkas
 
@@ -1330,7 +1330,7 @@ Dosen dan Super admin yang berhak mengelola kelas menggunakan alur impor yang sa
 
 **Periksa hasil:** Status kelas sesuai kondisi perkuliahan dan data siap ditinjau.
 
-![Memantau kelas dan mengatur arsip dengan penanda merah](images/tutorial/37-pengaturan.png)
+![Memantau kelas dan mengatur arsip dengan penanda merah](../images/tutorial/37-pengaturan.png)
 
 Penanda gambar: 1 Status kelas; 2 Kunci; 3 Simpan
 
@@ -1371,7 +1371,7 @@ Arsip kelas dan penguncian nilai akhir adalah dua status berbeda. Periksa keduan
 
 **Periksa hasil:** Pemantauan dan administrasi dilakukan pada prodi/kelas yang dimaksud.
 
-![Meninjau administrasi seluruh program studi dengan penanda merah](images/tutorial/70-super-admin.png)
+![Meninjau administrasi seluruh program studi dengan penanda merah](../images/tutorial/70-super-admin.png)
 
 Penanda gambar: 1 Kebijakan; 2 Tambah kelas
 
@@ -1410,7 +1410,7 @@ Pimpinan menggunakan role dan cakupan yang diberikan kampus. Versi ini tidak men
 
 **Periksa hasil:** Semester aktif, daftar pilihan, dan banner sesuai periode kampus.
 
-![Mengatur tahun ajaran dan banner semester dengan penanda merah](images/tutorial/71-semester.png)
+![Mengatur tahun ajaran dan banner semester dengan penanda merah](../images/tutorial/71-semester.png)
 
 Penanda gambar: 1 Semester aktif; 2 Label; 3 Tambah; 4 Simpan
 
@@ -1451,7 +1451,7 @@ Mengganti semester aktif tidak mendaftarkan ulang peserta atau menerbitkan kelas
 
 **Periksa hasil:** Versi kebijakan dan ambang yang diisikan tersimpan.
 
-![Menetapkan kebijakan skala nilai dan ambang hadir dengan penanda merah](images/tutorial/72-kebijakan.png)
+![Menetapkan kebijakan skala nilai dan ambang hadir dengan penanda merah](../images/tutorial/72-kebijakan.png)
 
 Penanda gambar: 1 Versi; 2 Ambang
 

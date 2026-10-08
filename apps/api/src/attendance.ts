@@ -1,13 +1,25 @@
 import type { Express } from "express";
 import { z } from "zod";
-import { db, ensure, classAccess, mutate, audit, getAcademicSettings } from "./core.js";
+import {
+  db,
+  ensure,
+  classAccess,
+  mutate,
+  audit,
+  getAcademicSettings,
+} from "./core.js";
 import type { AttendanceStatus } from "@prisma/client";
-import { attendanceSummary, matchesAttendanceCode } from "../../../packages/shared/src/attendance.js";
+import {
+  attendanceSummary,
+  matchesAttendanceCode,
+} from "../../../packages/shared/src/attendance.js";
 
 const statusSchema = z.enum(["PRESENT", "EXCUSED", "SICK", "ABSENT", "LATE"]);
 const timestamp = z.string().datetime({ offset: true });
-const optionalTimestamp = timestamp.nullable().optional()
-  .transform(value => value == null ? value : new Date(value));
+const optionalTimestamp = timestamp
+  .nullable()
+  .optional()
+  .transform((value) => (value == null ? value : new Date(value)));
 
 function generateRandomCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -75,13 +87,19 @@ export function registerAttendanceRoutes(app: Express) {
 
     const formatted = sessions.map((s) => {
       const myRecord = s.records.find((r) => r.userId === user.id) || null;
-      const presentCount = s.records.filter((r) => r.status === "PRESENT").length;
-      const excusedCount = s.records.filter((r) => r.status === "EXCUSED").length;
+      const presentCount = s.records.filter(
+        (r) => r.status === "PRESENT",
+      ).length;
+      const excusedCount = s.records.filter(
+        (r) => r.status === "EXCUSED",
+      ).length;
       const sickCount = s.records.filter((r) => r.status === "SICK").length;
       const absentCount = s.records.filter((r) => r.status === "ABSENT").length;
       const lateCount = s.records.filter((r) => r.status === "LATE").length;
 
-      const isScheduled = Boolean(!s.isOpen && s.startTime && now < s.startTime);
+      const isScheduled = Boolean(
+        !s.isOpen && s.startTime && now < s.startTime,
+      );
       const isLive = Boolean(s.isOpen && (!s.endTime || now <= s.endTime));
       const isExpired = Boolean(s.endTime && now > s.endTime);
 
@@ -154,16 +172,28 @@ export function registerAttendanceRoutes(app: Express) {
             isOpen: z.boolean().optional(),
             allowSelfCheckIn: z.boolean().default(true),
             requireCode: z.boolean().default(false),
-            checkInCode: z.string().trim().regex(/^[A-Za-z0-9]{6}$/).optional().nullable(),
+            checkInCode: z
+              .string()
+              .trim()
+              .regex(/^[A-Za-z0-9]{6}$/)
+              .optional()
+              .nullable(),
           })
           .parse(req.body);
 
-        ensure(!data.startTime || !data.endTime || data.startTime <= data.endTime, 400, "INVALID_DATE_RANGE");
+        ensure(
+          !data.startTime || !data.endTime || data.startTime <= data.endTime,
+          400,
+          "INVALID_DATE_RANGE",
+        );
         const now = new Date();
 
         // Kode presensi: DEFAULT TANPA KODE (null) kecuali requireCode = true atau kode custom diisi
         let code: string | null = null;
-        if (data.requireCode || (data.checkInCode && data.checkInCode.trim().length > 0)) {
+        if (
+          data.requireCode ||
+          (data.checkInCode && data.checkInCode.trim().length > 0)
+        ) {
           code = (
             data.checkInCode && data.checkInCode.trim().length >= 4
               ? data.checkInCode.trim()
@@ -174,7 +204,11 @@ export function registerAttendanceRoutes(app: Express) {
         // Status awal buka sesi:
         // Jika dijadwalkan di masa depan (startTime > now) dan isOpen tidak ditentukan khusus, mulai sebagai terjadwal (false)
         let initialIsOpen = data.isOpen ?? true;
-        if (data.startTime && data.startTime > now && data.isOpen === undefined) {
+        if (
+          data.startTime &&
+          data.startTime > now &&
+          data.isOpen === undefined
+        ) {
           initialIsOpen = false;
         }
 
@@ -257,13 +291,24 @@ export function registerAttendanceRoutes(app: Express) {
             allowSelfCheckIn: z.boolean().optional(),
             requireCode: z.boolean().optional(),
             regenerateCode: z.boolean().optional(),
-            checkInCode: z.string().trim().regex(/^[A-Za-z0-9]{6}$/).nullable().optional(),
+            checkInCode: z
+              .string()
+              .trim()
+              .regex(/^[A-Za-z0-9]{6}$/)
+              .nullable()
+              .optional(),
           })
           .parse(req.body);
 
-        const nextStart = data.startTime === undefined ? session.startTime : data.startTime;
-        const nextEnd = data.endTime === undefined ? session.endTime : data.endTime;
-        ensure(!nextStart || !nextEnd || nextStart <= nextEnd, 400, "INVALID_DATE_RANGE");
+        const nextStart =
+          data.startTime === undefined ? session.startTime : data.startTime;
+        const nextEnd =
+          data.endTime === undefined ? session.endTime : data.endTime;
+        ensure(
+          !nextStart || !nextEnd || nextStart <= nextEnd,
+          400,
+          "INVALID_DATE_RANGE",
+        );
         let nextCode = session.checkInCode;
         if (data.requireCode === false) {
           nextCode = null;
@@ -284,10 +329,13 @@ export function registerAttendanceRoutes(app: Express) {
           where: { id: sessionId },
           data: {
             title: data.title ?? undefined,
-            description: data.description !== undefined ? data.description : undefined,
-            sectionId: data.sectionId !== undefined ? data.sectionId : undefined,
+            description:
+              data.description !== undefined ? data.description : undefined,
+            sectionId:
+              data.sectionId !== undefined ? data.sectionId : undefined,
             sessionDate: data.sessionDate ?? undefined,
-            startTime: data.startTime !== undefined ? data.startTime : undefined,
+            startTime:
+              data.startTime !== undefined ? data.startTime : undefined,
             endTime: data.endTime !== undefined ? data.endTime : undefined,
             isOpen: data.isOpen !== undefined ? data.isOpen : undefined,
             allowSelfCheckIn:
@@ -513,6 +561,9 @@ export function registerAttendanceRoutes(app: Express) {
         ensure(session, 404, "NOT_FOUND");
         const now = new Date();
 
+        ensure(user.role === "STUDENT", 403, "STUDENT_ONLY");
+        await classAccess(tx, user, session.classId, true, true);
+
         // Jika sesi terjadwal dan saat ini dalam rentang waktu perkuliahan, aktifkan otomatis
         if (
           !session.isOpen &&
@@ -529,11 +580,17 @@ export function registerAttendanceRoutes(app: Express) {
 
         ensure(session.isOpen, 403, "SESSION_CLOSED");
         ensure(session.allowSelfCheckIn, 403, "SELF_CHECKIN_DISABLED");
-        ensure(session.class.status === "PUBLISHED", 403, "CLASS_NOT_PUBLISHED");
+        ensure(
+          session.class.status === "PUBLISHED",
+          403,
+          "CLASS_NOT_PUBLISHED",
+        );
 
         // Periksa enrollment aktif mahasiswa
         const enrollment = await tx.enrollment.findUnique({
-          where: { classId_userId: { classId: session.classId, userId: user.id } },
+          where: {
+            classId_userId: { classId: session.classId, userId: user.id },
+          },
         });
         ensure(enrollment && enrollment.isActive, 403, "ENROLLMENT_REQUIRED");
 
@@ -542,7 +599,7 @@ export function registerAttendanceRoutes(app: Express) {
           ensure(false, 400, "SESSION_NOT_STARTED_YET");
         }
         if (session.endTime && now > session.endTime) {
-          ensure(false, 400, "SESSION_EXPIRED");
+          ensure(false, 400, "ATTENDANCE_CLOSED");
         }
 
         // Validasi kode presensi (Hanya jika sesi mensyaratkan kode)
@@ -654,7 +711,12 @@ export function registerAttendanceRoutes(app: Express) {
       }
 
       // Persentase kehadiran: (Hadir + Terlambat) / Total Sesi
-      const summary = attendanceSummary(presentCount, lateCount, totalSessions, minAttendancePercentage);
+      const summary = attendanceSummary(
+        presentCount,
+        lateCount,
+        totalSessions,
+        minAttendancePercentage,
+      );
 
       return {
         user: e.user,

@@ -2,9 +2,9 @@
 """
 Dokumen Tinjauan Teknis & Usulan Penyelarasan Integrasi SSO UAY — E-Learning UAY
 Menghasilkan 3 format:
-1. docs/Review Kebutuhan Integrasi SSO UAY - E-Learning.md
-2. docs/Review Kebutuhan Integrasi SSO UAY - E-Learning.docx
-3. docs/Review Kebutuhan Integrasi SSO UAY - E-Learning.pdf
+1. docs/integrations/sso/Review Kebutuhan Integrasi SSO UAY - E-Learning.md
+2. docs/integrations/sso/Review Kebutuhan Integrasi SSO UAY - E-Learning.docx
+3. docs/integrations/sso/Review Kebutuhan Integrasi SSO UAY - E-Learning.pdf
 """
 from __future__ import annotations
 import os

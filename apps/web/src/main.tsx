@@ -16,18 +16,11 @@
  */
 
 import { ConfirmationHost } from "./confirm";
+import { FeedbackHost } from "./feedback";
 import { createRoot } from "react-dom/client";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Analytics } from "@vercel/analytics/react";
-import {
-  t,
-  api,
-  useApi,
-  Loading,
-  navigate,
-  Empty,
-  setAuthToken,
-} from "./lib";
+import { t, api, useApi, Loading, navigate, Empty, setAuthToken } from "./lib";
 import { handleOidcCallback, logoutOidc } from "./oidc";
 import { readCache } from "./readCache";
 import {
@@ -41,6 +34,7 @@ import { useSessionExpiry } from "./useSessionExpiry";
 import "./styles.css";
 import "./workspace.css";
 import "./experience.css";
+import "./phone.css";
 
 import { PublicShell, AuthShell } from "./components/layout";
 import { Landing } from "./pages/Landing";
@@ -67,7 +61,9 @@ const ClassPage = lazy(() =>
   import("./ClassPage").then((m) => ({ default: m.ClassPage })),
 );
 const RectorDashboard = lazy(() =>
-  import("./rector/RectorDashboard").then((m) => ({ default: m.RectorDashboard })),
+  import("./rector/RectorDashboard").then((m) => ({
+    default: m.RectorDashboard,
+  })),
 );
 const QuizPage = lazy(() =>
   import("./Assessment").then((m) => ({ default: m.QuizPage })),
@@ -78,14 +74,17 @@ const AssignmentPage = lazy(() =>
 
 function AuthCallbackPage({
   config,
+  configError,
   onSuccess,
 }: {
   config?: any;
+  configError?: Error | null;
   onSuccess: () => void;
 }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!config) return;
     let active = true;
     async function processCallback() {
       try {
@@ -99,14 +98,11 @@ function AuthCallbackPage({
         }
         setAuthToken(oidcUser.access_token);
 
-
         // Sync with backend session & user database
         await api("/auth/session", "POST", {
           accessToken: oidcUser.access_token,
           idToken: oidcUser.id_token,
           refreshToken: oidcUser.refresh_token,
-        }).catch((err) => {
-          console.warn("[Auth] Session sync non-fatal error:", err);
         });
         if (active) {
           readCache.clear();
@@ -138,7 +134,7 @@ function AuthCallbackPage({
     };
   }, [config]);
 
-  if (error) {
+  if (error || configError) {
     return (
       <PublicShell config={config}>
         <div
@@ -165,7 +161,7 @@ function AuthCallbackPage({
               fontSize: "0.95rem",
             }}
           >
-            {error}
+            {error ?? configError?.message}
           </p>
           <button
             type="button"
@@ -202,24 +198,24 @@ function AuthCallbackPage({
 }
 
 function App() {
-  const config = useApi("/auth/config"),
-    identity = useApi("/me");
-  const user = identity.data;
   const [route, setRoute] = useState(routeFromLocation);
+  const config = useApi("/auth/config"),
+    identity = useApi(route.startsWith("/auth/callback") ? null : "/me");
+  const user = identity.data;
   useNavigationGuard();
   useEffect(() => {
-    if (route.split('?')[0] !== '/Panduan/panduan.html') return;
+    if (route.split("?")[0] !== "/Panduan/panduan.html") return;
     // A new tab uses the shared campus cookie. Recheck the account when the
     // reader returns after logging out or switching accounts in another tab.
     const refreshIdentity = () => identity.reload();
     const onVisibility = () => {
-      if (document.visibilityState === 'visible') refreshIdentity();
+      if (document.visibilityState === "visible") refreshIdentity();
     };
-    window.addEventListener('focus', refreshIdentity);
-    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener("focus", refreshIdentity);
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
-      window.removeEventListener('focus', refreshIdentity);
-      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener("focus", refreshIdentity);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [route]);
 
@@ -273,8 +269,8 @@ function App() {
   }, []);
   useEffect(() => {
     if (!user) return;
-    if(user.role === 'RECTOR' && route.split('?')[0] === '/dashboard') {
-      navigate('/rector', true);
+    if (user.role === "RECTOR" && route.split("?")[0] === "/dashboard") {
+      navigate("/rector", true);
       return;
     }
     const pending = sessionStorage.getItem("uay-return-path");
@@ -291,7 +287,8 @@ function App() {
         return;
       }
     }
-    if (["/", "/login"].includes(route)) navigate(user.role === 'RECTOR' ? '/rector' : '/dashboard', true);
+    if (["/", "/login"].includes(route))
+      navigate(user.role === "RECTOR" ? "/rector" : "/dashboard", true);
   }, [user, route]);
 
   const logout = async () => {
@@ -330,6 +327,7 @@ function App() {
     return (
       <AuthCallbackPage
         config={config.data}
+        configError={config.error}
         onSuccess={() => {
           identity.reload();
           const pending = sessionStorage.getItem("uay-return-path");
@@ -376,7 +374,7 @@ function App() {
   const parsedRoute = new URL(route, location.origin);
   const pathname = parsedRoute.pathname;
   const params = parsedRoute.searchParams;
-  if (pathname === '/Panduan/panduan.html')
+  if (pathname === "/Panduan/panduan.html")
     return (
       <Suspense fallback={<Loading />}>
         <GuidePage user={user} />
@@ -384,10 +382,24 @@ function App() {
     );
   const [, section, id, itemKind, itemSlug] = pathname.split("/");
   let page;
-  if (section === 'rector' && ['RECTOR','SUPER_ADMIN'].includes(user.role))
+  if (section === "rector" && ["RECTOR", "SUPER_ADMIN"].includes(user.role))
     page = <RectorDashboard demo={!!config.data?.demoEnabled} />;
-  else if (user.role === 'RECTOR' && !['profile','help','announcements'].includes(section))
-    page = <Empty><h1>Pemantauan akademik</h1><p>Akun rektor dapat melihat laporan kegiatan dosen dan penyelesaian penilaian.</p><a className="button" href="/rector">Buka laporan akademik</a></Empty>;
+  else if (
+    user.role === "RECTOR" &&
+    !["profile", "help", "announcements"].includes(section)
+  )
+    page = (
+      <Empty>
+        <h1>Pemantauan akademik</h1>
+        <p>
+          Akun rektor dapat melihat laporan kegiatan dosen dan penyelesaian
+          penilaian.
+        </p>
+        <a className="button" href="/rector">
+          Buka laporan akademik
+        </a>
+      </Empty>
+    );
   else if (section === "classes" && id)
     page = (
       <ClassPage
@@ -436,8 +448,7 @@ function App() {
     page = <AnnouncementsPage user={user} config={config.data} />;
   else if (section === "profile")
     page = <Profile user={user} accountUrl={config.data?.accountUrl} />;
-  else if (section === "help")
-    page = <HelpPage user={user} />;
+  else if (section === "help") page = <HelpPage user={user} />;
   else if (
     ["", "dashboard", "classes", "agenda", "grades", "notifications"].includes(
       section,
@@ -489,6 +500,7 @@ const isVercel =
 root.render(
   <>
     <ConfirmationHost />
+    <FeedbackHost />
     <App />
     {isVercel && <Analytics />}
   </>,

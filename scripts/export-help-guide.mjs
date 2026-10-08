@@ -59,7 +59,14 @@ for (const article of guide.tutorials) {
     "",
     `**Periksa hasil:** ${article.result}`,
     "",
-    ...(article.figure ? [`![${article.figure.alt}](images/tutorial/${basename(article.figure.src)})`, "", article.figure.caption, ""] : []),
+    ...(article.figure
+      ? [
+          `![${article.figure.alt}](images/tutorial/${basename(article.figure.src)})`,
+          "",
+          article.figure.caption,
+          "",
+        ]
+      : []),
     "### Input, pilihan, dan tombol",
     "",
     "| Kontrol di layar | Nilai atau contoh | Fungsi dan akibat |",
@@ -112,7 +119,8 @@ const master = lines.join("\n");
 const alias =
   "# Panduan operasional E-Learning UAY\n\nGunakan [panduan penggunaan utama](BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md) atau menu **Bantuan** di aplikasi. Panduan di aplikasi mengikuti role akun.\n\nDokumen ini merupakan tautan ke sumber utama agar petunjuk tidak memiliki dua salinan yang berbeda.\n";
 const files = {
-  "guide-grade-scales.json": JSON.stringify(GRADE_SCALE_PRESETS, null, 2) + "\n",
+  "guide-grade-scales.json":
+    JSON.stringify(GRADE_SCALE_PRESETS, null, 2) + "\n",
   "BUKU_PANDUAN_PENGGUNAAN_ELEARNING_UAY.md": master,
   "PANDUAN_OPERASIONAL_PENGGUNA_UAY.md": alias,
 };
@@ -120,23 +128,30 @@ const check = process.argv.includes("--check");
 const outputIndex = process.argv.indexOf("--output-dir");
 if (outputIndex >= 0 && !process.argv[outputIndex + 1])
   throw new Error("--output-dir requires a directory");
-const directories = [resolve(root, "docs")];
+const defaultDirectory = resolve(root, "docs/guides");
+const directories = [defaultDirectory];
 if (outputIndex >= 0) directories.push(resolve(process.argv[outputIndex + 1]));
 for (const directory of directories) {
+  const imageDirectory =
+    directory === defaultDirectory ? "../images/tutorial" : "images/tutorial";
   if (!check)
-    mkdirSync(resolve(directory, "images/tutorial"), { recursive: true });
+    mkdirSync(resolve(directory, imageDirectory), { recursive: true });
   for (const [name, content] of Object.entries(files)) {
+    const outputContent =
+      directory === defaultDirectory
+        ? content.replaceAll("](images/tutorial/", "](../images/tutorial/")
+        : content;
     const path = resolve(directory, name);
     if (check) {
-      if (readFileSync(path, "utf8").replaceAll("\r\n", "\n") !== content)
+      if (readFileSync(path, "utf8").replaceAll("\r\n", "\n") !== outputContent)
         throw new Error(`${path} is out of date; run npm run docs:guide`);
-    } else writeFileSync(path, content);
+    } else writeFileSync(path, outputContent);
   }
   if (!check)
-    for (const article of guide.tutorials.filter(article => article.figure))
+    for (const article of guide.tutorials.filter((article) => article.figure))
       copyFileSync(
         resolve(root, "apps/web/public", article.figure.src.slice(1)),
-        resolve(directory, "images/tutorial", basename(article.figure.src)),
+        resolve(directory, imageDirectory, basename(article.figure.src)),
       );
 }
 console.log(

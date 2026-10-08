@@ -37,7 +37,7 @@ bash "${DEPLOY_DIR}/scripts/backup-native.sh"
 
 # Hentikan backend PM2 sementara waktu agar tidak ada transaksi baru
 echo "Menghentikan layanan backend di PM2..."
-pm2 stop uay-api
+pm2 stop elearning-uay
 
 # Putuskan seluruh koneksi aktif ke database
 sudo -u "${DB_USER}" psql -d postgres -v ON_ERROR_STOP=1 -v db_name="$DB_NAME" <<'SQL'

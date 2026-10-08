@@ -591,6 +591,14 @@
   "errors": {
     "LOGIN_REQUIRED": "Silakan masuk untuk melanjutkan.",
     "SESSION_EXPIRED": "Sesi Anda berakhir. Silakan masuk kembali.",
+    "SESSION_CLOSED": "Sesi presensi sudah ditutup. Minta dosen membuka sesi atau mencatat kehadiran Anda.",
+    "SELF_CHECKIN_DISABLED": "Presensi mandiri belum diaktifkan. Kehadiran dicatat oleh dosen pengampu.",
+    "ATTENDANCE_CLOSED": "Batas waktu pengisian presensi sudah lewat. Hubungi dosen pengampu.",
+    "SESSION_NOT_STARTED_YET": "Waktu pengisian presensi belum dimulai. Coba kembali sesuai jadwal perkuliahan.",
+    "CODE_REQUIRED": "Masukkan kode presensi 6 karakter yang ditampilkan dosen.",
+    "INVALID_CHECKIN_CODE": "Kode presensi tidak sesuai. Periksa kode terbaru pada layar dosen, lalu coba lagi.",
+    "CLASS_NOT_PUBLISHED": "Kelas belum diterbitkan. Hubungi dosen pengampu atau admin prodi.",
+    "ENROLLMENT_REQUIRED": "Anda belum terdaftar sebagai peserta aktif kelas ini. Hubungi admin prodi.",
     "ACCOUNT_DISABLED": "Akun Anda dinonaktifkan oleh administrator institusi. Silakan hubungi bagian akademik.",
     "CLASS_ACCESS_DENIED": "Anda belum terdaftar atau ditugaskan pada kelas ini.",
     "PARTICIPATION_DISABLED": "Hak partisipasi Anda pada kelas ini telah dinonaktifkan oleh pengajar atau administrator.",
@@ -614,12 +622,14 @@
     "CORRECTION_REASON_REQUIRED": "Koreksi nilai wajib disertai alasan minimal 5 karakter.",
     "FILE_SERVICE_UNAVAILABLE": "Layanan berkas sedang tidak tersedia. Permintaan belum berhasil; silakan coba lagi.",
     "FILE_NOT_READY": "Berkas belum selesai diverifikasi atau tidak dapat digunakan dalam aktivitas ini.",
+    "DOWNLOAD_TICKET_EXPIRED": "Tautan unduhan sudah kedaluwarsa atau tidak valid. Buka kembali berkas untuk mendapatkan tautan baru.",
     "FILE_TYPE_OR_SIZE": "Jenis atau ukuran berkas tidak sesuai ketentuan.",
     "FILE_ACCESS_DENIED": "Anda tidak memiliki akses ke berkas ini.",
     "ATTEMPT_LIMIT": "Seluruh kesempatan pengerjaan kuis telah digunakan.",
     "SUBMISSION_LIMIT": "Batas versi pengumpulan tugas telah tercapai.",
     "ATTEMPT_CLOSED": "Pengerjaan kuis telah berakhir.",
     "ANSWER_CONFLICT": "Jawaban diubah dari tab lain. Muat ulang untuk mengambil versi terbaru.",
+    "ANNOUNCEMENT_CONFLICT": "Pengumuman sudah diubah oleh pengguna lain. Input Anda tetap tersedia sebagai draf lokal. Tutup editor, muat ulang daftar, lalu gabungkan perubahan dengan versi terbaru sebelum menyimpan.",
     "QUIZ_HAS_ATTEMPTS": "Kuis yang sudah dikerjakan tidak dapat diubah. Buat kuis baru untuk menjaga riwayat penilaian.",
     "SUBMISSION_SUPERSEDED": "Nilai versi pengumpulan terbaru, karena versi ini telah digantikan.",
     "INVALID_DATE_RANGE": "Urutan tanggal tidak valid.",
@@ -656,6 +666,7 @@
     "FILE_SERVICE_INVALID_RESPONSE": "Layanan berkas mengirim respons yang tidak valid. Silakan coba lagi.",
     "FILE_SERVICE_OPERATION_UNSUPPORTED": "Operasi ini tidak didukung oleh layanan berkas yang digunakan.",
     "FILE_SERVICE_REQUIRED": "Layanan berkas belum dikonfigurasi.",
-    "FILE_SERVICE_REJECTED": "Layanan berkas menolak permintaan. Silakan coba lagi."
+    "FILE_SERVICE_REJECTED": "Layanan berkas menolak permintaan. Silakan coba lagi.",
+    "CACHE_UNAVAILABLE": "Layanan sesi sementara tidak tersedia. Tunggu sebentar lalu coba lagi."
   }
 }

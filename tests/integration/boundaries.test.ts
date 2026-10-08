@@ -53,7 +53,10 @@ test("quiz scheduling boundaries follow the technical design", async (suite) => 
       },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
-    return { status: response.status, body: await response.json().catch(() => ({})) };
+    return {
+      status: response.status,
+      body: await response.json().catch(() => ({})),
+    };
   }
 
   const question = () => ({
@@ -84,7 +87,7 @@ test("quiz scheduling boundaries follow the technical design", async (suite) => 
     })
   ).body;
   const cls = (
-    await request(teacher, "/course-classes", "POST", {
+    await request(admin, "/course-classes", "POST", {
       courseId: course.id,
       name: "Boundary A",
       academicYear: "2026/2027",
@@ -114,39 +117,61 @@ test("quiz scheduling boundaries follow the technical design", async (suite) => 
       questions: [question()],
     });
 
-  await suite.test("timer accepts 1 to 300 minutes and rejects outside", async () => {
-    assert.equal((await makeQuiz(0)).status, 400, "0 minutes must be rejected");
-    assert.equal((await makeQuiz(1)).status, 201, "1 minute must be accepted");
-    assert.equal((await makeQuiz(300)).status, 201, "300 minutes must be accepted");
-    assert.equal((await makeQuiz(301)).status, 400, "301 minutes must be rejected");
-  });
+  await suite.test(
+    "timer accepts 1 to 300 minutes and rejects outside",
+    async () => {
+      assert.equal(
+        (await makeQuiz(0)).status,
+        400,
+        "0 minutes must be rejected",
+      );
+      assert.equal(
+        (await makeQuiz(1)).status,
+        201,
+        "1 minute must be accepted",
+      );
+      assert.equal(
+        (await makeQuiz(300)).status,
+        201,
+        "300 minutes must be accepted",
+      );
+      assert.equal(
+        (await makeQuiz(301)).status,
+        400,
+        "301 minutes must be rejected",
+      );
+    },
+  );
 
-  await suite.test("quiz before its opening time reports when it opens", async () => {
-    const opensAt = new Date(Date.now() + 86400_000);
-    const quiz = (
-      await request(teacher, `/sections/${section.id}/quizzes`, "POST", {
-        title: "Belum dibuka",
-        status: "PUBLISHED",
-        isVisible: true,
-        availableFrom: opensAt.toISOString(),
-        attemptLimit: 1,
-        questions: [question()],
-      })
-    ).body;
-    const blocked = await request(
-      student,
-      `/quizzes/${quiz.id}/attempts`,
-      "POST",
-      {},
-    );
-    assert.equal(blocked.status, 403);
-    assert.equal(blocked.body.error.code, "NOT_OPEN_YET");
-    // The interface states the date, so the moment has to travel with the error.
-    assert.equal(
-      new Date(blocked.body.error.details.at).toISOString(),
-      opensAt.toISOString(),
-    );
-  });
+  await suite.test(
+    "quiz before its opening time reports when it opens",
+    async () => {
+      const opensAt = new Date(Date.now() + 86400_000);
+      const quiz = (
+        await request(teacher, `/sections/${section.id}/quizzes`, "POST", {
+          title: "Belum dibuka",
+          status: "PUBLISHED",
+          isVisible: true,
+          availableFrom: opensAt.toISOString(),
+          attemptLimit: 1,
+          questions: [question()],
+        })
+      ).body;
+      const blocked = await request(
+        student,
+        `/quizzes/${quiz.id}/attempts`,
+        "POST",
+        {},
+      );
+      assert.equal(blocked.status, 403);
+      assert.equal(blocked.body.error.code, "NOT_OPEN_YET");
+      // The interface states the date, so the moment has to travel with the error.
+      assert.equal(
+        new Date(blocked.body.error.details.at).toISOString(),
+        opensAt.toISOString(),
+      );
+    },
+  );
 
   await new Promise<void>((resolve) => server.close(() => resolve()));
 });

@@ -27,6 +27,8 @@ import { DraftRouteContext } from "./useLocalDraft";
 import { confirmAction } from "./confirm";
 import { PublishButton } from "./PublishButton";
 import { useEffect, useState } from "react";
+import { usePhoneLayout } from "./usePhoneLayout";
+import { hasPermission } from "../../../packages/shared/src/permissions";
 import {
   ArrowLeft,
   Plus,
@@ -105,6 +107,7 @@ export function ClassPage({
   selectedSlug: string | null;
 }) {
   const info = useApi(`/course-classes/${id}`);
+  const phone = usePhoneLayout();
   const [modal, setModal] = useState<any>(null),
     [message, setMessage] = useState("");
   const cls = info.data;
@@ -127,7 +130,15 @@ export function ClassPage({
   if (info.error) return <Notice error={info.error} />;
   if (!cls) return null;
   const isDeptAdminForClass = user.role === "DEPARTMENT_ADMIN" && cls.canManage;
-  const canEditClass = (user.role === "INSTRUCTOR" || isDeptAdminForClass) && cls.canManage;
+  const canEditClass =
+    (user.role === "INSTRUCTOR" || isDeptAdminForClass) && cls.canManage;
+  const canAdministerClass =
+    cls.canManage &&
+    (canEditClass || hasPermission(user.role, "MANAGE_ALL_CLASSES"));
+  const administrativeWritable =
+    canAdministerClass &&
+    cls.status !== "ARCHIVED" &&
+    cls.course.status !== "ARCHIVED";
   const writable =
     canEditClass &&
     cls.status !== "ARCHIVED" &&
@@ -204,19 +215,15 @@ export function ClassPage({
           "Buka kembali kelas ini? Status kelas akan diubah menjadi Terbit (aktif) sehingga perkuliahan dan aktivitas dapat dilanjutkan kembali.",
       ))
     ) {
-      return;
+      return false;
     }
-    try {
-      await api(`/course-classes/${cls.id}`, "PATCH", {
-        name: cls.name,
-        academicYear: cls.academicYear,
-        status: "PUBLISHED",
-      });
-      setMessage("Kelas berhasil dibuka kembali dan sekarang berstatus aktif.");
-      info.reload();
-    } catch (error: any) {
-      setMessage(error?.message || "Kelas belum dapat dibuka kembali. Coba lagi.");
-    }
+    await api(`/course-classes/${cls.id}`, "PATCH", {
+      name: cls.name,
+      academicYear: cls.academicYear,
+      status: "PUBLISHED",
+    });
+    setMessage("Kelas berhasil dibuka kembali dan sekarang berstatus aktif.");
+    info.reload();
   };
   const classUrl = classPath(cls);
   const resource = cls.sections
@@ -250,7 +257,8 @@ export function ClassPage({
     }
     return <Empty>Konten tidak ditemukan.</Empty>;
   }
-  if (resourceSlug && !resource && !cls.isInactiveParticipant) return <Empty>Materi tidak ditemukan.</Empty>;
+  if (resourceSlug && !resource && !cls.isInactiveParticipant)
+    return <Empty>Materi tidak ditemukan.</Empty>;
   const isResourceDone = (r: any) => {
     if (!cls?.progress) return false;
     if (r.resourceType === "VIDEO_MEDIA") {
@@ -300,38 +308,50 @@ export function ClassPage({
             )}
           </div>
         </div>
-        <div className="toolbar">
+        <div className="class-heading-actions">
           {cls.isInactiveParticipant ? (
             <span className="badge danger">{t.participationDisabled}</span>
           ) : (
             <Badge value={cls.status} />
           )}
-          {canEditClass && isArchived && cls.course.status !== "ARCHIVED" && (
-            <button
-              className="primary"
-              onClick={handleReopen}
-            >
-              <ArchiveRestore size={16} />
-              {t.reopenClass || "Buka kembali kelas"}
-            </button>
-          )}
-          {writable && (
-            <button
-              className="secondary"
-              onClick={() => setModal({ kind: "settings" })}
-            >
-              <Settings2 size={16} />
-              {t.settings}
-            </button>
-          )}
-          {canEditClass && cls.course.status !== "ARCHIVED" && (
-            <button
-              className="secondary"
-              onClick={() => setModal({ kind: "clone" })}
-            >
-              <Copy size={16} />
-              {t.cloneClass}
-            </button>
+          {canAdministerClass && (
+            <details className="class-management" open={!phone}>
+              <summary>
+                Kelola kelas <Settings2 size={16} />
+              </summary>
+              <div className="toolbar">
+                {canAdministerClass &&
+                  isArchived &&
+                  cls.course.status !== "ARCHIVED" && (
+                    <Action
+                      className="primary"
+                      run={handleReopen}
+                      busyLabel="Membuka kembali…"
+                    >
+                      <ArchiveRestore size={16} />
+                      {t.reopenClass || "Buka kembali kelas"}
+                    </Action>
+                  )}
+                {administrativeWritable && (
+                  <button
+                    className="secondary"
+                    onClick={() => setModal({ kind: "settings" })}
+                  >
+                    <Settings2 size={16} />
+                    {t.settings}
+                  </button>
+                )}
+                {canAdministerClass && cls.course.status !== "ARCHIVED" && (
+                  <button
+                    className="secondary"
+                    onClick={() => setModal({ kind: "clone" })}
+                  >
+                    <Copy size={16} />
+                    {t.cloneClass}
+                  </button>
+                )}
+              </div>
+            </details>
           )}
         </div>
       </div>
@@ -355,411 +375,475 @@ export function ClassPage({
                     "Kelas ini diarsipkan oleh dosen pengampu. Konten pembelajaran ditampilkan dalam mode hanya-baca."}
                 </span>
               </div>
-              {canEditClass && cls.course.status !== "ARCHIVED" && (
-                <button
+              {canAdministerClass && cls.course.status !== "ARCHIVED" && (
+                <Action
                   className="primary compact"
-                  onClick={handleReopen}
+                  run={handleReopen}
+                  busyLabel="Membuka kembali…"
                 >
                   <ArchiveRestore size={15} />
                   {t.reopenClass || "Buka kembali kelas"}
-                </button>
+                </Action>
               )}
             </div>
           )}
           {user.role === "SUPER_ADMIN" && (
-            <div className="callout note">Admin institusi dapat memantau ruang kelas. Pengelolaan pembelajaran dilakukan oleh dosen pengampu atau admin prodi terkait.</div>
+            <div className="callout note">
+              Admin institusi dapat memantau ruang kelas. Pengelolaan
+              pembelajaran dilakukan oleh dosen pengampu atau admin prodi
+              terkait.
+            </div>
           )}
           {user.role === "DEPARTMENT_ADMIN" && !cls.canManage && (
-            <div className="callout note">Kelas ini berada di luar cakupan program studi Anda. Ruang kelas ditampilkan dalam mode baca.</div>
+            <div className="callout note">
+              Kelas ini berada di luar cakupan program studi Anda. Ruang kelas
+              ditampilkan dalam mode baca.
+            </div>
           )}
           {isDeptAdminForClass && (
-            <div className="callout note">Mode Bantuan Prodi: Anda dapat membantu mengelola materi, bank soal, kuis, tugas, dan presensi. Pengisian dan penerbitan nilai akhir adalah wewenang penuh dosen pengampu.</div>
-          )}
-          {canEditClass && isArchived && cls.course.status === "ARCHIVED" && (
-            <div className="callout note">Mata kuliah ini masih diarsipkan. Minta admin mengaktifkan mata kuliah di katalog sebelum membuka kembali kelas.</div>
-          )}
-          {message && <Notice>{message}</Notice>}
-          <nav className="class-tabs" aria-label={t.menu}>
-            {tabs.map(([value, label]) => (
-              <a
-                key={value}
-                className={tab === value ? "selected" : ""}
-                aria-current={tab === value ? "page" : undefined}
-                href={value === "content" ? classUrl : `${classUrl}/${value}`}
-              >
-                {label}
-              </a>
-            ))}
-          </nav>
-      {tab === "content" && (
-        <>
-          <div className="section-heading">
-            <div>
-              <h2>
-                {t.meetings}{" "}
-                <span className="count">{cls.sections.length}</span>
-              </h2>
+            <div className="callout note">
+              Mode Bantuan Prodi: Anda dapat membantu mengelola materi, bank
+              soal, kuis, tugas, dan presensi. Pengisian dan penerbitan nilai
+              akhir adalah wewenang penuh dosen pengampu.
             </div>
-            {writable && (
-              <button
-                className="primary"
-                onClick={() => setModal({ kind: "section" })}
-              >
-                <Plus size={16} />
-                {t.newSection}
-              </button>
+          )}
+          {canAdministerClass &&
+            isArchived &&
+            cls.course.status === "ARCHIVED" && (
+              <div className="callout note">
+                Mata kuliah ini masih diarsipkan. Minta admin mengaktifkan mata
+                kuliah di katalog sebelum membuka kembali kelas.
+              </div>
             )}
-          </div>
-          {!cls.sections.length && <Empty>{t.emptySections}</Empty>}
-          <div className="section-list">
-            {cls.sections.map((section: any, index: number) => (
-              <section className="meeting-card" key={section.id}>
-                <div className="meeting-heading">
-                  <span className="meeting-number">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <div className="meeting-info">
-                    <div className="meeting-tags">
-                      <span
-                        className={`meeting-type-tag type-${section.type.toLowerCase()}`}
-                      >
-                        {(t.sectionTypes as any)[section.type]}
-                      </span>
-                      {section.startDate && (
-                        <span className="meeting-date">
-                          <CalendarDays size={13} />
-                          {date(section.startDate)}
-                        </span>
-                      )}
-                    </div>
-                    <h2>{section.title}</h2>
-                  </div>
-                  {!section.isVisible && <Badge value="DRAFT" />}
-                  {writable && (
-                    <div className="toolbar">
-                      <PublishButton
-                        path={`/sections/${section.id}`}
-                        title={section.title}
-                        published={section.isVisible}
-                        onPublished={() =>
-                          published("sections", section.id, !section.isVisible)
-                        }
-                      />
-                      <Action
-                        className="icon-button"
-                        disabled={index === 0}
-                        run={async () => {
-                          const ids = cls.sections.map((s: any) => s.id);
-                          [ids[index], ids[index - 1]] = [
-                            ids[index - 1],
-                            ids[index],
-                          ];
-                          await api(
-                            `/course-classes/${cls.id}/section-order`,
-                            "PUT",
-                            { ids },
-                          );
-                          info.reload();
-                        }}
-                      >
-                        <ArrowUp size={16} />
-                        <span className="sr-only">{t.moveUp}</span>
-                      </Action>
-                      <Action
-                        className="icon-button"
-                        disabled={index === cls.sections.length - 1}
-                        run={async () => {
-                          const ids = cls.sections.map((s: any) => s.id);
-                          [ids[index], ids[index + 1]] = [
-                            ids[index + 1],
-                            ids[index],
-                          ];
-                          await api(
-                            `/course-classes/${cls.id}/section-order`,
-                            "PUT",
-                            { ids },
-                          );
-                          info.reload();
-                        }}
-                      >
-                        <ArrowDown size={16} />
-                        <span className="sr-only">{t.moveDown}</span>
-                      </Action>
-                      <button
-                        className="text-button"
-                        onClick={() => setModal({ kind: "section", section })}
-                      >
-                        {t.edit}
-                      </button>
-                    </div>
-                  )}
+          {message && <Notice>{message}</Notice>}
+          {phone ? (
+            <Field label="Buka bagian kelas">
+              <select
+                value={tab}
+                onChange={(event) =>
+                  navigate(
+                    event.target.value === "content"
+                      ? classUrl
+                      : `${classUrl}/${event.target.value}`,
+                  )
+                }
+              >
+                {tabs.map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          ) : (
+            <nav className="class-tabs" aria-label={t.menu}>
+              {tabs.map(([value, label]) => (
+                <a
+                  key={value}
+                  className={tab === value ? "selected" : ""}
+                  aria-current={tab === value ? "page" : undefined}
+                  href={value === "content" ? classUrl : `${classUrl}/${value}`}
+                >
+                  {label}
+                </a>
+              ))}
+            </nav>
+          )}
+          {tab === "content" && (
+            <>
+              <div className="section-heading">
+                <div>
+                  <h2>
+                    {t.meetings}{" "}
+                    <span className="count">{cls.sections.length}</span>
+                  </h2>
                 </div>
-                {section.description && (
-                  <p className="meeting-description">{section.description}</p>
+                {writable && (
+                  <button
+                    className="primary"
+                    onClick={() => setModal({ kind: "section" })}
+                  >
+                    <Plus size={16} />
+                    {t.newSection}
+                  </button>
                 )}
-                <div className="learning-items">
-                  {section.resources.map((r: any) => {
-                    const done = !cls.canManage && isResourceDone(r);
-                    return (
-                      <div
-                        className={`learning-item ${done ? "item-completed" : ""}`}
-                        key={r.id}
-                      >
-                        <a
-                          href={contentPath(
-                            cls,
-                            "resources",
-                            r,
-                            section.resources,
-                          )}
-                        >
-                          <span className="activity-icon material">
-                            <BookOpen size={19} />
+              </div>
+              {!cls.sections.length && <Empty>{t.emptySections}</Empty>}
+              <div className="section-list">
+                {cls.sections.map((section: any, index: number) => (
+                  <section className="meeting-card" key={section.id}>
+                    <div className="meeting-heading">
+                      <span className="meeting-number">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      <div className="meeting-info">
+                        <div className="meeting-tags">
+                          <span
+                            className={`meeting-type-tag type-${section.type.toLowerCase()}`}
+                          >
+                            {(t.sectionTypes as any)[section.type]}
                           </span>
-                          <div>
-                            <h3>{r.title}</h3>
-                            <small>
-                              {(t.resourceTypes as any)[r.resourceType]}
-                            </small>
-                          </div>
-                          {done && (
-                            <span className="status-pill completed">
-                              <CheckCircle2 size={13} />
-                              {t.completed}
+                          {section.startDate && (
+                            <span className="meeting-date">
+                              <CalendarDays size={13} />
+                              {date(section.startDate)}
                             </span>
                           )}
-                          <ChevronRight size={16} />
-                        </a>
-                        {!r.isVisible && <Badge value="DRAFT" />}
-                        {writable && (
+                        </div>
+                        <h2>{section.title}</h2>
+                      </div>
+                      {!section.isVisible && <Badge value="DRAFT" />}
+                      {writable && (
+                        <div className="toolbar">
                           <PublishButton
-                            path={`/resources/${r.id}`}
-                            title={r.title}
-                            published={r.isVisible}
+                            path={`/sections/${section.id}`}
+                            title={section.title}
+                            published={section.isVisible}
                             onPublished={() =>
-                              published("resources", r.id, !r.isVisible)
+                              published(
+                                "sections",
+                                section.id,
+                                !section.isVisible,
+                              )
                             }
                           />
-                        )}
-                        {writable && (
+                          <Action
+                            className="icon-button"
+                            disabled={index === 0}
+                            run={async () => {
+                              const ids = cls.sections.map((s: any) => s.id);
+                              [ids[index], ids[index - 1]] = [
+                                ids[index - 1],
+                                ids[index],
+                              ];
+                              await api(
+                                `/course-classes/${cls.id}/section-order`,
+                                "PUT",
+                                { ids },
+                              );
+                              info.reload();
+                            }}
+                          >
+                            <ArrowUp size={16} />
+                            <span className="sr-only">{t.moveUp}</span>
+                          </Action>
+                          <Action
+                            className="icon-button"
+                            disabled={index === cls.sections.length - 1}
+                            run={async () => {
+                              const ids = cls.sections.map((s: any) => s.id);
+                              [ids[index], ids[index + 1]] = [
+                                ids[index + 1],
+                                ids[index],
+                              ];
+                              await api(
+                                `/course-classes/${cls.id}/section-order`,
+                                "PUT",
+                                { ids },
+                              );
+                              info.reload();
+                            }}
+                          >
+                            <ArrowDown size={16} />
+                            <span className="sr-only">{t.moveDown}</span>
+                          </Action>
                           <button
                             className="text-button"
                             onClick={() =>
-                              setModal({
-                                kind: "resource",
-                                sectionId: section.id,
-                                resource: r,
-                              })
+                              setModal({ kind: "section", section })
                             }
                           >
                             {t.edit}
                           </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                  {section.quizzes.map((q: any) => (
-                    <div className="learning-item" key={q.id}>
-                      <a href={contentPath(cls, "quizzes", q, section.quizzes)}>
-                        <span className="activity-icon quiz">
-                          <ClipboardCheck size={19} />
-                        </span>
-                        <div>
-                          <h3>{q.title}</h3>
-                          <small>
-                            {t.quiz} · {q.timeLimitMinutes} min{" "}
-                            {q.availableUntil && ` · ${date(q.availableUntil)}`}
-                          </small>
                         </div>
-                        <ChevronRight size={16} />
-                      </a>
-                      {cls.canManage ? (
-                        <Badge value={q.isVisible ? q.status : "DRAFT"} />
-                      ) : (
-                        <Badge
-                          value={
-                            q.userStatus ??
-                            (q.isVisible ? q.status : "DRAFT")
-                          }
-                        />
-                      )}
-                      {writable && (
-                        <PublishButton
-                          path={`/quizzes/${q.id}`}
-                          title={q.title}
-                          published={q.status === "PUBLISHED" && q.isVisible}
-                          onPublished={() =>
-                            published(
-                              "quizzes",
-                              q.id,
-                              !(q.status === "PUBLISHED" && q.isVisible),
-                            )
-                          }
-                        />
                       )}
                     </div>
-                  ))}
-                  {section.assignments.map((a: any) => (
-                    <div className="learning-item" key={a.id}>
-                      <a
-                        href={contentPath(
-                          cls,
-                          "assignments",
-                          a,
-                          section.assignments,
-                        )}
-                      >
-                        <span className="activity-icon assignment">
-                          <FileText size={19} />
-                        </span>
-                        <div>
-                          <h3>{a.title}</h3>
-                          <small>
-                            {t.assignment} ·{" "}
-                            {a.deadline ? date(a.deadline) : t.noDeadline}
-                          </small>
-                        </div>
-                        <ChevronRight size={16} />
-                      </a>
-                      {cls.canManage ? (
-                        !a.isVisible && <Badge value="DRAFT" />
-                      ) : (
-                        a.userStatus && <Badge value={a.userStatus} />
-                      )}
-                      {writable && (
-                        <PublishButton
-                          path={`/assignments/${a.id}`}
-                          title={a.title}
-                          published={a.isVisible}
-                          onPublished={() =>
-                            published("assignments", a.id, !a.isVisible)
-                          }
-                        />
-                      )}
-                    </div>
-                  ))}
-                  {!section.resources.length &&
-                    !section.quizzes.length &&
-                    !section.assignments.length && (
-                      <p className="empty-inline">{t.emptyContent}</p>
+                    {section.description && (
+                      <p className="meeting-description">
+                        {section.description}
+                      </p>
                     )}
-                </div>
-                {writable && (
-                  <div className="meeting-actions">
-                    <button
-                      className="text-button"
-                      onClick={() =>
-                        setModal({ kind: "resource", sectionId: section.id })
-                      }
-                    >
-                      <Plus size={14} />
-                      {t.material}
-                    </button>
-                    <button
-                      className="text-button"
-                      onClick={() =>
-                        setModal({ kind: "quiz", sectionId: section.id })
-                      }
-                    >
-                      <Plus size={14} />
-                      {t.quiz}
-                    </button>
-                    <button
-                      className="text-button"
-                      onClick={() =>
-                        setModal({ kind: "assignment", sectionId: section.id })
-                      }
-                    >
-                      <Plus size={14} />
-                      {t.assignment}
-                    </button>
-                  </div>
-                )}
-              </section>
-            ))}
-          </div>
-        </>
-      )}
-      {tab === "attendance" && (
-        <Attendance
-          classId={cls.id}
-          writable={writable}
-          canManage={cls.canManage}
-          user={user}
-        />
-      )}
-      {tab === "gradebook" && (
-        <Gradebook
-          classId={cls.id}
-          writable={user.role === "INSTRUCTOR" && writable}
-          user={user}
-        />
-      )}
-      {tab === "participants" && cls.canManage && (
-        <Participants classId={cls.id} writable={writable} />
-      )}
-      {tab === "banks" && cls.canManage && (
-        <QuestionBanks classId={cls.id} writable={writable} />
-      )}
-      {tab === "files" && cls.canManage && (
-        <Files classId={cls.id} writable={writable} />
-      )}
-      {tab === "audit" && cls.canManage && <Audit classId={cls.id} />}
-      {tab === "announcements" && (
-        <>
-          <div className="section-heading">
-            <h2>{t.announcements}</h2>
-            {writable && (
-              <button
-                className="primary"
-                onClick={() => setModal({ kind: "announcement" })}
-              >
-                <Plus size={16} />
-                {t.newAnnouncement}
-              </button>
-            )}
-          </div>
-          {cls.announcements.length ? (
-            cls.announcements.map((a: any) => (
-              <article className="card announcement-card" id={`announcement-${a.id}`} key={a.id}>
-                <div className="toolbar">
-                  {a.isImportant && (
-                    <span className="badge">
-                      <Pin size={12} />
-                      {t.important}
-                    </span>
-                  )}
-                  {!a.isPublished && <Badge value="DRAFT" />}
-                  {writable && (
-                    <PublishButton
-                      path={`/announcements/${a.id}`}
-                      title={a.title}
-                      published={a.isPublished}
-                      onPublished={() =>
-                        published("announcements", a.id, !a.isPublished)
-                      }
-                    />
-                  )}
-                  <small>{date(a.publishedAt)}</small>
-                </div>
-                <h2>{a.title}</h2>
-                <p className="preserve-lines">{a.content}</p>
-              </article>
-            ))
-          ) : (
-            <Empty>{t.noAnnouncements}</Empty>
+                    <div className="learning-items">
+                      {section.resources.map((r: any) => {
+                        const done = !cls.canManage && isResourceDone(r);
+                        return (
+                          <div
+                            className={`learning-item ${done ? "item-completed" : ""}`}
+                            key={r.id}
+                          >
+                            <a
+                              href={contentPath(
+                                cls,
+                                "resources",
+                                r,
+                                section.resources,
+                              )}
+                            >
+                              <span className="activity-icon material">
+                                <BookOpen size={19} />
+                              </span>
+                              <div>
+                                <h3>{r.title}</h3>
+                                <small>
+                                  {(t.resourceTypes as any)[r.resourceType]}
+                                </small>
+                              </div>
+                              {done && (
+                                <span className="status-pill completed">
+                                  <CheckCircle2 size={13} />
+                                  {t.completed}
+                                </span>
+                              )}
+                              <ChevronRight size={16} />
+                            </a>
+                            {!r.isVisible && <Badge value="DRAFT" />}
+                            {writable && (
+                              <PublishButton
+                                path={`/resources/${r.id}`}
+                                title={r.title}
+                                published={r.isVisible}
+                                onPublished={() =>
+                                  published("resources", r.id, !r.isVisible)
+                                }
+                              />
+                            )}
+                            {writable && (
+                              <button
+                                className="text-button"
+                                onClick={() =>
+                                  setModal({
+                                    kind: "resource",
+                                    sectionId: section.id,
+                                    resource: r,
+                                  })
+                                }
+                              >
+                                {t.edit}
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {section.quizzes.map((q: any) => (
+                        <div className="learning-item" key={q.id}>
+                          <a
+                            href={contentPath(
+                              cls,
+                              "quizzes",
+                              q,
+                              section.quizzes,
+                            )}
+                          >
+                            <span className="activity-icon quiz">
+                              <ClipboardCheck size={19} />
+                            </span>
+                            <div>
+                              <h3>{q.title}</h3>
+                              <small>
+                                {t.quiz} · {q.timeLimitMinutes} min{" "}
+                                {q.availableUntil &&
+                                  ` · ${date(q.availableUntil)}`}
+                              </small>
+                            </div>
+                            <ChevronRight size={16} />
+                          </a>
+                          {cls.canManage ? (
+                            <Badge value={q.isVisible ? q.status : "DRAFT"} />
+                          ) : (
+                            <Badge
+                              value={
+                                q.userStatus ??
+                                (q.isVisible ? q.status : "DRAFT")
+                              }
+                            />
+                          )}
+                          {writable && (
+                            <PublishButton
+                              path={`/quizzes/${q.id}`}
+                              title={q.title}
+                              published={
+                                q.status === "PUBLISHED" && q.isVisible
+                              }
+                              onPublished={() =>
+                                published(
+                                  "quizzes",
+                                  q.id,
+                                  !(q.status === "PUBLISHED" && q.isVisible),
+                                )
+                              }
+                            />
+                          )}
+                        </div>
+                      ))}
+                      {section.assignments.map((a: any) => (
+                        <div className="learning-item" key={a.id}>
+                          <a
+                            href={contentPath(
+                              cls,
+                              "assignments",
+                              a,
+                              section.assignments,
+                            )}
+                          >
+                            <span className="activity-icon assignment">
+                              <FileText size={19} />
+                            </span>
+                            <div>
+                              <h3>{a.title}</h3>
+                              <small>
+                                {t.assignment} ·{" "}
+                                {a.deadline ? date(a.deadline) : t.noDeadline}
+                              </small>
+                            </div>
+                            <ChevronRight size={16} />
+                          </a>
+                          {cls.canManage
+                            ? !a.isVisible && <Badge value="DRAFT" />
+                            : a.userStatus && <Badge value={a.userStatus} />}
+                          {writable && (
+                            <PublishButton
+                              path={`/assignments/${a.id}`}
+                              title={a.title}
+                              published={a.isVisible}
+                              onPublished={() =>
+                                published("assignments", a.id, !a.isVisible)
+                              }
+                            />
+                          )}
+                        </div>
+                      ))}
+                      {!section.resources.length &&
+                        !section.quizzes.length &&
+                        !section.assignments.length && (
+                          <p className="empty-inline">{t.emptyContent}</p>
+                        )}
+                    </div>
+                    {writable && (
+                      <div className="meeting-actions">
+                        <button
+                          className="text-button"
+                          onClick={() =>
+                            setModal({
+                              kind: "resource",
+                              sectionId: section.id,
+                            })
+                          }
+                        >
+                          <Plus size={14} />
+                          {t.material}
+                        </button>
+                        <button
+                          className="text-button"
+                          onClick={() =>
+                            setModal({ kind: "quiz", sectionId: section.id })
+                          }
+                        >
+                          <Plus size={14} />
+                          {t.quiz}
+                        </button>
+                        <button
+                          className="text-button"
+                          onClick={() =>
+                            setModal({
+                              kind: "assignment",
+                              sectionId: section.id,
+                            })
+                          }
+                        >
+                          <Plus size={14} />
+                          {t.assignment}
+                        </button>
+                      </div>
+                    )}
+                  </section>
+                ))}
+              </div>
+            </>
           )}
-        </>
-      )}
-      {resource && (
-        <ResourceViewer
-          resource={resource}
-          cls={cls}
-          user={user}
-          reload={info.reload}
-          onClose={() => navigate(classUrl)}
-        />
-      )}
+          {tab === "attendance" && (
+            <Attendance
+              classId={cls.id}
+              writable={writable}
+              canManage={cls.canManage}
+              user={user}
+            />
+          )}
+          {tab === "gradebook" && (
+            <Gradebook
+              classId={cls.id}
+              writable={user.role === "INSTRUCTOR" && writable}
+              user={user}
+            />
+          )}
+          {tab === "participants" && cls.canManage && (
+            <Participants classId={cls.id} writable={administrativeWritable} />
+          )}
+          {tab === "banks" && cls.canManage && (
+            <QuestionBanks classId={cls.id} writable={writable} />
+          )}
+          {tab === "files" && cls.canManage && (
+            <Files classId={cls.id} writable={writable} />
+          )}
+          {tab === "audit" && cls.canManage && <Audit classId={cls.id} />}
+          {tab === "announcements" && (
+            <>
+              <div className="section-heading">
+                <h2>{t.announcements}</h2>
+                {writable && (
+                  <button
+                    className="primary"
+                    onClick={() => setModal({ kind: "announcement" })}
+                  >
+                    <Plus size={16} />
+                    {t.newAnnouncement}
+                  </button>
+                )}
+              </div>
+              {cls.announcements.length ? (
+                cls.announcements.map((a: any) => (
+                  <article
+                    className="card announcement-card"
+                    id={`announcement-${a.id}`}
+                    key={a.id}
+                  >
+                    <div className="toolbar">
+                      {a.isImportant && (
+                        <span className="badge">
+                          <Pin size={12} />
+                          {t.important}
+                        </span>
+                      )}
+                      {!a.isPublished && <Badge value="DRAFT" />}
+                      {writable && (
+                        <PublishButton
+                          path={`/announcements/${a.id}`}
+                          title={a.title}
+                          published={a.isPublished}
+                          onPublished={() =>
+                            published("announcements", a.id, !a.isPublished)
+                          }
+                        />
+                      )}
+                      <small>{date(a.publishedAt)}</small>
+                    </div>
+                    <h2>{a.title}</h2>
+                    <p className="preserve-lines">{a.content}</p>
+                  </article>
+                ))
+              ) : (
+                <Empty>{t.noAnnouncements}</Empty>
+              )}
+            </>
+          )}
+          {resource && (
+            <ResourceViewer
+              resource={resource}
+              cls={cls}
+              user={user}
+              reload={info.reload}
+              onClose={() => navigate(classUrl)}
+            />
+          )}
         </>
       )}
       {modal?.kind === "resource" && (
@@ -820,4 +904,3 @@ export function ClassPage({
     </DraftRouteContext.Provider>
   );
 }
-

@@ -3,6 +3,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useRef,
   type ReactNode,
 } from "react";
 
@@ -29,6 +30,7 @@ import {
   Users,
   X,
 } from "lucide-react";
+import { notifyAction } from "../feedback";
 
 import {
   ActivityWaterfall,
@@ -48,14 +50,15 @@ import {
   type ReportResponse,
   type Summary,
 } from "../../../../packages/shared/src/rector";
-import { formatDateTime, localTimeZone } from "../../../../packages/shared/src/time";
+import {
+  formatDateTime,
+  localTimeZone,
+} from "../../../../packages/shared/src/time";
 import { readCache } from "../readCache";
 import "./styles.css";
 const API = "/api/rector/v1";
 const formatDate = (v: string | null) =>
-  v
-    ? formatDateTime(v)
-    : "Belum ada data";
+  v ? formatDateTime(v) : "Belum ada data";
 const n = (v: number) => new Intl.NumberFormat("id-ID").format(v);
 const shortDay = (v: string) =>
   !v || Number.isNaN(Date.parse(v))
@@ -73,7 +76,9 @@ type View =
   | "definitions";
 function useReport<T>(path: string | null, onUnauthorized: () => void) {
   const cacheKey = path ? `/rector${path}` : null;
-  const initialData = cacheKey ? readCache.peek<ReportResponse<T>>(cacheKey) ?? null : null;
+  const initialData = cacheKey
+    ? (readCache.peek<ReportResponse<T>>(cacheKey) ?? null)
+    : null;
   const [data, setData] = useState<ReportResponse<T> | null>(initialData);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(Boolean(path && !initialData));
@@ -575,7 +580,10 @@ export function RectorDashboard({ demo }: { demo: boolean }) {
     params.get(key) ??
     opts?.defaultFilters[key as keyof typeof opts.defaultFilters] ??
     "";
+  const exportInFlight = useRef(false);
   const exportReport = async (format: "csv" | "pdf") => {
+    if (exportInFlight.current) return;
+    exportInFlight.current = true;
     setExporting(true);
     setExportError("");
     try {
@@ -600,9 +608,11 @@ export function RectorDashboard({ demo }: { demo: boolean }) {
       document.body.appendChild(a);
       a.click();
       a.remove();
+      notifyAction("Laporan berhasil disiapkan. Unduhan telah dimulai.");
     } catch (e) {
       setExportError((e as Error).message);
     } finally {
+      exportInFlight.current = false;
       setExporting(false);
     }
   };
@@ -970,7 +980,7 @@ function Overview({
           </div>
           <Building2 size={23} />
         </div>
-        <div className="table-wrap">
+        <div className="table-wrap phone-record-table">
           <table>
             <thead>
               <tr>
@@ -983,14 +993,16 @@ function Overview({
             <tbody>
               {s.departments.map((d) => (
                 <tr key={d.department}>
-                  <td>
+                  <td className="record-title">
                     <strong>{d.department}</strong>
                   </td>
-                  <td>
+                  <td data-label="Dosen / kelas">
                     {d.lecturers} dosen · {d.classes} kelas
                   </td>
-                  <td>{n(d.academicActions)} kegiatan</td>
-                  <td>
+                  <td data-label="Aktivitas akademik">
+                    {n(d.academicActions)} kegiatan
+                  </td>
+                  <td data-label="Belum dinilai">
                     <Badge tone={d.pending ? "amber" : "green"}>
                       {d.pending ? `${d.pending} pekerjaan` : "Selesai dinilai"}
                     </Badge>
@@ -1149,7 +1161,7 @@ function LecturerList({
       />
       {data &&
         (data.items.length ? (
-          <div className="table-wrap">
+          <div className="table-wrap phone-record-table">
             <table className="rector-lecturer-table">
               <thead>
                 <tr>
@@ -1181,7 +1193,7 @@ function LecturerList({
               <tbody>
                 {data.items.map((l) => (
                   <tr key={l.id}>
-                    <td>
+                    <td className="record-title">
                       <button
                         className="name-link"
                         onClick={() => nav("lecturer", l.id)}
@@ -1198,43 +1210,49 @@ function LecturerList({
                         <ChevronRight size={14} />
                       </button>
                     </td>
-                    <td>
-                      {l.lastAcademicAt ? (
-                        <>
-                          {formatDate(l.lastAcademicAt)}
-                          <small>
-                            {l.academicActions} kegiatan · {l.activeDays} hari
-                            aktif
-                          </small>
-                        </>
-                      ) : (
-                        <>
-                          <Badge tone="neutral">
-                            {l.classCount === 0
-                              ? "Belum memiliki kelas"
-                              : l.logins
-                                ? "Hanya login"
-                                : "Belum ada aktivitas"}
-                          </Badge>
-                          {l.lastLoginAt && (
-                            <small>Login: {formatDate(l.lastLoginAt)}</small>
-                          )}
-                        </>
-                      )}
+                    <td data-label="Aktivitas terakhir">
+                      <span className="record-value">
+                        {l.lastAcademicAt ? (
+                          <>
+                            {formatDate(l.lastAcademicAt)}
+                            <small>
+                              {l.academicActions} kegiatan · {l.activeDays} hari
+                              aktif
+                            </small>
+                          </>
+                        ) : (
+                          <>
+                            <Badge tone="neutral">
+                              {l.classCount === 0
+                                ? "Belum memiliki kelas"
+                                : l.logins
+                                  ? "Hanya login"
+                                  : "Belum ada aktivitas"}
+                            </Badge>
+                            {l.lastLoginAt && (
+                              <small>Login: {formatDate(l.lastLoginAt)}</small>
+                            )}
+                          </>
+                        )}
+                      </span>
                     </td>
-                    <td>
-                      {l.materialObjects} materi · {l.assessmentObjects} tugas,
-                      kuis & bank soal
-                      <small>
-                        {l.materialActions + l.assessmentActions} kegiatan
-                        tercatat
-                      </small>
+                    <td data-label="Materi & evaluasi">
+                      <span className="record-value">
+                        {l.materialObjects} materi · {l.assessmentObjects}{" "}
+                        tugas, kuis & bank soal
+                        <small>
+                          {l.materialActions + l.assessmentActions} kegiatan
+                          tercatat
+                        </small>
+                      </span>
                     </td>
-                    <td>
-                      {l.gradingActions} kegiatan penilaian
-                      <small>{l.publicationActions} penerbitan nilai</small>
+                    <td data-label="Penilaian">
+                      <span className="record-value">
+                        {l.gradingActions} kegiatan penilaian
+                        <small>{l.publicationActions} penerbitan nilai</small>
+                      </span>
                     </td>
-                    <td>
+                    <td data-label="Belum dinilai">
                       <Badge tone={l.pending ? "amber" : "green"}>
                         {l.pending
                           ? `${l.pending} pekerjaan`
@@ -1264,6 +1282,7 @@ function LecturerList({
               >
                 <option value="name">Nama dosen</option>
                 <option value="lastAcademicAt">Aktivitas terakhir</option>
+                <option value="materialActions">Materi & evaluasi</option>
                 <option value="gradingActions">Penilaian</option>
                 <option value="pending">
                   Pekerjaan mahasiswa belum dinilai

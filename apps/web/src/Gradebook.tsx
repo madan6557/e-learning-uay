@@ -1,5 +1,6 @@
 import { useLocalDraft, SaveStatus } from "./useLocalDraft";
 import { useEffect, useState } from "react";
+import { usePhoneLayout } from "./usePhoneLayout";
 import {
   Download,
   Plus,
@@ -29,9 +30,24 @@ import {
   usePagination,
 } from "./lib";
 import { confirmAction } from "./confirm";
-import { GRADE_SCALE_PRESETS, gradeScaleLabel } from "../../../packages/shared/src/domain";
+import {
+  GRADE_SCALE_PRESETS,
+  gradeScaleLabel,
+} from "../../../packages/shared/src/domain";
 import { parseCsv } from "./csv";
+import type { FormProps } from "./components/ui/Form";
 export { parseCsv };
+
+export function GradebookEditor({
+  writable,
+  ...props
+}: FormProps & { writable: boolean }) {
+  return writable ? (
+    <Form {...props} />
+  ) : (
+    <section aria-label="Rekap nilai hanya baca">{props.children}</section>
+  );
+}
 
 export function GradeScoreInput({
   value,
@@ -221,13 +237,20 @@ function StudentGradeReviewModal({
               <div style={{ fontWeight: 700, fontSize: "1.08rem" }}>
                 {data.student.name}
               </div>
-              <div style={{ fontSize: "0.85rem", color: "var(--muted, #64748b)" }}>
+              <div
+                style={{ fontSize: "0.85rem", color: "var(--muted, #64748b)" }}
+              >
                 NIM: {data.student.identifierValue} · {data.student.email}
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
               <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: "0.75rem", color: "var(--muted, #64748b)" }}>
+                <div
+                  style={{
+                    fontSize: "0.75rem",
+                    color: "var(--muted, #64748b)",
+                  }}
+                >
                   Simulasi Nilai Akhir
                 </div>
                 <div
@@ -264,9 +287,11 @@ function StudentGradeReviewModal({
             lineHeight: 1.5,
           }}
         >
-          Berikut adalah rincian aktivitas capaian mahasiswa per bagian bobot penilaian.
-          Hasil kalkulasi sistem disajikan sebagai <strong>rekomendasi/saran</strong>. Anda dapat
-          mengecek dan mengoreksi nilai section sesuai evaluasi akademik Anda sebelum menekan tombol simpan draf.
+          Berikut adalah rincian aktivitas capaian mahasiswa per bagian bobot
+          penilaian. Hasil kalkulasi sistem disajikan sebagai{" "}
+          <strong>rekomendasi/saran</strong>. Anda dapat mengecek dan mengoreksi
+          nilai section sesuai evaluasi akademik Anda sebelum menekan tombol
+          simpan draf.
         </p>
 
         <div
@@ -300,8 +325,12 @@ function StudentGradeReviewModal({
                     gap: 8,
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 700 }}>
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 8 }}
+                  >
+                    <h3
+                      style={{ margin: 0, fontSize: "1rem", fontWeight: 700 }}
+                    >
                       {cat.name}
                     </h3>
                     <span
@@ -343,7 +372,9 @@ function StudentGradeReviewModal({
                     </span>
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 10 }}
+                  >
                     {cat.sourceType !== "MANUAL" && (
                       <div
                         style={{
@@ -355,7 +386,8 @@ function StudentGradeReviewModal({
                           fontWeight: 600,
                         }}
                       >
-                        Saran Sistem: <strong>{cat.suggestedScore.toFixed(2)}</strong>
+                        Saran Sistem:{" "}
+                        <strong>{cat.suggestedScore.toFixed(2)}</strong>
                       </div>
                     )}
                   </div>
@@ -375,13 +407,19 @@ function StudentGradeReviewModal({
                       <thead>
                         <tr style={{ background: "#f1f5f9" }}>
                           <th style={{ padding: "6px 10px" }}>Aktivitas</th>
-                          <th style={{ padding: "6px 10px", textAlign: "center" }}>
+                          <th
+                            style={{ padding: "6px 10px", textAlign: "center" }}
+                          >
                             Nilai Riil
                           </th>
-                          <th style={{ padding: "6px 10px", textAlign: "center" }}>
+                          <th
+                            style={{ padding: "6px 10px", textAlign: "center" }}
+                          >
                             Skala 100
                           </th>
-                          <th style={{ padding: "6px 10px", textAlign: "right" }}>
+                          <th
+                            style={{ padding: "6px 10px", textAlign: "right" }}
+                          >
                             Status
                           </th>
                         </tr>
@@ -393,7 +431,7 @@ function StudentGradeReviewModal({
                               <strong>{act.title}</strong>
                               <small
                                 style={{
-                                 display: "block",
+                                  display: "block",
                                   color: "var(--muted, #64748b)",
                                 }}
                               >
@@ -420,10 +458,16 @@ function StudentGradeReviewModal({
                               {act.normalizedScore.toFixed(2)}
                             </td>
                             <td
-                              style={{ padding: "6px 10px", textAlign: "right" }}
+                              style={{
+                                padding: "6px 10px",
+                                textAlign: "right",
+                              }}
                             >
                               <span
-                                style={{ fontSize: "0.75rem", color: "#64748b" }}
+                                style={{
+                                  fontSize: "0.75rem",
+                                  color: "#64748b",
+                                }}
                               >
                                 {act.status}
                               </span>
@@ -463,7 +507,9 @@ function StudentGradeReviewModal({
                     gap: 8,
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 10 }}
+                  >
                     <label style={{ fontSize: "0.85rem", fontWeight: 600 }}>
                       Nilai Akhir Bagian ({cat.name}):
                     </label>
@@ -578,6 +624,81 @@ function StudentGradeReviewModal({
   );
 }
 
+export function PhoneGradeRecord({
+  row,
+  changes,
+  writable,
+  onScoreChange,
+  onReview,
+}: {
+  row: any;
+  changes: Record<string, { score: string }>;
+  writable: boolean;
+  onScoreChange: (userId: string, category: any, score: string) => void;
+  onReview: () => void;
+}) {
+  return (
+    <details className="phone-grade-record">
+      <summary>
+        <span className="phone-grade-person">
+          <strong>{row.user.name}</strong>
+          <small>{row.user.identifierValue}</small>
+          <Badge value={row.record?.publishedAt ? "PUBLISHED" : "DRAFT"} />
+        </span>
+        <span className="phone-grade-total">
+          <strong>{row.finalScore.toFixed(2)}</strong>
+          <span>Nilai {row.gradeLetter}</span>
+        </span>
+      </summary>
+      <div className="phone-grade-body">
+        {row.pending.length > 0 && (
+          <p className="callout warning">{t.pendingGrading}</p>
+        )}
+        {writable && (
+          <button
+            type="button"
+            className="secondary"
+            onClick={onReview}
+            aria-label={`Tinjau nilai ${row.user.name}`}
+          >
+            Tinjau capaian & kalkulasi
+          </button>
+        )}
+        <div className="phone-grade-fields">
+          {row.categoryScores.map((category: any) => (
+            <Field key={category.categoryId} label={category.name}>
+              {writable && category.source !== "PROGRESS" ? (
+                <GradeScoreInput
+                  ariaLabel={`${row.user.name} · ${category.name}`}
+                  className={
+                    changes[row.user.id + ":" + category.categoryId]
+                      ? "changed"
+                      : ""
+                  }
+                  value={
+                    changes[row.user.id + ":" + category.categoryId]?.score ??
+                    String(category.score)
+                  }
+                  onChange={(score) =>
+                    onScoreChange(row.user.id, category, score)
+                  }
+                />
+              ) : (
+                <strong>{category.score.toFixed(2)} / 100</strong>
+              )}
+            </Field>
+          ))}
+        </div>
+        <div className="phone-grade-progress">
+          <span>Progres belajar</span>
+          <strong>{row.progress}%</strong>
+          <progress value={row.progress} max={100} />
+        </div>
+      </div>
+    </details>
+  );
+}
+
 export function Gradebook({
   classId,
   writable,
@@ -588,6 +709,7 @@ export function Gradebook({
   user?: any;
 }) {
   const info = useApi(`/course-classes/${classId}/gradebook`);
+  const phone = usePhoneLayout();
   const [modal, setModal] = useState<any>(null),
     [weights, setWeights] = useState<any[]>([]),
     [acknowledge, setAcknowledge] = useState(false),
@@ -599,7 +721,9 @@ export function Gradebook({
   const changedCount = Object.keys(changes).length;
   const [reason, setReason] = useState("");
   const [unsaved, setUnsaved] = useState(false);
-  useEffect(() => { if (!changedCount) setReason(""); }, [changedCount]);
+  useEffect(() => {
+    if (!changedCount) setReason("");
+  }, [changedCount]);
   const data = info.data;
 
   useEffect(() => {
@@ -609,6 +733,15 @@ export function Gradebook({
   }, [data?.class?.gradeScaleVersion]);
 
   const pagination = usePagination(data?.rows ?? [], 25);
+  const changeScore = (userId: string, category: any, score: string) => {
+    const key = userId + ":" + category.categoryId;
+    setChanges((previous) => {
+      const next = { ...previous };
+      if (score !== "" && Number(score) === category.score) delete next[key];
+      else next[key] = { userId, categoryId: category.categoryId, score };
+      return next;
+    });
+  };
 
   if (info.loading && !data) return <Loading />;
   if (info.error) return <Notice error={info.error} />;
@@ -681,6 +814,8 @@ export function Gradebook({
                 ]),
               )
             }
+            busyLabel="Menyiapkan ekspor…"
+            successMessage="Rekap nilai berhasil disiapkan. Unduhan telah dimulai."
           >
             <Download size={16} />
             {t.export}
@@ -695,65 +830,70 @@ export function Gradebook({
                 <Upload size={16} />
                 {t.import}
               </button>
-              <button
-                className="secondary"
-                disabled={locked || unsaved}
-                onClick={() => {
-                  setWeights(structuredClone(data.categories));
-                  setModal({ kind: "weights" });
-                }}
-              >
-                {t.weights}
-              </button>
-              <Action
-                className="secondary"
-                disabled={locked || unsaved}
-                run={async () => {
-                  if (
-                    !(await confirmAction(
-                      "Terapkan nilai saran kalkulasi otomatis ke seluruh mahasiswa sebagai draf? Nilai saran dari aktivitas riil mahasiswa akan disimpan ke draf untuk dapat ditinjau lebih lanjut.",
-                    ))
-                  )
-                    return;
-                  const batchChanges: any[] = [];
-                  for (const r of data.rows) {
-                    for (const c of r.categoryScores) {
+              <details className="grade-settings-disclosure" open={!phone}>
+                <summary>Pengaturan nilai</summary>
+                <div className="toolbar">
+                  <button
+                    className="secondary"
+                    disabled={locked || unsaved}
+                    onClick={() => {
+                      setWeights(structuredClone(data.categories));
+                      setModal({ kind: "weights" });
+                    }}
+                  >
+                    {t.weights}
+                  </button>
+                  <Action
+                    className="secondary"
+                    disabled={locked || unsaved}
+                    run={async () => {
                       if (
-                        c.sourceType !== "MANUAL" &&
-                        c.suggestedScore !== undefined
-                      ) {
-                        batchChanges.push({
-                          userId: r.user.id,
-                          categoryId: c.categoryId,
-                          score: c.suggestedScore,
-                        });
+                        !(await confirmAction(
+                          "Terapkan nilai saran kalkulasi otomatis ke seluruh mahasiswa sebagai draf? Nilai saran dari aktivitas riil mahasiswa akan disimpan ke draf untuk dapat ditinjau lebih lanjut.",
+                        ))
+                      )
+                        return false;
+                      const batchChanges: any[] = [];
+                      for (const r of data.rows) {
+                        for (const c of r.categoryScores) {
+                          if (
+                            c.sourceType !== "MANUAL" &&
+                            c.suggestedScore !== undefined
+                          ) {
+                            batchChanges.push({
+                              userId: r.user.id,
+                              categoryId: c.categoryId,
+                              score: c.suggestedScore,
+                            });
+                          }
+                        }
                       }
-                    }
-                  }
-                  if (!batchChanges.length) {
-                    setMessage(
-                      "Tidak ada nilai kalkulasi otomatis yang tersedia untuk diterapkan.",
-                    );
-                    return;
-                  }
-                  await api(
-                    `/course-classes/${classId}/manual-grades/batch`,
-                    "POST",
-                    {
-                      changes: batchChanges,
-                      reason:
-                        "Penerapan kalkulasi otomatis sistem ke draf rekap nilai",
-                    },
-                  );
-                  setMessage(
-                    `${batchChanges.length} nilai saran otomatis berhasil diterapkan ke draf.`,
-                  );
-                  info.reload();
-                }}
-              >
-                <Calculator size={16} />
-                Terapkan Kalkulasi Otomatis ke Draf
-              </Action>
+                      if (!batchChanges.length) {
+                        setMessage(
+                          "Tidak ada nilai kalkulasi otomatis yang tersedia untuk diterapkan.",
+                        );
+                        return false;
+                      }
+                      await api(
+                        `/course-classes/${classId}/manual-grades/batch`,
+                        "POST",
+                        {
+                          changes: batchChanges,
+                          reason:
+                            "Penerapan kalkulasi otomatis sistem ke draf rekap nilai",
+                        },
+                      );
+                      setMessage(
+                        `${batchChanges.length} nilai saran otomatis berhasil diterapkan ke draf.`,
+                      );
+                      info.reload();
+                    }}
+                  >
+                    <Calculator size={16} />
+                    Terapkan Kalkulasi Otomatis ke Draf
+                  </Action>
+                </div>
+              </details>
             </>
           )}
         </div>
@@ -761,7 +901,9 @@ export function Gradebook({
       {message && <Notice>{message}</Notice>}
       {user?.role === "DEPARTMENT_ADMIN" && (
         <div className="callout note">
-          Mode pratinjau rekap nilai: Anda dapat memantau capaian mahasiswa dan mengekspor berkas nilai. Pengaturan bobot, koreksi nilai manual, dan publikasi nilai akhir merupakan wewenang dosen pengampu.
+          Mode pratinjau rekap nilai: Anda dapat memantau capaian mahasiswa dan
+          mengekspor berkas nilai. Pengaturan bobot, koreksi nilai manual, dan
+          publikasi nilai akhir merupakan wewenang dosen pengampu.
         </div>
       )}
       {!data.weightsValid && (
@@ -771,44 +913,50 @@ export function Gradebook({
         <div className="callout warning">{t.pendingGradingWarning}</div>
       )}
       {locked && <div className="callout note">{t.publishedGradeWarning}</div>}
-      <div className="weight-distribution-bar">
-        {data.categories.map((c: any, i: number) => {
-          // Shared categorical ramp: the chart tokens of the UAY design system.
-          const colors = [
-            "var(--chart-1)",
-            "var(--chart-2)",
-            "var(--chart-3)",
-            "var(--chart-4)",
-            "var(--chart-5)",
-          ];
-          return (
-            <div
-              key={c.id}
-              className="weight-bar-segment"
-              style={{
-                width: `${c.weightPercent}%`,
-                backgroundColor: colors[i % colors.length],
-              }}
-              title={`${c.name}: ${c.weightPercent}%`}
-            />
-          );
-        })}
-      </div>
-      <div className="weight-strip">
-        {data.categories.map((c: any) => (
-          <span key={c.id}>
-            <strong>{c.weightPercent}%</strong>
-            {c.name}
-          </span>
-        ))}
-      </div>
-      <Form
+      <details className="weight-legend" open={!phone}>
+        <summary>Komposisi penilaian</summary>
+        <div className="weight-distribution-bar">
+          {data.categories.map((c: any, i: number) => {
+            // Shared categorical ramp: the chart tokens of the UAY design system.
+            const colors = [
+              "var(--chart-1)",
+              "var(--chart-2)",
+              "var(--chart-3)",
+              "var(--chart-4)",
+              "var(--chart-5)",
+            ];
+            return (
+              <div
+                key={c.id}
+                className="weight-bar-segment"
+                style={{
+                  width: `${c.weightPercent}%`,
+                  backgroundColor: colors[i % colors.length],
+                }}
+                title={`${c.name}: ${c.weightPercent}%`}
+              />
+            );
+          })}
+        </div>
+        <div className="weight-strip">
+          {data.categories.map((c: any) => (
+            <span key={c.id}>
+              <strong>{c.weightPercent}%</strong>
+              {c.name}
+            </span>
+          ))}
+        </div>
+      </details>
+      <GradebookEditor
+        writable={writable}
         draftKey={"gradebook:" + classId}
         draftValue={{ changes, reason }}
         captureFields={false}
         onDirtyChange={setUnsaved}
-        onRestoreDraft={value => { setChanges(value.changes ?? value); setReason(value.reason ?? ""); }}
-        disabled={!writable}
+        onRestoreDraft={(value) => {
+          setChanges(value.changes ?? value);
+          setReason(value.reason ?? "");
+        }}
         submitDisabled={!changedCount}
         submitLabel={"Simpan semua perubahan (" + changedCount + ")"}
         onSubmit={async (f) => {
@@ -831,132 +979,158 @@ export function Gradebook({
           info.reload();
         }}
       >
-        <div
-          className="card table-wrap grade-table"
-          role="region"
-          aria-label="Daftar nilai peserta"
-          tabIndex={0}
-        >
-          <table>
-            <thead>
-              <tr>
-                <th>{t.name}</th>
-                {data.categories.map((c: any) => (
-                  <th key={c.id}>
-                    {c.name}
-                    <small className="block">{c.weightPercent}%</small>
-                  </th>
-                ))}
-                <th>{t.progress}</th>
-                <th>{t.finalScore}</th>
-                <th>{t.letter}</th>
-                <th>{t.status}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pagination.paginatedItems.map((r: any) => (
-                <tr
-                  key={r.user.id}
-                  className={writable ? "clickable-grade-row" : ""}
-                  onClick={(e) => {
-                    if (!writable) return;
-                    const target = e.target as HTMLElement;
-                    if (
-                      target.tagName === "INPUT" ||
-                      target.tagName === "TEXTAREA" ||
-                      target.closest("button") ||
-                      target.closest("input") ||
-                      target.closest("textarea")
-                    ) {
-                      return;
+        {phone ? (
+          <div className="phone-grade-list" aria-label="Daftar nilai peserta">
+            <p className="muted">
+              {writable
+                ? "Buka kartu mahasiswa untuk melihat atau mengubah komponen nilai."
+                : "Buka kartu mahasiswa untuk melihat rincian komponen nilai."}
+            </p>
+            {pagination.paginatedItems.map((row: any) => (
+              <PhoneGradeRecord
+                key={row.user.id}
+                row={row}
+                changes={changes}
+                writable={writable}
+                onScoreChange={changeScore}
+                onReview={() =>
+                  setModal({ kind: "student_review", userId: row.user.id })
+                }
+              />
+            ))}
+            {!data.rows.length && <Empty>{t.noParticipants}</Empty>}
+          </div>
+        ) : (
+          <div
+            className="card table-wrap grade-table"
+            role="region"
+            aria-label="Daftar nilai peserta"
+            tabIndex={0}
+          >
+            <table>
+              <thead>
+                <tr>
+                  <th>{t.name}</th>
+                  {data.categories.map((c: any) => (
+                    <th key={c.id}>
+                      {c.name}
+                      <small className="block">{c.weightPercent}%</small>
+                    </th>
+                  ))}
+                  <th>{t.progress}</th>
+                  <th>{t.finalScore}</th>
+                  <th>{t.letter}</th>
+                  <th>{t.status}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pagination.paginatedItems.map((r: any) => (
+                  <tr
+                    key={r.user.id}
+                    className={writable ? "clickable-grade-row" : ""}
+                    onClick={(e) => {
+                      if (!writable) return;
+                      const target = e.target as HTMLElement;
+                      if (
+                        target.tagName === "INPUT" ||
+                        target.tagName === "TEXTAREA" ||
+                        target.closest("button") ||
+                        target.closest("input") ||
+                        target.closest("textarea")
+                      ) {
+                        return;
+                      }
+                      setModal({ kind: "student_review", userId: r.user.id });
+                    }}
+                    title={
+                      writable
+                        ? "Klik baris untuk meninjau rincian capaian & kalkulasi nilai mahasiswa"
+                        : undefined
                     }
-                    setModal({ kind: "student_review", userId: r.user.id });
-                  }}
-                  title={
-                    writable
-                      ? "Klik baris untuk meninjau rincian capaian & kalkulasi nilai mahasiswa"
-                      : undefined
-                  }
-                >
-                  <td>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <strong>{r.user.name}</strong>
-                      {writable && (
-                        <span
-                          style={{
-                            fontSize: "0.72rem",
-                            background: "rgba(2, 132, 199, 0.1)",
-                            color: "#0284c7",
-                            padding: "1px 6px",
-                            borderRadius: 4,
-                            fontWeight: 600,
-                          }}
-                        >
-                          Tinjau
-                        </span>
-                      )}
-                    </div>
-                    <small className="block">{r.user.identifierValue}</small>
-                  </td>
-                  {r.categoryScores.map((c: any) => (
-                    <td key={c.categoryId}>
-                      {writable && c.source !== "PROGRESS" ? (
-                        <GradeScoreInput
-                          className={
-                            changes[r.user.id + ":" + c.categoryId]
-                              ? "changed"
-                              : ""
-                          }
-                          ariaLabel={r.user.name + " · " + c.name}
-                          value={
-                            changes[r.user.id + ":" + c.categoryId]?.score ??
-                            String(c.score)
-                          }
-                          onChange={(score) => {
-                            const key = r.user.id + ":" + c.categoryId;
-                            setChanges((previous) => {
-                              const next = { ...previous };
-                              if (score !== "" && Number(score) === c.score)
-                                delete next[key];
-                              else
-                                next[key] = {
-                                  userId: r.user.id,
-                                  categoryId: c.categoryId,
-                                  score,
-                                };
-                              return next;
-                            });
-                          }}
-                        />
-                      ) : (
-                        c.score.toFixed(2)
+                  >
+                    <td>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                        }}
+                      >
+                        <strong>{r.user.name}</strong>
+                        {writable && (
+                          <button
+                            type="button"
+                            className="secondary sm"
+                            aria-label={`Tinjau nilai ${r.user.name}`}
+                            onClick={() =>
+                              setModal({
+                                kind: "student_review",
+                                userId: r.user.id,
+                              })
+                            }
+                            style={{
+                              fontSize: "0.72rem",
+                              background: "rgba(2, 132, 199, 0.1)",
+                              color: "#0284c7",
+                              padding: "1px 6px",
+                              borderRadius: 4,
+                              fontWeight: 600,
+                            }}
+                          >
+                            Tinjau
+                          </button>
+                        )}
+                      </div>
+                      <small className="block">{r.user.identifierValue}</small>
+                    </td>
+                    {r.categoryScores.map((c: any) => (
+                      <td key={c.categoryId}>
+                        {writable && c.source !== "PROGRESS" ? (
+                          <GradeScoreInput
+                            className={
+                              changes[r.user.id + ":" + c.categoryId]
+                                ? "changed"
+                                : ""
+                            }
+                            ariaLabel={r.user.name + " · " + c.name}
+                            value={
+                              changes[r.user.id + ":" + c.categoryId]?.score ??
+                              String(c.score)
+                            }
+                            onChange={(score) =>
+                              changeScore(r.user.id, c, score)
+                            }
+                          />
+                        ) : (
+                          c.score.toFixed(2)
+                        )}
+                      </td>
+                    ))}
+                    <td>
+                      <span>{r.progress}%</span>
+                      <progress value={r.progress} max={100} />
+                    </td>
+                    <td>
+                      <strong>{r.finalScore.toFixed(2)}</strong>
+                    </td>
+                    <td>
+                      <span className="letter-badge">{r.gradeLetter}</span>
+                    </td>
+                    <td>
+                      <Badge
+                        value={r.record?.publishedAt ? "PUBLISHED" : "DRAFT"}
+                      />
+                      {r.pending.length > 0 && (
+                        <small className="block">{t.pendingGrading}</small>
                       )}
                     </td>
-                  ))}
-                  <td>
-                    <span>{r.progress}%</span>
-                    <progress value={r.progress} max={100} />
-                  </td>
-                  <td>
-                    <strong>{r.finalScore.toFixed(2)}</strong>
-                  </td>
-                  <td>
-                    <span className="letter-badge">{r.gradeLetter}</span>
-                  </td>
-                  <td>
-                    <Badge
-                      value={r.record?.publishedAt ? "PUBLISHED" : "DRAFT"}
-                    />
-                    {r.pending.length > 0 && (
-                      <small className="block">{t.pendingGrading}</small>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {!data.rows.length && <Empty>{t.noParticipants}</Empty>}
-        </div>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {!data.rows.length && <Empty>{t.noParticipants}</Empty>}
+          </div>
+        )}
         <Pagination
           page={pagination.page}
           totalPages={pagination.totalPages}
@@ -974,7 +1148,7 @@ export function Gradebook({
             <textarea
               name="reason"
               value={reason}
-              onChange={e => setReason(e.target.value)}
+              onChange={(e) => setReason(e.target.value)}
               minLength={5}
               required={Object.values(changes).some((change) => {
                 const row = data.rows.find(
@@ -990,7 +1164,7 @@ export function Gradebook({
             />
           </Field>
         )}
-      </Form>
+      </GradebookEditor>
       {writable && (
         <>
           <div className="publish-panel">
@@ -1085,10 +1259,12 @@ export function Gradebook({
                   onChange={(e) => setGradeScaleVersion(e.target.value)}
                 >
                   <option value="2026.1">
-                    2026.1 - Standar Baru UAY 2026 (A &ge; 85, B+ &ge; 80, B &ge; 75, dst.)
+                    2026.1 - Standar Baru UAY 2026 (A &ge; 85, B+ &ge; 80, B
+                    &ge; 75, dst.)
                   </option>
                   <option value="2024.1">
-                    2024.1 - Kurikulum Transisi 2024 (A &ge; 80, B+ &ge; 75, B &ge; 70, dst.)
+                    2024.1 - Kurikulum Transisi 2024 (A &ge; 80, B+ &ge; 75, B
+                    &ge; 70, dst.)
                   </option>
                 </select>
               </Field>
@@ -1106,7 +1282,9 @@ export function Gradebook({
                       borderRadius: 8,
                       padding: 12,
                       marginBottom: 12,
-                      background: isMandatory ? "rgba(2, 132, 199, 0.03)" : "transparent",
+                      background: isMandatory
+                        ? "rgba(2, 132, 199, 0.03)"
+                        : "transparent",
                     }}
                   >
                     <div
@@ -1118,7 +1296,13 @@ export function Gradebook({
                       }}
                     >
                       <Field label={t.category}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6,
+                          }}
+                        >
                           <input
                             required
                             disabled={isMandatory}
@@ -1157,7 +1341,10 @@ export function Gradebook({
                           step="0.1"
                           value={c.weightPercent}
                           onChange={(e) => {
-                            const val = Math.max(0, Math.min(100, Number(e.target.value) || 0));
+                            const val = Math.max(
+                              0,
+                              Math.min(100, Number(e.target.value) || 0),
+                            );
                             setWeights(
                               weights.map((w, j) =>
                                 i === j ? { ...w, weightPercent: val } : w,
@@ -1171,20 +1358,31 @@ export function Gradebook({
                         hint="Pilih sumber aktivitas untuk saran nilai"
                       >
                         <select
-                          value={c.sourceType || (c.kind === "PROGRESS" ? "PROGRESS" : "MANUAL")}
+                          value={
+                            c.sourceType ||
+                            (c.kind === "PROGRESS" ? "PROGRESS" : "MANUAL")
+                          }
                           onChange={(e) =>
                             setWeights(
                               weights.map((w, j) =>
-                                i === j ? { ...w, sourceType: e.target.value } : w,
+                                i === j
+                                  ? { ...w, sourceType: e.target.value }
+                                  : w,
                               ),
                             )
                           }
                         >
-                          <option value="MANUAL">Input Manual (Tanpa Kalkulator)</option>
+                          <option value="MANUAL">
+                            Input Manual (Tanpa Kalkulator)
+                          </option>
                           <option value="ASSIGNMENT">Tugas Terstruktur</option>
                           <option value="QUIZ">Kuis</option>
-                          <option value="ASSIGNMENT_AND_QUIZ">Gabungan Tugas &amp; Kuis</option>
-                          <option value="PROGRESS">Progres Belajar Materi</option>
+                          <option value="ASSIGNMENT_AND_QUIZ">
+                            Gabungan Tugas &amp; Kuis
+                          </option>
+                          <option value="PROGRESS">
+                            Progres Belajar Materi
+                          </option>
                           <option value="ATTENDANCE">Presensi Kehadiran</option>
                         </select>
                       </Field>
@@ -1299,12 +1497,13 @@ export function ImportPanel({
     [review, setReview] = useState<any>(null),
     [error, setError] = useState<Error | null>(null),
     [busy, setBusy] = useState(false),
+    [committing, setCommitting] = useState(false),
     [reason, setReason] = useState("");
   const draft = useLocalDraft(
     "import:" + classId + ":" + initialKind,
     { kind, target, rows, headers, reason },
     (v) => {
-      setKind(v.kind);
+      setKind(initialKind);
       setTarget(v.target);
       setRows(v.rows);
       setHeaders(v.headers);
@@ -1368,298 +1567,328 @@ export function ImportPanel({
     await exportSheet(`template-${kind.toLowerCase()}.xlsx`, cols, [example]);
   };
   return (
-    <Modal title={t.importTitle} wide onClose={onClose}>
+    <Modal
+      title={t.importTitle}
+      wide
+      onClose={onClose}
+      busy={busy || committing}
+    >
       <div
         className="import-draft"
         data-dirty={draft.dirty ? "true" : undefined}
       >
-        <SaveStatus draft={draft} />
+        <SaveStatus draft={draft} busy={busy || committing} />
       </div>
       <p>{t.importDescription}</p>
-      <div className="form-grid">
-        <Field label={t.importKind}>
-          <select
-            value={kind}
-            onChange={(e) => {
-              setKind(e.target.value);
-              setRows([]);
-              setReview(null);
-              setTarget("");
-            }}
-          >
-            {["ENROLLMENT", "GRADES", "QUESTIONS"].map((value) => (
-              <option value={value} key={value}>
-                {(t as any)[value]}
-              </option>
-            ))}
-          </select>
-        </Field>
-        {kind !== "ENROLLMENT" && (
-          <Field label={kind === "GRADES" ? t.category : t.questionBanks}>
-            <select value={target} onChange={(e) => setTarget(e.target.value)}>
-              <option value="">{t.choose}</option>
-              {(kind === "GRADES"
-                ? categories.data?.filter((c) => c.kind !== "PROGRESS")
-                : banks.data
-              )?.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name ?? item.title}
+      <fieldset disabled={busy || committing || !!draft.recovery}>
+        <div className="form-grid">
+          <Field label={t.importKind}>
+            <select
+              value={kind}
+              onChange={(e) => {
+                setKind(e.target.value);
+                setRows([]);
+                setReview(null);
+                setTarget("");
+              }}
+            >
+              {[initialKind].map((value) => (
+                <option value={value} key={value}>
+                  {(t as any)[value]}
                 </option>
               ))}
             </select>
           </Field>
-        )}
-      </div>
-      <div className="toolbar">
-        <Action run={template}>
-          <Download size={16} />
-          {t.template}
-        </Action>
-        <label
-          className="button secondary"
-          style={{
-            cursor: "pointer",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-          }}
-        >
-          <Upload size={16} />
-          <span>{busy ? t.uploading : t.chooseFile}</span>
-          <input
-            type="file"
-            accept=".csv,.xlsx"
-            disabled={busy}
-            style={{ display: "none" }}
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              setError(null);
-              setBusy(true);
-              try {
-                if (file.size === 0 || file.size > 10 * 1024 * 1024)
-                  throw new Error(t.errors.FILE_TYPE_OR_SIZE);
-                let matrix: any[][];
-                if (file.name.toLowerCase().endsWith(".csv"))
-                  matrix = parseCsv((await file.text()).replace(/^\uFEFF/, ""));
-                else {
-                  const book = await workbook();
-                  await book.xlsx.load(await file.arrayBuffer());
-                  const sheet = book.worksheets[0];
-                  if (!sheet) throw new Error(t.errors.IMPORT_EMPTY);
-                  matrix = [];
-                  sheet.eachRow((row) => {
-                    matrix.push(
-                      (row.values as any[])
-                        .slice(1)
-                        .map((v) =>
-                          v && typeof v === "object"
-                            ? (v.text ?? v.result ?? "")
-                            : v,
-                        ),
-                    );
-                  });
-                }
-                if (matrix.length < 2 || matrix.length > 501)
-                  throw new Error(t.errors.IMPORT_EMPTY);
-                const cols = matrix[0].map((v) => String(v).trim());
-                if (new Set(cols).size !== cols.length)
-                  throw new Error(t.errors.VALIDATION_ERROR);
-                setHeaders(cols);
-                setRows(
-                  matrix.slice(1).map((row) => ({
-                    values: normalizeRow(cols, row),
-                    exclude: false,
-                    override: false,
-                  })),
-                );
-                setReview(null);
-              } catch (e) {
-                setError(e as Error);
-              } finally {
-                setBusy(false);
-              }
+          {kind !== "ENROLLMENT" && (
+            <Field label={kind === "GRADES" ? t.category : t.questionBanks}>
+              <select
+                value={target}
+                onChange={(e) => setTarget(e.target.value)}
+              >
+                <option value="">{t.choose}</option>
+                {(kind === "GRADES"
+                  ? categories.data?.filter((c) => c.kind !== "PROGRESS")
+                  : banks.data
+                )?.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name ?? item.title}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+        </div>
+        <div className="toolbar">
+          <Action run={template}>
+            <Download size={16} />
+            {t.template}
+          </Action>
+          <label
+            className="button secondary"
+            style={{
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
             }}
-          />
-        </label>
-      </div>
-      {kind === "GRADES" && (
-        <Field label={t.reason} hint={t.reasonHint}>
-          <input value={reason} onChange={(e) => setReason(e.target.value)} />
-        </Field>
-      )}
-      {error && <Notice error={error} />}{" "}
-      {busy ? (
-        <Loading />
-      ) : !rows.length ? (
-        <Empty>{t.emptyImport}</Empty>
-      ) : (
-        <>
-          <div className="import-summary">
-            <strong>
-              {rows.length} {t.row.toLowerCase()}
-            </strong>
-            <span>
-              {review?.ready ?? 0} {t.ready}
-            </span>
-            <span>
-              {review?.issues ?? 0} {t.issues}
-            </span>
-          </div>
-          <div className="table-wrap import-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>{t.row}</th>
-                  {headers.map((h) => (
-                    <th key={h}>{h}</th>
-                  ))}
-                  <th>{t.status}</th>
-                  <th>{t.oldValue}</th>
-                  <th>{t.exclude}</th>
-                  <th>{t.override}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, index) => (
-                  <tr key={index} className={row.exclude ? "excluded-row" : ""}>
-                    <td>{index + 2}</td>
-                    {headers.map((header) => (
-                      <td key={header}>
-                        <input
-                          aria-label={`${header} ${index + 2}`}
-                          disabled={row.exclude}
-                          value={
-                            typeof row.values[header] === "object"
-                              ? JSON.stringify(row.values[header])
-                              : (row.values[header] ?? "")
-                          }
-                          onChange={(e) => {
-                            let value: any = e.target.value;
-                            if (["points", "maxWords"].includes(header))
-                              value = Number(value);
-                            if (
-                              ["options", "answerKey", "rubric"].includes(
-                                header,
-                              )
-                            ) {
-                              try {
-                                value = JSON.parse(value);
-                              } catch {}
+          >
+            <Upload size={16} />
+            <span>{busy ? t.uploading : t.chooseFile}</span>
+            <input
+              type="file"
+              accept=".csv,.xlsx"
+              disabled={busy}
+              style={{ display: "none" }}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setError(null);
+                setBusy(true);
+                try {
+                  if (file.size === 0 || file.size > 10 * 1024 * 1024)
+                    throw new Error(t.errors.FILE_TYPE_OR_SIZE);
+                  let matrix: any[][];
+                  if (file.name.toLowerCase().endsWith(".csv"))
+                    matrix = parseCsv(
+                      (await file.text()).replace(/^\uFEFF/, ""),
+                    );
+                  else {
+                    const book = await workbook();
+                    await book.xlsx.load(await file.arrayBuffer());
+                    const sheet = book.worksheets[0];
+                    if (!sheet) throw new Error(t.errors.IMPORT_EMPTY);
+                    matrix = [];
+                    sheet.eachRow((row) => {
+                      matrix.push(
+                        (row.values as any[])
+                          .slice(1)
+                          .map((v) =>
+                            v && typeof v === "object"
+                              ? (v.text ?? v.result ?? "")
+                              : v,
+                          ),
+                      );
+                    });
+                  }
+                  if (matrix.length < 2 || matrix.length > 501)
+                    throw new Error(t.errors.IMPORT_EMPTY);
+                  const cols = matrix[0].map((v) => String(v).trim());
+                  if (new Set(cols).size !== cols.length)
+                    throw new Error(t.errors.VALIDATION_ERROR);
+                  setHeaders(cols);
+                  setRows(
+                    matrix.slice(1).map((row) => ({
+                      values: normalizeRow(cols, row),
+                      exclude: false,
+                      override: false,
+                    })),
+                  );
+                  setReview(null);
+                } catch (e) {
+                  setError(e as Error);
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            />
+          </label>
+        </div>
+        {kind === "GRADES" && (
+          <Field label={t.reason} hint={t.reasonHint}>
+            <input value={reason} onChange={(e) => setReason(e.target.value)} />
+          </Field>
+        )}
+        {error && <Notice error={error} />}{" "}
+        {busy ? (
+          <Loading />
+        ) : !rows.length ? (
+          <Empty>{t.emptyImport}</Empty>
+        ) : (
+          <>
+            <div className="import-summary">
+              <strong>
+                {rows.length} {t.row.toLowerCase()}
+              </strong>
+              <span>
+                {review?.ready ?? 0} {t.ready}
+              </span>
+              <span>
+                {review?.issues ?? 0} {t.issues}
+              </span>
+            </div>
+            <div className="table-wrap import-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>{t.row}</th>
+                    {headers.map((h) => (
+                      <th key={h}>{h}</th>
+                    ))}
+                    <th>{t.status}</th>
+                    <th>{t.oldValue}</th>
+                    <th>{t.exclude}</th>
+                    <th>{t.override}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row, index) => (
+                    <tr
+                      key={index}
+                      className={row.exclude ? "excluded-row" : ""}
+                    >
+                      <td>{index + 2}</td>
+                      {headers.map((header) => (
+                        <td key={header}>
+                          <input
+                            aria-label={`${header} ${index + 2}`}
+                            disabled={row.exclude}
+                            value={
+                              typeof row.values[header] === "object"
+                                ? JSON.stringify(row.values[header])
+                                : (row.values[header] ?? "")
                             }
+                            onChange={(e) => {
+                              let value: any = e.target.value;
+                              if (["points", "maxWords"].includes(header))
+                                value = Number(value);
+                              if (
+                                ["options", "answerKey", "rubric"].includes(
+                                  header,
+                                )
+                              ) {
+                                try {
+                                  value = JSON.parse(value);
+                                } catch {}
+                              }
+                              setReview(null);
+                              setRows(
+                                rows.map((r, i) =>
+                                  i === index
+                                    ? {
+                                        ...r,
+                                        values: {
+                                          ...r.values,
+                                          [header]: value,
+                                        },
+                                      }
+                                    : r,
+                                ),
+                              );
+                            }}
+                          />
+                        </td>
+                      ))}
+                      <td>
+                        {review?.rows[index]?.status === "READY" ? (
+                          <Badge value="READY" />
+                        ) : (
+                          review?.rows[index]?.issues?.map((code: string) => (
+                            <small className="block danger-text" key={code}>
+                              {(t.errors as any)[code] ?? code}
+                            </small>
+                          ))
+                        )}
+                      </td>
+                      <td>
+                        <small>
+                          {review?.rows[index]?.existing
+                            ? JSON.stringify(
+                                kind === "GRADES"
+                                  ? { score: review.rows[index].existing.score }
+                                  : { id: review.rows[index].existing.id },
+                              )
+                            : "—"}
+                        </small>
+                      </td>
+                      <td>
+                        <input
+                          aria-label={`${t.exclude} ${index + 2}`}
+                          type="checkbox"
+                          checked={row.exclude}
+                          onChange={(e) => {
                             setReview(null);
                             setRows(
                               rows.map((r, i) =>
                                 i === index
-                                  ? {
-                                      ...r,
-                                      values: { ...r.values, [header]: value },
-                                    }
+                                  ? { ...r, exclude: e.target.checked }
                                   : r,
                               ),
                             );
                           }}
                         />
                       </td>
-                    ))}
-                    <td>
-                      {review?.rows[index]?.status === "READY" ? (
-                        <Badge value="READY" />
-                      ) : (
-                        review?.rows[index]?.issues?.map((code: string) => (
-                          <small className="block danger-text" key={code}>
-                            {(t.errors as any)[code] ?? code}
-                          </small>
-                        ))
-                      )}
-                    </td>
-                    <td>
-                      <small>
-                        {review?.rows[index]?.existing
-                          ? JSON.stringify(
-                              kind === "GRADES"
-                                ? { score: review.rows[index].existing.score }
-                                : { id: review.rows[index].existing.id },
-                            )
-                          : "—"}
-                      </small>
-                    </td>
-                    <td>
-                      <input
-                        aria-label={`${t.exclude} ${index + 2}`}
-                        type="checkbox"
-                        checked={row.exclude}
-                        onChange={(e) => {
-                          setReview(null);
-                          setRows(
-                            rows.map((r, i) =>
-                              i === index
-                                ? { ...r, exclude: e.target.checked }
-                                : r,
-                            ),
-                          );
-                        }}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        aria-label={`${t.override} ${index + 2}`}
-                        type="checkbox"
-                        checked={row.override}
-                        onChange={(e) => {
-                          setReview(null);
-                          setRows(
-                            rows.map((r, i) =>
-                              i === index
-                                ? { ...r, override: e.target.checked }
-                                : r,
-                            ),
-                          );
-                        }}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="form-actions">
-            <Action
-              run={async () =>
-                setReview(
-                  await api(
-                    `/course-classes/${classId}/imports/preview`,
-                    "POST",
-                    batch(),
-                  ),
-                )
-              }
-            >
-              {t.preview}
-            </Action>
-            <Action
-              className="primary"
-              disabled={
-                !!draft.recovery ||
-                !review ||
-                review.issues > 0 ||
-                review.ready === 0
-              }
-              run={async () => {
-                await api(
-                  `/course-classes/${classId}/imports/commit`,
-                  "POST",
-                  batch(),
-                );
-                await draft.saved();
-                onClose();
-              }}
-            >
-              {t.commitImport} ({review?.ready ?? 0})
-            </Action>
-          </div>
-        </>
-      )}
+                      <td>
+                        <input
+                          aria-label={`${t.override} ${index + 2}`}
+                          type="checkbox"
+                          checked={row.override}
+                          onChange={(e) => {
+                            setReview(null);
+                            setRows(
+                              rows.map((r, i) =>
+                                i === index
+                                  ? { ...r, override: e.target.checked }
+                                  : r,
+                              ),
+                            );
+                          }}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="form-actions">
+              <Action
+                run={async () =>
+                  setReview(
+                    await api(
+                      `/course-classes/${classId}/imports/preview`,
+                      "POST",
+                      batch(),
+                    ),
+                  )
+                }
+              >
+                {t.preview}
+              </Action>
+              <Action
+                className="primary"
+                busyLabel="Menyimpan hasil impor…"
+                successMessage="Impor berhasil disimpan."
+                disabledReason={
+                  draft.recovery
+                    ? "Pulihkan atau buang draf terlebih dahulu."
+                    : "Pratinjau harus selesai dan semua masalah baris harus diperbaiki sebelum impor."
+                }
+                disabled={
+                  !!draft.recovery ||
+                  !review ||
+                  review.issues > 0 ||
+                  review.ready === 0
+                }
+                run={async () => {
+                  setCommitting(true);
+                  try {
+                    await api(
+                      `/course-classes/${classId}/imports/commit`,
+                      "POST",
+                      batch(),
+                    );
+                    await draft.saved();
+                    onClose();
+                  } finally {
+                    setCommitting(false);
+                  }
+                }}
+              >
+                {t.commitImport} ({review?.ready ?? 0})
+              </Action>
+            </div>
+          </>
+        )}
+      </fieldset>
     </Modal>
   );
 }

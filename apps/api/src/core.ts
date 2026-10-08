@@ -19,6 +19,10 @@
  */
 
 import { classPath } from "../../../packages/shared/src/urls.js";
+import {
+  canManageDepartmentScope,
+  hasPermission,
+} from "../../../packages/shared/src/permissions.js";
 import { Prisma, PrismaClient, type User } from "@prisma/client";
 import { Redis } from "ioredis";
 import { createHash, randomUUID } from "node:crypto";
@@ -158,9 +162,9 @@ export const config = {
     if (!url || !key) return "local";
     const isUay = Boolean(
       process.env.UAY_FILE_SERVICE_URL ||
-        process.env.UAY_FILE_SERVICE_API_KEY ||
-        url.includes("/api/v1") ||
-        url.includes("file-service.uay.ac.id"),
+      process.env.UAY_FILE_SERVICE_API_KEY ||
+      url.includes("/api/v1") ||
+      url.includes("file-service.uay.ac.id"),
     );
     return isUay ? "uay" : "legacy";
   },
@@ -196,19 +200,30 @@ export const config = {
     .map((s) => s.trim())
     .filter(Boolean),
 };
-const initialAcademicYear = process.env.ACADEMIC_YEAR?.trim() || "2026/2027 Ganjil";
+const initialAcademicYear =
+  process.env.ACADEMIC_YEAR?.trim() || "2026/2027 Ganjil";
 const initialAcademicSettings = {
   academicYear: initialAcademicYear,
-  semesterLabel: process.env.SEMESTER_LABEL?.trim() || "SEMESTER GANJIL 2026/2027",
-  academicYears: [...new Set([
-    "2025/2026 Ganjil", "2025/2026 Genap", "2026/2027 Ganjil",
-    "2026/2027 Genap", "2027/2028 Ganjil", "2027/2028 Genap", initialAcademicYear,
-  ])],
+  semesterLabel:
+    process.env.SEMESTER_LABEL?.trim() || "SEMESTER GANJIL 2026/2027",
+  academicYears: [
+    ...new Set([
+      "2025/2026 Ganjil",
+      "2025/2026 Genap",
+      "2026/2027 Ganjil",
+      "2026/2027 Genap",
+      "2027/2028 Ganjil",
+      "2027/2028 Genap",
+      initialAcademicYear,
+    ]),
+  ],
   defaultGradeScaleVersion: "2026.1",
   minAttendancePercentage: 75,
 };
 
-export async function getAcademicSettings(client: Prisma.TransactionClient = db) {
+export async function getAcademicSettings(
+  client: Prisma.TransactionClient = db,
+) {
   return client.academicSettings.upsert({
     where: { id: "global" },
     create: { id: "global", ...initialAcademicSettings },
@@ -242,13 +257,13 @@ function productionConfigurationErrors() {
     invalid.push("AUTH_MODE=oidc");
   }
 
-  // REDIS_URL bersifat opsional: jika tidak diisi, cache & rate limiter otomatis fallback ke in-memory
+  required("REDIS_URL", resolvedRedisUrl);
   required("SSO_ISSUER", process.env.SSO_ISSUER);
   required("SSO_CLIENT_ID", process.env.SSO_CLIENT_ID);
   // SSO_CLIENT_SECRET bersifat opsional (tidak diperlukan untuk Client bertipe Public dengan PKCE)
   required("SSO_AUDIENCE", process.env.SSO_AUDIENCE);
   required("SSO_REDIRECT_URI", process.env.SSO_REDIRECT_URI);
-  // SSO_WEBHOOK_SECRET bersifat opsional (endpoint /api/v1/auth/revocations aman mengembalikan 503 jika belum diisi)
+  required("SSO_WEBHOOK_SECRET", process.env.SSO_WEBHOOK_SECRET);
 
   const activeFileUrl =
     process.env.UAY_FILE_SERVICE_URL?.trim() ||
@@ -266,7 +281,9 @@ function productionConfigurationErrors() {
     invalid.push("FILE_SERVICE_KEY or UAY_FILE_SERVICE_API_KEY");
   }
   if (config.fileMode === "local") {
-    invalid.push("FILE_SERVICE_REQUIRED (mode production wajib hanya menerima file service)");
+    invalid.push(
+      "FILE_SERVICE_REQUIRED (mode production wajib hanya menerima file service)",
+    );
   }
   required("FILE_ALLOWED_ORIGINS", process.env.FILE_ALLOWED_ORIGINS);
 
@@ -274,18 +291,26 @@ function productionConfigurationErrors() {
     invalid.push("HTTPS SSO_ACCOUNT_URL");
   }
 
-  const isIntranetOrLocal = (val: string) =>
-    val.startsWith("http://file-service.uay.ac.id") ||
-    val.startsWith("http://127.0.0.1") ||
-    val.startsWith("http://localhost");
+  const isIntranetOrLocal = (value: string) => {
+    try {
+      const url = new URL(value);
+      return (
+        url.protocol === "http:" &&
+        ["file-service.uay.ac.id", "127.0.0.1", "localhost"].includes(
+          url.hostname,
+        ) &&
+        !url.username &&
+        !url.password
+      );
+    } catch {
+      return false;
+    }
+  };
 
   if (
-    [
-      config.origin,
-      config.apiOrigin,
-      config.issuer,
-      config.redirectUri,
-    ].some((value) => !value.startsWith("https://")) ||
+    [config.origin, config.apiOrigin, config.issuer, config.redirectUri].some(
+      (value) => !value.startsWith("https://"),
+    ) ||
     (config.fileUrl &&
       !config.fileUrl.startsWith("https://") &&
       !isIntranetOrLocal(config.fileUrl))
@@ -327,10 +352,16 @@ export const redis = resolvedRedisUrl
   : null;
 
 if (redis) {
-  redis.on("connect", () => console.log("[Cache] Redis terhubung: menggunakan Redis cluster/server."));
-  redis.on("error", (err) => console.error("[Cache] Redis connection error (otomatis fallback ke in-memory):", err.message));
+  redis.on("connect", () =>
+    console.log("[Cache] Redis terhubung: menggunakan Redis cluster/server."),
+  );
+  redis.on("error", (err) =>
+    console.error("[Cache] Redis connection error:", err.message),
+  );
 } else {
-  console.log("[Cache] REDIS_URL tidak terdeteksi: otomatis menggunakan penyimpanan in-memory.");
+  console.log(
+    "[Cache] REDIS_URL tidak terdeteksi: otomatis menggunakan penyimpanan in-memory.",
+  );
 }
 
 const memory = new Map<string, { value: string; expires: number }>();
@@ -341,7 +372,8 @@ export const cache = {
       try {
         return await redis.get(key);
       } catch {
-        // Fallback ke in-memory saat terjadi transient network error
+        if (production && !isDemo)
+          throw new HttpError(503, "CACHE_UNAVAILABLE");
       }
     }
     const item = memory.get(key);
@@ -355,7 +387,8 @@ export const cache = {
         await redis.set(key, value, "EX", seconds);
         return;
       } catch {
-        // Fallback ke in-memory saat terjadi transient network error
+        if (production && !isDemo)
+          throw new HttpError(503, "CACHE_UNAVAILABLE");
       }
     }
     if (memory.size > 10000)
@@ -368,7 +401,8 @@ export const cache = {
         await redis.del(key);
         return;
       } catch {
-        // Fallback ke in-memory
+        if (production && !isDemo)
+          throw new HttpError(503, "CACHE_UNAVAILABLE");
       }
     }
     memory.delete(key);
@@ -378,7 +412,8 @@ export const cache = {
       try {
         return await redis.getdel(key);
       } catch {
-        // Fallback ke in-memory
+        if (production && !isDemo)
+          throw new HttpError(503, "CACHE_UNAVAILABLE");
       }
     }
     const value = await this.get(key);
@@ -399,7 +434,8 @@ export const cache = {
           ) <= limit
         );
       } catch {
-        // Fallback ke in-memory rate limiter
+        if (production && !isDemo)
+          throw new HttpError(503, "CACHE_UNAVAILABLE");
       }
     }
     const item = memory.get(key);
@@ -576,15 +612,14 @@ export async function mutate<T>(
   }, isolation);
 }
 export const canManageDepartment = (user: User, department: string) =>
-  user.role === "SUPER_ADMIN" ||
-  (user.role === "DEPARTMENT_ADMIN" &&
-    user.departmentScopes.includes(department));
+  canManageDepartmentScope(user.role, user.departmentScopes, department);
 export async function classAccess(
   tx: Prisma.TransactionClient,
   user: User,
   classId: string,
   write = false,
   studentWrite = false,
+  administrativeWrite = false,
 ) {
   const item = await tx.courseClass.findFirst({
     where: { OR: [{ id: classId }, { slug: classId }] },
@@ -601,7 +636,8 @@ export async function classAccess(
   ensure(item, 404, "NOT_FOUND");
   const manage =
     canManageDepartment(user, item.course.departmentCode) ||
-    item.instructors.some((i) => i.userId === user.id);
+    (user.role === "INSTRUCTOR" &&
+      item.instructors.some((i) => i.userId === user.id));
   const activeEnrollment = item.enrollments.find((e) => e.isActive);
   const inactiveEnrollment = item.enrollments.find((e) => !e.isActive);
   const enrolled = Boolean(activeEnrollment);
@@ -623,7 +659,11 @@ export async function classAccess(
       user.role === "DEPARTMENT_ADMIN" &&
       user.departmentScopes.includes(item.course.departmentCode);
     ensure(
-      user.role === "INSTRUCTOR" || isDeptAdmin || (studentWrite && user.role === "STUDENT"),
+      user.role === "INSTRUCTOR" ||
+        isDeptAdmin ||
+        (administrativeWrite &&
+          hasPermission(user.role, "MANAGE_ALL_CLASSES")) ||
+        (studentWrite && user.role === "STUDENT"),
       403,
       "CLASS_READ_ONLY",
     );

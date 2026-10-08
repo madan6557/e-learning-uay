@@ -2,7 +2,7 @@
   "version": 1,
   "document": {
     "title": "Technical Design E-Learning UAY · v5.0",
-    "path": "docs/Technical Design - E-Learning UAY - v5.0.md",
+    "path": "docs/requirements/Technical Design - E-Learning UAY - v5.0.md",
     "sha256": "1dfda756cde43dd82f300f9e0a47b6f9cca01f9bf1014b034409006189f6d537",
     "notes": [
       "Tambahan REC-004 dan seterusnya serta HELP mengacu pada implementasi dan panduan 7 Oktober 2026, bukan penambahan butir RTM resmi. Peran Rektor memakai sesi e-learning yang sama; zona waktu mengikuti perangkat.",

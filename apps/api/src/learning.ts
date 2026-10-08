@@ -111,7 +111,11 @@ export async function validateResource(raw: unknown, tx: any, classId: string) {
   if (data.resourceType === "DOCUMENT")
     ensure(p.fileObjectId && p.totalPages, 400, "DOCUMENT_REQUIRED");
   if (data.resourceType === "VIDEO_MEDIA") {
-    ensure((p.fileObjectId || p.url) && p.durationSeconds, 400, "VIDEO_REQUIRED");
+    ensure(
+      (p.fileObjectId || p.url) && p.durationSeconds,
+      400,
+      "VIDEO_REQUIRED",
+    );
     if (p.url) {
       ensure(
         config.embedOrigins.includes(new URL(p.url).origin),
@@ -231,8 +235,12 @@ async function reviewCourseBatch(
       issues.push("DATABASE_CONFLICT");
     }
 
-    const rawStatus = String(row.values.status ?? "").trim().toUpperCase();
-    const resolvedStatus = ["DRAFT", "PUBLISHED", "ARCHIVED"].includes(rawStatus)
+    const rawStatus = String(row.values.status ?? "")
+      .trim()
+      .toUpperCase();
+    const resolvedStatus = ["DRAFT", "PUBLISHED", "ARCHIVED"].includes(
+      rawStatus,
+    )
       ? rawStatus
       : "PUBLISHED";
 
@@ -271,23 +279,27 @@ export function registerLearning(app: Express) {
             ? {
                 OR: [
                   { departmentCode: { in: user.departmentScopes } },
-                  { classes: { some: { instructors: { some: { userId: user.id } } } } },
+                  {
+                    classes: {
+                      some: { instructors: { some: { userId: user.id } } },
+                    },
+                  },
                 ],
               }
-          : {
-              classes: {
-                some: {
-                  OR: [
-                    { instructors: { some: { userId: user.id } } },
-                    {
-                      enrollments: {
-                        some: { userId: user.id, isActive: true },
+            : {
+                classes: {
+                  some: {
+                    OR: [
+                      { instructors: { some: { userId: user.id } } },
+                      {
+                        enrollments: {
+                          some: { userId: user.id, isActive: true },
+                        },
                       },
-                    },
-                  ],
+                    ],
+                  },
                 },
-              },
-            };
+              };
     res.json(
       await db.course.findMany({
         where: scope,
@@ -371,7 +383,9 @@ export function registerLearning(app: Express) {
       await mutate(req, async (tx) => {
         const course = await tx.course.findUnique({
           where: { id: String(req.params.id) },
-          include: { _count: { select: { classes: true, questionBanks: true } } },
+          include: {
+            _count: { select: { classes: true, questionBanks: true } },
+          },
         });
         ensure(course, 404, "NOT_FOUND");
         ensure(
@@ -385,7 +399,16 @@ export function registerLearning(app: Express) {
           "COURSE_IN_USE",
         );
         await tx.course.delete({ where: { id: course.id } });
-        await audit(tx, req.context, "DELETE", "COURSE", course.id, null, course, null);
+        await audit(
+          tx,
+          req.context,
+          "DELETE",
+          "COURSE",
+          course.id,
+          null,
+          course,
+          null,
+        );
         return { id: course.id };
       }),
     ),
@@ -474,9 +497,28 @@ export function registerLearning(app: Express) {
           ...(req.query.q
             ? {
                 OR: [
-                  { name: { contains: String(req.query.q), mode: "insensitive" as const } },
-                  { course: { code: { contains: String(req.query.q), mode: "insensitive" as const } } },
-                  { course: { title: { contains: String(req.query.q), mode: "insensitive" as const } } },
+                  {
+                    name: {
+                      contains: String(req.query.q),
+                      mode: "insensitive" as const,
+                    },
+                  },
+                  {
+                    course: {
+                      code: {
+                        contains: String(req.query.q),
+                        mode: "insensitive" as const,
+                      },
+                    },
+                  },
+                  {
+                    course: {
+                      title: {
+                        contains: String(req.query.q),
+                        mode: "insensitive" as const,
+                      },
+                    },
+                  },
                 ],
               }
             : {}),
@@ -532,9 +574,7 @@ export function registerLearning(app: Express) {
       };
     });
     res.json(
-      req.query.summary === "true"
-        ? await dashboardClasses(mapped, u)
-        : mapped,
+      req.query.summary === "true" ? await dashboardClasses(mapped, u) : mapped,
     );
   });
   app.post("/api/v1/course-classes", async (req, res) =>
@@ -558,15 +598,7 @@ export function registerLearning(app: Express) {
           req.context.user,
           course.departmentCode,
         );
-        const isInstructor =
-          req.context.user.role === "INSTRUCTOR" &&
-          req.context.user.departmentScopes.includes(course.departmentCode) &&
-          data.instructorIds.includes(req.context.user.id);
-        ensure(
-          isManager || isInstructor,
-          403,
-          "WRITE_ACCESS_DENIED",
-        );
+        ensure(isManager, 403, "WRITE_ACCESS_DENIED");
         ensure(course.status !== "ARCHIVED", 423, "CLASS_ARCHIVED");
         const users = await tx.user.findMany({
           where: {
@@ -821,7 +853,9 @@ export function registerLearning(app: Express) {
         ...s,
         resources: s.resources.filter((r) => cls.canManage || visible(r)),
         quizzes: s.quizzes
-          .filter((q) => cls.canManage || (q.status === "PUBLISHED" && q.isVisible))
+          .filter(
+            (q) => cls.canManage || (q.status === "PUBLISHED" && q.isVisible),
+          )
           .map((q) => {
             if (cls.canManage) return q;
             const attempts = myAttempts.filter((a: any) => a.quizId === q.id);
@@ -857,9 +891,7 @@ export function registerLearning(app: Express) {
             const isSubmitted = subs.some(
               (sub: any) => sub.status !== "SUPERSEDED",
             );
-            const isCutoffPassed = Boolean(
-              a.cutoffDate && now > a.cutoffDate,
-            );
+            const isCutoffPassed = Boolean(a.cutoffDate && now > a.cutoffDate);
             const isDeadlinePassed = Boolean(
               a.deadline && now > a.deadline && !a.allowLate,
             );
@@ -910,7 +942,11 @@ export function registerLearning(app: Express) {
             enrollmentKey: z.string().min(6).nullable().optional(),
           })
           .parse(req.body);
-        ensure(cls.status !== "ARCHIVED" || data.status !== "ARCHIVED", 423, "CLASS_ARCHIVED");
+        ensure(
+          cls.status !== "ARCHIVED" || data.status !== "ARCHIVED",
+          423,
+          "CLASS_ARCHIVED",
+        );
         const after = await tx.courseClass.update({
           where: { id: cls.id },
           data: {
@@ -1047,6 +1083,8 @@ export function registerLearning(app: Express) {
           req.context.user,
           String(req.params.id),
           true,
+          false,
+          true,
         );
         const { userId, isActive } = z
           .object({
@@ -1113,13 +1151,16 @@ export function registerLearning(app: Express) {
           req.context.user,
           String(req.params.id),
           true,
+          false,
+          true,
         );
         const { userIds } = z
           .object({ userIds: z.array(z.string().uuid()).min(1) })
           .parse(req.body);
         ensure(
-          req.context.user.role === "INSTRUCTOR" &&
-            userIds.includes(req.context.user.id),
+          canManageDepartment(req.context.user, cls.course.departmentCode) ||
+            (req.context.user.role === "INSTRUCTOR" &&
+              userIds.includes(req.context.user.id)),
           403,
           "WRITE_ACCESS_DENIED",
         );
@@ -1577,10 +1618,7 @@ export function registerLearning(app: Express) {
       });
       for (const q of quizzes) {
         if (q.section?.class)
-          targetUrls.set(
-            q.id,
-            contentPath(q.section.class, "quizzes", q, []),
-          );
+          targetUrls.set(q.id, contentPath(q.section.class, "quizzes", q, []));
       }
     }
     if (submissionIds.length) {
@@ -1729,57 +1767,74 @@ export function registerLearning(app: Express) {
     const cursor =
       typeof req.query.cursor === "string" ? req.query.cursor : undefined;
     const entries = await db.auditLog.findMany({
-        where: { classId: cls.id },
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        take: 50,
-        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-        include: { user: { select: { name: true } } },
-      });
+      where: { classId: cls.id },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: 50,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      include: { user: { select: { name: true } } },
+    });
     const descriptiveEntities = new Set([
-      "COURSE", "CLASS", "SECTION", "RESOURCE", "ASSIGNMENT",
-      "QUIZ", "ANNOUNCEMENT", "QUESTION_BANK",
+      "COURSE",
+      "CLASS",
+      "SECTION",
+      "RESOURCE",
+      "ASSIGNMENT",
+      "QUIZ",
+      "ANNOUNCEMENT",
+      "QUESTION_BANK",
     ]);
     const visibleFields = [
-      "status", "isVisible", "isPublished", "academicYear", "credits",
-      "departmentCode", "deadline", "availableFrom", "availableUntil",
-      "startDate", "endDate",
+      "status",
+      "isVisible",
+      "isPublished",
+      "academicYear",
+      "credits",
+      "departmentCode",
+      "deadline",
+      "availableFrom",
+      "availableUntil",
+      "startDate",
+      "endDate",
     ];
     const record = (value: unknown): Record<string, unknown> =>
       value && typeof value === "object" && !Array.isArray(value)
-        ? value as Record<string, unknown>
+        ? (value as Record<string, unknown>)
         : {};
-    res.json(entries.map((entry) => {
-      const before = record(entry.beforeState);
-      const after = record(entry.afterState);
-      const fields = descriptiveEntities.has(entry.entity)
-        ? [...visibleFields, "title", "name"]
-        : visibleFields;
-      const safe = (value: unknown) =>
-        value === null || ["string", "number", "boolean"].includes(typeof value)
-          ? value
-          : undefined;
-      const changes = fields.flatMap((field) => {
-        const oldValue = safe(before[field]);
-        const newValue = safe(after[field]);
-        return JSON.stringify(oldValue) === JSON.stringify(newValue)
-          ? []
-          : [{ field, before: oldValue, after: newValue }];
-      });
-      const title = descriptiveEntities.has(entry.entity)
-        ? safe(after.title ?? after.name ?? before.title ?? before.name)
-        : null;
-      return {
-        id: entry.id,
-        action: entry.action,
-        entity: entry.entity,
-        actorRole: entry.actorRole,
-        user: entry.user,
-        createdAt: entry.createdAt,
-        reason: entry.reason,
-        objectTitle: typeof title === "string" ? title : null,
-        changes,
-      };
-    }));
+    res.json(
+      entries.map((entry) => {
+        const before = record(entry.beforeState);
+        const after = record(entry.afterState);
+        const fields = descriptiveEntities.has(entry.entity)
+          ? [...visibleFields, "title", "name"]
+          : visibleFields;
+        const safe = (value: unknown) =>
+          value === null ||
+          ["string", "number", "boolean"].includes(typeof value)
+            ? value
+            : undefined;
+        const changes = fields.flatMap((field) => {
+          const oldValue = safe(before[field]);
+          const newValue = safe(after[field]);
+          return JSON.stringify(oldValue) === JSON.stringify(newValue)
+            ? []
+            : [{ field, before: oldValue, after: newValue }];
+        });
+        const title = descriptiveEntities.has(entry.entity)
+          ? safe(after.title ?? after.name ?? before.title ?? before.name)
+          : null;
+        return {
+          id: entry.id,
+          action: entry.action,
+          entity: entry.entity,
+          actorRole: entry.actorRole,
+          user: entry.user,
+          createdAt: entry.createdAt,
+          reason: entry.reason,
+          objectTitle: typeof title === "string" ? title : null,
+          changes,
+        };
+      }),
+    );
   });
   app.post("/api/v1/course-classes/:id/clone", async (req, res) =>
     res.json(
@@ -1930,26 +1985,53 @@ export function registerLearning(app: Express) {
   });
   app.put("/api/v1/system/settings", async (req, res) => {
     ensure(req.context.user.role === "SUPER_ADMIN", 403, "FORBIDDEN");
-    const data = z.object({
-      academicYear: z.string().trim().min(3).max(50),
-      semesterLabel: z.string().trim().min(3).max(100).optional(),
-      academicYears: z.array(z.string().trim().min(3).max(50)).min(1).max(100).optional(),
-      defaultGradeScaleVersion: z.string().refine(v => Object.hasOwn(GRADE_SCALE_PRESETS, v)).optional(),
-      minAttendancePercentage: z.number().min(0).max(100).optional(),
-    }).parse(req.body);
-    res.json(await mutate(req, async (tx) => {
-      const before = await getAcademicSettings(tx);
-      const after = await tx.academicSettings.update({
-        where: { id: "global" },
-        data: {
-          ...data,
-          semesterLabel: data.semesterLabel ?? "SEMESTER " + data.academicYear.toUpperCase(),
-          academicYears: [...new Set([...(data.academicYears ?? before.academicYears), data.academicYear])],
-        },
-      });
-      await audit(tx, req.context, "UPDATE", "SYSTEM", "academic-settings", null,
-        before, after, "Pembaruan pengaturan akademik global");
-      return after;
-    }));
+    const data = z
+      .object({
+        academicYear: z.string().trim().min(3).max(50),
+        semesterLabel: z.string().trim().min(3).max(100).optional(),
+        academicYears: z
+          .array(z.string().trim().min(3).max(50))
+          .min(1)
+          .max(100)
+          .optional(),
+        defaultGradeScaleVersion: z
+          .string()
+          .refine((v) => Object.hasOwn(GRADE_SCALE_PRESETS, v))
+          .optional(),
+        minAttendancePercentage: z.number().min(0).max(100).optional(),
+      })
+      .parse(req.body);
+    res.json(
+      await mutate(req, async (tx) => {
+        const before = await getAcademicSettings(tx);
+        const after = await tx.academicSettings.update({
+          where: { id: "global" },
+          data: {
+            ...data,
+            semesterLabel:
+              data.semesterLabel ??
+              "SEMESTER " + data.academicYear.toUpperCase(),
+            academicYears: [
+              ...new Set([
+                ...(data.academicYears ?? before.academicYears),
+                data.academicYear,
+              ]),
+            ],
+          },
+        });
+        await audit(
+          tx,
+          req.context,
+          "UPDATE",
+          "SYSTEM",
+          "academic-settings",
+          null,
+          before,
+          after,
+          "Pembaruan pengaturan akademik global",
+        );
+        return after;
+      }),
+    );
   });
 }

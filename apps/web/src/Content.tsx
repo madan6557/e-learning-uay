@@ -3,6 +3,7 @@ import DOMPurify from "dompurify";
 import katex from "katex";
 import hljs from "highlight.js/lib/common";
 import { ArticleTools } from "./ArticleTools";
+import { useEditorViewMode } from "./useEditorViewMode";
 import { importArticle } from "./articleImport";
 import {
   GripVertical,
@@ -14,6 +15,9 @@ import {
   Download,
   ExternalLink,
   CheckCircle2,
+  Eye,
+  Edit3,
+  Columns,
 } from "lucide-react";
 import {
   blockTypes,
@@ -571,8 +575,350 @@ export function ResourceEditor({
   const change = setDraft;
   const payload = (data: any) =>
     change({ ...draft, dynamicPayload: { ...draft.dynamicPayload, ...data } });
+
+  const isRich = ["RICH_TEXT", "LAB_PRACTICUM"].includes(draft.resourceType);
+  const { viewMode, setViewMode, canSplit } = useEditorViewMode();
+  const [previewChecked, setPreviewChecked] = useState<string[]>([]);
+
+  const editorFields = (
+    <>
+      <div className="resource-metadata-grid">
+        <Field label={t.title}>
+          <input
+            required
+            value={draft.title}
+            onChange={(e) => change({ ...draft, title: e.target.value })}
+          />
+        </Field>
+        <Field label={t.material}>
+          <select
+            disabled={!!resource}
+            value={draft.resourceType}
+            onChange={(e) =>
+              change({ ...draft, resourceType: e.target.value })
+            }
+          >
+            {Object.entries(t.resourceTypes).map(([value, label]) => (
+              <option value={value} key={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
+      {["DOCUMENT", "LAB_PRACTICUM"].includes(draft.resourceType) && (
+        <>
+          <FileUpload
+            classId={classId}
+            purpose="RESOURCE"
+            accept={
+              draft.resourceType === "DOCUMENT"
+                ? "application/pdf"
+                : undefined
+            }
+            onUploaded={(f) =>
+              payload({ fileObjectId: f.id, fileName: f.name })
+            }
+          />
+          {draft.dynamicPayload.fileObjectId && (
+            <p>{draft.dynamicPayload.fileName ?? t.saved}</p>
+          )}
+        </>
+      )}
+      {draft.resourceType === "VIDEO_MEDIA" && (
+        <>
+          <Field label="URL Video Embed (YouTube / External)">
+            <input
+              type="url"
+              placeholder="https://www.youtube.com/embed/... atau https://..."
+              value={draft.dynamicPayload.url ?? ""}
+              onChange={(e) => payload({ url: e.target.value })}
+            />
+          </Field>
+          {!draft.dynamicPayload.url && (
+            <>
+              <p style={{ fontSize: 13, color: "var(--muted)", margin: "8px 0 4px" }}>
+                Atau unggah berkas video (MP4):
+              </p>
+              <FileUpload
+                classId={classId}
+                purpose="VIDEO"
+                accept="video/mp4,video/webm"
+                onUploaded={(f) =>
+                  payload({ fileObjectId: f.id, fileName: f.name })
+                }
+              />
+              {draft.dynamicPayload.fileObjectId && (
+                <p>{draft.dynamicPayload.fileName ?? t.saved}</p>
+              )}
+            </>
+          )}
+        </>
+      )}
+      {draft.resourceType === "DOCUMENT" && (
+        <Field label={t.totalPages}>
+          <input
+            type="number"
+            required
+            min={1}
+            max={10000}
+            value={draft.dynamicPayload.totalPages ?? ""}
+            onChange={(e) => payload({ totalPages: Number(e.target.value) })}
+          />
+        </Field>
+      )}
+      {draft.resourceType === "VIDEO_MEDIA" && (
+        <div className="form-grid">
+          <Field label={t.duration}>
+            <input
+              type="number"
+              min={1}
+              max={36000}
+              required
+              value={draft.dynamicPayload.durationSeconds ?? ""}
+              onChange={(e) =>
+                payload({ durationSeconds: Number(e.target.value) })
+              }
+            />
+          </Field>
+          <Field label={t.watchThreshold}>
+            <input
+              type="number"
+              min={1}
+              max={100}
+              required
+              value={draft.dynamicPayload.minWatchPercent ?? 85}
+              onChange={(e) =>
+                payload({ minWatchPercent: Number(e.target.value) })
+              }
+            />
+          </Field>
+        </div>
+      )}
+      {["EXTERNAL_LINK", "VIRTUAL_SIMULATOR", "TELECONFERENCE"].includes(
+        draft.resourceType,
+      ) && (
+        <Field label={t.url}>
+          <input
+            type="url"
+            required
+            value={draft.dynamicPayload.url ?? ""}
+            onChange={(e) => payload({ url: e.target.value })}
+          />
+        </Field>
+      )}
+      {isRich && (
+        <ArticleTools
+          onAddAttachment={() => {
+            const blocks = draft.dynamicPayload.blocks ?? [];
+            if (blocks.length >= 300)
+              throw new Error("Total isi materi maksimal 300 blok.");
+            payload({ blocks: [...blocks, newBlock("file_attachment")] });
+          }}
+          onImport={(text) => {
+            const article = importArticle(text, {
+              title: draft.title,
+              blocks: draft.dynamicPayload.blocks ?? [],
+            });
+            change({
+              ...draft,
+              title: article.title,
+              dynamicPayload: {
+                ...draft.dynamicPayload,
+                blocks: article.blocks,
+              },
+            });
+          }}
+        />
+      )}
+      {isRich && (
+        <BlockEditor
+          blocks={draft.dynamicPayload.blocks ?? []}
+          onChange={(blocks) => payload({ blocks })}
+          classId={classId}
+        />
+      )}
+      <div className="form-grid">
+        <Field label={t.opens}>
+          <input
+            type="datetime-local"
+            value={localInput(draft.availableFrom)}
+            onChange={(e) =>
+              change({ ...draft, availableFrom: isoInput(e.target.value) })
+            }
+          />
+        </Field>
+        <Field label={t.closes}>
+          <input
+            type="datetime-local"
+            value={localInput(draft.availableUntil)}
+            onChange={(e) =>
+              change({ ...draft, availableUntil: isoInput(e.target.value) })
+            }
+          />
+        </Field>
+      </div>
+    </>
+  );
+
+  const previewPanel = (
+    <div
+      className="resource-viewer"
+      style={{
+        background: "var(--surface, #ffffff)",
+        padding: "20px 22px",
+        borderRadius: 12,
+        border: "1px solid var(--border, #e2e8f0)",
+        boxShadow: "0 2px 10px rgba(0, 0, 0, 0.04)",
+      }}
+    >
+      <div
+        className="resource-caption"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 16,
+          paddingBottom: 10,
+          borderBottom: "1px solid var(--border-subtle, #f1f5f9)",
+          flexWrap: "wrap",
+          gap: 8,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <span
+            className="badge"
+            style={{
+              padding: "4px 9px",
+              borderRadius: 5,
+              fontSize: "0.76rem",
+              fontWeight: 700,
+              background: "rgba(2, 132, 199, 0.12)",
+              color: "var(--primary, #0284c7)",
+              letterSpacing: "0.02em",
+            }}
+          >
+            {(t.resourceTypes as any)[draft.resourceType] || "Materi Teks"}
+          </span>
+          <span
+            className="badge"
+            style={{
+              padding: "4px 9px",
+              borderRadius: 5,
+              fontSize: "0.76rem",
+              fontWeight: 600,
+              background: draft.isVisible ? "rgba(16, 185, 129, 0.12)" : "rgba(100, 116, 139, 0.12)",
+              color: draft.isVisible ? "#059669" : "#64748b",
+            }}
+          >
+            {draft.isVisible ? "Status: Terbit" : "Status: Draf"}
+          </span>
+        </div>
+        {draft.availableFrom && (
+          <span style={{ fontSize: "0.78rem", color: "var(--muted, #64748b)" }}>
+            Akses: {date(draft.availableFrom)}
+          </span>
+        )}
+      </div>
+
+      <h2
+        style={{
+          fontSize: "1.35rem",
+          fontWeight: 800,
+          margin: "0 0 16px 0",
+          color: "var(--foreground, #0f172a)",
+          lineHeight: 1.35,
+        }}
+      >
+        {draft.title.trim() || (
+          <span style={{ color: "#94a3b8", fontStyle: "italic", fontWeight: 400 }}>
+            Judul Materi Pembelajaran
+          </span>
+        )}
+      </h2>
+
+      {draft.dynamicPayload?.blocks && draft.dynamicPayload.blocks.length > 0 ? (
+        <Blocks
+          blocks={draft.dynamicPayload.blocks}
+          resourceId={resource?.id}
+          checked={previewChecked}
+          onCheck={setPreviewChecked}
+        />
+      ) : (
+        <div
+          style={{
+            padding: "32px 16px",
+            textAlign: "center",
+            color: "#94a3b8",
+            fontStyle: "italic",
+            background: "var(--surface-muted, #f8fafc)",
+            borderRadius: 8,
+            border: "1px dashed var(--border, #cbd5e1)",
+          }}
+        >
+          Belum ada isi materi. Tambahkan blok teks, judul, gambar, atau kode pada formulir editor di kiri untuk melihat pratinjau langsung.
+        </div>
+      )}
+    </div>
+  );
+
   return (
-    <Modal title={resource ? t.edit : t.newResource} onClose={onClose} wide>
+    <Modal
+      title={resource ? t.edit : t.newResource}
+      onClose={onClose}
+      wide={!isRich || viewMode !== "split"}
+      fullScreen={isRich && viewMode === "split"}
+    >
+      {isRich && (
+        <div className="announcement-viewmode-bar">
+          <div className="segmented-buttons">
+            <button
+              type="button"
+              className={viewMode === "edit" ? "active" : ""}
+              onClick={() => setViewMode("edit")}
+              aria-pressed={viewMode === "edit"}
+            >
+              <Edit3 size={13} />
+              Tulis
+            </button>
+            <button
+              type="button"
+              className={viewMode === "preview" ? "active" : ""}
+              onClick={() => setViewMode("preview")}
+              aria-pressed={viewMode === "preview"}
+            >
+              <Eye size={13} />
+              Pratinjau
+            </button>
+            {canSplit && <button
+              type="button"
+              className={viewMode === "split" ? "active" : ""}
+              onClick={() => setViewMode("split")}
+              aria-pressed={viewMode === "split"}
+            >
+              <Columns size={13} />
+              Berdampingan
+            </button>}
+          </div>
+
+          <div style={{ fontSize: "0.8rem", color: "var(--muted, #64748b)" }}>
+            {viewMode === "split" ? (
+              <span>
+                Mode <strong>Berdampingan</strong>: Formulir blok materi di kiri, pratinjau di kanan.
+              </span>
+            ) : viewMode === "preview" ? (
+              <span>
+                Mode <strong>Pratinjau</strong>: Tampilan membaca materi sebagaimana dilihat mahasiswa.
+              </span>
+            ) : (
+              <span>
+                Mode <strong>Tulis</strong>: Fokus penyusunan blok materi pembelajaran.
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       <Form
         draftKey={`resource:${resource?.id ?? sectionId}`}
         draftValue={draft}
@@ -598,182 +944,63 @@ export function ResourceEditor({
           onSaved();
         }}
       >
-        <div className="resource-metadata-grid">
-          <Field label={t.title}>
-            <input
-              required
-              value={draft.title}
-              onChange={(e) => change({ ...draft, title: e.target.value })}
-            />
-          </Field>
-          <Field label={t.material}>
-            <select
-              disabled={!!resource}
-              value={draft.resourceType}
-              onChange={(e) =>
-                change({ ...draft, resourceType: e.target.value })
-              }
-            >
-              {Object.entries(t.resourceTypes).map(([value, label]) => (
-                <option value={value} key={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </div>
-        {["DOCUMENT", "LAB_PRACTICUM"].includes(draft.resourceType) && (
-          <>
-            <FileUpload
-              classId={classId}
-              purpose="RESOURCE"
-              accept={
-                draft.resourceType === "DOCUMENT"
-                  ? "application/pdf"
-                  : undefined
-              }
-              onUploaded={(f) =>
-                payload({ fileObjectId: f.id, fileName: f.name })
-              }
-            />
-            {draft.dynamicPayload.fileObjectId && (
-              <p>{draft.dynamicPayload.fileName ?? t.saved}</p>
-            )}
-          </>
-        )}
-        {draft.resourceType === "VIDEO_MEDIA" && (
-          <>
-            <Field label="URL Video Embed (YouTube / External)">
-              <input
-                type="url"
-                placeholder="https://www.youtube.com/embed/... atau https://..."
-                value={draft.dynamicPayload.url ?? ""}
-                onChange={(e) => payload({ url: e.target.value })}
-              />
-            </Field>
-            {!draft.dynamicPayload.url && (
-              <>
-                <p style={{ fontSize: 13, color: "var(--muted)", margin: "8px 0 4px" }}>
-                  Atau unggah berkas video (MP4):
-                </p>
-                <FileUpload
-                  classId={classId}
-                  purpose="VIDEO"
-                  accept="video/mp4,video/webm"
-                  onUploaded={(f) =>
-                    payload({ fileObjectId: f.id, fileName: f.name })
-                  }
-                />
-                {draft.dynamicPayload.fileObjectId && (
-                  <p>{draft.dynamicPayload.fileName ?? t.saved}</p>
-                )}
-              </>
-            )}
-          </>
-        )}
-        {draft.resourceType === "DOCUMENT" && (
-          <Field label={t.totalPages}>
-            <input
-              type="number"
-              required
-              min={1}
-              max={10000}
-              value={draft.dynamicPayload.totalPages ?? ""}
-              onChange={(e) => payload({ totalPages: Number(e.target.value) })}
-            />
-          </Field>
-        )}
-        {draft.resourceType === "VIDEO_MEDIA" && (
-          <div className="form-grid">
-            <Field label={t.duration}>
-              <input
-                type="number"
-                min={1}
-                max={36000}
-                required
-                value={draft.dynamicPayload.durationSeconds ?? ""}
-                onChange={(e) =>
-                  payload({ durationSeconds: Number(e.target.value) })
-                }
-              />
-            </Field>
-            <Field label={t.watchThreshold}>
-              <input
-                type="number"
-                min={1}
-                max={100}
-                required
-                value={draft.dynamicPayload.minWatchPercent ?? 85}
-                onChange={(e) =>
-                  payload({ minWatchPercent: Number(e.target.value) })
-                }
-              />
-            </Field>
+        {isRich && viewMode === "split" ? (
+          <div className="announcement-split-container">
+            <div className="announcement-editor-left">{editorFields}</div>
+            <div className="announcement-preview-panel">
+              <div className="announcement-preview-panel-header">
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontWeight: 700,
+                    fontSize: "0.85rem",
+                    color: "var(--foreground, #0f172a)",
+                  }}
+                >
+                  <Eye size={15} style={{ color: "var(--primary, #0284c7)" }} />
+                  Pratinjau Materi (Tampilan Mahasiswa)
+                </div>
+                <span
+                  style={{
+                    fontSize: "0.74rem",
+                    background: "#e0f2fe",
+                    color: "#0369a1",
+                    padding: "2px 8px",
+                    borderRadius: 12,
+                    fontWeight: 600,
+                  }}
+                >
+                  Tampilan Pembaca
+                </span>
+              </div>
+              <div className="announcement-preview-scroll">
+                {previewPanel}
+              </div>
+            </div>
           </div>
+        ) : isRich && viewMode === "preview" ? (
+          <div style={{ maxWidth: 860, margin: "0 auto", padding: "10px 0" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                fontWeight: 700,
+                fontSize: "0.85rem",
+                color: "var(--muted, #64748b)",
+                marginBottom: 12,
+              }}
+            >
+              <Eye size={15} style={{ color: "var(--primary, #0284c7)" }} />
+              Pratinjau Nyata bagi Mahasiswa
+            </div>
+            {previewPanel}
+          </div>
+        ) : (
+          editorFields
         )}
-        {["EXTERNAL_LINK", "VIRTUAL_SIMULATOR", "TELECONFERENCE"].includes(
-          draft.resourceType,
-        ) && (
-          <Field label={t.url}>
-            <input
-              type="url"
-              required
-              value={draft.dynamicPayload.url ?? ""}
-              onChange={(e) => payload({ url: e.target.value })}
-            />
-          </Field>
-        )}
-        {["RICH_TEXT", "LAB_PRACTICUM"].includes(draft.resourceType) && (
-          <ArticleTools
-            onAddAttachment={() => {
-              const blocks = draft.dynamicPayload.blocks ?? [];
-              if (blocks.length >= 300)
-                throw new Error("Total isi materi maksimal 300 blok.");
-              payload({ blocks: [...blocks, newBlock("file_attachment")] });
-            }}
-            onImport={(text) => {
-              const article = importArticle(text, {
-                title: draft.title,
-                blocks: draft.dynamicPayload.blocks ?? [],
-              });
-              change({
-                ...draft,
-                title: article.title,
-                dynamicPayload: {
-                  ...draft.dynamicPayload,
-                  blocks: article.blocks,
-                },
-              });
-            }}
-          />
-        )}
-        {["RICH_TEXT", "LAB_PRACTICUM"].includes(draft.resourceType) && (
-          <BlockEditor
-            blocks={draft.dynamicPayload.blocks ?? []}
-            onChange={(blocks) => payload({ blocks })}
-            classId={classId}
-          />
-        )}
-        <div className="form-grid">
-          <Field label={t.opens}>
-            <input
-              type="datetime-local"
-              value={localInput(draft.availableFrom)}
-              onChange={(e) =>
-                change({ ...draft, availableFrom: isoInput(e.target.value) })
-              }
-            />
-          </Field>
-          <Field label={t.closes}>
-            <input
-              type="datetime-local"
-              value={localInput(draft.availableUntil)}
-              onChange={(e) =>
-                change({ ...draft, availableUntil: isoInput(e.target.value) })
-              }
-            />
-          </Field>
-        </div>
       </Form>
     </Modal>
   );
@@ -825,13 +1052,14 @@ export function DownloadButton({
     </Action>
   );
 }
-function FileImage({ data, resourceId }: { data: any; resourceId: string }) {
+function FileImage({ data, resourceId }: { data: any; resourceId?: string }) {
   const [url, setUrl] = useState(""),
     [error, setError] = useState<Error | null>(null);
   useEffect(() => {
+    if (!data.fileObjectId) return;
     let active = true;
     api(`/files/${data.fileObjectId}/download-ticket`, "POST", {
-      resourceId,
+      resourceId: resourceId || undefined,
       inline: true,
     })
       .then((ticket) => {
@@ -856,12 +1084,12 @@ function FileImage({ data, resourceId }: { data: any; resourceId: string }) {
 export function Blocks({
   blocks,
   resourceId,
-  checked,
+  checked = [],
   onCheck,
 }: {
   blocks: ContentBlock[];
-  resourceId: string;
-  checked: string[];
+  resourceId?: string;
+  checked?: string[];
   onCheck?: (ids: string[]) => void;
 }) {
   return (
@@ -1388,7 +1616,11 @@ function VideoViewer({
             src={url}
             controls
             controlsList="nodownload"
+            onError={() =>
+              setError(new Error("Video tidak dapat diputar. Periksa koneksi lalu coba muat ulang video."))
+            }
             onLoadedMetadata={() => {
+              setError(null);
               if (ref.current)
                 ref.current.currentTime = Math.min(
                   previous?.lastPositionSeconds ?? 0,
@@ -1424,16 +1656,34 @@ function VideoViewer({
       <progress value={progress} max={100} />
       {embed.isEmbed && writable && progress < 100 && (
         <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
-          <button
-            type="button"
+          <Action
             className="button"
-            onClick={() => void commit(payload.durationSeconds || 300)}
+            busyLabel="Menyimpan progres…"
+            run={() => commit(payload.durationSeconds || 300)}
           >
             Tandai Selesai Menonton
-          </button>
+          </Action>
         </div>
       )}
       {error && <Notice error={error} />}
+      {error && !embed.isEmbed && (
+        <Action
+          busyLabel="Memuat ulang video…"
+          run={async () => {
+            if (payload.fileObjectId && !payload.url) {
+              const ticket = await api(`/files/${payload.fileObjectId}/download-ticket`, "POST", {
+                resourceId: resource.id,
+                inline: true,
+              });
+              if (ticket.url === url) ref.current?.load();
+              else setUrl(ticket.url);
+            } else ref.current?.load();
+            return false;
+          }}
+        >
+          Coba muat ulang video
+        </Action>
+      )}
     </div>
   );
 }

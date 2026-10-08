@@ -1,7 +1,13 @@
-import { UserManager, type UserManagerSettings, type User } from "oidc-client-ts";
+import {
+  UserManager,
+  type UserManagerSettings,
+  type User,
+} from "oidc-client-ts";
 
 let userManagerInstance: UserManager | null = null;
 let currentConfigKey = "";
+let callbackUrl = "";
+let callbackResult: Promise<User> | null = null;
 
 export function getOidcManager(authConfig?: {
   issuer?: string;
@@ -59,7 +65,11 @@ export async function handleOidcCallback(authConfig?: {
   redirectUri?: string;
 }): Promise<User> {
   const manager = getOidcManager(authConfig);
-  return await manager.signinRedirectCallback();
+  if (!callbackResult || callbackUrl !== window.location.href) {
+    callbackUrl = window.location.href;
+    callbackResult = manager.signinRedirectCallback();
+  }
+  return await callbackResult;
 }
 
 export async function logoutOidc(): Promise<void> {

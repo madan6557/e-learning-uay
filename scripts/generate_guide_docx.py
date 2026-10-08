@@ -95,7 +95,7 @@ def build(output):
     new_heading(doc,'Konversi nilai')
     doc.add_paragraph('Gunakan skala pada kelas. Jumlah bobot kategori harus 100 persen. Nilai akhir yang sudah diterbitkan mempertahankan versi kebijakannya. Pengubahan skala default bukan penghitungan ulang nilai yang telah terbit.')
     # Canonical scale values exported by the application, not copied from an old slide.
-    scales=json.loads((ROOT/'docs/guide-grade-scales.json').read_text(encoding='utf-8'))
+    scales=json.loads((ROOT/'docs/guides/guide-grade-scales.json').read_text(encoding='utf-8'))
     for scale in scales.values():
         doc.add_heading('Skala '+scale['version'],2)
         table(doc,['Skor minimum','Huruf mutu','Indeks mutu'],[(str(b['minScore']),b['letter'],str(b['point'])) for b in scale['bands']],[2.4,2.2,2.2])
@@ -105,4 +105,4 @@ def build(output):
     doc.core_properties.title='Buku Panduan Penggunaan E Learning UAY';doc.core_properties.subject='Petunjuk lima peran sesuai aplikasi pada 7 Oktober 2026';doc.core_properties.author='Universitas Achmad Yani';doc.core_properties.comments='Sumber isi apps/web/src/data/helpGuide.json. Gambar memakai data contoh.'
     output.parent.mkdir(parents=True,exist_ok=True);doc.save(output);print(output)
 if __name__=='__main__':
-    ap=argparse.ArgumentParser();ap.add_argument('--output',type=Path,default=ROOT/'docs/Buku Panduan Penggunaan E-Learning UAY.docx');args=ap.parse_args();build(args.output)
+    ap=argparse.ArgumentParser();ap.add_argument('--output',type=Path,default=ROOT/'docs/guides/Buku Panduan Penggunaan E-Learning UAY.docx');args=ap.parse_args();build(args.output)

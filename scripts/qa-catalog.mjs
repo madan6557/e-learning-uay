@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 
-const sourcePath = "docs/Technical Design - E-Learning UAY - v5.0.md";
+const sourcePath = "docs/requirements/Technical Design - E-Learning UAY - v5.0.md";
 const source = readFileSync(sourcePath, "utf8");
 const roles = [
   "Mahasiswa",

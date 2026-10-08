@@ -29,7 +29,8 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
     teacher = await makeUser("INSTRUCTOR", ["IF"]),
     student = await makeUser("STUDENT"),
     outsider = await makeUser("STUDENT", ["OTHER"]),
-    department = await makeUser("DEPARTMENT_ADMIN", ["OTHER"]);
+    department = await makeUser("DEPARTMENT_ADMIN", ["OTHER"]),
+    ownDepartment = await makeUser("DEPARTMENT_ADMIN", ["IF"]);
   const cookies = new Map<string, string>();
   async function request(
     user: any,
@@ -58,7 +59,15 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
     );
     return data;
   }
-  for (const user of [admin, teacher, student, outsider, department]) {
+  for (const user of [
+    admin,
+    teacher,
+    student,
+    outsider,
+    department,
+    ownDepartment,
+  ]) {
+    await new Promise((resolve) => setTimeout(resolve, 220));
     const response = await fetch(base + "/auth/development-login", {
       method: "POST",
       headers: {
@@ -83,30 +92,47 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
     submission: any,
     categories: any[] = [];
   try {
-    await suite.test("department admin can create, update, archive, and delete an unused course", async () => {
-      const ownCourse = await request(department, "/courses", "POST", {
-        code: `OWN-${suffix}`,
-        title: "Mata kuliah prodi",
-        departmentCode: "OTHER",
-        status: "DRAFT",
-      }, 201);
-      await request(department, `/courses/${ownCourse.id}`, "PATCH", {
-        code: ownCourse.code,
-        title: "Mata kuliah diperbarui",
-        departmentCode: "OTHER",
-        status: "ARCHIVED",
-      });
-      await request(department, `/courses/${ownCourse.id}`, "PATCH", {
-        code: ownCourse.code,
-        title: "Mata kuliah aktif kembali",
-        departmentCode: "OTHER",
-        status: "PUBLISHED",
-      });
-      await request(department, `/courses/${ownCourse.id}`, "DELETE", undefined);
-      assert.equal(await db.course.findUnique({ where: { id: ownCourse.id } }), null);
-    });
     await suite.test(
-      "admin manages catalogue, lecturer creates class, and scopes are enforced",
+      "department admin can create, update, archive, and delete an unused course",
+      async () => {
+        const ownCourse = await request(
+          department,
+          "/courses",
+          "POST",
+          {
+            code: `OWN-${suffix}`,
+            title: "Mata kuliah prodi",
+            departmentCode: "OTHER",
+            status: "DRAFT",
+          },
+          201,
+        );
+        await request(department, `/courses/${ownCourse.id}`, "PATCH", {
+          code: ownCourse.code,
+          title: "Mata kuliah diperbarui",
+          departmentCode: "OTHER",
+          status: "ARCHIVED",
+        });
+        await request(department, `/courses/${ownCourse.id}`, "PATCH", {
+          code: ownCourse.code,
+          title: "Mata kuliah aktif kembali",
+          departmentCode: "OTHER",
+          status: "PUBLISHED",
+        });
+        await request(
+          department,
+          `/courses/${ownCourse.id}`,
+          "DELETE",
+          undefined,
+        );
+        assert.equal(
+          await db.course.findUnique({ where: { id: ownCourse.id } }),
+          null,
+        );
+      },
+    );
+    await suite.test(
+      "administrators create catalogue/classes, lecturer manages assigned class, and scopes are enforced",
       async () => {
         course = await request(
           admin,
@@ -131,14 +157,20 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
           },
           403,
         );
-        await request(admin, "/course-classes", "POST", {
-          courseId: course.id,
-          name: "Not permitted",
-          academicYear: "2026/2027",
-          instructorIds: [teacher.id],
-        }, 403);
-        cls = await request(
+        await request(
           teacher,
+          "/course-classes",
+          "POST",
+          {
+            courseId: course.id,
+            name: "Not permitted",
+            academicYear: "2026/2027",
+            instructorIds: [teacher.id],
+          },
+          403,
+        );
+        cls = await request(
+          admin,
           "/course-classes",
           "POST",
           {
@@ -156,7 +188,13 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
           "POST",
           { userId: student.id },
         );
-        await request(admin, `/course-classes/${cls.id}/sections`, "POST", { title: "Tidak boleh" }, 403);
+        await request(
+          admin,
+          `/course-classes/${cls.id}/sections`,
+          "POST",
+          { title: "Tidak boleh" },
+          403,
+        );
         await request(
           outsider,
           `/course-classes/${cls.id}`,
@@ -164,7 +202,10 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
           undefined,
           403,
         );
-        assert.deepEqual(await request(outsider, "/course-classes?summary=true"), []);
+        assert.deepEqual(
+          await request(outsider, "/course-classes?summary=true"),
+          [],
+        );
         await request(
           department,
           `/course-classes/${cls.id}`,
@@ -181,17 +222,102 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
         );
         const publicClass = await request(teacher, `/course-classes/${cls.id}`);
         assert.ok(publicClass.slug && !publicClass.slug.includes(cls.id));
-        assert.equal((await request(student, `/course-classes/${publicClass.slug}`)).id, cls.id);
-        await request(outsider, `/course-classes/${publicClass.slug}`, "GET", undefined, 403);
-        const duplicate = await db.courseClass.create({ data: {
-          courseId: course.id, name: publicClass.name, academicYear: publicClass.academicYear,
-        } });
+        assert.equal(
+          (await request(student, `/course-classes/${publicClass.slug}`)).id,
+          cls.id,
+        );
+        await request(
+          outsider,
+          `/course-classes/${publicClass.slug}`,
+          "GET",
+          undefined,
+          403,
+        );
+        const duplicate = await db.courseClass.create({
+          data: {
+            courseId: course.id,
+            name: publicClass.name,
+            academicYear: publicClass.academicYear,
+          },
+        });
         assert.notEqual(duplicate.slug, publicClass.slug);
-        await db.courseClass.update({ where: { id: duplicate.id }, data: { name: "Renamed" } });
-        assert.equal((await db.courseClass.findUniqueOrThrow({ where: { id: duplicate.id } })).slug, duplicate.slug);
+        await db.courseClass.update({
+          where: { id: duplicate.id },
+          data: { name: "Renamed" },
+        });
+        assert.equal(
+          (
+            await db.courseClass.findUniqueOrThrow({
+              where: { id: duplicate.id },
+            })
+          ).slug,
+          duplicate.slug,
+        );
         categories = await request(
           teacher,
           `/course-classes/${cls.id}/grade-categories`,
+        );
+      },
+    );
+    await suite.test(
+      "class administration matches permissions and imports cannot bypass grading authority",
+      async () => {
+        await request(admin, `/course-classes/${cls.id}/participants`, "POST", {
+          userId: student.id,
+        });
+        await request(admin, `/course-classes/${cls.id}/instructors`, "POST", {
+          userIds: [teacher.id],
+        });
+        await request(
+          ownDepartment,
+          `/course-classes/${cls.id}/instructors`,
+          "POST",
+          { userIds: [teacher.id] },
+        );
+        const before = await db.manualGradeRecord.count({
+          where: { classId: cls.id },
+        });
+        for (const user of [admin, ownDepartment]) {
+          for (const operation of ["preview", "commit"]) {
+            await request(
+              user,
+              `/course-classes/${cls.id}/imports/${operation}`,
+              "POST",
+              {
+                kind: "GRADES",
+                categoryId: categories[0].id,
+                rows: [
+                  {
+                    values: {
+                      identifierValue: student.identifierValue,
+                      score: 99,
+                    },
+                  },
+                ],
+              },
+              403,
+            );
+          }
+        }
+        assert.equal(
+          await db.manualGradeRecord.count({ where: { classId: cls.id } }),
+          before,
+        );
+        await request(
+          admin,
+          `/course-classes/${cls.id}/imports/preview`,
+          "POST",
+          {
+            kind: "ENROLLMENT",
+            rows: [{ values: { identifierValue: student.identifierValue } }],
+          },
+        );
+        await request(
+          admin,
+          `/course-classes/${cls.id}/sections`,
+          "POST",
+          { title: "Forbidden classroom authoring" },
+          403,
         );
       },
     );
@@ -695,10 +821,16 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
         const cloned = await request(teacher, `/course-classes/${copy.id}`);
         assert.equal(cloned.status, "DRAFT");
         assert.equal(copy.path, `/classes/${cloned.slug}`);
-        assert.equal((await request(teacher, `/course-classes/${cloned.slug}`)).id, copy.id);
+        assert.equal(
+          (await request(teacher, `/course-classes/${cloned.slug}`)).id,
+          copy.id,
+        );
         const original = await request(teacher, `/course-classes/${cls.id}`);
         for (const kind of ["resources", "quizzes", "assignments"]) {
-          assert.notEqual(cloned.sections[0][kind][0].slug, original.sections[0][kind][0].slug);
+          assert.notEqual(
+            cloned.sections[0][kind][0].slug,
+            original.sections[0][kind][0].slug,
+          );
         }
         assert.equal(cloned.sections.length, 1);
         assert.equal(
@@ -749,19 +881,40 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
           academicYear: "2027/2028",
           status: "ARCHIVED",
         });
-        await request(teacher, `/course-classes/${copy.id}/sections`, "POST", { title: "Ditolak saat arsip" }, 423);
-        await request(admin, `/course-classes/${copy.id}`, "PATCH", {
-          name: "Next Semester",
-          academicYear: "2027/2028",
-          status: "PUBLISHED",
-        }, 403);
+        await request(
+          teacher,
+          `/course-classes/${copy.id}/sections`,
+          "POST",
+          { title: "Ditolak saat arsip" },
+          423,
+        );
+        await request(
+          admin,
+          `/course-classes/${copy.id}`,
+          "PATCH",
+          {
+            name: "Next Semester",
+            academicYear: "2027/2028",
+            status: "PUBLISHED",
+          },
+          200,
+        );
         await request(teacher, `/course-classes/${copy.id}`, "PATCH", {
           name: "Next Semester",
           academicYear: "2027/2028",
           status: "PUBLISHED",
         });
-        assert.equal((await request(teacher, `/course-classes/${copy.id}`)).status, "PUBLISHED");
-        await request(teacher, `/course-classes/${copy.id}/sections`, "POST", { title: "Lanjut setelah arsip" }, 201);
+        assert.equal(
+          (await request(teacher, `/course-classes/${copy.id}`)).status,
+          "PUBLISHED",
+        );
+        await request(
+          teacher,
+          `/course-classes/${copy.id}/sections`,
+          "POST",
+          { title: "Lanjut setelah arsip" },
+          201,
+        );
       },
     );
     await suite.test(
@@ -975,7 +1128,9 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
           const summaryBytes = Buffer.byteLength(JSON.stringify(summary));
           const detailBytes = Buffer.byteLength(JSON.stringify(detail));
           assert(summaryBytes < detailBytes);
-          suite.diagnostic(`${user.role} class payload: ${detailBytes} -> ${summaryBytes} bytes`);
+          suite.diagnostic(
+            `${user.role} class payload: ${detailBytes} -> ${summaryBytes} bytes`,
+          );
         }
         for (const user of [department]) {
           const summaries = await request(user, "/course-classes?summary=true");

@@ -2,9 +2,9 @@
 """
 Dokumen Pengajuan Teknis Penyelarasan Integrasi SSO UAY — E-Learning (Versi Ringkas / 2 Halaman)
 Menghasilkan:
-1. docs/Pengajuan Teknis Integrasi SSO UAY - E-Learning (Ringkas).md
-2. docs/Pengajuan Teknis Integrasi SSO UAY - E-Learning (Ringkas).docx
-3. docs/Pengajuan Teknis Integrasi SSO UAY - E-Learning (Ringkas).pdf
+1. docs/integrations/sso/Pengajuan Teknis Integrasi SSO UAY - E-Learning (Ringkas).md
+2. docs/integrations/sso/Pengajuan Teknis Integrasi SSO UAY - E-Learning (Ringkas).docx
+3. docs/integrations/sso/Pengajuan Teknis Integrasi SSO UAY - E-Learning (Ringkas).pdf
 """
 from __future__ import annotations
 import os

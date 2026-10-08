@@ -33,90 +33,100 @@ import {
 
 async function serviceJson(response: Response): Promise<any> {
   let body;
-  try { body = await response.json(); } catch { ensure(false, 502, "FILE_SERVICE_INVALID_RESPONSE"); }
-  ensure(body && typeof body === "object" && body.success !== false, 502, "FILE_SERVICE_INVALID_RESPONSE");
+  try {
+    body = await response.json();
+  } catch {
+    ensure(false, 502, "FILE_SERVICE_INVALID_RESPONSE");
+  }
+  ensure(
+    body && typeof body === "object" && body.success !== false,
+    502,
+    "FILE_SERVICE_INVALID_RESPONSE",
+  );
   return body.data ?? body;
 }
 
-function createSimplePdf(pagesText: string[], isLandscape = false): Buffer {
-  const pageIds: number[] = [];
-  const contentIds: number[] = [];
-  let currentId = 3;
-  for (let i = 0; i < pagesText.length; i++) {
-    pageIds.push(++currentId);
-    contentIds.push(++currentId);
-  }
-  const allObjs = [
-    '<< /Type /Catalog /Pages 2 0 R >>',
-    '<< /Type /Pages /Kids [' + pageIds.map(id => id + ' 0 R').join(' ') + '] /Count ' + pageIds.length + ' >>',
-    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>'
-  ];
-  const mediaBox = isLandscape ? '[0 0 842 595]' : '[0 0 595 842]';
-  const startY = isLandscape ? 500 : 750;
-  for (let i = 0; i < pagesText.length; i++) {
-    const text = pagesText[i];
-    const lines = text.split('\n');
-    let stream = 'BT\n/F1 16 Tf\n50 ' + startY + ' Td\n';
-    for (let l = 0; l < lines.length; l++) {
-      if (l > 0) stream += '0 -24 Td\n';
-      stream += '(' + lines[l].replace(/[\(\)\\]/g, ' ') + ') Tj\n';
-    }
-    stream += 'ET';
-    allObjs.push('<< /Type /Page /Parent 2 0 R /MediaBox ' + mediaBox + ' /Resources << /Font << /F1 3 0 R >> >> /Contents ' + contentIds[i] + ' 0 R >>');
-    allObjs.push('<< /Length ' + Buffer.byteLength(stream) + ' >>\nstream\n' + stream + '\nendstream');
-  }
-  let out = '%PDF-1.4\n';
-  const xref = [0];
-  for (let i = 0; i < allObjs.length; i++) {
-    xref.push(Buffer.byteLength(out));
-    out += (i + 1) + ' 0 obj\n' + allObjs[i] + '\nendobj\n';
-  }
-  const xrefStart = Buffer.byteLength(out);
-  out += 'xref\n0 ' + (allObjs.length + 1) + '\n0000000000 65535 f \n';
-  for (let i = 1; i <= allObjs.length; i++) {
-    out += String(xref[i]).padStart(10, '0') + ' 00000 n \n';
-  }
-  out += 'trailer\n<< /Size ' + (allObjs.length + 1) + ' /Root 1 0 R >>\nstartxref\n' + xrefStart + '\n%%EOF';
-  return Buffer.from(out, 'binary');
-}
-
-export async function checkFileService(options?: { timeoutMs?: number; requestId?: string }) {
+export async function checkFileService(options?: {
+  timeoutMs?: number;
+  requestId?: string;
+}) {
   const mode = config.fileMode;
   if (mode === "local") {
     ensure(!production || isDemo, 503, "FILE_SERVICE_REQUIRED");
     if (!existsSync(uploadDir)) mkdirSync(uploadDir, { recursive: true });
     accessSync(uploadDir, constants.R_OK | constants.W_OK);
-    return { status: "ok", mode, simulated: true, timestamp: new Date().toISOString() };
+    return {
+      status: "ok",
+      mode,
+      simulated: true,
+      timestamp: new Date().toISOString(),
+    };
   }
   ensure(config.fileUrl && config.fileKey, 503, "FILE_SERVICE_REQUIRED");
-  const response = await serviceFetch("file_service",
-    mode === "uay" ? getUayEndpoint("/health") : `${config.fileUrl.replace(/\/+$/, "")}/health`,
-    { headers: mode === "uay" ? getUayHeaders(options) : { Authorization: `Bearer ${config.fileKey}` } },
-    { idempotent: true, attempts: 1, timeoutMs: options?.timeoutMs ?? 3000 });
+  const response = await serviceFetch(
+    "file_service",
+    mode === "uay"
+      ? getUayEndpoint("/health")
+      : `${config.fileUrl.replace(/\/+$/, "")}/health`,
+    {
+      headers:
+        mode === "uay"
+          ? getUayHeaders(options)
+          : { Authorization: `Bearer ${config.fileKey}` },
+    },
+    { idempotent: true, attempts: 1, timeoutMs: options?.timeoutMs ?? 3000 },
+  );
   ensure(response.ok, 503, "FILE_SERVICE_UNAVAILABLE");
   const body = await serviceJson(response);
-  ensure(["ok", "healthy"].includes(body.status) && body.storage?.accessible !== false,
-    502, "FILE_SERVICE_INVALID_RESPONSE");
-  return { ...body, mode, simulated: isDemo, timestamp: new Date().toISOString() };
+  ensure(
+    ["ok", "healthy"].includes(body.status) &&
+      body.storage?.accessible !== false,
+    502,
+    "FILE_SERVICE_INVALID_RESPONSE",
+  );
+  return {
+    ...body,
+    mode,
+    simulated: isDemo,
+    timestamp: new Date().toISOString(),
+  };
 }
 
-async function authorizeFileAccess(req: Request, file: FileReference, resourceId?: string) {
+async function authorizeFileAccess(
+  req: Request,
+  file: FileReference,
+  resourceId?: string,
+) {
   if (resourceId) {
-    const resource = await db.resourceItem.findUnique({ where: { id: resourceId } });
+    const resource = await db.resourceItem.findUnique({
+      where: { id: resourceId },
+    });
     ensure(resource, 404, "NOT_FOUND");
-    ensure(resourceFileIds(resource.dynamicPayload).includes(file.id), 403, "FILE_ACCESS_DENIED");
+    ensure(
+      resourceFileIds(resource.dynamicPayload).includes(file.id),
+      403,
+      "FILE_ACCESS_DENIED",
+    );
     const cls = await itemAccess(db, req.context.user, resource.sectionId);
     if (!cls.canManage) available(resource);
     if (["SUBMISSION", "QUIZ_ANSWER"].includes(file.purpose)) {
       const fileClass = await classAccess(db, req.context.user, file.classId);
       ensure(!fileClass.isInactiveParticipant, 403, "PARTICIPATION_DISABLED");
-      ensure(fileClass.canManage || file.ownerId === req.context.user.id, 403, "FILE_ACCESS_DENIED");
+      ensure(
+        fileClass.canManage || file.ownerId === req.context.user.id,
+        403,
+        "FILE_ACCESS_DENIED",
+      );
     }
     return cls;
   }
   const cls = await classAccess(db, req.context.user, file.classId);
   ensure(!cls.isInactiveParticipant, 403, "PARTICIPATION_DISABLED");
-  ensure(cls.canManage || file.ownerId === req.context.user.id, 403, "FILE_ACCESS_DENIED");
+  ensure(
+    cls.canManage || file.ownerId === req.context.user.id,
+    403,
+    "FILE_ACCESS_DENIED",
+  );
   return cls;
 }
 
@@ -226,22 +236,19 @@ export async function uayUpload(params: {
       "00000000-0000-0000-0000-000000000001",
   );
   formData.append("visibility", params.visibility || "private");
-  if (params.resourceType) formData.append("resource_type", params.resourceType);
+  if (params.resourceType)
+    formData.append("resource_type", params.resourceType);
   if (params.resourceId) formData.append("resource_id", params.resourceId);
   if (params.folderId) formData.append("folder_id", params.folderId);
 
-  const res = await serviceFetch(
-    "file_service",
-    getUayEndpoint("/files"),
-    {
-      method: "POST",
-      headers: getUayHeaders({
-        actorId: params.actorId,
-        requestId: params.requestId,
-      }),
-      body: formData,
-    },
-  );
+  const res = await serviceFetch("file_service", getUayEndpoint("/files"), {
+    method: "POST",
+    headers: getUayHeaders({
+      actorId: params.actorId,
+      requestId: params.requestId,
+    }),
+    body: formData,
+  });
   ensure(res.ok, 502, "FILE_SERVICE_REJECTED");
   const uploaded = await serviceJson(res);
   const fileId = uploaded.fileId || uploaded.id;
@@ -264,9 +271,16 @@ export async function uayGetMetadata(
   );
   ensure(res.ok, res.status === 404 ? 404 : 502, "FILE_SERVICE_REJECTED");
   const meta = await serviceJson(res);
-  ensure(typeof meta.fileId === "string" && typeof meta.originalName === "string" &&
-    Number.isSafeInteger(meta.sizeBytes) && meta.sizeBytes > 0 && typeof meta.mimeType === "string" &&
-    typeof meta.status === "string", 502, "FILE_SERVICE_INVALID_RESPONSE");
+  ensure(
+    typeof meta.fileId === "string" &&
+      typeof meta.originalName === "string" &&
+      Number.isSafeInteger(meta.sizeBytes) &&
+      meta.sizeBytes > 0 &&
+      typeof meta.mimeType === "string" &&
+      typeof meta.status === "string",
+    502,
+    "FILE_SERVICE_INVALID_RESPONSE",
+  );
   return meta;
 }
 
@@ -339,8 +353,14 @@ export async function uayGetRepositories(options?: {
   );
   ensure(res.ok, 502, "FILE_SERVICE_REJECTED");
   const repos = await serviceJson(res);
-  ensure(Array.isArray(repos) && repos.every(r => r && typeof r.id === "string" && typeof r.name === "string"),
-    502, "FILE_SERVICE_INVALID_RESPONSE");
+  ensure(
+    Array.isArray(repos) &&
+      repos.every(
+        (r) => r && typeof r.id === "string" && typeof r.name === "string",
+      ),
+    502,
+    "FILE_SERVICE_INVALID_RESPONSE",
+  );
   return repos;
 }
 
@@ -397,8 +417,7 @@ async function handleLocalFileRequest(
       fileObjectId: id,
       uploadUrl: `${base}/api/v1/files/local-storage/${id}`,
       headers: {
-        "Content-Type":
-          (body as any)?.mimeType || "application/octet-stream",
+        "Content-Type": (body as any)?.mimeType || "application/octet-stream",
       },
       expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
     };
@@ -457,8 +476,7 @@ const allowedTypes = new Set([
   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 ]);
 
-const blockedExtensions =
-  /\.(html?|svg|js|mjs|exe|dll|bat|cmd|ps1|sh|msi)$/i;
+const blockedExtensions = /\.(html?|svg|js|mjs|exe|dll|bat|cmd|ps1|sh|msi)$/i;
 
 export async function fileRequest(
   path: string,
@@ -549,13 +567,39 @@ async function serveFileStream(id: string, req: any, res: any) {
     return;
   }
   const fileRef = await db.fileReference.findUnique({ where: { id } });
-  if (config.fileMode === "uay") {
+  if (config.fileMode !== "local") {
     try {
       const targetId = await getRemoteFileId(id);
-      const remoteRes = await uayStreamFile(targetId, req.headers.range, {
-        actorId: req.context?.user?.id,
-        requestId: req.context?.requestId,
-      });
+      const remoteRes =
+        config.fileMode === "uay"
+          ? await uayStreamFile(targetId, req.headers.range, {
+              actorId: req.context?.user?.id,
+              requestId: req.context?.requestId,
+            })
+          : await (async () => {
+              const ticket = await fileRequest(
+                "/v1/files/" + encodeURIComponent(id) + "/download-ticket",
+                "POST",
+                { inline: true },
+                req.context?.requestId,
+              );
+              const url = validateSignedUrl(ticket.downloadUrl);
+              return serviceFetch(
+                "file_service",
+                url,
+                {
+                  headers: req.headers.range
+                    ? { Range: req.headers.range }
+                    : {},
+                },
+                { idempotent: true },
+              );
+            })();
+      ensure(
+        remoteRes.ok || remoteRes.status === 206,
+        remoteRes.status === 404 ? 404 : 502,
+        "FILE_SERVICE_REJECTED",
+      );
       if (remoteRes.ok || remoteRes.status === 206) {
         res.status(remoteRes.status);
         for (const [key, value] of remoteRes.headers.entries()) {
@@ -586,26 +630,15 @@ async function serveFileStream(id: string, req: any, res: any) {
           return;
         }
       }
-    } catch {
-      // Remote file service not ready or unreachable; proceed to local fallback
+    } catch (error) {
+      throw error;
     }
+    ensure(false, 502, "FILE_SERVICE_INVALID_RESPONSE");
   }
 
   const filePath = getLocalFilePath(id);
-  if (!existsSync(filePath) && fileRef) {
-    try {
-      const fallbackPdf = createSimplePdf([
-        `Universitas Achmad Yani (UAY)\nE-Learning Platform\n\n${fileRef.name}\n\nDokumen materi perkuliahan sedang dalam proses integrasi berkas.\nSilakan unduh atau akses kembali secara berkala.`
-      ]);
-      writeFileSync(filePath, fallbackPdf);
-    } catch {}
-  }
 
   if (!existsSync(filePath)) {
-    if (production && !isDemo && config.fileMode !== "legacy") {
-      res.status(502).json({ error: "FILE_SERVICE_UNAVAILABLE" });
-      return;
-    }
     res.status(404).json({ error: "NOT_FOUND" });
     return;
   }
@@ -664,7 +697,11 @@ async function handleBinaryUpload(id: string, req: any, res: any) {
   for await (const chunk of req) {
     const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
     size += buf.length;
-    ensure(size <= fileRef.sizeBytes && size <= limit, 400, "FILE_TYPE_OR_SIZE");
+    ensure(
+      size <= fileRef.sizeBytes && size <= limit,
+      400,
+      "FILE_TYPE_OR_SIZE",
+    );
     chunks.push(buf);
   }
   ensure(size === fileRef.sizeBytes, 400, "FILE_TYPE_OR_SIZE");
@@ -689,7 +726,9 @@ async function handleBinaryUpload(id: string, req: any, res: any) {
       } else {
         ensure(false, 502, "FILE_SERVICE_INVALID_RESPONSE");
       }
-    } catch (err) { throw err; }
+    } catch (err) {
+      throw err;
+    }
   } else if (production && !isDemo && config.fileMode !== "legacy") {
     res.status(503).json({ error: "FILE_SERVICE_REQUIRED" });
     return;
@@ -700,8 +739,14 @@ async function handleBinaryUpload(id: string, req: any, res: any) {
 export function registerFiles(app: Express) {
   app.get("/api/v1/files/health", async (req, res) => {
     const data = await checkFileService({ requestId: req.context.requestId });
-    res.json({ statusCode: 200, success: true, data,
-      message: data.simulated ? "File service simulation is available" : "File service is healthy" });
+    res.json({
+      statusCode: 200,
+      success: true,
+      data,
+      message: data.simulated
+        ? "File service simulation is available"
+        : "File service is healthy",
+    });
   });
 
   app.post("/api/v1/files/upload-ticket", async (req, res) =>
@@ -810,9 +855,7 @@ export function registerFiles(app: Express) {
             /\/$/,
             "",
           );
-          uploadUrl = validateSignedUrl(
-            `${base}/api/v1/files/upload/${id}`,
-          );
+          uploadUrl = validateSignedUrl(`${base}/api/v1/files/upload/${id}`);
           headers = { "Content-Type": data.mimeType };
           expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
         } else {
@@ -823,9 +866,7 @@ export function registerFiles(app: Express) {
             /\/$/,
             "",
           );
-          uploadUrl = validateSignedUrl(
-            `${base}/api/v1/files/upload/${id}`,
-          );
+          uploadUrl = validateSignedUrl(`${base}/api/v1/files/upload/${id}`);
           headers = { "Content-Type": data.mimeType };
           expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
         }
@@ -886,11 +927,17 @@ export function registerFiles(app: Express) {
         if (config.fileMode === "uay") {
           const targetId = await getRemoteFileId(file.id);
           const metadata = await uayGetMetadata(targetId, {
-            actorId: req.context.user.id, requestId: req.context.requestId,
+            actorId: req.context.user.id,
+            requestId: req.context.requestId,
           });
-          ensure(["active", "ready"].includes(metadata.status.toLowerCase()) &&
-            metadata.checksum === file.checksum && metadata.sizeBytes === file.sizeBytes &&
-            metadata.mimeType === file.mimeType, 409, "FILE_NOT_READY");
+          ensure(
+            ["active", "ready"].includes(metadata.status.toLowerCase()) &&
+              metadata.checksum === file.checksum &&
+              metadata.sizeBytes === file.sizeBytes &&
+              metadata.mimeType === file.mimeType,
+            409,
+            "FILE_NOT_READY",
+          );
         } else if (config.fileMode === "legacy") {
           const metadata = await fileRequest(
             `/v1/files/${encodeURIComponent(file.id)}`,
@@ -954,30 +1001,16 @@ export function registerFiles(app: Express) {
       url = validateSignedUrl(ticket.downloadUrl);
       expiresAt = ticket.expiresAt;
     } else if (config.fileMode === "uay") {
-      const base = (config.apiOrigin || config.origin || "").replace(
-        /\/$/,
-        "",
-      );
+      const base = (config.apiOrigin || config.origin || "").replace(/\/$/, "");
       const token = createSignedDownloadToken(file.id, 900);
       expiresAt = new Date(Date.now() + 900 * 1000).toISOString();
-      url = validateSignedUrl(
-        `${base}/api/v1/files/${file.id}/stream?token=${encodeURIComponent(token)}${
-          req.body.inline ? "&inline=1" : ""
-        }`,
-      );
+      url = `${base}/api/v1/files/${file.id}/stream?token=${encodeURIComponent(token)}${resourceId ? `&resourceId=${encodeURIComponent(resourceId)}` : ""}${req.body.inline ? "&inline=1" : ""}`;
     } else {
       ensure(!production || isDemo, 503, "FILE_SERVICE_REQUIRED");
-      const base = (config.apiOrigin || config.origin || "").replace(
-        /\/$/,
-        "",
-      );
+      const base = (config.apiOrigin || config.origin || "").replace(/\/$/, "");
       const token = createSignedDownloadToken(file.id, 900);
       expiresAt = new Date(Date.now() + 900 * 1000).toISOString();
-      url = validateSignedUrl(
-        `${base}/api/v1/files/${file.id}/stream?token=${encodeURIComponent(token)}${
-          req.body.inline ? "&inline=1" : ""
-        }`,
-      );
+      url = `${base}/api/v1/files/${file.id}/stream?token=${encodeURIComponent(token)}${resourceId ? `&resourceId=${encodeURIComponent(resourceId)}` : ""}${req.body.inline ? "&inline=1" : ""}`;
     }
 
     if (resourceId)
@@ -1096,7 +1129,9 @@ export function registerFiles(app: Express) {
                   requestId: req.context.requestId,
                 });
               }
-            } catch (err) { throw err; }
+            } catch (err) {
+              throw err;
+            }
           } else if (config.fileMode === "legacy") {
             await fileRequest(
               `/v1/files/${encodeURIComponent(file.id)}/${operation}`,
@@ -1152,7 +1187,9 @@ export function registerFiles(app: Express) {
             actorId: req.context.user.id,
             requestId: req.context.requestId,
           });
-        } catch (err) { throw err; }
+        } catch (err) {
+          throw err;
+        }
       } else if (config.fileMode === "legacy") {
         await fileRequest(
           `/v1/files/${encodeURIComponent(file.id)}/trash`,
@@ -1202,7 +1239,10 @@ export function registerFiles(app: Express) {
     ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
     res.json(
       await db.fileReference.findMany({
-        where: { classId: cls.id, purpose: { in: ["RESOURCE", "VIDEO", "COVER"] } },
+        where: {
+          classId: cls.id,
+          purpose: { in: ["RESOURCE", "VIDEO", "COVER"] },
+        },
         orderBy: { createdAt: "desc" },
         take: 200,
       }),
@@ -1218,7 +1258,7 @@ export function registerFiles(app: Express) {
       res.status(403).json({ error: "LOCAL_STORAGE_DISABLED_IN_PRODUCTION" });
       return;
     }
-    handleBinaryUpload(String(req.params.id), req, res);
+    return handleBinaryUpload(String(req.params.id), req, res);
   });
 
   // Streaming and download endpoints (RFC 7233 byte-range support)
@@ -1226,17 +1266,14 @@ export function registerFiles(app: Express) {
     const id = String(req.params.id);
     const token = String(req.query.token || "");
     const hasValidToken = verifySignedDownloadToken(id, token);
-    if (!hasValidToken) {
-      if (!req.context?.user) {
-        res.status(401).json({ error: "UNAUTHORIZED" });
-        return;
-      }
-      const file = await db.fileReference.findUnique({ where: { id } });
-      if (!file || file.status !== "READY") {
-        res.status(404).json({ error: "NOT_FOUND" });
-        return;
-      }
-    }
+    const file = await db.fileReference.findUnique({ where: { id } });
+    ensure(file?.status === "READY", 404, "FILE_NOT_READY");
+    ensure(!token || hasValidToken, 403, "DOWNLOAD_TICKET_EXPIRED");
+    ensure(req.context?.user, 401, "UNAUTHORIZED");
+    const resourceId = z.string().uuid().optional().parse(req.query.resourceId);
+    // A signed lease never grants another account access or preserves access
+    // after enrollment, publication or class status changes.
+    await authorizeFileAccess(req, file, resourceId);
     await serveFileStream(id, req, res);
   };
 
@@ -1246,59 +1283,85 @@ export function registerFiles(app: Express) {
       res.status(403).json({ error: "LOCAL_STORAGE_DISABLED_IN_PRODUCTION" });
       return;
     }
-    streamHandler(req, res);
+    return streamHandler(req, res);
   });
   app.get("/api/v1/files/:id", streamHandler);
 
   app.get("/api/v1/files/:id/metadata", async (req, res) => {
-    const file = await db.fileReference.findUnique({ where: { id: String(req.params.id) } });
+    const file = await db.fileReference.findUnique({
+      where: { id: String(req.params.id) },
+    });
     ensure(file, 404, "NOT_FOUND");
     const resourceId = z.string().uuid().optional().parse(req.query.resourceId);
     await authorizeFileAccess(req, file, resourceId);
     let data;
     if (config.fileMode === "uay") {
-      try {
-        data = await uayGetMetadata(await getRemoteFileId(file.id), {
-          actorId: req.context.user.id, requestId: req.context.requestId,
-        });
-      } catch {
-        data = {
-          fileId: file.id, originalName: file.name, sizeBytes: file.sizeBytes,
-          mimeType: file.mimeType, checksum: file.checksum,
-          status: file.status === "READY" ? "active" : file.status.toLowerCase(),
-          visibility: "private", simulated: true,
-        };
-      }
+      data = await uayGetMetadata(await getRemoteFileId(file.id), {
+        actorId: req.context.user.id,
+        requestId: req.context.requestId,
+      });
     } else if (config.fileMode === "legacy") {
       data = await fileRequest("/v1/files/" + encodeURIComponent(file.id));
-      ensure(typeof data.status === "string" && Number.isSafeInteger(data.sizeBytes) &&
-        data.sizeBytes > 0 && typeof data.mimeType === "string", 502, "FILE_SERVICE_INVALID_RESPONSE");
+      ensure(
+        typeof data.status === "string" &&
+          Number.isSafeInteger(data.sizeBytes) &&
+          data.sizeBytes > 0 &&
+          typeof data.mimeType === "string",
+        502,
+        "FILE_SERVICE_INVALID_RESPONSE",
+      );
     } else {
       ensure(!production || isDemo, 503, "FILE_SERVICE_REQUIRED");
       data = {
-        fileId: file.id, originalName: file.name, sizeBytes: file.sizeBytes,
-        mimeType: file.mimeType, checksum: file.checksum,
+        fileId: file.id,
+        originalName: file.name,
+        sizeBytes: file.sizeBytes,
+        mimeType: file.mimeType,
+        checksum: file.checksum,
         status: file.status === "READY" ? "active" : file.status.toLowerCase(),
-        visibility: "private", simulated: true,
+        visibility: "private",
+        simulated: true,
       };
     }
-    res.json({ statusCode: 200, success: true, data,
-      message: "Metadata retrieved successfully", timestamp: new Date().toISOString() });
+    res.json({
+      statusCode: 200,
+      success: true,
+      data,
+      message: "Metadata retrieved successfully",
+      timestamp: new Date().toISOString(),
+    });
   });
 
   app.get("/api/v1/repositories", async (req, res) => {
-    ensure(config.fileMode !== "legacy", 501, "FILE_SERVICE_OPERATION_UNSUPPORTED");
+    ensure(
+      config.fileMode !== "legacy",
+      501,
+      "FILE_SERVICE_OPERATION_UNSUPPORTED",
+    );
     let data;
     if (config.fileMode === "uay") {
-      data = await uayGetRepositories({ actorId: req.context.user.id, requestId: req.context.requestId });
+      data = await uayGetRepositories({
+        actorId: req.context.user.id,
+        requestId: req.context.requestId,
+      });
     } else {
       ensure(!production || isDemo, 503, "FILE_SERVICE_REQUIRED");
-      data = [{ id: config.fileRepoId, name: "Penyimpanan lokal (simulasi)", slug: "elearning",
-        status: "active", simulated: true }];
+      data = [
+        {
+          id: config.fileRepoId,
+          name: "Penyimpanan lokal (simulasi)",
+          slug: "elearning",
+          status: "active",
+          simulated: true,
+        },
+      ];
     }
-    res.json({ statusCode: 200, success: true, data,
-      message: "Repositories retrieved successfully", timestamp: new Date().toISOString() });
+    res.json({
+      statusCode: 200,
+      success: true,
+      data,
+      message: "Repositories retrieved successfully",
+      timestamp: new Date().toISOString(),
+    });
   });
-
-
 }

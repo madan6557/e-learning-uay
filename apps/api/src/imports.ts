@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db, ensure, classAccess, mutate, audit, json } from "./core.js";
 import { questionSchema } from "../../../packages/shared/src/domain.js";
 import { refreshPublishedFinal } from "./grades.js";
+import { canGradeClassWork } from "../../../packages/shared/src/permissions.js";
 const batchSchema = z.object({
   kind: z.enum(["ENROLLMENT", "GRADES", "QUESTIONS"]),
   categoryId: z.string().uuid().optional(),
@@ -132,13 +133,24 @@ async function review(
 }
 export function registerImports(app: Express) {
   app.post("/api/v1/course-classes/:id/imports/preview", async (req, res) => {
+    const batch = batchSchema.parse(req.body);
     const cls = await classAccess(
       db,
       req.context.user,
       String(req.params.id),
       true,
+      false,
+      batch.kind === "ENROLLMENT",
     );
-    const batch = batchSchema.parse(req.body);
+    if (batch.kind === "GRADES")
+      ensure(
+        canGradeClassWork(
+          req.context.user,
+          cls.instructors.some((i) => i.userId === req.context.user.id),
+        ),
+        403,
+        "ONLY_INSTRUCTOR_CAN_GRADE",
+      );
     const rows = await review(db, cls.id, cls.courseId, batch);
     res.json({
       rows: rows.map(({ user, parsed, ...row }) => row),
@@ -149,13 +161,24 @@ export function registerImports(app: Express) {
   app.post("/api/v1/course-classes/:id/imports/commit", async (req, res) =>
     res.json(
       await mutate(req, async (tx) => {
+        const batch = batchSchema.parse(req.body);
         const cls = await classAccess(
           tx,
           req.context.user,
           String(req.params.id),
           true,
+          false,
+          batch.kind === "ENROLLMENT",
         );
-        const batch = batchSchema.parse(req.body);
+        if (batch.kind === "GRADES")
+          ensure(
+            canGradeClassWork(
+              req.context.user,
+              cls.instructors.some((i) => i.userId === req.context.user.id),
+            ),
+            403,
+            "ONLY_INSTRUCTOR_CAN_GRADE",
+          );
         const rows = await review(tx, cls.id, cls.courseId, batch);
         ensure(
           rows.every((r) => r.status !== "ISSUE"),

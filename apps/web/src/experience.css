@@ -2576,7 +2576,7 @@ textarea:focus {
 }
 /* Rail geometry is desktop-only; below the breakpoint the sidebar is a drawer
    and keeps the responsive rules declared earlier in this file. */
-@media (min-width: 761px) {
+@media (min-width: 1025px) {
   .sidebar {
     width: 256px;
     padding: 0 8px 8px;
@@ -2986,7 +2986,7 @@ table th {
   transition: opacity 160ms cubic-bezier(0.4, 0, 0.2, 1), max-width 240ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@media (min-width: 761px) {
+@media (min-width: 1025px) {
   .nav-collapsed .sidebar {
     width: 64px;
     padding: 0 0 8px 0;
@@ -3417,7 +3417,7 @@ main {
   max-width: 100%;
   box-sizing: border-box;
 }
-@media(min-width:761px) {
+@media(min-width:1025px) {
   .sidebar { width: 248px; }
   .workspace { margin-left: 248px; width: calc(100% - 248px); min-width: 0; max-width: 100%; }
   .nav-collapsed .sidebar {width:64px;}
@@ -3431,17 +3431,17 @@ main {
   .sidebar nav a { min-height: 48px; }
   .sidebar-collapse-section { display: none; }
 }
-/* Report navigation becomes a drawer before its rail squeezes the report. */
+/* Navigation becomes a drawer before its rail squeezes the report. */
 @media(max-width:1024px) {
- .rector-workspace .workspace {margin-left:0;width:100%;}
- .rector-workspace .sidebar {position:fixed;inset:0 auto 0 0;width:min(280px,calc(100vw - 48px));padding:24px 18px;transform:translateX(-100%);z-index:30;}
- .rector-workspace.menu-open .sidebar {transform:translateX(0);}
- .rector-workspace .sidebar-brand {margin:0 0 12px;padding:0;border:0;height:auto;}
- .rector-workspace .sidebar-collapse-section {display:none;}
- .rector-workspace .topbar .mobile-menu {display:inline-flex;}
- .rector-workspace .topbar-mark {display:none;}
- .rector-workspace .nav-scrim {display:block;position:fixed;inset:0;background:#1a283660;z-index:25;border:0;width:100%;height:100%;}
- .rector-workspace main {padding:24px 20px 40px;}
+ .app-shell .workspace {margin-left:0;width:100%;}
+ .app-shell .sidebar {position:fixed;inset:0 auto 0 0;width:min(280px,calc(100vw - 48px));padding:24px 18px;transform:translateX(-100%);z-index:30;}
+ .app-shell.menu-open .sidebar {transform:translateX(0);}
+ .app-shell .sidebar-brand {margin:0 0 12px;padding:0;border:0;height:auto;}
+ .app-shell .sidebar-collapse-section {display:none;}
+ .app-shell .topbar .mobile-menu {display:inline-flex;}
+ .app-shell .topbar-mark {display:none;}
+ .app-shell .nav-scrim {display:block;position:fixed;inset:0;background:#1a283660;z-index:25;border:0;width:100%;height:100%;}
+ .app-shell main {padding:24px 20px 40px;}
 }
 @media(max-width:520px) {
  .rector-workspace .topbar .breadcrumbs,.rector-workspace .topbar-divider {display:none;}

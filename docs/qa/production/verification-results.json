@@ -1,0 +1,81 @@
+{
+  "verifiedOn": "2026-10-09",
+  "timeZone": "Asia/Singapore",
+  "environment": {
+    "label": "Lokal · PostgreSQL _test · fixture SSO & File Service",
+    "database": "elearning_test",
+    "runtime": "v22.12.0",
+    "platform": "win32",
+    "limitations": "Hasil otomatis lokal dengan fixture tidak membuktikan penerimaan SSO/File Service kampus, antivirus nyata, Redis produksi, VPS atau performa pilot."
+  },
+  "qa": {
+    "runId": "01471674-8dcb-4871-b437-f6cd33218b5c",
+    "completedAt": "2026-10-08T19:31:59.080Z",
+    "workingTree": "working copy (includes current uncommitted QA work)",
+    "baseRevision": "d33bc2b4fca27a683038b344d2845304b1b9c6b7",
+    "summary": {
+      "cases": 354,
+      "pass": 163,
+      "fail": 0,
+      "blocked": 0,
+      "not_run": 191
+    },
+    "suites": [
+      {
+        "name": "domain",
+        "tests": 155,
+        "exitCode": 0
+      },
+      {
+        "name": "integration",
+        "tests": 130,
+        "exitCode": 0
+      }
+    ],
+    "regressionFindings": [],
+    "reportSha256": "16bebd77e490d346e8363634e8b08d749ebcef7c2b7dd9a794381b06e36174ea",
+    "reportDigestEncoding": "UTF-8/LF"
+  },
+  "commands": [
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run qa:run",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run qa:test",
+      "exitCode": 0,
+      "tests": 8
+    },
+    {
+      "command": "npm run qa:build",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run docs:guide:check",
+      "exitCode": 0
+    }
+  ],
+  "dependencyAudit": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "staging": "Pending access; fixture results do not establish campus production acceptance.",
+  "documentation": {
+    "relativeLinks": 251,
+    "brokenLinks": 0,
+    "movedDocuments": 59,
+    "guidePackaging": "8 files verified"
+  }
+}

@@ -1,207 +1,55 @@
-# Panduan Deployment VPS Hostinger dengan PM2 (Tanpa Docker)
+# Deployment production kampus dengan PM2 dan Nginx
 
-Panduan ini ditujukan untuk **Tim VPS / Infrastruktur** yang akan melakukan deployment E-Learning UAY di VPS Hostinger.
+Panduan ini untuk production kampus, menggunakan Node.js >=22.12, PostgreSQL 15/16, Redis, OIDC kampus dan File Service nyata. Mode uji lokal dijalankan terpisah melalui `npm run db:local` dan `npm run dev:test`. Jangan menjalankan seed atau fixture SSO/File Service pada database production.
 
-## Ringkasan Lingkungan Deployment
-- **Target OS**: Ubuntu 22.04 LTS / 24.04 LTS
-- **Runtime**: Node.js **>= 22.12** & npm
-- **Process Manager**: PM2 (`npm install -g pm2`)
-- **Database**: PostgreSQL 15 atau 16
-- **Reverse Proxy**: Nginx (direkomendasikan) atau direct port 3000
-- **Mode Sistem**: **Mode Uji / Pilot** (`DEMO_MODE=true`, `AUTH_MODE=development`)
-- **Penyimpanan Berkas**: **Lokal Disk VPS** (`FILE_STORAGE_DRIVER=local`, direktori `./uploads`), tanpa AWS S3 / tanpa layanan file eksternal.
+## Konfigurasi
 
----
+Salin `deployment/.env.native.example` menjadi `.env` di root proyek, batasi izin menjadi 600, lalu isi seluruh nilai nyata. `DEMO_MODE=false`, `AUTH_MODE=oidc`, HTTPS dan konfigurasi pencabutan akun wajib. Daftarkan callback backend `https://DOMAIN/api/v1/auth/callback` pada penyedia OIDC. Untuk klien PKCE public, `SSO_CLIENT_SECRET` boleh kosong. Konfigurasikan webhook pencabutan akun dengan secret yang sama di kedua layanan.
 
-## Langkah Deployment Cepat (Manual)
+Gunakan Redis khusus dengan autentikasi dan akses jaringan terbatas; gangguan Redis mengembalikan 503, termasuk operasi sesi dan pembatasan akses. Tidak ada fallback memori untuk production kampus. File Service wajib memiliki kunci dan origin yang diizinkan. Penyimpanan lokal dan dokumen pengganti tidak digunakan sebagai pemulihan kegagalan layanan nyata.
 
-### 1. Prasyarat di VPS
-Pastikan Node.js 22, PostgreSQL, dan PM2 telah terpasang:
-```bash
-# Cek versi Node.js (harus >= 22.12)
-node -v
+PM2 menjalankan `elearning-uay`, memaksa `NODE_ENV=production` dan `DEMO_MODE=false`, dengan default API `127.0.0.1:3000`. Port API tidak perlu dibuka ke internet. Nginx menerima trafik publik dan mengganti header proxy; `TRUST_PROXY=1` hanya sesuai untuk satu proxy tepercaya langsung di depan API.
 
-# Install PM2 secara global jika belum ada
-npm install -g pm2
-```
+## Instalasi dan pembaruan
 
-### 2. Siapkan Database PostgreSQL
-Buat user dan database di PostgreSQL:
-```bash
-sudo -u postgres psql
-```
-```sql
-CREATE USER uay WITH ENCRYPTED PASSWORD 'password_database_anda';
-CREATE DATABASE elearning OWNER uay;
-GRANT ALL PRIVILEGES ON DATABASE elearning TO uay;
-\q
-```
-
-### 3. Clone Repositori
-```bash
-# Clone ke direktori aplikasi (misal: /var/www/e-learning)
-git clone https://github.com/UAY-System/e-learning.git /var/www/e-learning
-cd /var/www/e-learning
-```
-
-### 4. Konfigurasi Lingkungan (`.env`)
-Salin file `.env.example` menjadi `.env`:
-```bash
-cp .env.example .env
-chmod 600 .env
-```
-Buka dan sesuaikan `.env`:
-```env
-NODE_ENV=production
-PORT=3000
-API_HOST=0.0.0.0
-TRUST_PROXY=1
-
-# PENTING: APP_ORIGIN harus sama persis dengan URL yang diakses browser
-# Contoh jika memakai IP VPS: http://194.233.xx.xx:3000
-# Contoh jika memakai Domain: https://elearning.uay.ac.id
-APP_ORIGIN=http://194.233.xx.xx:3000
-API_ORIGIN=http://194.233.xx.xx:3000
-
-# Kredensial Database
-DATABASE_URL=postgresql://uay:password_database_anda@127.0.0.1:5432/elearning?schema=public
-
-# Mode Uji Coba (Tester & Akun Demo Aktif Langsung)
-DEMO_MODE=true
-AUTH_MODE=development
-
-# Penyimpanan Berkas Lokal di VPS (Tanpa S3)
-FILE_STORAGE_DRIVER=local
-UPLOAD_DIR=./uploads
-```
-
-> ⚠️ **Catatan Penting CSRF & Origin**: Nilai `APP_ORIGIN` harus cocok dengan URL yang dibuka pengguna di peramban. Jika berbeda, sistem pengamanan API akan memblokir request POST/PUT dengan status `403 INVALID_ORIGIN`.
-
-### 5. Install Dependensi, Migrasi DB & Seed Data
-```bash
-# Install paket
-npm install
-
-# Buat direktori berkas upload
-mkdir -p uploads
-
-# Generate Prisma Client & Migrasi Database
-npm run db:generate
-npm run db:migrate
-
-# Seed data akun uji & kelas contoh
-npm run db:seed
-```
-*Catatan:* `npm run db:seed` aman dijalankan berulang (idempoten) dan otomatis menyiapkan akun tester:
-- **Super Admin**: NIP `ADM001`
-- **Admin Prodi Informatika**: NIP `ADMIF01`
-- **Dosen**: NIDN `1112089001`
-- **Mahasiswa**: NIM `202601001` s/d `202601010` (10 mahasiswa terdaftar aktif)
-
-### 6. Build Aplikasi Web & API
-```bash
-npm run build:web
-npm run build:api
-```
-*(Atau cukup jalankan `npm run build`)*
-
-### 7. Jalankan dengan PM2
-```bash
-# Menjalankan aplikasi dengan konfigurasi ekosistem produksi
-pm2 start ecosystem.config.cjs --env production
-
-# Simpan state PM2 agar otomatis berjalan saat VPS reboot
-pm2 save
-pm2 startup
-```
-Jalankan baris perintah `sudo env PATH=...` yang ditampilkan oleh output `pm2 startup`.
-
-Periksa status aplikasi:
-```bash
-pm2 status
-pm2 logs elearning-uay
-curl -i http://127.0.0.1:3000/api/health
-```
-Output `curl` harus menghasilkan `{"status":"ok","service":"elearning-uay","version":"0.1.0"}`.
-
----
-
-## Opsi Nginx & HTTPS (Reverse Proxy)
-
-Jika menggunakan domain dan sertifikat SSL/HTTPS, gunakan konfigurasi Nginx yang telah disiapkan di `deployment/nginx/hostinger.conf`:
-```bash
-sudo cp deployment/nginx/hostinger.conf /etc/nginx/sites-available/elearning
-# Sesuaikan server_name dan path direktori di file tersebut jika berbeda
-sudo nano /etc/nginx/sites-available/elearning
-
-sudo ln -s /etc/nginx/sites-available/elearning /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
-
-# Pasang SSL gratis dengan Certbot
-sudo certbot --nginx -d elearning.uay.ac.id
-```
-
----
-
-## Opsi CI/CD Otomatis (GitHub Actions)
-
-Workflow GitHub Actions sudah tersedia di `.github/workflows/deploy.yml`. Jika tim VPS ingin deployment berjalan otomatis setiap kali ada `git push` ke branch `main`:
-Tambahkan **Repository Secrets** di menu GitHub repo (`Settings` > `Secrets and variables` > `Actions`):
-- `HOSTINGER_HOST`: IP publik VPS
-- `HOSTINGER_SSH_KEY`: Private SSH Key (atau `HOSTINGER_PASSWORD`)
-- `HOSTINGER_USERNAME`: `root` atau user VPS (misal `uay`)
-- `HOSTINGER_APP_DIR`: `/var/www/e-learning`
-- `HOSTINGER_PORT`: `22` (opsional)
-
----
-
-## Pemeliharaan & Update Rutin
-Jika ada pembaruan kode di kemudian hari:
-```bash
-cd /var/www/e-learning
-git pull origin main
-npm install
-npm run db:generate
-npm run db:migrate
-npm run build:web
-npm run build:api
-pm2 reload elearning-uay
-```
-
-Certbot memasang HTTPS/redirect; aplikasi memakai origin HTTPS. Jangan membuka
-port 3000 ke publik. SPA fallback menyajikan index.html untuk URL kelas/tugas,
-sementara `/api/` menuju API dan asset yang hilang menghasilkan 404.
-Log akses tidak merekam query string callback SSO/tiket berkas.
-
-## Pembaruan
-
-Buat backup database terlebih dahulu dan catat commit sebelumnya, kemudian:
+Dari root checkout deployment yang telah ditinjau:
 
 ```bash
-cd /opt/uay-elearning
-git pull --ff-only
 npm ci
+npm run typecheck
 npm run build
+npm test
+npm audit
+# Ambil backup database sebelum migrasi.
 npm run db:migrate
-npm run reload:prod
+npm run start:prod
 pm2 save
-curl --fail https://elearning.example.ac.id/api/health
 ```
 
-Build selesai sebelum migrasi dan reload. Migrasi tidak kompatibel memerlukan
-maintenance window. Rollback kode hanya aman jika schema tetap kompatibel.
-`npm start` hanya menjalankan API yang sudah dibuild, tanpa migrasi atau seed.
-Jangan mengisi `VITE_API_URL`/`RAILWAY_API_ORIGIN` di VPS: frontend memakai API
-pada domain yang sama. Script backup/restore native ada pada `deployment/scripts/`.
-Latih restore di database terisolasi sebelum go-live.
-Script native memakai `DB_NAME=elearning_prod`, `DB_USER=postgres` (user OS
-untuk sudo PostgreSQL), dan `DB_OWNER=elearning` (pemilik objek database saat
-restore). Sesuaikan jika nama akun berbeda. Jalankan restore sebagai user `uay`
-yang mengelola PM2 dan memiliki izin sudo PostgreSQL. Backup lokal berada di
-`deployment/backups/`; salin juga ke penyimpanan di luar VPS.
+Untuk pembaruan aplikasi yang telah lolos staging, gunakan `npm run reload:prod`. Simpan checkout/build sebelumnya untuk rollback aplikasi. Jangan membalik migrasi database secara spontan; gunakan backup terverifikasi dan rencana pemulihan jika perubahan data tidak kompatibel.
 
-Verifikasi SSO resmi, upload/scan, back/forward, refresh deep link, expiry kuis,
-backup/restore dan akses mahasiswa/dosen/admin pada VPS sebelum penerimaan.
-Dokumen dan konfigurasi ini disiapkan dari lingkungan Windows; Nginx, systemd,
-TLS dan PM2 di VPS Hostinger belum dijalankan.
+## Migrasi pengumuman lama
+
+Pengumuman sekarang berada di tabel `system_announcements`. Backup JSON lama dan database terlebih dahulu. Migrasi tidak otomatis dijalankan saat server mulai, tidak mengubah record yang telah ada, serta mempertahankan ID dan waktu sumber.
+
+```bash
+npm run db:migrate:announcements -- --file /PATH/system-announcements.json
+# Tinjau jumlah dan hasil validasi sebelum penerapan.
+npm run db:migrate:announcements -- --file /PATH/system-announcements.json --apply
+```
+
+Pengulangan `--apply` aman dan melaporkan jumlah record yang dilewati. JSON tidak dihapus. Impor tidak mengirim notifikasi massal ulang. Validasi gagal menghentikan seluruh impor; perbaiki sumber, lalu ulangi. Contoh pengumuman hanya berasal dari seed mode uji.
+
+## Nginx dan HTTPS
+
+Sesuaikan domain dan root checkout di `deployment/nginx/hostinger.conf`. Template HTTP adalah tahap bootstrap untuk penerbitan sertifikat; production harus menggunakan HTTPS dengan redirect HTTP ke HTTPS. Setelah memasang sertifikat melalui mekanisme resmi infrastruktur, jalankan `nginx -t`, reload Nginx, dan verifikasi perpanjangan sertifikat. Pertahankan akses log tanpa query string agar kode callback dan tiket tidak masuk log.
+
+Nginx meneruskan `/api/` ke `127.0.0.1:3000`; aset Vite berada di `apps/web/dist`. Batas body 50 MB perlu diselaraskan dengan kebijakan upload jika berkas dikirim melalui API. Berkas yang menggunakan tiket File Service langsung mengikuti batas layanan tersebut. Pastikan header Host dan X-Forwarded-Proto berasal dari proxy tepercaya dan origin browser cocok dengan APP_ORIGIN.
+
+## Kesehatan, backup dan penerimaan
+
+`GET /api/health` mengembalikan 200 jika PostgreSQL dan Redis siap, dan 503 jika salah satunya gagal pada production kampus. Respons menyertakan hasil masing-masing dependency. Pemeriksaan ini tidak membuktikan SSO atau File Service; periksa `/api/v1/files/health` menggunakan sesi yang berwenang, serta login/upload/download nyata. Pantau 5xx, kegagalan dependency, latensi dan kapasitas PostgreSQL/Redis.
+
+`deployment/scripts/backup-native.sh` membuat dump terkompresi dan checksum dengan izin terbatas. Simpan salinan terenkripsi di luar VPS dan uji restore ke database terisolasi, tanpa menghentikan production. `restore-native.sh` adalah prosedur penggantian database yang memerlukan konfirmasi operator, backup sebelum pemulihan dan penghentian proses `elearning-uay`; jangan gunakan skrip itu untuk latihan restore terisolasi.
+
+Status production menunggu bukti staging: SSO/File Service nyata, pencabutan sesi, Redis gagal/pulih, HTTPS, backup/restore terisolasi, serta pilot 50 mahasiswa. Gunakan [laporan kesiapan](../docs/qa/PRODUCTION-READINESS.md).

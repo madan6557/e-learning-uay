@@ -1,5 +1,7 @@
 # Status implementasi v4.0
 
+> Catatan ini merupakan riwayat implementasi. Untuk perubahan dan hasil verifikasi 8–9 Oktober 2026, gunakan [laporan kesiapan production](../qa/PRODUCTION-READINESS.md).
+
 Tanggal: 13 September 2026. Sumber: `Presentation - Technical Design E-Learning UAY - v4.0.pdf` (18 halaman) dan rincian `Technical Design - E-Learning UAY - v4.0.md`.
 
 ## Cakupan yang sudah tersedia
@@ -33,7 +35,7 @@ Tanggal: 13 September 2026. Sumber: `Presentation - Technical Design E-Learning 
 
 Migrasi `202609180003_sso_naming_alignment` memindahkan basis data yang sudah ada
 tanpa kehilangan data. Pemetaan lengkap ada di
-[contracts/SSO-DATA-MAPPING.md](contracts/SSO-DATA-MAPPING.md).
+[contracts/SSO-DATA-MAPPING.md](../contracts/SSO-DATA-MAPPING.md).
 
 ## Perbaikan cacat pada siklus ini
 
@@ -66,7 +68,7 @@ tanpa kehilangan data. Pemetaan lengkap ada di
 
 Hasil akhir: **build lulus, 10/10 tes domain lulus, 29/29 tes integrasi lulus, npm audit 0 kerentanan**. Pemeriksaan browser mencakup landing tanpa sidebar, login SSO biasa dan callback demo OIDC, dashboard dan profil desktop/mobile, editor materi, peserta, pengumuman, bank soal, berkas, audit, serta gradebook dengan satu tombol simpan global. Hosted demo juga diverifikasi memakai origin publik aplikasi, callback OIDC internal, dan File Service fixture.
 
-Tes integrasi memakai service fixture dan database `_test`. Keberhasilan tes ini tidak menyatakan bahwa SSO/File Service kampus atau VPS telah diterima. Rincian matriks audit UI/UX tersedia di [UI-UX-AUDIT.md](UI-UX-AUDIT.md). Daftar periksa untuk pengujian manual per modul ada di [PANDUAN-PENGUJIAN.md](PANDUAN-PENGUJIAN.md).
+Tes integrasi memakai service fixture dan database `_test`. Keberhasilan tes ini tidak menyatakan bahwa SSO/File Service kampus atau VPS telah diterima. Rincian matriks audit UI/UX tersedia di [UI-UX-AUDIT.md](../qa/UI-UX-AUDIT.md). Daftar periksa untuk pengujian manual per modul ada di [PANDUAN-PENGUJIAN.md](../qa/PANDUAN-PENGUJIAN.md).
 
 ## Pekerjaan yang membutuhkan pihak/lingkungan luar
 
@@ -77,7 +79,7 @@ Tes integrasi memakai service fixture dan database `_test`. Keberhasilan tes ini
 
 P1/P2 yang ditetapkan sebagai pengembangan berikutnya dalam desain (misalnya forum, gamifikasi, SCORM/LTI, integrasi SIAKAD dan analitik lanjutan) tidak dinyatakan selesai. Clean clone dan ekspor rekap sudah tersedia untuk mendukung pilot.
 
-Panduan: [menjalankan aplikasi](../README.md), [kontrak adapter](contracts/IMPLEMENTED-ADAPTERS.md), [deployment/backup/restore](../deployment/README.md).
+Panduan: [menjalankan aplikasi](../../README.md), [kontrak adapter](../contracts/IMPLEMENTED-ADAPTERS.md), [deployment/backup/restore](../../deployment/README.md).
 
 ## Koreksi kebijakan dan akses — 5 Oktober 2026
 
@@ -97,7 +99,7 @@ API presensi mewajibkan timestamp dengan `Z` atau offset, memvalidasi urutan jad
 
 Migrasi `202610060008_utc_timestamp_defaults` membuat 25 default DateTime menghasilkan `CURRENT_TIMESTAMP AT TIME ZONE 'UTC'`. Kolom tetap memakai `TIMESTAMP(3)` sesuai konvensi proyek; default tidak lagi bergantung pada zona sesi PostgreSQL. Migrasi hanya mengubah default dan tidak menebak atau menggeser timestamp lama.
 
-Build, 49 tes utama, dan 45 tes integrasi lulus. Form produksi diuji melalui React/JSDOM pada UTC+7 dan UTC+8, termasuk pergantian tahun, jadwal lintas hari, serta payload UTC saat simpan ulang. Default SQL diuji pada sesi UTC, UTC+7 dan UTC+8. Rincian: [TIME-CONSISTENCY-VERIFICATION.md](qa/TIME-CONSISTENCY-VERIFICATION.md).
+Build, 49 tes utama, dan 45 tes integrasi lulus. Form produksi diuji melalui React/JSDOM pada UTC+7 dan UTC+8, termasuk pergantian tahun, jadwal lintas hari, serta payload UTC saat simpan ulang. Default SQL diuji pada sesi UTC, UTC+7 dan UTC+8. Rincian: [TIME-CONSISTENCY-VERIFICATION.md](../qa/TIME-CONSISTENCY-VERIFICATION.md).
 
 ## Integrasi panduan Bantuan — 6 Oktober 2026
 
@@ -115,4 +117,4 @@ Kartu Bantuan/kebijakan dan pilihan dosen memakai tombol dengan akses keyboard. 
 
 Tes isolasi prodi dan rector bridge kini menjalankan endpoint produksi serta PostgreSQL `_test`. Tes mengungkap dan mengamankan pencarian identitas Admin Prodi tanpa cakupan, autentikasi token khusus snapshot, serta urutan sesi dosen terbaru sebelum batas 50 baris. Pemetaan QA mengikuti tes integrasi tersebut.
 
-Panduan Markdown utama diekspor dari data Bantuan serta skala produksi melalui `npm run docs:guide`; `npm run docs:guide:check` memeriksa kesesuaiannya. Dokumen operasional mengarah ke panduan utama. Istilah presensi menjadi kode 6 karakter pada aplikasi dan panduan. Build, 47 tes utama, 53 tes integrasi, 8 tes portal, serta 143 kasus otomatis QA lulus. Sebanyak 186 kasus katalog belum diuji otomatis. Pemeriksaan UI mencakup empat role dan breakpoint desktop/seluler. Rincian: [AI-SLOP-9-14-VERIFICATION.md](qa/AI-SLOP-9-14-VERIFICATION.md).
+Panduan Markdown utama diekspor dari data Bantuan serta skala produksi melalui `npm run docs:guide`; `npm run docs:guide:check` memeriksa kesesuaiannya. Dokumen operasional mengarah ke panduan utama. Istilah presensi menjadi kode 6 karakter pada aplikasi dan panduan. Build, 47 tes utama, 53 tes integrasi, 8 tes portal, serta 143 kasus otomatis QA lulus. Sebanyak 186 kasus katalog belum diuji otomatis. Pemeriksaan UI mencakup empat role dan breakpoint desktop/seluler. Rincian: [AI-SLOP-9-14-VERIFICATION.md](../qa/AI-SLOP-9-14-VERIFICATION.md).

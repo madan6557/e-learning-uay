@@ -168,18 +168,32 @@ export function createApp() {
     process.env.DEMO_INTERNAL_FILE_URL,
   );
   app.get("/api/health", async (_req, res) => {
+    let databaseReady = false;
+    let redisReady = !production || isDemo;
     try {
       await db.$queryRaw`SELECT 1`;
-      if (redis) {
-        await redis.ping().catch((err: any) => {
-          console.warn("[Health] Redis ping warning (fallback active):", err?.message);
-        });
+      databaseReady = true;
+    } catch {}
+    if (redis) {
+      try {
+        await redis.ping();
+        redisReady = true;
+      } catch {
+        redisReady = false;
       }
-      res.json({ status: "ok", service: "elearning-uay", version: "0.1.0" });
-    } catch (err: any) {
-      console.error("[Health] Health check failed:", err);
-      res.status(503).json({ status: "error", error: "DATABASE_UNAVAILABLE" });
     }
+    const ready = databaseReady && (redisReady || !production || isDemo);
+    res
+      .status(ready ? 200 : 503)
+      .json({
+        status: ready ? "ok" : "error",
+        service: "elearning-uay",
+        version: "0.1.0",
+        checks: {
+          database: databaseReady ? "ok" : "unavailable",
+          redis: redis ? (redisReady ? "ok" : "unavailable") : "not_configured",
+        },
+      });
   });
   app.use("/api", async (req, res, next) => {
     res.setHeader("Cache-Control", "no-store");
@@ -214,7 +228,11 @@ export function createApp() {
     const rectorAllowed =
       req.path === "/me" ||
       (req.path.startsWith("/system-announcements") && req.method === "GET");
-    ensure(req.context.user.role !== "RECTOR" || rectorAllowed, 403, "FORBIDDEN");
+    ensure(
+      req.context.user.role !== "RECTOR" || rectorAllowed,
+      403,
+      "FORBIDDEN",
+    );
     next();
   });
   app.use("/api/v1", (req, _res, next) => {
@@ -237,7 +255,9 @@ export function createApp() {
         /^\/assignments\/[^/]+\/publish-grades/.test(req.path) ||
         /^\/course-classes\/[^/]+\/manual-grades/.test(req.path) ||
         /^\/course-classes\/[^/]+\/grade-categories/.test(req.path) ||
-        /^\/course-classes\/[^/]+\/gradebook\/(calculate|publish|lock)/.test(req.path);
+        /^\/course-classes\/[^/]+\/gradebook\/(calculate|publish|lock)/.test(
+          req.path,
+        );
       ensure(!isGradingPath, 403, "ONLY_INSTRUCTOR_CAN_GRADE");
       next();
       return;
@@ -246,6 +266,12 @@ export function createApp() {
     // Super Administrators manage the catalogue, university policy, and broadcasts.
     // Classroom content belongs to assigned instructors or department admins.
     const allowed =
+      (req.path === "/course-classes" && req.method === "POST") ||
+      (/^\/course-classes\/[^/]+$/.test(req.path) && req.method === "PATCH") ||
+      (/^\/course-classes\/[^/]+\/(participants|instructors|clone|imports\/(preview|commit))$/.test(
+        req.path,
+      ) &&
+        req.method === "POST") ||
       req.path === "/courses" ||
       req.path.startsWith("/courses/") ||
       req.path === "/system/settings" ||

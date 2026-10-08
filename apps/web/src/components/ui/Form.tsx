@@ -8,9 +8,14 @@ import {
 } from "react";
 import { LoaderCircle } from "lucide-react";
 import { Button } from "../../ui";
-import { useLocalDraft, SaveStatus, DraftRouteContext } from "../../useLocalDraft";
+import {
+  useLocalDraft,
+  SaveStatus,
+  DraftRouteContext,
+} from "../../useLocalDraft";
 import { confirmAction } from "../../confirm";
 import { Notice } from "./Notice";
+import { notifyAction } from "../../feedback";
 import labels from "../../../../../packages/shared/src/id.json";
 
 export type FormSnapshot = Record<string, string[]>;
@@ -67,6 +72,9 @@ export interface FormProps {
   ) => Promise<unknown>;
   children: ReactNode;
   submitLabel?: string;
+  successMessage?: string;
+  busyLabel?: string;
+  disabledReason?: string;
   onCancel?: () => void;
   draftKey?: string;
   draftValue?: any;
@@ -86,6 +94,9 @@ export function Form({
   onSubmit,
   children,
   submitLabel = "Simpan semua perubahan",
+  successMessage = "Perubahan berhasil disimpan.",
+  busyLabel,
+  disabledReason,
   onCancel,
   draftKey = "form",
   draftValue,
@@ -101,6 +112,7 @@ export function Form({
   const [error, setError] = useState<Error | null>(null);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const ref = useRef<HTMLFormElement>(null);
+  const inFlight = useRef(false);
   const [fields, setFields] = useState<FormSnapshot>({});
   const draftRoute = useContext(DraftRouteContext);
   const draft = useLocalDraft(
@@ -138,7 +150,15 @@ export function Form({
       }}
       onSubmit={async (e) => {
         e.preventDefault();
-        if (busy || disabled || submitDisabled || draft.recovery) return;
+        if (
+          inFlight.current ||
+          busy ||
+          disabled ||
+          submitDisabled ||
+          draft.recovery
+        )
+          return;
+        inFlight.current = true;
         const data = new FormData(e.currentTarget);
         const submitter = (e.nativeEvent as SubmitEvent)
           .submitter as HTMLButtonElement | null;
@@ -153,6 +173,14 @@ export function Form({
         try {
           const result = await onSubmit(data, intent);
           if (result !== false) {
+            if (successMessage)
+              notifyAction(
+                publication
+                  ? intent === "draft"
+                    ? "Draf berhasil disimpan."
+                    : "Konten berhasil diterbitkan."
+                  : successMessage,
+              );
             await new Promise((resolve) => setTimeout(resolve, 0));
             await draft.saved();
             if (publication)
@@ -162,6 +190,7 @@ export function Form({
           setError(error as Error);
         } finally {
           setBusy(false);
+          inFlight.current = false;
           setPendingAction(null);
         }
       }}
@@ -171,6 +200,9 @@ export function Form({
         {children}
       </fieldset>
       {error && <Notice error={error} />}
+      {(disabled || submitDisabled) && disabledReason && (
+        <p className="action-reason">{disabledReason}</p>
+      )}
       <div
         className={`form-actions sticky-actions${publication ? " publication-actions" : ""}`}
       >
@@ -201,7 +233,7 @@ export function Form({
           pendingAction !== "unpublish" ? (
             <>
               <LoaderCircle size={16} className="spin" />
-              {labels.saving}
+              {busyLabel ?? labels.saving}
             </>
           ) : publication ? (
             "Simpan dan Publikasikan"
@@ -221,17 +253,27 @@ export function Form({
             onClick={
               publication.published && publication.onUnpublish
                 ? async () => {
-                    if (busy || disabled || submitDisabled || draft.recovery)
+                    if (
+                      inFlight.current ||
+                      busy ||
+                      disabled ||
+                      submitDisabled ||
+                      draft.recovery
+                    )
                       return;
+                    inFlight.current = true;
                     setBusy(true);
                     setPendingAction("unpublish");
                     setError(null);
                     try {
-                      await publication.onUnpublish!();
+                      const result = await publication.onUnpublish!();
+                      if (result !== false)
+                        notifyAction("Publikasi berhasil ditarik.");
                       window.dispatchEvent(new Event("notifications-changed"));
                     } catch (error) {
                       setError(error as Error);
                     } finally {
+                      inFlight.current = false;
                       setBusy(false);
                       setPendingAction(null);
                     }
@@ -243,7 +285,7 @@ export function Form({
             (pendingAction === "draft" || pendingAction === "unpublish") ? (
               <>
                 <LoaderCircle size={16} className="spin" />
-                {labels.saving}
+                {busyLabel ?? labels.saving}
               </>
             ) : publication.published && publication.onUnpublish ? (
               "Tarik Publikasi"

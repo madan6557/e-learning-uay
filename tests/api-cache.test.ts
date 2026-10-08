@@ -51,23 +51,83 @@ test("notification requests send credentials and expire the session once on 401"
   globalThis.window = events as unknown as Window & typeof globalThis;
   let expired = 0;
   let requests = 0;
-  events.addEventListener("session-expired", () => { expired++; });
+  events.addEventListener("session-expired", () => {
+    expired++;
+  });
   readCache.clear();
   setAuthToken("fixture-access-token");
   globalThis.fetch = async (input, init) => {
     requests++;
     assert.equal(String(input), "/api/v1/notifications/unread-count");
     assert.equal(init?.credentials, "same-origin");
-    assert.equal(new Headers(init?.headers).get("Authorization"), "Bearer fixture-access-token");
-    return new Response(JSON.stringify({ error: { code: "SESSION_EXPIRED" } }), { status: 401 });
+    assert.equal(
+      new Headers(init?.headers).get("Authorization"),
+      "Bearer fixture-access-token",
+    );
+    return new Response(
+      JSON.stringify({ error: { code: "SESSION_EXPIRED" } }),
+      { status: 401 },
+    );
   };
   try {
-    await assert.rejects(() => api("/notifications/unread-count"), (error: any) => error.code === "SESSION_EXPIRED");
+    await assert.rejects(
+      () => api("/notifications/unread-count"),
+      (error: any) => error.code === "SESSION_EXPIRED",
+    );
     assert.equal(requests, 1);
     assert.equal(expired, 1);
     assert.equal(getAuthToken(), null);
   } finally {
     setAuthToken(null);
+    readCache.clear();
+    Object.assign(globalThis, previous);
+  }
+});
+
+test("anonymous identity checks preserve pending OIDC state and the return path", async () => {
+  const previous = {
+    fetch: globalThis.fetch,
+    window: globalThis.window,
+    sessionStorage: globalThis.sessionStorage,
+  };
+  const values = new Map([
+    ["oidc.pending", "pkce-state"],
+    ["uay-return-path", "/classes/example"],
+  ]);
+  globalThis.sessionStorage = {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => {
+      values.set(key, value);
+    },
+    removeItem: (key: string) => {
+      values.delete(key);
+    },
+    key: (index: number) => [...values.keys()][index] ?? null,
+    get length() {
+      return values.size;
+    },
+  } as Storage;
+  const events = new EventTarget();
+  globalThis.window = events as unknown as Window & typeof globalThis;
+  let expired = 0;
+  events.addEventListener("session-expired", () => {
+    expired++;
+  });
+  setAuthToken(null);
+  readCache.clear();
+  globalThis.fetch = async () =>
+    new Response(JSON.stringify({ error: { code: "LOGIN_REQUIRED" } }), {
+      status: 401,
+    });
+  try {
+    await assert.rejects(
+      () => api("/me"),
+      (error: any) => error.code === "LOGIN_REQUIRED",
+    );
+    assert.equal(expired, 0);
+    assert.equal(values.get("oidc.pending"), "pkce-state");
+    assert.equal(values.get("uay-return-path"), "/classes/example");
+  } finally {
     readCache.clear();
     Object.assign(globalThis, previous);
   }
