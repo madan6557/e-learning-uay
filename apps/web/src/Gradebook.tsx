@@ -921,9 +921,19 @@ export function Gradebook({
         <div className="error">{t.errors.WEIGHTS_TOTAL}</div>
       )}
       {pending && (
-        <div className="callout warning">{t.pendingGradingWarning}</div>
+        <div className="callout warning">
+          {writable
+            ? t.pendingGradingWarning
+            : "Masih ada jawaban yang menunggu penilaian oleh dosen pengampu."}
+        </div>
       )}
-      {locked && <div className="callout note">{t.publishedGradeWarning}</div>}
+      {locked && (
+        <div className="callout note">
+          {writable
+            ? t.publishedGradeWarning
+            : "Sebagian nilai akhir telah diterbitkan dan dikunci oleh dosen pengampu."}
+        </div>
+      )}
       <details className="weight-legend" open={!phone}>
         <summary>Komposisi penilaian</summary>
         <div className="weight-distribution-bar">

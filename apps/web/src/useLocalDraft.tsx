@@ -133,7 +133,7 @@ export function useLocalDraft<T>(
   const [baseline, setBaseline] = useState(encoded);
   const [generation, setGeneration] = useState(0);
   const [recovery, setRecovery] = useState<any>(null);
-  const [status, setStatus] = useState("Tersimpan");
+  const [status, setStatus] = useState("Belum ada perubahan");
   const [error, setError] = useState("");
   const dirty = enabled && encoded !== baseline;
   const latest = useRef({ value, dirty });
@@ -178,7 +178,9 @@ export function useLocalDraft<T>(
       void pending.current.catch(() =>
         setError("Draft lama belum dapat dibersihkan."),
       );
-      setStatus("Tersimpan");
+      setStatus((current) =>
+        current === "Tersimpan di server" ? current : "Belum ada perubahan",
+      );
     }
     if (!dirty || !userId || recovery) return;
     setStatus("Belum disimpan");
@@ -222,7 +224,7 @@ export function useLocalDraft<T>(
       latest.current.dirty = false;
       setBaseline(JSON.stringify(latest.current.value));
       setGeneration((v) => v + 1);
-      setStatus("Tersimpan");
+      setStatus("Tersimpan di server");
       setRecovery(null);
       try {
         await pending.current.catch(() => {});
@@ -252,8 +254,7 @@ export function SaveStatus({
       {draft.recovery && (
         <div className="recovery-banner">
           <span>
-            Draft ditemukan ·{" "}
-            {formatDateTime(draft.recovery.updatedAt)}
+            Draft ditemukan · {formatDateTime(draft.recovery.updatedAt)}
           </span>
           <button type="button" className="secondary" onClick={draft.restore}>
             Pulihkan draft

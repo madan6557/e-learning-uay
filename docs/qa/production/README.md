@@ -6,6 +6,8 @@ Lingkungan lokal demo, database elearning_visual_test. Akun merupakan fixture, b
 
 ## Koreksi grace dan kartu ponsel, 9 Oktober
 
+[Patrol akhir UI/UX](final-patrol/README.md) memuat pemeriksaan terbaru setelah penambahan editor rich text: modal AI bertingkat, feedback dalam dialog, label formulir, status simpan, dan 214 pengukuran pada 74 halaman/mode. QA terakhir pada patrol ini lulus 165 tes domain/UI dan 132 integrasi; gate staging kampus tetap berlaku.
+
 Audit lanjutan seluruh menu lima peran, komponen dan modal pada enam lebar layar tersedia di [audit jarak responsif](spacing-audit/README.md). Bukti ini mencakup koreksi ikon landing, gutter modal/formulir, pagination, tinjauan nilai, filter koreksi kuis, bantuan dan kode proyektor.
 
 Pemeriksaan lanjutan memakai database demo terisolasi yang sama, dengan dua mata kuliah dan satu kelas draf sementara khusus QA; data sementara dibersihkan setelah pemeriksaan. [Hasil DOM lanjutan](grace-mobile-checks.json) memuat katalog pada 390/500/768/1440 px, serta contoh kartu peserta, presensi, kuis dan riwayat Rektor pada 390 px. Screenshot ini melengkapi bukti awal di bawah.

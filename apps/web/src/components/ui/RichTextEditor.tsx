@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useContext, useId } from "react";
 import {
   Bold,
   Italic,
@@ -12,13 +12,11 @@ import {
   Eye,
   Edit3,
   Sparkles,
-  Copy,
-  Check,
-  Download,
-  FileText,
-  X,
 } from "lucide-react";
 import { Html } from "../../Content";
+import { FieldContext } from "./Field";
+import { AiPromptModal, type AiPromptTemplate } from "./AiPromptModal";
+export type { AiPromptTemplate } from "./AiPromptModal";
 
 export function formatContentHtml(raw?: string | null): string {
   if (!raw || !raw.trim()) return "";
@@ -39,21 +37,12 @@ export function stripHtmlTags(raw?: string | null): string {
     .trim();
 }
 
-export interface AiPromptTemplate {
-  id: string;
-  title: string;
-  subtitle: string;
-  downloadUrl: string;
-  downloadFileName: string;
-  promptText: string;
-  sampleHtml: string;
-}
-
 export const AI_PROMPT_TEMPLATES: Record<string, AiPromptTemplate> = {
   assignment: {
     id: "assignment",
     title: "Tugas Kuliah & Studi Kasus",
-    subtitle: "Instruksi tugas terstruktur dengan studi kasus, rubrik, dan ketentuan pengumpulan",
+    subtitle:
+      "Instruksi tugas terstruktur dengan studi kasus, rubrik, dan ketentuan pengumpulan",
     downloadUrl: "/authoring/prompt-tugas-kuliah-ai.txt",
     downloadFileName: "prompt-tugas-kuliah-ai.txt",
     promptText: `Bertindaklah sebagai Dosen Pengampu Perguruan Tinggi di Universitas Achmad Yani (UAY). Buatlah instruksi tugas kuliah terstruktur dan komprehensif berbahasa Indonesia dengan format Rich Text HTML siap pakai untuk E-Learning UAY.
@@ -102,7 +91,8 @@ Gunakan format tag HTML yang rapi (<p>, <h3>, <ul>, <ol>, <li>, <strong>, <em>, 
   quiz: {
     id: "quiz",
     title: "Soal Kuis & Ujian",
-    subtitle: "Paket soal pilihan ganda, benar/salah, menjodohkan, esai, beserta kunci dan rubrik",
+    subtitle:
+      "Paket soal pilihan ganda, benar/salah, menjodohkan, esai, beserta kunci dan rubrik",
     downloadUrl: "/authoring/prompt-soal-ujian-ai.txt",
     downloadFileName: "prompt-soal-ujian-ai.txt",
     promptText: `Bertindaklah sebagai Dosen dan Pembuat Soal Ujian Perguruan Tinggi di Universitas Achmad Yani (UAY). Buatlah paket soal kuis/ujian akademik berbahasa Indonesia untuk E-Learning UAY.
@@ -130,7 +120,8 @@ PETUNJUK FORMAT TIAP SOAL:
   announcement: {
     id: "announcement",
     title: "Surat Edaran & Pengumuman Resmi",
-    subtitle: "Draf surat edaran resmi universitas dengan gaya formal akademik dan kontak helpdesk",
+    subtitle:
+      "Draf surat edaran resmi universitas dengan gaya formal akademik dan kontak helpdesk",
     downloadUrl: "/authoring/prompt-pengumuman-edaran-ai.txt",
     downloadFileName: "prompt-pengumuman-edaran-ai.txt",
     promptText: `Bertindaklah sebagai Bagian Administrasi Akademik / Pimpinan Universitas Achmad Yani (UAY). Buatlah surat edaran atau pengumuman resmi akademik berbahasa Indonesia dengan gaya formal dan format Rich Text HTML siap pakai untuk E-Learning UAY.
@@ -158,7 +149,8 @@ Gunakan tag HTML formal (<p>, <h3>, <ul>, <ol>, <li>, <strong>, <em>, <blockquot
   article: {
     id: "article",
     title: "Materi Pembelajaran & Artikel",
-    subtitle: "Panduan penyusunan modul materi ajar lengkap dengan contoh kode, tabel, dan formula",
+    subtitle:
+      "Panduan penyusunan modul materi ajar lengkap dengan contoh kode, tabel, dan formula",
     downloadUrl: "/authoring/prompt-artikel-ai.txt",
     downloadFileName: "prompt-artikel-ai.txt",
     promptText: `Bertindaklah sebagai Dosen Ahli dalam pembuatan materi kuliah di Universitas Achmad Yani (UAY). Buatlah artikel pembelajaran komprehensif berbahasa Indonesia untuk E-Learning UAY.
@@ -215,22 +207,10 @@ export function RichTextEditor({
 }: RichTextEditorProps) {
   const [mode, setMode] = useState<"edit" | "preview">("edit");
   const [showAiModal, setShowAiModal] = useState(false);
-  const [selectedAiTemplate, setSelectedAiTemplate] = useState<string>(
-    defaultAiTemplate ?? "assignment",
-  );
-  const [copied, setCopied] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    if (!showAiModal) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setShowAiModal(false);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showAiModal]);
+  const field = useContext(FieldContext);
+  const generatedId = useId();
+  const controlId = id ?? field?.controlId ?? generatedId;
 
   const insertTag = (before: string, after: string, placeholderText = "") => {
     if (disabled) return;
@@ -270,8 +250,18 @@ export function RichTextEditor({
       )}
 
       {/* Formatting Toolbar */}
-      <div className="rich-editor-toolbar" style={{ justifyContent: "space-between" }}>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center" }}>
+      <div
+        className="rich-editor-toolbar"
+        style={{ justifyContent: "space-between" }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 4,
+            alignItems: "center",
+          }}
+        >
           <button
             type="button"
             title="Teks Tebal"
@@ -389,13 +379,13 @@ export function RichTextEditor({
           <button
             type="button"
             style={{
-              background: "linear-gradient(135deg, rgba(124, 58, 237, 0.09), rgba(2, 132, 199, 0.09))",
+              background:
+                "linear-gradient(135deg, rgba(124, 58, 237, 0.09), rgba(2, 132, 199, 0.09))",
               color: "#7c3aed",
               borderColor: "rgba(124, 58, 237, 0.35)",
               fontWeight: 600,
             }}
             onClick={() => {
-              setSelectedAiTemplate(defaultAiTemplate ?? "assignment");
               setShowAiModal(true);
             }}
             title="Buka Template Prompt AI"
@@ -406,11 +396,15 @@ export function RichTextEditor({
           <button
             type="button"
             style={{
-              background: mode === "edit" ? "var(--primary, #0284c7)" : "#ffffff",
+              background:
+                mode === "edit" ? "var(--primary, #0284c7)" : "#ffffff",
               color: mode === "edit" ? "#ffffff" : "var(--foreground, #334155)",
-              borderColor: mode === "edit" ? "var(--primary, #0284c7)" : undefined,
+              borderColor:
+                mode === "edit" ? "var(--primary, #0284c7)" : undefined,
             }}
             onClick={() => setMode("edit")}
+            aria-pressed={mode === "edit"}
+            aria-controls={controlId}
             title="Mode Editor Teks"
           >
             <Edit3 size={13} /> Tulis
@@ -418,11 +412,16 @@ export function RichTextEditor({
           <button
             type="button"
             style={{
-              background: mode === "preview" ? "var(--primary, #0284c7)" : "#ffffff",
-              color: mode === "preview" ? "#ffffff" : "var(--foreground, #334155)",
-              borderColor: mode === "preview" ? "var(--primary, #0284c7)" : undefined,
+              background:
+                mode === "preview" ? "var(--primary, #0284c7)" : "#ffffff",
+              color:
+                mode === "preview" ? "#ffffff" : "var(--foreground, #334155)",
+              borderColor:
+                mode === "preview" ? "var(--primary, #0284c7)" : undefined,
             }}
             onClick={() => setMode("preview")}
+            aria-pressed={mode === "preview"}
+            aria-controls={controlId}
             title="Pratinjau Hasil Format"
           >
             <Eye size={13} /> Pratinjau
@@ -434,11 +433,16 @@ export function RichTextEditor({
       {mode === "edit" ? (
         <textarea
           ref={textareaRef}
-          id={id}
+          id={controlId}
+          aria-labelledby={field?.labelId}
+          aria-describedby={field?.describedBy}
+          aria-label={field ? undefined : placeholder || "Konten teks"}
           className="rich-editor-textarea"
           rows={rows}
           style={{ minHeight }}
-          placeholder={placeholder || "Tuliskan konten dengan format teks rapi di sini..."}
+          placeholder={
+            placeholder || "Tuliskan konten dengan format teks rapi di sini..."
+          }
           value={value}
           required={required}
           disabled={disabled}
@@ -446,6 +450,11 @@ export function RichTextEditor({
         />
       ) : (
         <div
+          id={controlId}
+          role="region"
+          tabIndex={0}
+          aria-labelledby={field?.labelId}
+          aria-label={field ? undefined : "Pratinjau konten teks"}
           className="rich-editor-textarea formatted-content announcement-content-body"
           style={{
             minHeight: minHeight ?? (rows ? rows * 28 : 120),
@@ -458,264 +467,25 @@ export function RichTextEditor({
           {value.trim() ? (
             <Html text={formatContentHtml(value)} inline={false} />
           ) : (
-            <span style={{ color: "var(--muted, #94a3b8)", fontStyle: "italic" }}>
-              (Belum ada teks untuk dipratinjau. Ketik pada mode Tulis terlebih dahulu.)
+            <span
+              style={{ color: "var(--muted, #94a3b8)", fontStyle: "italic" }}
+            >
+              (Belum ada teks untuk dipratinjau. Ketik pada mode Tulis terlebih
+              dahulu.)
             </span>
           )}
         </div>
       )}
 
-      {/* AI Prompt Templates Modal */}
       {showAiModal && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(15, 23, 42, 0.65)",
-            backdropFilter: "blur(4px)",
-            zIndex: 99999,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 16,
-          }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowAiModal(false);
-          }}
-        >
-          <div
-            style={{
-              background: "#ffffff",
-              borderRadius: 12,
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.2)",
-              width: "100%",
-              maxWidth: 680,
-              maxHeight: "90vh",
-              display: "flex",
-              flexDirection: "column",
-              overflow: "hidden",
-            }}
-          >
-            {/* Header */}
-            <div
-              style={{
-                padding: "16px 20px",
-                borderBottom: "1px solid var(--line, #e2e8f0)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                background: "linear-gradient(135deg, rgba(124, 58, 237, 0.05), rgba(2, 132, 199, 0.05))",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <Sparkles size={18} color="#7c3aed" />
-                <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700 }}>
-                  Template Prompt AI — E-Learning UAY
-                </h3>
-              </div>
-              <button
-                type="button"
-                className="icon-button"
-                onClick={() => setShowAiModal(false)}
-                title="Tutup"
-                style={{ background: "transparent", border: 0, cursor: "pointer", color: "#64748b" }}
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Template Selector Tabs */}
-            <div
-              style={{
-                display: "flex",
-                borderBottom: "1px solid var(--line, #e2e8f0)",
-                background: "var(--surface-muted, #f8fafc)",
-                padding: "4px 8px 0",
-                gap: 4,
-                overflowX: "auto",
-              }}
-            >
-              {Object.values(AI_PROMPT_TEMPLATES).map((tmpl) => (
-                <button
-                  key={tmpl.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedAiTemplate(tmpl.id);
-                    setCopied(false);
-                  }}
-                  style={{
-                    padding: "8px 12px",
-                    border: "none",
-                    borderBottom: selectedAiTemplate === tmpl.id ? "2px solid #7c3aed" : "2px solid transparent",
-                    background: "transparent",
-                    fontWeight: selectedAiTemplate === tmpl.id ? 700 : 500,
-                    color: selectedAiTemplate === tmpl.id ? "#7c3aed" : "#64748b",
-                    cursor: "pointer",
-                    fontSize: "0.85rem",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {tmpl.title}
-                </button>
-              ))}
-            </div>
-
-            {/* Content Body */}
-            <div style={{ padding: "16px 20px", overflowY: "auto", flex: 1 }}>
-              {(() => {
-                const currentTmpl =
-                  AI_PROMPT_TEMPLATES[selectedAiTemplate] ??
-                  AI_PROMPT_TEMPLATES.assignment;
-                return (
-                  <div>
-                    <p style={{ margin: "0 0 10px", fontSize: "0.88rem", color: "#475569" }}>
-                      {currentTmpl.subtitle}
-                    </p>
-                    <div
-                      style={{
-                        background: "rgba(2, 132, 199, 0.08)",
-                        border: "1px solid rgba(2, 132, 199, 0.2)",
-                        borderRadius: 8,
-                        padding: "10px 14px",
-                        fontSize: "0.82rem",
-                        color: "#0369a1",
-                        marginBottom: 12,
-                      }}
-                    >
-                      💡 <strong>Cara Pakai:</strong> Klik tombol <strong>Salin Prompt</strong> di bawah, tempelkan ke AI (ChatGPT, Claude, Gemini, dll.), sesuaikan variabel di dalam tanda <code>[kurung siku]</code>, lalu salin hasil teksnya kembali ke editor ini.
-                    </div>
-                    <pre
-                      style={{
-                        background: "#0f172a",
-                        color: "#f8fafc",
-                        padding: 14,
-                        borderRadius: 8,
-                        fontSize: "0.82rem",
-                        lineHeight: 1.6,
-                        whiteSpace: "pre-wrap",
-                        wordBreak: "break-word",
-                        maxHeight: 280,
-                        overflowY: "auto",
-                        fontFamily: "var(--font-mono, monospace)",
-                      }}
-                    >
-                      {currentTmpl.promptText}
-                    </pre>
-                  </div>
-                );
-              })()}
-            </div>
-
-            {/* Footer Actions */}
-            <div
-              style={{
-                padding: "12px 20px",
-                borderTop: "1px solid var(--line, #e2e8f0)",
-                background: "var(--surface-muted, #f8fafc)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-                gap: 8,
-              }}
-            >
-              <div style={{ display: "flex", gap: 8 }}>
-                <a
-                  href={
-                    (AI_PROMPT_TEMPLATES[selectedAiTemplate] ??
-                      AI_PROMPT_TEMPLATES.assignment).downloadUrl
-                  }
-                  download={
-                    (AI_PROMPT_TEMPLATES[selectedAiTemplate] ??
-                      AI_PROMPT_TEMPLATES.assignment).downloadFileName
-                  }
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                    fontSize: "0.82rem",
-                    color: "var(--foreground, #334155)",
-                    textDecoration: "none",
-                    padding: "6px 12px",
-                    borderRadius: 6,
-                    border: "1px solid var(--line, #cbd5e1)",
-                    background: "#ffffff",
-                    fontWeight: 500,
-                  }}
-                >
-                  <Download size={14} /> Unduh .txt
-                </a>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const currentTmpl =
-                      AI_PROMPT_TEMPLATES[selectedAiTemplate] ??
-                      AI_PROMPT_TEMPLATES.assignment;
-                    onChange(currentTmpl.sampleHtml);
-                    setShowAiModal(false);
-                  }}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                    fontSize: "0.82rem",
-                    color: "#0284c7",
-                    border: "1px solid rgba(2, 132, 199, 0.3)",
-                    background: "rgba(2, 132, 199, 0.08)",
-                    padding: "6px 12px",
-                    borderRadius: 6,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                  title="Isi editor dengan contoh format langsung"
-                >
-                  <FileText size={14} /> Sisipkan Contoh Format
-                </button>
-              </div>
-
-              <div style={{ display: "flex", gap: 8 }}>
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={() => setShowAiModal(false)}
-                >
-                  Tutup
-                </button>
-                <button
-                  type="button"
-                  className="primary"
-                  style={{
-                    background: copied ? "#16a34a" : "#7c3aed",
-                    borderColor: copied ? "#16a34a" : "#7c3aed",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                  }}
-                  onClick={async () => {
-                    const currentTmpl =
-                      AI_PROMPT_TEMPLATES[selectedAiTemplate] ??
-                      AI_PROMPT_TEMPLATES.assignment;
-                    await navigator.clipboard.writeText(currentTmpl.promptText);
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2500);
-                  }}
-                >
-                  {copied ? (
-                    <>
-                      <Check size={14} /> Berhasil Disalin!
-                    </>
-                  ) : (
-                    <>
-                      <Copy size={14} /> Salin Prompt AI
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <AiPromptModal
+          templates={AI_PROMPT_TEMPLATES}
+          initialTemplate={defaultAiTemplate ?? "assignment"}
+          hasContent={!!value.trim()}
+          disabled={disabled}
+          onInsert={onChange}
+          onClose={() => setShowAiModal(false)}
+        />
       )}
     </div>
   );

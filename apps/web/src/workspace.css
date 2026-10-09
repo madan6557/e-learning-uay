@@ -2735,6 +2735,43 @@ hr {
   font-size: 0.88em;
 }
 
+.ai-prompt-body {
+  display: grid;
+  gap: var(--space-5);
+}
+.ai-prompt-body > .field,
+.ai-prompt-body > p {
+  margin: 0;
+}
+.ai-prompt-help {
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+  line-height: 1.65;
+}
+.ai-prompt-text {
+  width: 100%;
+  min-height: 240px;
+  max-height: 320px;
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.875rem;
+  line-height: 1.65;
+  resize: vertical;
+}
+.modal .ai-prompt-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+.ai-prompt-actions > :is(a, button) {
+  width: 100%;
+  justify-content: center;
+  white-space: normal;
+}
 .feedback-host {
   position: fixed;
   bottom: max(20px, env(safe-area-inset-bottom));
@@ -2744,6 +2781,22 @@ hr {
   display: grid;
   gap: 8px;
   pointer-events: none;
+}
+.modal[open]:has(> .feedback-host .feedback-item) {
+  display: flex;
+  flex-direction: column;
+}
+.modal:has(> .feedback-host .feedback-item) > .modal-scroll {
+  min-height: 0;
+}
+.modal > .feedback-host {
+  position: static;
+  flex: none;
+  width: auto;
+  margin: 0 var(--modal-gutter);
+}
+.modal > .feedback-host:has(.feedback-item) {
+  margin-block: var(--space-4);
 }
 @keyframes toast-slide-in {
   from {

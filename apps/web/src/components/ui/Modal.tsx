@@ -11,6 +11,7 @@ export interface ModalProps {
   fullScreen?: boolean;
   extraActions?: ReactNode;
   busy?: boolean;
+  className?: string;
 }
 
 export function Modal({
@@ -21,6 +22,7 @@ export function Modal({
   fullScreen = false,
   extraActions,
   busy = false,
+  className = "",
 }: ModalProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const busyRef = useRef(busy);
@@ -42,13 +44,25 @@ export function Modal({
 
   useEffect(() => {
     const el = ref.current!;
+    const ownerDocument = el.ownerDocument;
+    const trigger = ownerDocument.activeElement as HTMLElement | null;
     el.showModal();
     const cancel = (event: Event) => {
       event.preventDefault();
       close();
     };
     el.addEventListener("cancel", cancel);
-    return () => el.removeEventListener("cancel", cancel);
+    return () => {
+      el.removeEventListener("cancel", cancel);
+      if (el.isConnected && el.open) el.close();
+      setTimeout(() => {
+        if (!trigger?.isConnected) return;
+        const dialogs =
+          ownerDocument.querySelectorAll<HTMLDialogElement>("dialog[open]");
+        const activeDialog = dialogs.item(dialogs.length - 1);
+        if (!activeDialog || activeDialog.contains(trigger)) trigger.focus();
+      }, 0);
+    };
   }, []);
 
   const modalClass = fullScreen
@@ -61,7 +75,7 @@ export function Modal({
     <dialog
       ref={ref}
       aria-labelledby={titleId}
-      className={modalClass}
+      className={`${modalClass} ${className}`.trim()}
       onClick={(e) => {
         if (e.target === ref.current) close();
       }}

@@ -1,0 +1,2438 @@
+{
+  "environment": "local demo — elearning_visual_test",
+  "date": "2026-10-09",
+  "checks": [
+    {
+      "label": "prompt-ai",
+      "dialogs": [
+        {
+          "scrollWidth": 618,
+          "title": "Editor uji dengan judul panjang",
+          "width": 618
+        },
+        {
+          "scrollWidth": 618,
+          "title": "Template Prompt AI — E-Learning UAY",
+          "width": 618
+        }
+      ],
+      "focus": "Patrol UI UAY lokalAksi fixture hanya untuk menguji UI, tanpa menulis ke API.Buk",
+      "heading": "Patrol UI UAY lokal",
+      "height": 900,
+      "horizontalControls": [],
+      "pageWidth": 1440,
+      "width": 1440
+    },
+    {
+      "label": "prompt-ai",
+      "dialogs": [
+        {
+          "scrollWidth": 618,
+          "title": "Editor uji dengan judul panjang",
+          "width": 618
+        },
+        {
+          "scrollWidth": 618,
+          "title": "Template Prompt AI — E-Learning UAY",
+          "width": 618
+        }
+      ],
+      "focus": "Patrol UI UAY lokalAksi fixture hanya untuk menguji UI, tanpa menulis ke API.Buk",
+      "heading": "Patrol UI UAY lokal",
+      "height": 900,
+      "horizontalControls": [],
+      "pageWidth": 768,
+      "width": 768
+    },
+    {
+      "label": "prompt-ai",
+      "dialogs": [
+        {
+          "scrollWidth": 390,
+          "title": "Editor uji dengan judul panjang",
+          "width": 390
+        },
+        {
+          "scrollWidth": 390,
+          "title": "Template Prompt AI — E-Learning UAY",
+          "width": 390
+        }
+      ],
+      "focus": "Patrol UI UAY lokalAksi fixture hanya untuk menguji UI, tanpa menulis ke API.Buk",
+      "heading": "Patrol UI UAY lokal",
+      "height": 844,
+      "horizontalControls": [],
+      "pageWidth": 390,
+      "width": 390
+    },
+    {
+      "label": "prompt-ai",
+      "dialogs": [
+        {
+          "scrollWidth": 320,
+          "title": "Editor uji dengan judul panjang",
+          "width": 320
+        },
+        {
+          "scrollWidth": 320,
+          "title": "Template Prompt AI — E-Learning UAY",
+          "width": 320
+        }
+      ],
+      "focus": "Patrol UI UAY lokalAksi fixture hanya untuk menguji UI, tanpa menulis ke API.Buk",
+      "heading": "Patrol UI UAY lokal",
+      "height": 844,
+      "horizontalControls": [],
+      "pageWidth": 320,
+      "width": 320
+    },
+    {
+      "label": "rektor /rector",
+      "dialogs": [],
+      "heading": "Ringkasan universitas",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "rektor /rector",
+      "dialogs": [],
+      "heading": "Ringkasan universitas",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "rektor /rector",
+      "dialogs": [],
+      "heading": "Ringkasan universitas",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "rektor /announcements",
+      "dialogs": [],
+      "heading": "Pengumuman & Surat Edaran",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "rektor /announcements",
+      "dialogs": [],
+      "heading": "Pengumuman & Surat Edaran",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "rektor /announcements",
+      "dialogs": [],
+      "heading": "Pengumuman & Surat Edaran",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "rektor /profile",
+      "dialogs": [],
+      "heading": "Profil akun",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1440,
+      "width": 1440
+    },
+    {
+      "label": "rektor /profile",
+      "dialogs": [],
+      "heading": "Profil akun",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "rektor /profile",
+      "dialogs": [],
+      "heading": "Profil akun",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "rektor /help",
+      "dialogs": [],
+      "heading": "Pusat Bantuan & Panduan Pengguna",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "rektor /help",
+      "dialogs": [],
+      "heading": "Pusat Bantuan & Panduan Pengguna",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "rektor /help",
+      "dialogs": [],
+      "heading": "Pusat Bantuan & Panduan Pengguna",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "rektor /rector?timeZone=Asia%2FSingapore&view=lecturers",
+      "dialogs": [],
+      "heading": "Aktivitas dosen",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "rektor /rector?timeZone=Asia%2FSingapore&view=lecturers",
+      "dialogs": [],
+      "heading": "Aktivitas dosen",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "rektor /rector?timeZone=Asia%2FSingapore&view=lecturers",
+      "dialogs": [],
+      "heading": "Aktivitas dosen",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "rektor /rector?timeZone=Asia%2FSingapore&view=activities",
+      "dialogs": [],
+      "heading": "Riwayat kegiatan",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "rektor /rector?timeZone=Asia%2FSingapore&view=activities",
+      "dialogs": [],
+      "heading": "Riwayat kegiatan",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "rektor /rector?timeZone=Asia%2FSingapore&view=activities",
+      "dialogs": [],
+      "heading": "Riwayat kegiatan",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "rektor /rector?timeZone=Asia%2FSingapore&view=lecturer&id=00000000-0000-4000-8000-000000000002",
+      "dialogs": [],
+      "heading": "Profil aktivitas dosen",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "rektor /rector?timeZone=Asia%2FSingapore&view=lecturer&id=00000000-0000-4000-8000-000000000002",
+      "dialogs": [],
+      "heading": "Profil aktivitas dosen",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "rektor /rector?timeZone=Asia%2FSingapore&view=lecturer&id=00000000-0000-4000-8000-000000000002",
+      "dialogs": [],
+      "heading": "Profil aktivitas dosen",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "super-admin /dashboard",
+      "dialogs": [],
+      "heading": "Dashboard administrasi",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "super-admin /dashboard",
+      "dialogs": [],
+      "heading": "Dashboard administrasi",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "super-admin /dashboard",
+      "dialogs": [],
+      "heading": "Dashboard administrasi",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "super-admin /rector",
+      "dialogs": [],
+      "heading": "Ringkasan universitas",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "super-admin /rector",
+      "dialogs": [],
+      "heading": "Ringkasan universitas",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "super-admin /rector",
+      "dialogs": [],
+      "heading": "Ringkasan universitas",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "super-admin /catalog",
+      "dialogs": [],
+      "heading": "Katalog mata kuliah",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "super-admin /catalog",
+      "dialogs": [],
+      "heading": "Katalog mata kuliah",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "super-admin /catalog",
+      "dialogs": [],
+      "heading": "Katalog mata kuliah",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "super-admin /classes",
+      "dialogs": [],
+      "heading": "Kelola kelas",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "super-admin /classes",
+      "dialogs": [],
+      "heading": "Kelola kelas",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "super-admin /classes",
+      "dialogs": [],
+      "heading": "Kelola kelas",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "super-admin /agenda",
+      "dialogs": [],
+      "heading": "Agenda akademik",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "super-admin /agenda",
+      "dialogs": [],
+      "heading": "Agenda akademik",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "super-admin /agenda",
+      "dialogs": [],
+      "heading": "Agenda akademik",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "super-admin /grades",
+      "dialogs": [],
+      "heading": "Rekap nilai",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "super-admin /grades",
+      "dialogs": [],
+      "heading": "Rekap nilai",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "super-admin /grades",
+      "dialogs": [],
+      "heading": "Rekap nilai",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "super-admin /announcements",
+      "dialogs": [],
+      "heading": "Pengumuman & Surat Edaran",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "super-admin /announcements",
+      "dialogs": [],
+      "heading": "Pengumuman & Surat Edaran",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "super-admin /announcements",
+      "dialogs": [],
+      "heading": "Pengumuman & Surat Edaran",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "super-admin /notifications",
+      "dialogs": [],
+      "heading": "Notifikasi",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1440,
+      "width": 1440
+    },
+    {
+      "label": "super-admin /notifications",
+      "dialogs": [],
+      "heading": "Notifikasi",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 768,
+      "width": 768
+    },
+    {
+      "label": "super-admin /notifications",
+      "dialogs": [],
+      "heading": "Notifikasi",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 390,
+      "width": 390
+    },
+    {
+      "label": "super-admin /profile",
+      "dialogs": [],
+      "heading": "Profil akun",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1440,
+      "width": 1440
+    },
+    {
+      "label": "super-admin /profile",
+      "dialogs": [],
+      "heading": "Profil akun",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "super-admin /profile",
+      "dialogs": [],
+      "heading": "Profil akun",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "super-admin /help",
+      "dialogs": [],
+      "heading": "Pusat Bantuan & Panduan Pengguna",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "super-admin /help",
+      "dialogs": [],
+      "heading": "Pusat Bantuan & Panduan Pengguna",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "super-admin /help",
+      "dialogs": [],
+      "heading": "Pusat Bantuan & Panduan Pengguna",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "pengumuman-tulis",
+      "dialogs": [
+        {
+          "scrollWidth": 998,
+          "title": "Terbitkan Pengumuman / Edaran Baru",
+          "width": 998
+        }
+      ],
+      "heading": "Terbitkan Pengumuman / Edaran Baru",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "pengumuman-tulis",
+      "dialogs": [
+        {
+          "scrollWidth": 718,
+          "title": "Terbitkan Pengumuman / Edaran Baru",
+          "width": 718
+        }
+      ],
+      "heading": "Terbitkan Pengumuman / Edaran Baru",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "pengumuman-tulis",
+      "dialogs": [
+        {
+          "scrollWidth": 375,
+          "title": "Terbitkan Pengumuman / Edaran Baru",
+          "width": 375
+        }
+      ],
+      "heading": "Terbitkan Pengumuman / Edaran Baru",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "pengumuman-tulis",
+      "dialogs": [
+        {
+          "scrollWidth": 305,
+          "title": "Terbitkan Pengumuman / Edaran Baru",
+          "width": 305
+        }
+      ],
+      "heading": "Terbitkan Pengumuman / Edaran Baru",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 305,
+      "width": 320
+    },
+    {
+      "label": "pengumuman-preview",
+      "dialogs": [
+        {
+          "scrollWidth": 998,
+          "title": "Terbitkan Pengumuman / Edaran Baru",
+          "width": 998
+        }
+      ],
+      "heading": "Terbitkan Pengumuman / Edaran Baru",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "pengumuman-preview",
+      "dialogs": [
+        {
+          "scrollWidth": 718,
+          "title": "Terbitkan Pengumuman / Edaran Baru",
+          "width": 718
+        }
+      ],
+      "heading": "Terbitkan Pengumuman / Edaran Baru",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "pengumuman-preview",
+      "dialogs": [
+        {
+          "scrollWidth": 375,
+          "title": "Terbitkan Pengumuman / Edaran Baru",
+          "width": 375
+        }
+      ],
+      "heading": "Terbitkan Pengumuman / Edaran Baru",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "pengumuman-preview",
+      "dialogs": [
+        {
+          "scrollWidth": 305,
+          "title": "Terbitkan Pengumuman / Edaran Baru",
+          "width": 305
+        }
+      ],
+      "heading": "Terbitkan Pengumuman / Edaran Baru",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 305,
+      "width": 320
+    },
+    {
+      "label": "admin-prodi /dashboard",
+      "dialogs": [],
+      "heading": "Dashboard administrasi",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "admin-prodi /dashboard",
+      "dialogs": [],
+      "heading": "Dashboard administrasi",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "admin-prodi /dashboard",
+      "dialogs": [],
+      "heading": "Dashboard administrasi",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "admin-prodi /catalog",
+      "dialogs": [],
+      "heading": "Katalog mata kuliah",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1440,
+      "width": 1440
+    },
+    {
+      "label": "admin-prodi /catalog",
+      "dialogs": [],
+      "heading": "Katalog mata kuliah",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 768,
+      "width": 768
+    },
+    {
+      "label": "admin-prodi /catalog",
+      "dialogs": [],
+      "heading": "Katalog mata kuliah",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "admin-prodi /classes",
+      "dialogs": [],
+      "heading": "Kelola kelas",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "admin-prodi /classes",
+      "dialogs": [],
+      "heading": "Kelola kelas",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "admin-prodi /classes",
+      "dialogs": [],
+      "heading": "Kelola kelas",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "admin-prodi /agenda",
+      "dialogs": [],
+      "heading": "Agenda akademik",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "admin-prodi /agenda",
+      "dialogs": [],
+      "heading": "Agenda akademik",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 768,
+      "width": 768
+    },
+    {
+      "label": "admin-prodi /agenda",
+      "dialogs": [],
+      "heading": "Agenda akademik",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "admin-prodi /grades",
+      "dialogs": [],
+      "heading": "Rekap nilai",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1440,
+      "width": 1440
+    },
+    {
+      "label": "admin-prodi /grades",
+      "dialogs": [],
+      "heading": "Rekap nilai",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 768,
+      "width": 768
+    },
+    {
+      "label": "admin-prodi /grades",
+      "dialogs": [],
+      "heading": "Rekap nilai",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "admin-prodi /announcements",
+      "dialogs": [],
+      "heading": "Pengumuman & Surat Edaran",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "admin-prodi /announcements",
+      "dialogs": [],
+      "heading": "Pengumuman & Surat Edaran",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "admin-prodi /announcements",
+      "dialogs": [],
+      "heading": "Pengumuman & Surat Edaran",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "admin-prodi /notifications",
+      "dialogs": [],
+      "heading": "Notifikasi",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1440,
+      "width": 1440
+    },
+    {
+      "label": "admin-prodi /notifications",
+      "dialogs": [],
+      "heading": "Notifikasi",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 768,
+      "width": 768
+    },
+    {
+      "label": "admin-prodi /notifications",
+      "dialogs": [],
+      "heading": "Notifikasi",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 390,
+      "width": 390
+    },
+    {
+      "label": "admin-prodi /profile",
+      "dialogs": [],
+      "heading": "Profil akun",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1440,
+      "width": 1440
+    },
+    {
+      "label": "admin-prodi /profile",
+      "dialogs": [],
+      "heading": "Profil akun",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "admin-prodi /profile",
+      "dialogs": [],
+      "heading": "Profil akun",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "admin-prodi /help",
+      "dialogs": [],
+      "heading": "Pusat Bantuan & Panduan Pengguna",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "admin-prodi /help",
+      "dialogs": [],
+      "heading": "Pusat Bantuan & Panduan Pengguna",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "admin-prodi /help",
+      "dialogs": [],
+      "heading": "Pusat Bantuan & Panduan Pengguna",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "admin-prodi /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/gradebook",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "admin-prodi /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/gradebook",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "admin-prodi /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/gradebook",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "mahasiswa /dashboard",
+      "dialogs": [],
+      "heading": "Selamat Malam, Ahmad.",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "mahasiswa /dashboard",
+      "dialogs": [],
+      "heading": "Selamat Malam, Ahmad.",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "mahasiswa /dashboard",
+      "dialogs": [],
+      "heading": "Selamat Malam, Ahmad.",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "mahasiswa /classes",
+      "dialogs": [],
+      "heading": "Kelas saya",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "mahasiswa /classes",
+      "dialogs": [],
+      "heading": "Kelas saya",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "mahasiswa /classes",
+      "dialogs": [],
+      "heading": "Kelas saya",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "mahasiswa /agenda",
+      "dialogs": [],
+      "heading": "Agenda",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "mahasiswa /agenda",
+      "dialogs": [],
+      "heading": "Agenda",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 768,
+      "width": 768
+    },
+    {
+      "label": "mahasiswa /agenda",
+      "dialogs": [],
+      "heading": "Agenda",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "mahasiswa /grades",
+      "dialogs": [],
+      "heading": "Nilai",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1440,
+      "width": 1440
+    },
+    {
+      "label": "mahasiswa /grades",
+      "dialogs": [],
+      "heading": "Nilai",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 768,
+      "width": 768
+    },
+    {
+      "label": "mahasiswa /grades",
+      "dialogs": [],
+      "heading": "Nilai",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "mahasiswa /announcements",
+      "dialogs": [],
+      "heading": "Pengumuman & Surat Edaran",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "mahasiswa /announcements",
+      "dialogs": [],
+      "heading": "Pengumuman & Surat Edaran",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "mahasiswa /announcements",
+      "dialogs": [],
+      "heading": "Pengumuman & Surat Edaran",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "mahasiswa /notifications",
+      "dialogs": [],
+      "heading": "Notifikasi",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "mahasiswa /notifications",
+      "dialogs": [],
+      "heading": "Notifikasi",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "mahasiswa /notifications",
+      "dialogs": [],
+      "heading": "Notifikasi",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "mahasiswa /profile",
+      "dialogs": [],
+      "heading": "Profil akun",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1440,
+      "width": 1440
+    },
+    {
+      "label": "mahasiswa /profile",
+      "dialogs": [],
+      "heading": "Profil akun",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "mahasiswa /profile",
+      "dialogs": [],
+      "heading": "Profil akun",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "mahasiswa /help",
+      "dialogs": [],
+      "heading": "Pusat Bantuan & Panduan Pengguna",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "mahasiswa /help",
+      "dialogs": [],
+      "heading": "Pusat Bantuan & Panduan Pengguna",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "mahasiswa /help",
+      "dialogs": [],
+      "heading": "Pusat Bantuan & Panduan Pengguna",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "mahasiswa /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "mahasiswa /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "mahasiswa /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "mahasiswa /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/resources/memahami-cara-kerja-web",
+      "dialogs": [
+        {
+          "scrollWidth": 998,
+          "title": "Memahami cara kerja web",
+          "width": 998
+        }
+      ],
+      "heading": "Memahami cara kerja web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "mahasiswa /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/resources/memahami-cara-kerja-web",
+      "dialogs": [
+        {
+          "scrollWidth": 718,
+          "title": "Memahami cara kerja web",
+          "width": 718
+        }
+      ],
+      "heading": "Memahami cara kerja web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "mahasiswa /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/resources/memahami-cara-kerja-web",
+      "dialogs": [
+        {
+          "scrollWidth": 375,
+          "title": "Memahami cara kerja web",
+          "width": 375
+        }
+      ],
+      "heading": "Memahami cara kerja web",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "mahasiswa /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/quizzes/kuis-01-fondasi-web",
+      "dialogs": [],
+      "heading": "Kuis 01 · Fondasi web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "mahasiswa /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/quizzes/kuis-01-fondasi-web",
+      "dialogs": [],
+      "heading": "Kuis 01 · Fondasi web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "mahasiswa /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/quizzes/kuis-01-fondasi-web",
+      "dialogs": [],
+      "heading": "Kuis 01 · Fondasi web",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "mahasiswa /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/assignments/praktikum-01-halaman-profil",
+      "dialogs": [],
+      "heading": "Praktikum 01 · Halaman profil",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "mahasiswa /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/assignments/praktikum-01-halaman-profil",
+      "dialogs": [],
+      "heading": "Praktikum 01 · Halaman profil",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "mahasiswa /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/assignments/praktikum-01-halaman-profil",
+      "dialogs": [],
+      "heading": "Praktikum 01 · Halaman profil",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "dosen /dashboard",
+      "dialogs": [],
+      "heading": "Selamat Malam, Aruna.",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "dosen /dashboard",
+      "dialogs": [],
+      "heading": "Selamat Malam, Aruna.",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "dosen /dashboard",
+      "dialogs": [],
+      "heading": "Selamat Malam, Aruna.",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "dosen /classes",
+      "dialogs": [],
+      "heading": "Kelas saya",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1440,
+      "width": 1440
+    },
+    {
+      "label": "dosen /classes",
+      "dialogs": [],
+      "heading": "Kelas saya",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 768,
+      "width": 768
+    },
+    {
+      "label": "dosen /classes",
+      "dialogs": [],
+      "heading": "Kelas saya",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "dosen /agenda",
+      "dialogs": [],
+      "heading": "Agenda",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1440,
+      "width": 1440
+    },
+    {
+      "label": "dosen /agenda",
+      "dialogs": [],
+      "heading": "Agenda",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 768,
+      "width": 768
+    },
+    {
+      "label": "dosen /agenda",
+      "dialogs": [],
+      "heading": "Agenda",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 390,
+      "width": 390
+    },
+    {
+      "label": "dosen /grades",
+      "dialogs": [],
+      "heading": "Nilai",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1440,
+      "width": 1440
+    },
+    {
+      "label": "dosen /grades",
+      "dialogs": [],
+      "heading": "Nilai",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 768,
+      "width": 768
+    },
+    {
+      "label": "dosen /grades",
+      "dialogs": [],
+      "heading": "Nilai",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 390,
+      "width": 390
+    },
+    {
+      "label": "dosen /announcements",
+      "dialogs": [],
+      "heading": "Pengumuman & Surat Edaran",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "dosen /announcements",
+      "dialogs": [],
+      "heading": "Pengumuman & Surat Edaran",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "dosen /announcements",
+      "dialogs": [],
+      "heading": "Pengumuman & Surat Edaran",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "dosen /notifications",
+      "dialogs": [],
+      "heading": "Notifikasi",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1440,
+      "width": 1440
+    },
+    {
+      "label": "dosen /notifications",
+      "dialogs": [],
+      "heading": "Notifikasi",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 768,
+      "width": 768
+    },
+    {
+      "label": "dosen /notifications",
+      "dialogs": [],
+      "heading": "Notifikasi",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "dosen /profile",
+      "dialogs": [],
+      "heading": "Profil akun",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1440,
+      "width": 1440
+    },
+    {
+      "label": "dosen /profile",
+      "dialogs": [],
+      "heading": "Profil akun",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "dosen /profile",
+      "dialogs": [],
+      "heading": "Profil akun",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "dosen /help",
+      "dialogs": [],
+      "heading": "Pusat Bantuan & Panduan Pengguna",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "dosen /help",
+      "dialogs": [],
+      "heading": "Pusat Bantuan & Panduan Pengguna",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "dosen /help",
+      "dialogs": [],
+      "heading": "Pusat Bantuan & Panduan Pengguna",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/attendance",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/attendance",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/attendance",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/gradebook",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/gradebook",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/gradebook",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/announcements",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1440,
+      "width": 1440
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/announcements",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 768,
+      "width": 768
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/announcements",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/participants",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/participants",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/participants",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/banks",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/banks",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/banks",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/files",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1440,
+      "width": 1440
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/files",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/files",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/audit",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/audit",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/audit",
+      "dialogs": [],
+      "heading": "Pemrograman Web",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/resources/memahami-cara-kerja-web",
+      "dialogs": [
+        {
+          "scrollWidth": 998,
+          "title": "Memahami cara kerja web",
+          "width": 998
+        }
+      ],
+      "heading": "Memahami cara kerja web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/resources/memahami-cara-kerja-web",
+      "dialogs": [
+        {
+          "scrollWidth": 718,
+          "title": "Memahami cara kerja web",
+          "width": 718
+        }
+      ],
+      "heading": "Memahami cara kerja web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/resources/memahami-cara-kerja-web",
+      "dialogs": [
+        {
+          "scrollWidth": 375,
+          "title": "Memahami cara kerja web",
+          "width": 375
+        }
+      ],
+      "heading": "Memahami cara kerja web",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/quizzes/kuis-01-fondasi-web",
+      "dialogs": [],
+      "heading": "Kuis 01 · Fondasi web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/quizzes/kuis-01-fondasi-web",
+      "dialogs": [],
+      "heading": "Kuis 01 · Fondasi web",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/quizzes/kuis-01-fondasi-web",
+      "dialogs": [],
+      "heading": "Kuis 01 · Fondasi web",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/assignments/praktikum-01-halaman-profil",
+      "dialogs": [],
+      "heading": "Praktikum 01 · Halaman profil",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/assignments/praktikum-01-halaman-profil",
+      "dialogs": [],
+      "heading": "Praktikum 01 · Halaman profil",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "dosen /classes/if2101-pemrograman-web-kelas-a-2026-2027-ganjil/assignments/praktikum-01-halaman-profil",
+      "dialogs": [],
+      "heading": "Praktikum 01 · Halaman profil",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "dosen-modal-nilai-tugas",
+      "dialogs": [
+        {
+          "scrollWidth": 618,
+          "title": "Nilai tugas",
+          "width": 618
+        }
+      ],
+      "heading": "Nilai tugas",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "dosen-modal-nilai-tugas",
+      "dialogs": [
+        {
+          "scrollWidth": 618,
+          "title": "Nilai tugas",
+          "width": 618
+        }
+      ],
+      "heading": "Nilai tugas",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "dosen-modal-nilai-tugas",
+      "dialogs": [
+        {
+          "scrollWidth": 375,
+          "title": "Nilai tugas",
+          "width": 375
+        }
+      ],
+      "heading": "Nilai tugas",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "dosen-modal-nilai-tugas",
+      "dialogs": [
+        {
+          "scrollWidth": 305,
+          "title": "Nilai tugas",
+          "width": 305
+        }
+      ],
+      "heading": "Nilai tugas",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 305,
+      "width": 320
+    },
+    {
+      "label": "dosen-tambah-tugas",
+      "dialogs": [
+        {
+          "scrollWidth": 998,
+          "title": "Tambah tugas",
+          "width": 998
+        }
+      ],
+      "heading": "Tambah tugas",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "dosen-tambah-tugas",
+      "dialogs": [
+        {
+          "scrollWidth": 718,
+          "title": "Tambah tugas",
+          "width": 718
+        }
+      ],
+      "heading": "Tambah tugas",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "dosen-tambah-tugas",
+      "dialogs": [
+        {
+          "scrollWidth": 375,
+          "title": "Tambah tugas",
+          "width": 375
+        }
+      ],
+      "heading": "Tambah tugas",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "dosen-tambah-tugas",
+      "dialogs": [
+        {
+          "scrollWidth": 305,
+          "title": "Tambah tugas",
+          "width": 305
+        }
+      ],
+      "heading": "Tambah tugas",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 305,
+      "width": 320
+    },
+    {
+      "label": "dosen-prompt-ai",
+      "dialogs": [
+        {
+          "scrollWidth": 998,
+          "title": "Tambah tugas",
+          "width": 998
+        },
+        {
+          "scrollWidth": 618,
+          "title": "Template Prompt AI — E-Learning UAY",
+          "width": 618
+        }
+      ],
+      "heading": "Template Prompt AI — E-Learning UAY",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "dosen-prompt-ai",
+      "dialogs": [
+        {
+          "scrollWidth": 718,
+          "title": "Tambah tugas",
+          "width": 718
+        },
+        {
+          "scrollWidth": 618,
+          "title": "Template Prompt AI — E-Learning UAY",
+          "width": 618
+        }
+      ],
+      "heading": "Template Prompt AI — E-Learning UAY",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "dosen-prompt-ai",
+      "dialogs": [
+        {
+          "scrollWidth": 375,
+          "title": "Tambah tugas",
+          "width": 375
+        },
+        {
+          "scrollWidth": 375,
+          "title": "Template Prompt AI — E-Learning UAY",
+          "width": 375
+        }
+      ],
+      "heading": "Template Prompt AI — E-Learning UAY",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "dosen-prompt-ai",
+      "dialogs": [
+        {
+          "scrollWidth": 305,
+          "title": "Tambah tugas",
+          "width": 305
+        },
+        {
+          "scrollWidth": 305,
+          "title": "Template Prompt AI — E-Learning UAY",
+          "width": 305
+        }
+      ],
+      "heading": "Template Prompt AI — E-Learning UAY",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 305,
+      "width": 320
+    },
+    {
+      "label": "dosen-tambah-kuis",
+      "dialogs": [
+        {
+          "scrollWidth": 998,
+          "title": "Tambah kuis",
+          "width": 998
+        }
+      ],
+      "heading": "Tambah kuis",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "dosen-tambah-kuis",
+      "dialogs": [
+        {
+          "scrollWidth": 718,
+          "title": "Tambah kuis",
+          "width": 718
+        }
+      ],
+      "heading": "Tambah kuis",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "dosen-tambah-kuis",
+      "dialogs": [
+        {
+          "scrollWidth": 375,
+          "title": "Tambah kuis",
+          "width": 375
+        }
+      ],
+      "heading": "Tambah kuis",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "dosen-tambah-kuis",
+      "dialogs": [
+        {
+          "scrollWidth": 305,
+          "title": "Tambah kuis",
+          "width": 305
+        }
+      ],
+      "heading": "Tambah kuis",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 305,
+      "width": 320
+    },
+    {
+      "label": "kuis-jenis-Pilihan tunggal",
+      "dialogs": [
+        {
+          "scrollWidth": 305,
+          "title": "Tambah kuis",
+          "width": 305
+        }
+      ],
+      "heading": "Tambah kuis",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 305,
+      "width": 320
+    },
+    {
+      "label": "kuis-jenis-Pilihan jamak",
+      "dialogs": [
+        {
+          "scrollWidth": 305,
+          "title": "Tambah kuis",
+          "width": 305
+        }
+      ],
+      "heading": "Tambah kuis",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 305,
+      "width": 320
+    },
+    {
+      "label": "kuis-jenis-Benar / salah",
+      "dialogs": [
+        {
+          "scrollWidth": 305,
+          "title": "Tambah kuis",
+          "width": 305
+        }
+      ],
+      "heading": "Tambah kuis",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 305,
+      "width": 320
+    },
+    {
+      "label": "kuis-jenis-Isian singkat",
+      "dialogs": [
+        {
+          "scrollWidth": 305,
+          "title": "Tambah kuis",
+          "width": 305
+        }
+      ],
+      "heading": "Tambah kuis",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 305,
+      "width": 320
+    },
+    {
+      "label": "kuis-jenis-Menjodohkan",
+      "dialogs": [
+        {
+          "scrollWidth": 305,
+          "title": "Tambah kuis",
+          "width": 305
+        }
+      ],
+      "heading": "Tambah kuis",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 305,
+      "width": 320
+    },
+    {
+      "label": "kuis-jenis-Mengurutkan",
+      "dialogs": [
+        {
+          "scrollWidth": 305,
+          "title": "Tambah kuis",
+          "width": 305
+        }
+      ],
+      "heading": "Tambah kuis",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 305,
+      "width": 320
+    },
+    {
+      "label": "kuis-jenis-Uraian",
+      "dialogs": [
+        {
+          "scrollWidth": 305,
+          "title": "Tambah kuis",
+          "width": 305
+        }
+      ],
+      "heading": "Tambah kuis",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 305,
+      "width": 320
+    },
+    {
+      "label": "kuis-jenis-Unggah berkas",
+      "dialogs": [
+        {
+          "scrollWidth": 305,
+          "title": "Tambah kuis",
+          "width": 305
+        }
+      ],
+      "heading": "Tambah kuis",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 305,
+      "width": 320
+    },
+    {
+      "label": "landing-SSO",
+      "dialogs": [],
+      "heading": "E-Learning UAY",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 1425,
+      "width": 1440
+    },
+    {
+      "label": "landing-SSO",
+      "dialogs": [],
+      "heading": "E-Learning UAY",
+      "height": 900,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 753,
+      "width": 768
+    },
+    {
+      "label": "landing-SSO",
+      "dialogs": [],
+      "heading": "E-Learning UAY",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 375,
+      "width": 390
+    },
+    {
+      "label": "landing-SSO",
+      "dialogs": [],
+      "heading": "E-Learning UAY",
+      "height": 844,
+      "horizontalControls": [],
+      "loading": 0,
+      "pageWidth": 305,
+      "width": 320
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Notice } from "./components/ui/Notice";
 
 type Feedback = { id: number; message: string; error?: boolean };
@@ -14,9 +15,25 @@ export function notifyAction(message: string, error = false) {
 
 export function FeedbackHost() {
   const [messages, setMessages] = useState<Feedback[]>([]);
+  const [dialog, setDialog] = useState<HTMLDialogElement | null>(null);
   useEffect(() => {
+    // Native modal dialogs cover and make page-level feedback inert.
+    const syncDialog = () => {
+      const dialogs =
+        document.querySelectorAll<HTMLDialogElement>("dialog[open]");
+      setDialog(dialogs.item(dialogs.length - 1));
+    };
+    const observer = new window.MutationObserver(syncDialog);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["open"],
+    });
+    syncDialog();
     const timers = new Map<number, ReturnType<typeof setTimeout>>();
     const receive = (event: Event) => {
+      syncDialog();
       const item = (event as CustomEvent<Feedback>).detail;
       setMessages((current) => [...current.slice(-2), item]);
       const duration = item.error ? 8000 : 5000;
@@ -30,11 +47,12 @@ export function FeedbackHost() {
     };
     window.addEventListener("uay-feedback", receive);
     return () => {
+      observer.disconnect();
       window.removeEventListener("uay-feedback", receive);
       for (const timer of timers.values()) clearTimeout(timer);
     };
   }, []);
-  return (
+  const host = (
     <div className="feedback-host" aria-label="Hasil tindakan">
       {messages.map((item) => (
         <div className="feedback-item" key={item.id}>
@@ -52,4 +70,5 @@ export function FeedbackHost() {
       ))}
     </div>
   );
+  return dialog ? createPortal(host, dialog) : host;
 }

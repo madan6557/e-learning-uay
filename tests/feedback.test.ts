@@ -6,9 +6,59 @@ import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { Action } from "../apps/web/src/components/ui/Action.js";
 import { Form } from "../apps/web/src/components/ui/Form.js";
-import { FeedbackHost } from "../apps/web/src/feedback.js";
+import { FeedbackHost, notifyAction } from "../apps/web/src/feedback.js";
 
 Object.assign(globalThis, { React });
+test("feedback remains accessible in the active native dialog and survives closing nested dialogs", async () => {
+  const dom = new JSDOM(
+    '<div id="root"></div><dialog open id="editor"></dialog>',
+    { url: "http://localhost" },
+  );
+  Object.assign(globalThis, {
+    window: dom.window,
+    document: dom.window.document,
+    IS_REACT_ACT_ENVIRONMENT: true,
+  });
+  const root = createRoot(document.getElementById("root")!);
+  try {
+    await act(async () => root.render(createElement(FeedbackHost)));
+    await act(async () =>
+      notifyAction("Koneksi gagal. Isian tetap tersedia.", true),
+    );
+    assert.equal(
+      document.querySelector('[role="alert"]')?.closest("dialog")?.id,
+      "editor",
+    );
+    const nested = document.createElement("dialog");
+    nested.id = "prompt";
+    nested.setAttribute("open", "");
+    await act(async () => document.body.append(nested));
+    assert.equal(
+      document.querySelector('[role="alert"]')?.closest("dialog")?.id,
+      "prompt",
+    );
+    await act(async () => nested.remove());
+    assert.equal(
+      document.querySelector('[role="alert"]')?.closest("dialog")?.id,
+      "editor",
+    );
+    await act(async () => document.getElementById("editor")!.remove());
+    assert.match(
+      document.getElementById("root")!.textContent!,
+      /Isian tetap tersedia/,
+    );
+    await act(async () =>
+      document
+        .querySelector<HTMLButtonElement>('[aria-label="Tutup pesan"]')!
+        .click(),
+    );
+    assert.equal(document.querySelector('[role="alert"]'), null);
+  } finally {
+    await act(async () => root.unmount());
+    dom.window.close();
+  }
+});
+
 test("action feedback survives unmount, prevents concurrent clicks and excludes cancellation or failure", async () => {
   const dom = new JSDOM('<div id="root"></div>', { url: "http://localhost" });
   Object.assign(globalThis, {

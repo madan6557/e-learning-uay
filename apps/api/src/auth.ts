@@ -807,7 +807,7 @@ export function registerAuth(app: Express) {
   });
   app.post("/api/v1/auth/development-login", async (req, res) => {
     ensure(
-      (!production && config.authMode === "development") || isDemo,
+      config.authMode === "development" && (!production || isDemo),
       404,
       "NOT_FOUND",
     );

@@ -839,7 +839,7 @@ export function RectorDashboard({ demo }: { demo: boolean }) {
                         <option value="">Semua kelas</option>
                         {visibleClasses.map((c) => (
                           <option key={c.id} value={c.id}>
-                            {c.title} · {c.id.toUpperCase()}
+                            {c.title} · {c.department} · {c.semester}
                           </option>
                         ))}
                       </select>

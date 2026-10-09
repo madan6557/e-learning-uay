@@ -22,6 +22,7 @@ test("a form returns to clean after its initial value is restored", async () => 
     window: dom.window,
     document: dom.window.document,
     location: dom.window.location,
+    FormData: dom.window.FormData,
     indexedDB,
     IS_REACT_ACT_ENVIRONMENT: true,
   });
@@ -48,6 +49,10 @@ test("a form returns to clean after its initial value is restored", async () => 
     const form = document.querySelector("form")!;
     const select = document.querySelector("select")!;
     assert.equal(form.dataset.dirty, undefined);
+    assert.equal(
+      document.querySelector(".save-status")!.textContent,
+      "Belum ada perubahan",
+    );
 
     await act(async () => {
       select.value = "PUBLISHED";
@@ -60,6 +65,20 @@ test("a form returns to clean after its initial value is restored", async () => 
       select.dispatchEvent(new dom.window.Event("change", { bubbles: true }));
     });
     assert.equal(form.dataset.dirty, undefined);
+    assert.equal(
+      document.querySelector(".save-status")!.textContent,
+      "Belum ada perubahan",
+    );
+    await act(async () => {
+      form.dispatchEvent(
+        new dom.window.Event("submit", { bubbles: true, cancelable: true }),
+      );
+      await new Promise((done) => setTimeout(done, 20));
+    });
+    assert.equal(
+      document.querySelector(".save-status")!.textContent,
+      "Tersimpan di server",
+    );
   } finally {
     await act(async () => root.unmount());
     await removeDraft("form-test-user");
