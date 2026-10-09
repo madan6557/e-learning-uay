@@ -54,7 +54,7 @@ export function Notice({
           type="button"
           className="icon-button notice-close-button"
           onClick={onClose}
-          aria-label="Tutup pemberitahuan"
+          aria-label="Tutup pesan"
           style={{
             background: "transparent",
             border: 0,

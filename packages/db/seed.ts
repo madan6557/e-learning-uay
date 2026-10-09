@@ -1460,7 +1460,7 @@ for (const [idx, cfg] of classConfigs.entries()) {
         timeLimitMinutes: 60,
         attemptLimit: 10,
         randomizeQuestions: false,
-        resultReleaseMode: "IMMEDIATE",
+        resultReleaseMode: "AUTO",
         questions: {
           create: questions.map(({ id: _qId, ...q }, order) => ({
             ...q,
