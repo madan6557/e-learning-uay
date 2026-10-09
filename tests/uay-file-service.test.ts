@@ -320,17 +320,30 @@ test("UAY File Service: mock fixture endpoints and RFC 7233 streaming", async ()
 test("production mode strictly requires file service and rejects local storage", async () => {
   const origUrl = config.fileUrl;
   const origKey = config.fileKey;
+  const origBucket = config.s3Bucket;
+  const origEndpoint = config.s3Endpoint;
   try {
     (config as any).fileUrl = "";
     (config as any).fileKey = "";
+    (config as any).s3Bucket = "";
+    (config as any).s3Endpoint = "";
     assert.equal(config.fileMode, "local");
 
     (config as any).fileUrl = "http://file-service.uay.ac.id/api/v1";
     (config as any).fileKey = "uay_sec_live_key";
     assert.equal(config.fileMode, "uay");
+
+    // S3 configuration auto-detection (e.g. Railway Tigris bucket)
+    (config as any).fileUrl = "";
+    (config as any).fileKey = "";
+    (config as any).s3Bucket = "arranged-lounge-j7sbw8iq1";
+    (config as any).s3Endpoint = "https://t3.storageapi.dev";
+    assert.equal(config.fileMode, "s3");
   } finally {
     (config as any).fileUrl = origUrl;
     (config as any).fileKey = origKey;
+    (config as any).s3Bucket = origBucket;
+    (config as any).s3Endpoint = origEndpoint;
   }
 });
 

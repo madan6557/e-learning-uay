@@ -17,6 +17,14 @@ import { join, resolve } from "node:path";
 import { randomUUID, createHmac, timingSafeEqual } from "node:crypto";
 import { Readable } from "node:stream";
 import {
+  S3Client,
+  ListObjectsV2Command,
+  HeadObjectCommand,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
+import {
   db,
   ensure,
   config,
@@ -51,6 +59,33 @@ export async function checkFileService(options?: {
   requestId?: string;
 }) {
   const mode = config.fileMode;
+  if (mode === "s3") {
+    ensure(config.s3Bucket, 503, "FILE_SERVICE_REQUIRED");
+    try {
+      const client = getS3Client();
+      await client.send(
+        new ListObjectsV2Command({
+          Bucket: config.s3Bucket,
+          MaxKeys: 1,
+        }),
+      );
+      return {
+        status: "ok",
+        mode,
+        storage: {
+          accessible: true,
+          provider: "s3-compatible",
+          bucket: config.s3Bucket,
+          endpoint: config.s3Endpoint || "aws-default",
+        },
+        simulated: false,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (err: any) {
+      console.error("[S3 Health Check Error]:", err.message);
+      ensure(false, 503, "FILE_SERVICE_UNAVAILABLE");
+    }
+  }
   if (mode === "local") {
     ensure(!production || isDemo, 503, "FILE_SERVICE_REQUIRED");
     if (!existsSync(uploadDir)) mkdirSync(uploadDir, { recursive: true });
@@ -131,6 +166,108 @@ async function authorizeFileAccess(
 }
 
 const uploadDir = process.env.UPLOAD_DIR || resolve(process.cwd(), "uploads");
+
+let _s3Client: S3Client | null = null;
+export function getS3Client(): S3Client {
+  if (!_s3Client) {
+    _s3Client = new S3Client({
+      region: config.s3Region || "auto",
+      ...(config.s3Endpoint ? { endpoint: config.s3Endpoint } : {}),
+      ...(config.s3AccessKeyId && config.s3SecretAccessKey
+        ? {
+            credentials: {
+              accessKeyId: config.s3AccessKeyId,
+              secretAccessKey: config.s3SecretAccessKey,
+            },
+          }
+        : {}),
+      forcePathStyle: config.s3ForcePathStyle,
+    });
+  }
+  return _s3Client;
+}
+
+export function resetS3Client(): void {
+  _s3Client = null;
+}
+
+export function getS3ObjectKey(fileId: string): string {
+  const prefix = process.env.S3_KEY_PREFIX?.trim() || "uploads";
+  return `${prefix.replace(/\/+$/, "")}/${fileId.replace(/[^a-zA-Z0-9_-]/g, "")}.bin`;
+}
+
+export async function s3Upload(params: {
+  fileBuffer: Buffer | Uint8Array;
+  fileId: string;
+  fileName: string;
+  mimeType: string;
+}) {
+  const client = getS3Client();
+  ensure(config.s3Bucket, 503, "FILE_SERVICE_REQUIRED");
+  const key = getS3ObjectKey(params.fileId);
+  const res = await client.send(
+    new PutObjectCommand({
+      Bucket: config.s3Bucket,
+      Key: key,
+      Body: Buffer.from(params.fileBuffer),
+      ContentType: params.mimeType,
+      Metadata: {
+        originalname: encodeURIComponent(params.fileName),
+        fileid: params.fileId,
+      },
+    }),
+  );
+  return { key, etag: res.ETag };
+}
+
+export async function s3HeadObject(fileId: string) {
+  const client = getS3Client();
+  ensure(config.s3Bucket, 503, "FILE_SERVICE_REQUIRED");
+  try {
+    return await client.send(
+      new HeadObjectCommand({
+        Bucket: config.s3Bucket,
+        Key: getS3ObjectKey(fileId),
+      }),
+    );
+  } catch (err: any) {
+    if (
+      err.name === "NotFound" ||
+      err.name === "NoSuchKey" ||
+      err.$metadata?.httpStatusCode === 404
+    ) {
+      return null;
+    }
+    throw err;
+  }
+}
+
+export async function s3GetObject(fileId: string, range?: string) {
+  const client = getS3Client();
+  ensure(config.s3Bucket, 503, "FILE_SERVICE_REQUIRED");
+  return await client.send(
+    new GetObjectCommand({
+      Bucket: config.s3Bucket,
+      Key: getS3ObjectKey(fileId),
+      Range: range,
+    }),
+  );
+}
+
+export async function s3DeleteObject(fileId: string) {
+  const client = getS3Client();
+  ensure(config.s3Bucket, 503, "FILE_SERVICE_REQUIRED");
+  try {
+    await client.send(
+      new DeleteObjectCommand({
+        Bucket: config.s3Bucket,
+        Key: getS3ObjectKey(fileId),
+      }),
+    );
+  } catch (err: any) {
+    console.warn("[S3 Delete Warning]:", err.message);
+  }
+}
 
 export function getLocalFilePath(id: string): string {
   if (!existsSync(uploadDir)) mkdirSync(uploadDir, { recursive: true });
@@ -560,14 +697,58 @@ export function resourcesUsingFile(tx: any, id: string, classId?: string) {
   });
 }
 
-// Helper to stream binary files (local or remote UAY File Service with RFC 7233 range)
+// Helper to stream binary files (S3, UAY File Service, or local storage with RFC 7233 range)
 async function serveFileStream(id: string, req: any, res: any) {
   if (production && !isDemo && config.fileMode === "local") {
     res.status(503).json({ error: "FILE_SERVICE_REQUIRED" });
     return;
   }
   const fileRef = await db.fileReference.findUnique({ where: { id } });
-  if (config.fileMode !== "local") {
+
+  if (config.fileMode === "s3") {
+    try {
+      const s3Res = await s3GetObject(id, req.headers.range);
+      const isPartial = Boolean(req.headers.range && s3Res.ContentRange);
+      res.status(isPartial ? 206 : 200);
+      res.setHeader("Accept-Ranges", "bytes");
+      if (s3Res.ContentType) {
+        res.setHeader("Content-Type", s3Res.ContentType);
+      } else if (fileRef?.mimeType) {
+        res.setHeader("Content-Type", fileRef.mimeType);
+      }
+      if (s3Res.ContentLength !== undefined) {
+        res.setHeader("Content-Length", s3Res.ContentLength);
+      }
+      if (s3Res.ContentRange) {
+        res.setHeader("Content-Range", s3Res.ContentRange);
+      }
+      if (fileRef?.name) {
+        res.setHeader(
+          "Content-Disposition",
+          `inline; filename="${encodeURIComponent(fileRef.name)}"`,
+        );
+      }
+      if (s3Res.Body) {
+        (s3Res.Body as any).pipe(res);
+        return;
+      }
+    } catch (err: any) {
+      if (
+        err.name === "NoSuchKey" ||
+        err.name === "NotFound" ||
+        err.$metadata?.httpStatusCode === 404
+      ) {
+        // Fallback to local storage if available
+        const filePath = getLocalFilePath(id);
+        if (!existsSync(filePath)) {
+          res.status(404).json({ error: "NOT_FOUND" });
+          return;
+        }
+      } else {
+        throw err;
+      }
+    }
+  } else if (config.fileMode !== "local") {
     try {
       const targetId = await getRemoteFileId(id);
       const remoteRes =
@@ -708,7 +889,18 @@ async function handleBinaryUpload(id: string, req: any, res: any) {
   const binaryBuffer = Buffer.concat(chunks);
   writeFileSync(filePath, binaryBuffer);
 
-  if (config.fileMode === "uay") {
+  if (config.fileMode === "s3") {
+    try {
+      await s3Upload({
+        fileBuffer: binaryBuffer,
+        fileId: id,
+        fileName: fileRef.name,
+        mimeType: fileRef.mimeType,
+      });
+    } catch (err) {
+      throw err;
+    }
+  } else if (config.fileMode === "uay") {
     try {
       const uayRes = await uayUpload({
         fileBuffer: binaryBuffer,
@@ -729,7 +921,7 @@ async function handleBinaryUpload(id: string, req: any, res: any) {
     } catch (err) {
       throw err;
     }
-  } else if (production && !isDemo && config.fileMode !== "legacy") {
+  } else if (production && !isDemo && config.fileMode === "local") {
     res.status(503).json({ error: "FILE_SERVICE_REQUIRED" });
     return;
   }
@@ -849,7 +1041,7 @@ export function registerFiles(app: Express) {
           uploadUrl = validateSignedUrl(ticket.uploadUrl);
           headers = ticket.headers ?? {};
           expiresAt = ticket.expiresAt;
-        } else if (config.fileMode === "uay") {
+        } else if (config.fileMode === "uay" || config.fileMode === "s3") {
           id = randomUUID();
           const base = (config.apiOrigin || config.origin || "").replace(
             /\/$/,
@@ -924,7 +1116,15 @@ export function registerFiles(app: Express) {
           ["SUBMISSION", "QUIZ_ANSWER"].includes(file.purpose),
         );
 
-        if (config.fileMode === "uay") {
+        if (config.fileMode === "s3") {
+          const head = await s3HeadObject(file.id);
+          const localExists = existsSync(getLocalFilePath(file.id));
+          ensure(
+            (head && head.ContentLength === file.sizeBytes) || localExists,
+            409,
+            "FILE_NOT_READY",
+          );
+        } else if (config.fileMode === "uay") {
           const targetId = await getRemoteFileId(file.id);
           const metadata = await uayGetMetadata(targetId, {
             actorId: req.context.user.id,
@@ -1000,7 +1200,7 @@ export function registerFiles(app: Express) {
       );
       url = validateSignedUrl(ticket.downloadUrl);
       expiresAt = ticket.expiresAt;
-    } else if (config.fileMode === "uay") {
+    } else if (config.fileMode === "uay" || config.fileMode === "s3") {
       const base = (config.apiOrigin || config.origin || "").replace(/\/$/, "");
       const token = createSignedDownloadToken(file.id, 900);
       expiresAt = new Date(Date.now() + 900 * 1000).toISOString();
@@ -1295,7 +1495,21 @@ export function registerFiles(app: Express) {
     const resourceId = z.string().uuid().optional().parse(req.query.resourceId);
     await authorizeFileAccess(req, file, resourceId);
     let data;
-    if (config.fileMode === "uay") {
+    if (config.fileMode === "s3") {
+      const head = await s3HeadObject(file.id);
+      data = {
+        fileId: file.id,
+        originalName: file.name,
+        sizeBytes: head?.ContentLength ?? file.sizeBytes,
+        mimeType: head?.ContentType || file.mimeType,
+        checksum: file.checksum,
+        status: file.status === "READY" ? "active" : file.status.toLowerCase(),
+        visibility: "private",
+        simulated: false,
+        provider: "s3-compatible",
+        bucket: config.s3Bucket,
+      };
+    } else if (config.fileMode === "uay") {
       data = await uayGetMetadata(await getRemoteFileId(file.id), {
         actorId: req.context.user.id,
         requestId: req.context.requestId,
@@ -1339,7 +1553,18 @@ export function registerFiles(app: Express) {
       "FILE_SERVICE_OPERATION_UNSUPPORTED",
     );
     let data;
-    if (config.fileMode === "uay") {
+    if (config.fileMode === "s3") {
+      data = [
+        {
+          id: config.s3Bucket || "s3-storage",
+          name: `S3 Object Storage (${config.s3Bucket || "configured"})`,
+          slug: "s3-storage",
+          status: "active",
+          simulated: false,
+          provider: "s3-compatible",
+        },
+      ];
+    } else if (config.fileMode === "uay") {
       data = await uayGetRepositories({
         actorId: req.context.user.id,
         requestId: req.context.requestId,

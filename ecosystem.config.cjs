@@ -19,14 +19,14 @@ module.exports = {
       wait_ready: true,
       env: {
         NODE_ENV: "production",
-        DEMO_MODE: "false",
+        DEMO_MODE: process.env.DEMO_MODE || "false",
         API_HOST: process.env.API_HOST || "127.0.0.1",
         PORT: Number(process.env.PORT || 3000),
         TRUST_PROXY: "1",
       },
       env_production: {
         NODE_ENV: "production",
-        DEMO_MODE: "false",
+        DEMO_MODE: process.env.DEMO_MODE || "false",
         API_HOST: process.env.API_HOST || "127.0.0.1",
         PORT: Number(process.env.PORT || 3000),
         TRUST_PROXY: "1",

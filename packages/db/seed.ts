@@ -2,14 +2,24 @@ import { classPath } from "../shared/src/urls.js";
 import { PrismaClient } from "@prisma/client";
 import { loadEnvFile } from "node:process";
 import { questionSchema } from "../shared/src/domain.js";
-import { generateAllDemoFiles } from "./demo-media.js";
+import { generateAllDemoFiles, syncDemoFilesToStorage } from "./demo-media.js";
 import { sampleAnnouncements } from "./system-announcement-fixtures.js";
 
 try {
   loadEnvFile();
 } catch {}
-if (process.env.NODE_ENV === "production" && process.env.DEMO_MODE !== "true") {
-  throw new Error("Demo seed is disabled in production.");
+
+const allowSeedInProduction =
+  process.env.DEMO_MODE === "true" ||
+  process.env.ALLOW_SEED === "true" ||
+  process.env.STAGING === "true" ||
+  process.argv.includes("--force") ||
+  process.argv.includes("--demo");
+
+if (process.env.NODE_ENV === "production" && !allowSeedInProduction) {
+  throw new Error(
+    "Demo seed is disabled in production without explicit confirmation. To seed staging/demo VPS, run with --force or set DEMO_MODE=true / ALLOW_SEED=true.",
+  );
 }
 
 const db = new PrismaClient();
@@ -816,8 +826,8 @@ console.log(
   "Seeding learning materials, assignments, quizzes, and grade categories...",
 );
 
-// Generate demo files on disk for uploads/
-const generatedFiles = generateAllDemoFiles();
+// Generate demo files on disk for uploads/ and sync to S3 if configured
+const generatedFiles = await syncDemoFilesToStorage();
 
 // Upsert demo FileReferences in database for ids.class
 const demoFiles = [
@@ -969,26 +979,155 @@ for (const [idx, cfg] of classConfigs.entries()) {
 
   // 3. Resources
   if (isPrimary) {
-    // Primary class uses the rich demo media
+    // Primary class uses the rich demo media demonstrating all 11 block types
     await db.resourceItem.upsert({
       where: { id: ids.resource },
       create: {
         id: ids.resource,
         sectionId: sec1.id,
-        title: "Memahami cara kerja web",
+        title: "Modul 01 · Arsitektur Web Modern & Fondasi Aplikasi",
+        description:
+          "Materi pembelajaran lengkap mendemonstrasikan seluruh tipe blok konten terstruktur.",
         resourceType: "RICH_TEXT",
+        contentOrder: 0,
         dynamicPayload: {
           blocks: [
             {
-              id: "intro",
+              id: "intro-heading",
               type: "heading",
-              data: { level: 2, text: "Dari browser menuju server" },
+              data: {
+                level: 1,
+                text: "Arsitektur Web Modern: Fondasi Aplikasi & Siklus HTTP",
+              },
             },
             {
-              id: "paragraph",
+              id: "intro-para",
               type: "paragraph",
               data: {
-                text: "Setiap halaman web dimulai dari sebuah permintaan HTTP, lalu server mengembalikan respons HTML/JSON.",
+                text: "Selamat datang di perkuliahan Pemrograman Web Universitas Achmad Yani (UAY). Pada modul interaktif ini, kita akan mempelajari prinsip dasar bagaimana browser berkomunikasi dengan server melalui standar protokol internet global.",
+              },
+            },
+            {
+              id: "guide-callout",
+              type: "callout",
+              data: {
+                title: "Panduan Belajar & Target Kompetensi",
+                text: "Pelajari materi ini sebelum mengikuti sesi praktikum tatap muka. Catat konsep yang memerlukan pendalaman untuk sesi tanya jawab di ruang kelas.",
+                alertType: "TIP",
+              },
+            },
+            {
+              id: "competency-checklist",
+              type: "checklist",
+              data: {
+                items: [
+                  {
+                    id: "c1",
+                    text: "Memahami model arsitektur Client-Server dan protokol HTTP",
+                    checked: true,
+                  },
+                  {
+                    id: "c2",
+                    text: "Menyusun struktur dokumen HTML5 semantik dan aksesibel",
+                    checked: true,
+                  },
+                  {
+                    id: "c3",
+                    text: "Menganalisis perbedaan idempotensi metode RESTful API",
+                    checked: false,
+                  },
+                  {
+                    id: "c4",
+                    text: "Mengimplementasikan keamanan dasar web dan sertifikat TLS",
+                    checked: false,
+                  },
+                ],
+              },
+            },
+            {
+              id: "code-example",
+              type: "code_snippet",
+              data: {
+                filename: "index.html",
+                language: "html",
+                showLineNumbers: true,
+                code: "<!DOCTYPE html>\n<html lang=\"id\">\n  <head>\n    <meta charset=\"UTF-8\">\n    <title>Universitas Achmad Yani Banjarmasin</title>\n  </head>\n  <body>\n    <header>\n      <h1>E-Learning UAY</h1>\n      <nav><a href=\"#materi\">Materi Kuliah</a></nav>\n    </header>\n    <main>\n      <article>\n        <h2>Fondasi Web Semantik</h2>\n        <p>Halaman web terstruktur meningkatkan aksesibilitas dan SEO.</p>\n      </article>\n    </main>\n  </body>\n</html>",
+              },
+            },
+            {
+              id: "shannon-formula",
+              type: "math_latex",
+              data: {
+                expression: "C = B \\log_2 \\left(1 + \\frac{S}{N}\\right)",
+              },
+            },
+            {
+              id: "http-table",
+              type: "table",
+              data: {
+                header: true,
+                rows: [
+                  [
+                    "Metode HTTP",
+                    "Idempoten",
+                    "Deskripsi Perilaku",
+                    "Contoh Penggunaan",
+                  ],
+                  [
+                    "GET",
+                    "Ya",
+                    "Membaca data tanpa efek samping",
+                    "GET /api/v1/courses",
+                  ],
+                  [
+                    "POST",
+                    "Tidak",
+                    "Mengirimkan data baru atau mutasi",
+                    "POST /api/v1/submissions",
+                  ],
+                  [
+                    "PUT",
+                    "Ya",
+                    "Menggantikan seluruh sumber daya",
+                    "PUT /api/v1/files/upload/id",
+                  ],
+                  [
+                    "DELETE",
+                    "Ya",
+                    "Menghapus sumber daya yang ditentukan",
+                    "DELETE /api/v1/files/id",
+                  ],
+                ],
+              },
+            },
+            {
+              id: "syllabus-attachment",
+              type: "file_attachment",
+              data: {
+                fileObjectId: ids.filePdf,
+                displayName: "Silabus & RPS Pemrograman Web UAY (PDF Resmi)",
+              },
+            },
+            {
+              id: "media-video",
+              type: "embed_media",
+              data: {
+                url: "https://www.youtube.com/watch?v=2JYT5f2isg4",
+                title: "Video Pembelajaran: Bagaimana Web Bekerja (YouTube)",
+              },
+            },
+            {
+              id: "section-divider",
+              type: "divider",
+              data: {},
+            },
+            {
+              id: "academic-caution",
+              type: "callout",
+              data: {
+                title: "Perhatian Integritas Akademik",
+                text: "Seluruh pengerjaan tugas dan kuis harus mengedepankan integritas akademik. Plagiarisme akan berakibat pada pembatalan nilai akhir perkuliahan.",
+                alertType: "IMPORTANT",
               },
             },
           ],
@@ -1111,47 +1250,160 @@ for (const [idx, cfg] of classConfigs.entries()) {
   const quizId = isPrimary
     ? ids.quiz
     : `50000000-0000-4000-8000-${String(idx + 1).padStart(12, "0")}`;
-  const questions = [
-    {
-      type: "SINGLE_CHOICE",
-      text: `Konsep dasar dari materi ${courseMap.get(cfg.courseCode)?.title} adalah ...`,
-      points: 25,
-      options: [
-        { id: "a", text: "Konseptual fundamental" },
-        { id: "b", text: "Pilihan acak" },
-        { id: "c", text: "Bukan jawaban" },
-      ],
-      answerKey: { correct: ["a"] },
-    },
-    {
-      type: "TRUE_FALSE",
-      text: "Pemahaman materi prasyarat sangat penting dalam mata kuliah ini.",
-      points: 25,
-      options: [
-        { id: "true", text: "Benar" },
-        { id: "false", text: "Salah" },
-      ],
-      answerKey: { correct: ["true"] },
-    },
-    {
-      type: "SHORT_ANSWER",
-      text: "Sebutkan singkatan dari Universitas Achmad Yani Banjarmasin:",
-      points: 25,
-      options: [],
-      answerKey: { correct: ["UAY"] },
-    },
-    {
-      type: "ESSAY",
-      text: "Jelaskan relevansi mata kuliah ini terhadap kompetensi lulusan di dunia kerja profesional.",
-      points: 25,
-      options: [],
-      answerKey: { correct: [] },
-      rubric: [
-        { title: "Ketajaman analisis", points: 15 },
-        { title: "Relevansi contoh", points: 10 },
-      ],
-    },
-  ].map((q) => questionSchema.parse(q));
+  const questions = (
+    isPrimary
+      ? [
+          {
+            type: "SINGLE_CHOICE",
+            text: "Protokol komunikasi standar yang digunakan browser untuk meminta dokumen halaman dari web server adalah ...",
+            points: 10,
+            options: [
+              { id: "a", text: "HTTP / HTTPS (Hypertext Transfer Protocol)" },
+              { id: "b", text: "FTP (File Transfer Protocol)" },
+              { id: "c", text: "SMTP (Simple Mail Transfer Protocol)" },
+              { id: "d", text: "SSH (Secure Shell Protocol)" },
+            ],
+            answerKey: { correct: ["a"] },
+          },
+          {
+            type: "MULTIPLE_SELECT",
+            text: "Manakah dari elemen berikut yang merupakan tag HTML5 semantik? (Pilih semua yang benar)",
+            points: 15,
+            options: [
+              { id: "opt1", text: "<header> - Bagian pembuka atau navigasi" },
+              { id: "opt2", text: "<article> - Konten mandiri independen" },
+              { id: "opt3", text: "<div> - Kontainer generik non-semantik" },
+              { id: "opt4", text: "<main> - Konten utama dokumen" },
+            ],
+            answerKey: { correct: ["opt1", "opt2", "opt4"] },
+          },
+          {
+            type: "TRUE_FALSE",
+            text: "Menurut RFC 7231, metode HTTP POST bersifat idempoten karena menghasilkan efek samping yang sama jika dikirim berulang kali.",
+            points: 10,
+            options: [
+              { id: "true", text: "Benar" },
+              { id: "false", text: "Salah (POST tidak bersifat idempoten)" },
+            ],
+            answerKey: { correct: ["false"] },
+          },
+          {
+            type: "SHORT_ANSWER",
+            text: "Sebutkan singkatan dari Universitas Achmad Yani Banjarmasin:",
+            points: 10,
+            options: [],
+            answerKey: { correct: ["UAY"] },
+          },
+          {
+            type: "MATCHING",
+            text: "Jodohkan kode status respon HTTP dengan maknanya yang tepat:",
+            points: 15,
+            options: [
+              {
+                id: "m1",
+                text: "200 OK",
+                rightText: "Permintaan berhasil diproses dan dikembalikan",
+              },
+              {
+                id: "m2",
+                text: "201 Created",
+                rightText: "Sumber daya baru berhasil dibuat pada server",
+              },
+              {
+                id: "m3",
+                text: "404 Not Found",
+                rightText: "Sumber daya yang diminta tidak ditemukan",
+              },
+              {
+                id: "m4",
+                text: "500 Internal Server Error",
+                rightText: "Server mengalami galat internal yang tak terduga",
+              },
+            ],
+            answerKey: { pairs: { m1: "m1", m2: "m2", m3: "m3", m4: "m4" } },
+          },
+          {
+            type: "ORDERING",
+            text: "Urutkan tahapan alur penanganan permintaan web dari sisi browser ke server:",
+            points: 15,
+            options: [
+              { id: "s1", text: "1. Resolusi nama domain (DNS Lookup)" },
+              { id: "s2", text: "2. Pembentukan koneksi TCP (Three-way Handshake)" },
+              { id: "s3", text: "3. Negosiasi enkripsi TLS/SSL Handshake" },
+              { id: "s4", text: "4. Pengiriman HTTP Request & Penerimaan HTML" },
+            ],
+            answerKey: { correct: ["s1", "s2", "s3", "s4"] },
+          },
+          {
+            type: "ESSAY",
+            text: "Jelaskan perbedaan mendasar arsitektur Client-Side Rendering (CSR) dengan Server-Side Rendering (SSR) beserta kelebihan masing-masing dalam konteks kecepatan rendering awal dan SEO!",
+            points: 15,
+            options: [],
+            answerKey: { correct: [] },
+            rubric: [
+              { title: "Ketepatan konsep arsitektur CSR vs SSR", points: 8 },
+              {
+                title: "Analisis perbandingan FCP, SEO, dan beban server",
+                points: 7,
+              },
+            ],
+          },
+          {
+            type: "FILE_UPLOAD",
+            text: "Unggah diagram arsitektur web aplikasi (format PNG, PDF, atau ZIP) yang menggambarkan alur Client, Web Server, dan Database!",
+            points: 10,
+            options: [],
+            answerKey: { correct: [] },
+            rubric: [
+              {
+                title: "Kelengkapan komponen arsitektur dan relasi",
+                points: 10,
+              },
+            ],
+          },
+        ]
+      : [
+          {
+            type: "SINGLE_CHOICE",
+            text: `Konsep dasar dari materi ${courseMap.get(cfg.courseCode)?.title} adalah ...`,
+            points: 25,
+            options: [
+              { id: "a", text: "Konseptual fundamental" },
+              { id: "b", text: "Pilihan acak" },
+              { id: "c", text: "Bukan jawaban" },
+            ],
+            answerKey: { correct: ["a"] },
+          },
+          {
+            type: "TRUE_FALSE",
+            text: "Pemahaman materi prasyarat sangat penting dalam mata kuliah ini.",
+            points: 25,
+            options: [
+              { id: "true", text: "Benar" },
+              { id: "false", text: "Salah" },
+            ],
+            answerKey: { correct: ["true"] },
+          },
+          {
+            type: "SHORT_ANSWER",
+            text: "Sebutkan singkatan dari Universitas Achmad Yani Banjarmasin:",
+            points: 25,
+            options: [],
+            answerKey: { correct: ["UAY"] },
+          },
+          {
+            type: "ESSAY",
+            text: "Jelaskan relevansi mata kuliah ini terhadap kompetensi lulusan di dunia kerja profesional.",
+            points: 25,
+            options: [],
+            answerKey: { correct: [] },
+            rubric: [
+              { title: "Ketajaman analisis", points: 15 },
+              { title: "Relevansi contoh", points: 10 },
+            ],
+          },
+        ]
+  ).map((q) => questionSchema.parse(q));
 
   const bank = await db.questionBank.create({
     data: {
@@ -1169,14 +1421,16 @@ for (const [idx, cfg] of classConfigs.entries()) {
       id: quizId,
       sectionId: sec1.id,
       title: isPrimary
-        ? "Kuis 01 · Fondasi web"
+        ? "Kuis 01 · Evaluasi Fondasi Web (Komprehensif)"
         : `Kuis 01 · Pemahaman ${courseMap.get(cfg.courseCode)?.title}`,
-      description: "Evaluasi pemahaman konsep dasar perkuliahan.",
+      description: isPrimary
+        ? "Kuis evaluasi mencakup seluruh 8 tipe soal: pilihan ganda, majemuk, benar/salah, isian, menjodohkan, mengurutkan, esai & unggah berkas."
+        : "Evaluasi pemahaman konsep dasar perkuliahan.",
       status: "PUBLISHED",
       gradeCategoryId: categories[1].id,
-      timeLimitMinutes: 30,
+      timeLimitMinutes: 45,
       attemptLimit: 3,
-      randomizeQuestions: true,
+      randomizeQuestions: false,
       resultReleaseMode: "MANUAL",
       questions: {
         create: questions.map(({ id: _qId, ...q }, order) => ({
@@ -1189,6 +1443,35 @@ for (const [idx, cfg] of classConfigs.entries()) {
     update: { status: "PUBLISHED" },
     include: { questions: true },
   });
+
+  if (isPrimary) {
+    // Kuis 02 Interaktif: Terbuka untuk dicoba pengguna saat live demo
+    const liveQuizId = "50000000-0000-4000-8000-000000000099";
+    await db.quiz.upsert({
+      where: { id: liveQuizId },
+      create: {
+        id: liveQuizId,
+        sectionId: sec2Id,
+        title: "Kuis 02 · Uji Coba Interaktif Mandiri (Live Demo)",
+        description:
+          "Kuis terbuka untuk uji coba langsung semua tipe soal dengan rilis nilai instan.",
+        status: "PUBLISHED",
+        gradeCategoryId: categories[1].id,
+        timeLimitMinutes: 60,
+        attemptLimit: 10,
+        randomizeQuestions: false,
+        resultReleaseMode: "IMMEDIATE",
+        questions: {
+          create: questions.map(({ id: _qId, ...q }, order) => ({
+            ...q,
+            order,
+            questionBankId: bank.id,
+          })),
+        },
+      },
+      update: { status: "PUBLISHED" },
+    });
+  }
 
   // 6. Submissions & Quiz Attempts
   // Active classes: 4-5 submissions (some graded, some pending)
@@ -1312,6 +1595,32 @@ for (const [idx, cfg] of classConfigs.entries()) {
         verifiedBy: leadInstructor,
       },
       update: {},
+    });
+  }
+
+  if (isPrimary) {
+    // Sesi Presensi Terbuka: Aktif untuk uji coba mandiri saat demo
+    await db.attendanceSession.upsert({
+      where: {
+        id: "70000000-0000-4000-8000-000000000099",
+      },
+      create: {
+        id: "70000000-0000-4000-8000-000000000099",
+        classId: cfg.id,
+        sectionId: sec2Id,
+        title: "Pertemuan 02 · Presensi Mandiri Aktif (Live Demo)",
+        description:
+          "Sesi presensi mandiri aktif untuk demonstrasi. Masukkan kode UAY2026 untuk check-in.",
+        sessionDate: new Date(),
+        isOpen: true,
+        allowSelfCheckIn: true,
+        checkInCode: "UAY2026",
+      },
+      update: {
+        isOpen: true,
+        allowSelfCheckIn: true,
+        checkInCode: "UAY2026",
+      },
     });
   }
 

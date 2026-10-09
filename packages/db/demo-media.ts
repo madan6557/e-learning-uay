@@ -147,3 +147,78 @@ export function generateAllDemoFiles() {
     throw new Error("Gagal menyiapkan berkas mode uji.", { cause: err });
   }
 }
+
+export async function syncDemoFilesToStorage() {
+  const generated = generateAllDemoFiles();
+  const bucket =
+    process.env.S3_BUCKET?.trim() ||
+    process.env.S3_BUCKET_NAME?.trim() ||
+    process.env.BUCKET_NAME?.trim() ||
+    process.env.AWS_S3_BUCKET_NAME?.trim() ||
+    process.env.AWS_BUCKET?.trim() ||
+    "";
+  const accessKeyId =
+    process.env.S3_ACCESS_KEY_ID?.trim() ||
+    process.env.AWS_ACCESS_KEY_ID?.trim() ||
+    "";
+  const secretAccessKey =
+    process.env.S3_SECRET_ACCESS_KEY?.trim() ||
+    process.env.AWS_SECRET_ACCESS_KEY?.trim() ||
+    "";
+  const endpoint =
+    process.env.S3_ENDPOINT?.trim() ||
+    process.env.AWS_ENDPOINT_URL_S3?.trim() ||
+    process.env.AWS_ENDPOINT?.trim() ||
+    process.env.S3_ENDPOINT_URL?.trim() ||
+    "";
+  const region =
+    process.env.S3_REGION?.trim() ||
+    process.env.AWS_REGION?.trim() ||
+    process.env.AWS_DEFAULT_REGION?.trim() ||
+    "auto";
+
+  if (bucket && (accessKeyId || endpoint)) {
+    try {
+      const { S3Client, PutObjectCommand } = await import("@aws-sdk/client-s3");
+      const client = new S3Client({
+        region,
+        ...(endpoint ? { endpoint } : {}),
+        ...(accessKeyId && secretAccessKey
+          ? { credentials: { accessKeyId, secretAccessKey } }
+          : {}),
+        forcePathStyle: process.env.S3_FORCE_PATH_STYLE !== "false",
+      });
+      const prefix = process.env.S3_KEY_PREFIX?.trim() || "uploads";
+      const uploadDir = resolve(
+        process.cwd(),
+        process.env.FILE_SERVICE_DATA_DIRECTORY ??
+          process.env.UPLOAD_DIR ??
+          "uploads",
+      );
+      for (const item of generated) {
+        const filePath = join(uploadDir, `${item.id}.bin`);
+        if (existsSync(filePath)) {
+          const buffer = readFileSync(filePath);
+          await client.send(
+            new PutObjectCommand({
+              Bucket: bucket,
+              Key: `${prefix.replace(/\/+$/, "")}/${item.id}.bin`,
+              Body: buffer,
+              ContentType: item.mimeType,
+              Metadata: {
+                originalname: encodeURIComponent(item.name),
+                checksum: item.checksum,
+              },
+            }),
+          );
+          console.log(`✓ Berhasil sync berkas demo ke S3 (${bucket}): ${item.name}`);
+        }
+      }
+    } catch (s3Err: any) {
+      console.warn(
+        `[Sync S3 Info]: Melewati sinkronisasi S3 (${s3Err.message}). Berkas lokal tetap tersedia.`,
+      );
+    }
+  }
+  return generated;
+}

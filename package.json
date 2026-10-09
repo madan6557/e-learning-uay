@@ -20,6 +20,8 @@
     "db:generate": "prisma generate --schema packages/db/prisma/schema.prisma",
     "db:migrate": "prisma migrate deploy --schema packages/db/prisma/schema.prisma",
     "db:seed": "tsx packages/db/seed.ts",
+    "db:seed:demo": "tsx packages/db/seed.ts --force",
+    "db:seed:staging": "tsx packages/db/seed.ts --force",
     "db:seed:lab": "tsx packages/db/seed-lab.ts",
     "db:reset": "node scripts/reset-db.mjs",
     "db:local": "node scripts/database.mjs",

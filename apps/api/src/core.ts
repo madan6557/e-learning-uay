@@ -61,6 +61,12 @@ let _fileUrlOverride: string | null = null;
 let _fileKeyOverride: string | null = null;
 let _fileRepoIdOverride: string | null = null;
 let _fileClientIdOverride: string | null = null;
+let _s3EndpointOverride: string | null = null;
+let _s3BucketOverride: string | null = null;
+let _s3AccessKeyIdOverride: string | null = null;
+let _s3SecretAccessKeyOverride: string | null = null;
+let _s3RegionOverride: string | null = null;
+let _s3ForcePathStyleOverride: boolean | null = null;
 
 export const config = {
   port: Number(process.env.PORT ?? 3001),
@@ -154,19 +160,104 @@ export const config = {
   set fileClientId(val: string) {
     _fileClientIdOverride = val;
   },
-  get fileMode(): "uay" | "legacy" | "local" {
+  get s3Endpoint(): string {
+    if (_s3EndpointOverride !== null) return _s3EndpointOverride;
+    return (
+      process.env.S3_ENDPOINT?.trim() ||
+      process.env.AWS_ENDPOINT_URL_S3?.trim() ||
+      process.env.AWS_ENDPOINT?.trim() ||
+      process.env.S3_ENDPOINT_URL?.trim() ||
+      ""
+    );
+  },
+  set s3Endpoint(val: string) {
+    _s3EndpointOverride = val;
+  },
+  get s3Bucket(): string {
+    if (_s3BucketOverride !== null) return _s3BucketOverride;
+    return (
+      process.env.S3_BUCKET?.trim() ||
+      process.env.S3_BUCKET_NAME?.trim() ||
+      process.env.BUCKET_NAME?.trim() ||
+      process.env.AWS_S3_BUCKET_NAME?.trim() ||
+      process.env.AWS_BUCKET?.trim() ||
+      ""
+    );
+  },
+  set s3Bucket(val: string) {
+    _s3BucketOverride = val;
+  },
+  get s3Region(): string {
+    if (_s3RegionOverride !== null) return _s3RegionOverride;
+    return (
+      process.env.S3_REGION?.trim() ||
+      process.env.AWS_REGION?.trim() ||
+      process.env.AWS_DEFAULT_REGION?.trim() ||
+      "auto"
+    );
+  },
+  set s3Region(val: string) {
+    _s3RegionOverride = val;
+  },
+  get s3AccessKeyId(): string {
+    if (_s3AccessKeyIdOverride !== null) return _s3AccessKeyIdOverride;
+    return (
+      process.env.S3_ACCESS_KEY_ID?.trim() ||
+      process.env.AWS_ACCESS_KEY_ID?.trim() ||
+      ""
+    );
+  },
+  set s3AccessKeyId(val: string) {
+    _s3AccessKeyIdOverride = val;
+  },
+  get s3SecretAccessKey(): string {
+    if (_s3SecretAccessKeyOverride !== null) return _s3SecretAccessKeyOverride;
+    return (
+      process.env.S3_SECRET_ACCESS_KEY?.trim() ||
+      process.env.AWS_SECRET_ACCESS_KEY?.trim() ||
+      ""
+    );
+  },
+  set s3SecretAccessKey(val: string) {
+    _s3SecretAccessKeyOverride = val;
+  },
+  get s3ForcePathStyle(): boolean {
+    if (_s3ForcePathStyleOverride !== null) return _s3ForcePathStyleOverride;
+    if (process.env.S3_FORCE_PATH_STYLE === "false") return false;
+    return true;
+  },
+  set s3ForcePathStyle(val: boolean) {
+    _s3ForcePathStyleOverride = val;
+  },
+  get s3PublicUrl(): string {
+    return process.env.S3_PUBLIC_URL?.trim() || "";
+  },
+  get fileMode(): "s3" | "uay" | "legacy" | "local" {
     if (process.env.FILE_SERVICE_TYPE === "legacy") return "legacy";
     if (process.env.FILE_SERVICE_TYPE === "uay") return "uay";
-    const url = this.fileUrl;
-    const key = this.fileKey;
-    if (!url || !key) return "local";
-    const isUay = Boolean(
-      process.env.UAY_FILE_SERVICE_URL ||
-      process.env.UAY_FILE_SERVICE_API_KEY ||
-      url.includes("/api/v1") ||
-      url.includes("file-service.uay.ac.id"),
+    if (process.env.FILE_SERVICE_TYPE === "s3") return "s3";
+    if (process.env.FILE_SERVICE_TYPE === "local") return "local";
+
+    const hasS3 = Boolean(
+      this.s3Bucket && (this.s3AccessKeyId || this.s3Endpoint),
     );
-    return isUay ? "uay" : "legacy";
+    const hasUay = Boolean(
+      this.fileUrl &&
+        this.fileKey &&
+        (process.env.UAY_FILE_SERVICE_URL ||
+          process.env.UAY_FILE_SERVICE_API_KEY ||
+          this.fileUrl.includes("/api/v1") ||
+          this.fileUrl.includes("file-service.uay.ac.id")),
+    );
+
+    const driver = process.env.FILE_STORAGE_DRIVER?.toLowerCase().trim();
+    if (driver === "s3" && hasS3) return "s3";
+    if (driver === "uay" && hasUay) return "uay";
+
+    if (hasUay) return "uay";
+    if (hasS3) return "s3";
+    if (this.fileUrl && this.fileKey) return "legacy";
+    return "local";
   },
   get fileOrigins(): string[] {
     return Array.from(
@@ -183,6 +274,15 @@ export const config = {
           if (!u) return [];
           try {
             return [new URL(u).origin];
+          } catch {
+            return [];
+          }
+        })(),
+        ...(() => {
+          const ep = this.s3Endpoint;
+          if (!ep) return [];
+          try {
+            return [new URL(ep).origin];
           } catch {
             return [];
           }
