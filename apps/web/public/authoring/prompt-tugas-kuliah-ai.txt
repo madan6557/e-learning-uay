@@ -1,0 +1,28 @@
+TEMPLATE PROMPT TUGAS KULIAH & STUDI KASUS — E-LEARNING UAY
+
+CARA PAKAI:
+1. Ganti isian dalam tanda [kurung siku] sesuai mata kuliah Anda.
+2. Kirim seluruh teks prompt ini ke AI (ChatGPT, Claude, Gemini, dll.).
+3. Salin hasil instruksi tugas yang dihasilkan ke editor Tugas di E-Learning UAY.
+
+================================================================================
+PROMPT (SALIN MULAI DARI SINI):
+================================================================================
+
+Bertindaklah sebagai Dosen Pengampu Perguruan Tinggi di Universitas Achmad Yani (UAY). Buatlah instruksi tugas kuliah terstruktur dan komprehensif berbahasa Indonesia dengan format Rich Text HTML siap pakai untuk E-Learning UAY.
+
+Mata Kuliah: [misalnya: Rekayasa Perangkat Lunak]
+Program Studi / Semester: [misalnya: Teknik Informatika / Semester 4]
+Topik Tugas: [misalnya: Analisis Kebutuhan & Perancangan Diagram UML]
+Bentuk Tugas: [Individu / Kelompok 3-4 orang]
+Format Pengumpulan: [File PDF / Teks Jawaban / Tautan Repository GitHub / Berkas ZIP]
+Estimasi Waktu Pengerjaan: [misalnya: 1 Minggu]
+
+KETENTUAN KELUARAN:
+Gunakan format tag HTML yang rapi (<p>, <h3>, <ul>, <ol>, <li>, <strong>, <em>, <code>, <blockquote class="callout-box">) dengan struktur berikut:
+
+1. Deskripsi & Latar Belakang Studi Kasus (jelaskan konteks masalah dunia nyata yang relevan dan menantang).
+2. Instruksi Pengerjaan (langkah 1, 2, 3 secara bertahap dan terukur).
+3. Ketentuan Pengumpulan Berkas (sebutkan batas waktu, format file, dan tata cara penamaan berkas tugas).
+4. Kriteria Penilaian / Rubrik (rincian pembobotan nilai dari total 100 poin).
+5. Kotak Catatan Penting (<blockquote class="callout-box"><strong>PERHATIAN:</strong> Larangan plagiarisme, batas waktu pengumpulan, dan etika akademik universitas</blockquote>).

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   t,
   api,
@@ -9,6 +10,7 @@ import {
   textValue,
   navigate,
 } from "../../lib";
+import { RichTextEditor } from "../ui/RichTextEditor";
 import { confirmAction } from "../../confirm";
 
 export interface SectionModalProps {
@@ -19,6 +21,7 @@ export interface SectionModalProps {
 }
 
 export function SectionModal({ cls, section, onClose, onSaved }: SectionModalProps) {
+  const [description, setDescription] = useState(section?.description ?? "");
   return (
     <Modal
       title={section ? t.edit : t.newSection}
@@ -26,6 +29,10 @@ export function SectionModal({ cls, section, onClose, onSaved }: SectionModalPro
     >
       <Form
         draftKey={`section:${section?.id ?? "new"}`}
+        draftValue={{ description }}
+        onRestoreDraft={(v) => {
+          if (v.description !== undefined) setDescription(v.description);
+        }}
         onCancel={onClose}
         submitLabel={t.publish}
         publication={{
@@ -67,10 +74,15 @@ export function SectionModal({ cls, section, onClose, onSaved }: SectionModalPro
             defaultValue={section?.title}
           />
         </Field>
-        <Field label={t.description}>
-          <textarea
+        <Field label={`${t.description} (Format Teks Rapi)`}>
+          <RichTextEditor
+            compact
             name="description"
-            defaultValue={section?.description}
+            rows={4}
+            value={description}
+            onChange={setDescription}
+            placeholder="Tuliskan capaian atau deskripsi sesi pertemuan..."
+            defaultAiTemplate="article"
           />
         </Field>
         <Field label={t.sectionType}>
@@ -113,10 +125,15 @@ export interface AnnouncementModalProps {
 }
 
 export function AnnouncementModal({ cls, onClose, onSaved }: AnnouncementModalProps) {
+  const [content, setContent] = useState("");
   return (
     <Modal title={t.newAnnouncement} onClose={onClose}>
       <Form
         draftKey="announcement:new"
+        draftValue={{ content }}
+        onRestoreDraft={(v) => {
+          if (v.content !== undefined) setContent(v.content);
+        }}
         onCancel={onClose}
         publication={{ published: false }}
         onSubmit={async (f, intent) => {
@@ -133,8 +150,16 @@ export function AnnouncementModal({ cls, onClose, onSaved }: AnnouncementModalPr
         <Field label={t.title}>
           <input name="title" required />
         </Field>
-        <Field label={t.announcementContent}>
-          <textarea name="content" required rows={7} />
+        <Field label={`${t.announcementContent} (Format Teks Rapi)`}>
+          <RichTextEditor
+            name="content"
+            required
+            rows={6}
+            value={content}
+            onChange={setContent}
+            placeholder="Tuliskan pengumuman kelas dengan format teks rapi di sini..."
+            defaultAiTemplate="announcement"
+          />
         </Field>
         <Field label={t.publishedAt}>
           <input name="publishedAt" type="datetime-local" />

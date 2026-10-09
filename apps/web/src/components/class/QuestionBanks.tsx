@@ -11,6 +11,11 @@ import {
   Form,
   textValue,
 } from "../../lib";
+import {
+  stripHtmlTags,
+  formatContentHtml,
+} from "../ui/RichTextEditor";
+import { Html } from "../../Content";
 import { questionSchema } from "../../../../../packages/shared/src/domain";
 import { QuestionEditor } from "../../Assessment";
 import { ImportPanel } from "../../Gradebook";
@@ -85,14 +90,17 @@ export function QuestionBanks({
             {bank.questions.map((q: any, i: number) => (
               <details className="bank-question" key={q.id}>
                 <summary>
-                  {i + 1}. {q.text}
+                  {i + 1}. {stripHtmlTags(q.text) || t.questions}
                   <small>
                     {(t.questionTypes as any)[q.type]} · {q.points}{" "}
                     {t.points.toLowerCase()}
                   </small>
                 </summary>
                 <div className="bank-answer">
-                  {q.options.map((o: any) => (
+                  <div className="formatted-content" style={{ marginBottom: 12 }}>
+                    <Html text={formatContentHtml(q.text)} />
+                  </div>
+                  {q.options?.map((o: any) => (
                     <p key={o.id}>
                       {o.id.toUpperCase()}. {o.text}
                     </p>

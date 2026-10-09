@@ -67,7 +67,8 @@ import {
   Pagination,
   usePagination,
 } from "./lib";
-import { ResourceEditor, ResourceViewer } from "./Content";
+import { formatContentHtml } from "./components/ui/RichTextEditor";
+import { ResourceEditor, ResourceViewer, Html } from "./Content";
 import {
   QuizEditor,
   AssignmentEditor,
@@ -559,9 +560,9 @@ export function ClassPage({
                       )}
                     </div>
                     {section.description && (
-                      <p className="meeting-description">
-                        {section.description}
-                      </p>
+                      <div className="meeting-description formatted-content">
+                        <Html text={formatContentHtml(section.description)} />
+                      </div>
                     )}
                     <div className="learning-items">
                       {section.resources.map((r: any) => {
@@ -827,7 +828,9 @@ export function ClassPage({
                       <small>{date(a.publishedAt)}</small>
                     </div>
                     <h2>{a.title}</h2>
-                    <p className="preserve-lines">{a.content}</p>
+                    <div className="announcement-content formatted-content preserve-lines">
+                      <Html text={formatContentHtml(a.content)} />
+                    </div>
                   </article>
                 ))
               ) : (

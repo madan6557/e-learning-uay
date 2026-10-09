@@ -1,0 +1,27 @@
+TEMPLATE PROMPT SURAT EDARAN & PENGUMUMAN RESMI — E-LEARNING UAY
+
+CARA PAKAI:
+1. Ganti isian dalam tanda [kurung siku] sesuai perihal Anda.
+2. Kirim seluruh teks prompt ini ke AI (ChatGPT, Claude, Gemini, dll.).
+3. Salin surat edaran yang dihasilkan ke kolom "Isi Lengkap Pengumuman" di E-Learning UAY.
+
+================================================================================
+PROMPT (SALIN MULAI DARI SINI):
+================================================================================
+
+Bertindaklah sebagai Bagian Administrasi Akademik / Pimpinan Universitas Achmad Yani (UAY). Buatlah surat edaran atau pengumuman resmi akademik berbahasa Indonesia dengan gaya formal, terstruktur, dan format Rich Text HTML siap pakai untuk E-Learning UAY.
+
+Perihal / Judul Surat: [misalnya: Pelaksanaan Ujian Akhir Semester (UAS) Semester Genap TA 2025/2026]
+Penerbit: [Rektor / Wakil Rektor I Bidang Akademik / BAAK / Dekan Fakultas]
+Nomor Surat Referensi: [misalnya: SE/045/UAY/REK/2026]
+Sasaran Audiens: [Seluruh Sivitas Akademika / Seluruh Mahasiswa Aktif / Seluruh Dosen Pengampu]
+Agenda & Tanggal Penting: [sebutkan jadwal pelaksanaan dan tenggat waktu]
+Ketentuan Khusus: [sebutkan syarat presensi kehadiran minimal 75%, pelunasan administrasi, atau tata tertib ujian]
+
+KETENTUAN KELUARAN:
+Gunakan tag HTML formal (<p>, <h3>, <ul>, <ol>, <li>, <strong>, <em>, <blockquote class="callout-box">) dengan susunan:
+1. Salam pembuka resmi kepada sivitas akademika UAY.
+2. Konsiderans / dasar pertimbangan penerbitan edaran.
+3. Poin-poin ketentuan pelaksanaan yang wajib dipatuhi (gunakan penomoran <ol>).
+4. Kotak perhatian khusus (<blockquote class="callout-box"><strong>PERHATIAN:</strong> Konsekuensi keterlambatan atau pelanggaran tata tertib</blockquote>).
+5. Layanan bantuan helpdesk / narahubung resmi dan salam penutup.

@@ -32,9 +32,12 @@ import {
   numberValue,
   Pagination,
   usePagination,
+} from "./lib";
+import {
   RichTextEditor,
   formatContentHtml,
-} from "./lib";
+  stripHtmlTags,
+} from "./components/ui/RichTextEditor";
 import { DownloadButton, Html } from "./Content";
 import {
   questionTypes,
@@ -122,6 +125,7 @@ export function QuestionEditor({
           value={q.text}
           onChange={(val) => change({ text: val })}
           placeholder="Tuliskan pertanyaan butir soal (bisa diformat tebal, miring, poin, atau kode)..."
+          defaultAiTemplate="quiz"
         />
       </Field>
       {[
@@ -377,6 +381,7 @@ export function QuestionEditor({
           value={q.explanation ?? ""}
           onChange={(val) => change({ explanation: val })}
           placeholder="Tuliskan pembahasan atau penjelasan jawaban..."
+          defaultAiTemplate="quiz"
         />
       </Field>
     </div>
@@ -469,6 +474,7 @@ export function QuizEditor({
             value={description}
             onChange={setDescription}
             placeholder="Tuliskan petunjuk atau deskripsi kuis..."
+            defaultAiTemplate="quiz"
           />
         </Field>
         <div className="form-grid">
@@ -619,7 +625,7 @@ export function QuizEditor({
             key={index}
           >
             <summary>
-              {index + 1}. {q.text || t.newQuestion}
+              {index + 1}. {stripHtmlTags(q.text) || t.newQuestion}
               <span>
                 {q.points} {t.points}
               </span>
@@ -668,7 +674,7 @@ export function QuizEditor({
               <optgroup label={b.title} key={b.id}>
                 {b.questions.map((q: any) => (
                   <option value={q.id} key={q.id}>
-                    {q.text}
+                    {stripHtmlTags(q.text) || `${t.questions} ${q.id}`}
                   </option>
                 ))}
               </optgroup>
@@ -958,7 +964,8 @@ export function QuizPage({
                     .filter((q: any) => ["ESSAY", "FILE_UPLOAD"].includes(q.type))
                     .map((q: any) => {
                       const idx = quiz.questions.findIndex((item: any) => item.id === q.id) + 1;
-                      const preview = q.text ? (q.text.length > 25 ? q.text.slice(0, 25) + "..." : q.text) : "";
+                      const clean = stripHtmlTags(q.text);
+                      const preview = clean ? (clean.length > 30 ? clean.slice(0, 30) + "..." : clean) : "";
                       return (
                         <option value={q.id} key={q.id}>
                           Soal {idx}: {preview}
@@ -1600,21 +1607,63 @@ function AnswerInput({
         {value && <span className="badge">{t.saved}</span>}
       </>
     );
+  if (type === "ESSAY") {
+    return (
+      <div className="space-y-3">
+        {q.rubric && q.rubric.length > 0 && (
+          <div
+            style={{
+              padding: "10px 14px",
+              background: "rgba(2, 132, 199, 0.08)",
+              border: "1px solid rgba(2, 132, 199, 0.25)",
+              borderRadius: 8,
+              marginBottom: 10,
+              fontSize: "0.88rem",
+            }}
+          >
+            <strong
+              style={{
+                display: "block",
+                marginBottom: 6,
+                color: "var(--primary, #0284c7)",
+              }}
+            >
+              📋 Panduan Penilaian / Rubrik:
+            </strong>
+            <ul style={{ margin: 0, paddingLeft: 20 }}>
+              {q.rubric.map((r: any, i: number) => (
+                <li key={i} style={{ marginBottom: 3 }}>
+                  <span style={{ fontWeight: 600 }}>{r.title}</span> ({r.points} poin)
+                  {r.description ? ` — ${r.description}` : ""}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        <Field
+          label={
+            q.maxWords
+              ? `${t.maxWords}: ${q.maxWords} · Jawaban Esai (Format Teks & AI Prompt)`
+              : `Jawaban Esai (Format Teks & AI Prompt)`
+          }
+        >
+          <RichTextEditor
+            compact
+            rows={8}
+            minHeight="220px"
+            value={value ?? ""}
+            onChange={onChange}
+            placeholder="Tuliskan jawaban esai Anda secara terstruktur di sini..."
+            defaultAiTemplate="quiz"
+          />
+        </Field>
+      </div>
+    );
+  }
+
   return (
-    <Field
-      label={
-        type === "ESSAY" ? `${t.maxWords}: ${q.maxWords}` : t.correctAnswer
-      }
-    >
-      {type === "ESSAY" ? (
-        <textarea
-          rows={8}
-          value={value ?? ""}
-          onChange={(e) => onChange(e.target.value)}
-        />
-      ) : (
-        <input value={value ?? ""} onChange={(e) => onChange(e.target.value)} />
-      )}
+    <Field label={t.correctAnswer}>
+      <input value={value ?? ""} onChange={(e) => onChange(e.target.value)} />
     </Field>
   );
 }
@@ -1684,9 +1733,12 @@ function ManualQuizGrading({
         <p>Nilai seluruh jawaban, lalu simpan penilaian dalam satu langkah.</p>
         {questions.map((q: any, index: number) => (
           <section className="grading-question" key={q.id}>
-            <h3>
-              {index + 1}. {q.text}
-            </h3>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 8 }}>
+              <span style={{ fontWeight: 700, fontSize: "1.05rem" }}>{index + 1}.</span>
+              <div style={{ flex: 1, fontSize: "1.05rem", fontWeight: 600 }}>
+                <Html text={formatContentHtml(q.text)} />
+              </div>
+            </div>
             <div className="student-answer">
               {q.type === "FILE_UPLOAD" ? (
                 attempt.answersJson[q.id] ? (
@@ -1695,22 +1747,30 @@ function ManualQuizGrading({
                   t.noSubmissions
                 )
               ) : (
-                <p className="preserve-lines">
-                  {attempt.answersJson[q.id] ?? "—"}
-                </p>
+                <div
+                  style={{
+                    padding: "12px 16px",
+                    background: "var(--surface, #fff)",
+                    border: "1px solid var(--border, #e2e8f0)",
+                    borderRadius: 8,
+                  }}
+                  className="formatted-content"
+                >
+                  <Html text={formatContentHtml(attempt.answersJson[q.id] ?? "—")} />
+                </div>
               )}
             </div>
             {q.rubric?.length > 0 && (
-              <details className="rubric">
-                <summary>Panduan rubrik</summary>
+              <details className="rubric" style={{ marginTop: 8 }}>
+                <summary>Panduan rubrik ({q.rubric.length} kriteria)</summary>
                 {q.rubric.map((r: any, i: number) => (
                   <p key={i}>
-                    {r.title} · {r.points} poin
+                    <strong>{r.title}</strong> · {r.points} poin
                   </p>
                 ))}
               </details>
             )}
-            <div className="form-grid">
+            <div className="form-grid" style={{ marginTop: 12 }}>
               <Field label={t.score + " (0–" + q.points + ")"}>
                 <input
                   type="number"
@@ -1727,15 +1787,19 @@ function ManualQuizGrading({
                   }
                 />
               </Field>
-              <Field label={t.feedback}>
-                <textarea
+              <Field label={`${t.feedback} (Format Teks Rapi)`}>
+                <RichTextEditor
+                  compact
+                  rows={3}
                   value={values[q.id]?.feedback ?? ""}
-                  onChange={(e) =>
+                  onChange={(val) =>
                     setValues((v) => ({
                       ...v,
-                      [q.id]: { ...v[q.id], feedback: e.target.value },
+                      [q.id]: { ...v[q.id], feedback: val },
                     }))
                   }
+                  placeholder="Berikan umpan balik atau apresiasi pengerjaan esai mahasiswa..."
+                  defaultAiTemplate="quiz"
                 />
               </Field>
             </div>
@@ -1834,6 +1898,7 @@ export function AssignmentEditor({
             value={instructions}
             onChange={setInstructions}
             placeholder="Tuliskan petunjuk dan instruksi pengerjaan tugas dengan format teks rapi di sini..."
+            defaultAiTemplate="assignment"
           />
         </Field>
         <div className="form-grid">
@@ -2251,6 +2316,7 @@ export function AssignmentPage({
                       onChange={setBody}
                       rows={8}
                       placeholder="Tuliskan jawaban atau laporan tugas Anda di sini dengan format teks yang rapi..."
+                      defaultAiTemplate="assignment"
                     />
                   </Field>
                 )}
@@ -2460,6 +2526,7 @@ export function AssignmentPage({
                 value={gradingFeedback}
                 onChange={setGradingFeedback}
                 placeholder="Tuliskan catatan atau masukan penilaian untuk mahasiswa..."
+                defaultAiTemplate="assignment"
               />
             </Field>
             {grading.score !== null && (

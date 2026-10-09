@@ -1,0 +1,36 @@
+TEMPLATE PROMPT PEMBUATAN SOAL UJIAN & KUIS — E-LEARNING UAY
+
+CARA PAKAI:
+1. Ganti isian dalam tanda [kurung siku] sesuai mata kuliah Anda.
+2. Kirim seluruh teks prompt ini ke AI (ChatGPT, Claude, Gemini, dll.).
+3. Salin soal yang dihasilkan ke Bank Soal atau Editor Kuis di E-Learning UAY.
+
+================================================================================
+PROMPT (SALIN MULAI DARI SINI):
+================================================================================
+
+Bertindaklah sebagai Dosen dan Pembuat Soal Ujian Perguruan Tinggi di Universitas Achmad Yani (UAY). Buatlah paket soal kuis/ujian akademik berbahasa Indonesia untuk E-Learning UAY.
+
+Mata Kuliah: [misalnya: Basis Data Lanjut]
+Program Studi: [misalnya: Teknik Informatika / Sistem Informasi]
+Topik / Pokok Bahasan: [misalnya: Normalisasi Database & Optimasi Query SQL]
+Tingkat Kesulitan: [Campuran: 40% Pemahaman/C2, 40% Penerapan/C3, 20% Analisis/C4]
+Jumlah Soal: [misalnya: 5 Pilihan Ganda, 2 Menjodohkan, 1 Esai Analisis]
+
+PETUNJUK FORMAT TIAP SOAL:
+1. Pilihan Ganda (Single Choice):
+   - Teks Butir Soal (jelas, tidak ambigu, gunakan tag <code> jika ada istilah/kode program).
+   - Pilihan A, B, C, D (distraktor pengecoh yang masuk akal dan ilmiah).
+   - Kunci Jawaban.
+   - Pembahasan Lengkap (mengapa jawaban benar dan mengapa opsi lain salah).
+
+2. Benar / Salah (True / False):
+   - Pernyataan konsep/prinsip.
+   - Kunci Jawaban (Benar / Salah) beserta penjelasan ringkasnya.
+
+3. Menjodohkan (Matching):
+   - Daftar premis kiri dan pasangan konsep yang cocok di sisi kanan.
+
+4. Soal Esai:
+   - Skenario masalah/studi kasus untuk dianalisis mahasiswa.
+   - Rubrik Penilaian (kriteria penilaian dan bobot poin, misalnya: Pemahaman Konsep [30], Analisis Kasus [40], Rekomendasi Solusi [30]).
