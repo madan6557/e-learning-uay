@@ -29,6 +29,7 @@ import { PublishButton } from "./PublishButton";
 import { useEffect, useState } from "react";
 import { usePhoneLayout } from "./usePhoneLayout";
 import { hasPermission } from "../../../packages/shared/src/permissions";
+import { notifyAction } from "./feedback";
 import {
   ArrowLeft,
   Plus,
@@ -113,6 +114,11 @@ export function ClassPage({
     [message, setMessage] = useState("");
   const cls = info.data;
   useEffect(() => {
+    if (!message) return;
+    const t = setTimeout(() => setMessage(""), 5000);
+    return () => clearTimeout(t);
+  }, [message]);
+  useEffect(() => {
     if (!cls) return;
     const query = new URLSearchParams(location.search);
     let destination = classPath(cls);
@@ -178,11 +184,11 @@ export function ClassPage({
         ),
       })),
     }));
-    setMessage(
-      visible
-        ? t.contentPublished
-        : "Publikasi ditarik. Konten tidak ditampilkan kepada mahasiswa.",
-    );
+    const msg = visible
+      ? t.contentPublished
+      : "Publikasi ditarik. Konten tidak ditampilkan kepada mahasiswa.";
+    setMessage(msg);
+    notifyAction(msg);
   };
   const isArchived = cls.status === "ARCHIVED";
   const tabs = [
@@ -207,6 +213,7 @@ export function ClassPage({
   const saved = () => {
     setModal(null);
     setMessage(t.saved);
+    notifyAction(t.saved);
     info.reload();
   };
   const handleReopen = async () => {
@@ -223,7 +230,9 @@ export function ClassPage({
       academicYear: cls.academicYear,
       status: "PUBLISHED",
     });
-    setMessage("Kelas berhasil dibuka kembali dan sekarang berstatus aktif.");
+    const msg = "Kelas berhasil dibuka kembali dan sekarang berstatus aktif.";
+    setMessage(msg);
+    notifyAction(msg);
     info.reload();
   };
   const classUrl = classPath(cls);
@@ -416,7 +425,7 @@ export function ClassPage({
                 kuliah di katalog sebelum membuka kembali kelas.
               </div>
             )}
-          {message && <Notice>{message}</Notice>}
+          {message && <Notice onClose={() => setMessage("")}>{message}</Notice>}
           {phone ? (
             <Field label="Buka bagian kelas">
               <select

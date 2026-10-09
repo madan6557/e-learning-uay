@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
 import { Notice } from "./components/ui/Notice";
 
 type Feedback = { id: number; message: string; error?: boolean };
@@ -16,45 +15,39 @@ export function notifyAction(message: string, error = false) {
 export function FeedbackHost() {
   const [messages, setMessages] = useState<Feedback[]>([]);
   useEffect(() => {
-    const timers = new Set<ReturnType<typeof setTimeout>>();
+    const timers = new Map<number, ReturnType<typeof setTimeout>>();
     const receive = (event: Event) => {
       const item = (event as CustomEvent<Feedback>).detail;
-      setMessages((current) => [...current.slice(-3), item]);
-      if (!item.error) {
-        const timer = setTimeout(() => {
-          setMessages((current) =>
-            current.filter((message) => message.id !== item.id),
-          );
-          timers.delete(timer);
-        }, 7000);
-        timers.add(timer);
-      }
+      setMessages((current) => [...current.slice(-2), item]);
+      const duration = item.error ? 8000 : 5000;
+      const timer = setTimeout(() => {
+        setMessages((current) =>
+          current.filter((message) => message.id !== item.id),
+        );
+        timers.delete(item.id);
+      }, duration);
+      timers.set(item.id, timer);
     };
     window.addEventListener("uay-feedback", receive);
     return () => {
       window.removeEventListener("uay-feedback", receive);
-      for (const timer of timers) clearTimeout(timer);
+      for (const timer of timers.values()) clearTimeout(timer);
     };
   }, []);
   return (
     <div className="feedback-host" aria-label="Hasil tindakan">
       {messages.map((item) => (
         <div className="feedback-item" key={item.id}>
-          <Notice error={item.error ? item.message : undefined}>
-            {item.message}
-          </Notice>
-          <button
-            type="button"
-            className="icon-button"
-            aria-label="Tutup pesan"
-            onClick={() =>
+          <Notice
+            error={item.error ? item.message : undefined}
+            onClose={() =>
               setMessages((current) =>
                 current.filter((message) => message.id !== item.id),
               )
             }
           >
-            <X size={16} />
-          </button>
+            {item.message}
+          </Notice>
         </div>
       ))}
     </div>

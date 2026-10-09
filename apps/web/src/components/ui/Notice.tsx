@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, X } from "lucide-react";
 import { ApiError } from "../../services/api";
 import labels from "../../../../../packages/shared/src/id.json";
 
@@ -8,17 +8,21 @@ const t = labels;
 export function Notice({
   error,
   children,
+  onClose,
+  className = "",
 }: {
   error?: unknown;
   children?: ReactNode;
+  onClose?: () => void;
+  className?: string;
 }) {
   return (
     <div
-      className={error ? "error notice" : "success notice"}
+      className={`${error ? "error notice" : "success notice"} ${className}`.trim()}
       role={error ? "alert" : "status"}
     >
       {error ? <AlertCircle size={18} /> : <CheckCircle2 size={18} />}
-      <div>
+      <div style={{ flex: 1, minWidth: 0 }}>
         {error instanceof Error ? error.message : typeof error === "string" ? error : children}
         {error instanceof Error &&
           typeof (error as any).retry === "function" && (
@@ -45,6 +49,29 @@ export function Notice({
           </small>
         )}
       </div>
+      {onClose && (
+        <button
+          type="button"
+          className="icon-button notice-close-button"
+          onClick={onClose}
+          aria-label="Tutup pemberitahuan"
+          style={{
+            background: "transparent",
+            border: 0,
+            padding: 4,
+            cursor: "pointer",
+            color: "currentColor",
+            opacity: 0.7,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginLeft: "auto",
+            flexShrink: 0,
+          }}
+        >
+          <X size={15} />
+        </button>
+      )}
     </div>
   );
 }

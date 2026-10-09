@@ -1,5 +1,6 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { Action } from "./components/ui/Action";
+import { notifyAction } from "./feedback";
 import {
   CalendarCheck,
   CalendarClock,
@@ -196,6 +197,12 @@ export function Attendance({
   >(null);
   const [message, setMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!message) return;
+    const t = setTimeout(() => setMessage(null), 5000);
+    return () => clearTimeout(t);
+  }, [message]);
+
   const sessions = sessionsApi.data || [];
   const sessionsPagination = usePagination(sessions, 10);
 
@@ -216,23 +223,9 @@ export function Attendance({
       style={{ maxWidth: 1040, margin: "0 auto", paddingBottom: 40 }}
     >
       {message && (
-        <div
-          className="notice"
-          style={{
-            background: "#ecfdf5",
-            border: "1px solid #a7f3d0",
-            color: "#065f46",
-            padding: "12px 16px",
-            borderRadius: 8,
-            marginBottom: 16,
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-          }}
-        >
-          <CheckCircle2 size={18} />
-          <span>{message}</span>
-        </div>
+        <Notice onClose={() => setMessage(null)}>
+          {message}
+        </Notice>
       )}
 
       {/* Banner Notifikasi Presensi Aktif untuk Mahasiswa */}
@@ -823,9 +816,9 @@ export function Attendance({
                                 isOpen: !s.isOpen,
                               });
                               sessionsApi.reload();
-                              setMessage(
-                                `Sesi "${s.title}" berhasil ${!s.isOpen ? "dibuka" : "ditutup"}.`,
-                              );
+                              const msg = `Sesi "${s.title}" berhasil ${!s.isOpen ? "dibuka" : "ditutup"}.`;
+                              setMessage(msg);
+                              notifyAction(msg);
                             }}
                           >
                             {s.isOpen ? (
@@ -1000,6 +993,7 @@ export function Attendance({
           onCreated={() => {
             sessionsApi.reload();
             setMessage("Sesi presensi baru berhasil dibuat.");
+            notifyAction("Sesi presensi baru berhasil dibuat.");
           }}
         />
       )}
@@ -1012,6 +1006,7 @@ export function Attendance({
           onSaved={() => {
             sessionsApi.reload();
             setMessage("Jadwal dan pengaturan sesi berhasil disimpan.");
+            notifyAction("Jadwal dan pengaturan sesi berhasil disimpan.");
           }}
         />
       )}
@@ -1096,9 +1091,9 @@ export function Attendance({
                   });
                   sessionsApi.reload();
                   setModal(null);
-                  setMessage(
-                    `Sesi presensi berhasil ${!modal.session.isOpen ? "dibuka" : "ditutup"}.`,
-                  );
+                  const msg = `Sesi presensi berhasil ${!modal.session.isOpen ? "dibuka" : "ditutup"}.`;
+                  setMessage(msg);
+                  notifyAction(msg);
                 }}
               >
                 {modal.session.isOpen ? (
@@ -1127,7 +1122,9 @@ export function Attendance({
                   );
                   setModal({ kind: "code", session: res });
                   sessionsApi.reload();
-                  setMessage("Kode presensi baru berhasil dibuat.");
+                  const msg = "Kode presensi baru berhasil dibuat.";
+                  setMessage(msg);
+                  notifyAction(msg);
                 }}
               >
                 Acak Ulang Kode
@@ -1145,7 +1142,9 @@ export function Attendance({
           onClose={() => setModal(null)}
           onSaved={() => {
             sessionsApi.reload();
-            setMessage("Presensi manual berhasil disimpan.");
+            const msg = "Presensi manual berhasil disimpan.";
+            setMessage(msg);
+            notifyAction(msg);
           }}
         />
       )}
@@ -1167,9 +1166,9 @@ export function Attendance({
                   code,
                 });
                 setModal(null);
-                setMessage(
-                  "Presensi berhasil dicatat! Status Anda kini Hadir.",
-                );
+                const msg = "Presensi berhasil dicatat! Status Anda kini Hadir.";
+                setMessage(msg);
+                notifyAction(msg);
                 sessionsApi.reload();
               }}
             >
@@ -1280,9 +1279,9 @@ export function Attendance({
                       { code: "" },
                     );
                     setModal(null);
-                    setMessage(
-                      "Presensi berhasil dicatat! Status Anda kini Hadir.",
-                    );
+                    const msg = "Presensi berhasil dicatat! Status Anda kini Hadir.";
+                    setMessage(msg);
+                    notifyAction(msg);
                     sessionsApi.reload();
                   }}
                 >
@@ -1360,7 +1359,9 @@ export function CreateSessionModal({
       onCreated();
       onClose();
     } catch (err) {
-      setError(err as Error);
+      const e = err as Error;
+      setError(e);
+      notifyAction(e.message, true);
     } finally {
       savingRef.current = false;
       setSaving(false);
@@ -1381,7 +1382,7 @@ export function CreateSessionModal({
             minWidth: 0,
           }}
         >
-          {error && <Notice error={error} />}
+          {error && <Notice error={error} onClose={() => setError(null)} />}
           <label className="checkbox-line">
             <input
               type="checkbox"
@@ -1668,7 +1669,9 @@ export function ScheduleSessionModal({
       onSaved();
       onClose();
     } catch (err) {
-      setError(err as Error);
+      const e = err as Error;
+      setError(e);
+      notifyAction(e.message, true);
     } finally {
       savingRef.current = false;
       setSaving(false);
@@ -1693,7 +1696,7 @@ export function ScheduleSessionModal({
             minWidth: 0,
           }}
         >
-          {error && <Notice error={error} />}
+          {error && <Notice error={error} onClose={() => setError(null)} />}
           <label className="checkbox-line">
             <input
               type="checkbox"
@@ -2085,7 +2088,9 @@ function ManualAttendanceModal({
       onSaved();
       onClose();
     } catch (error) {
-      setError(error as Error);
+      const e = error as Error;
+      setError(e);
+      notifyAction(e.message, true);
     } finally {
       savingRef.current = false;
       setSaving(false);
@@ -2106,7 +2111,7 @@ function ManualAttendanceModal({
       onClose={onClose}
       wide
     >
-      {error && <Notice error={error} />}
+      {error && <Notice error={error} onClose={() => setError(null)} />}
       <div
         style={{
           display: "flex",

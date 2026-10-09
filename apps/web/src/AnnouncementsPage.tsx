@@ -924,7 +924,7 @@ function AnnouncementEditorModal({
       wide={viewMode !== "split"}
       fullScreen={viewMode === "split"}
     >
-      {error && <Notice error={error} />}
+      {error && <Notice error={error} onClose={() => setError(null)} />}
 
       {/* View Mode Switcher */}
       <div className="announcement-viewmode-bar">
@@ -1203,7 +1203,7 @@ export function AnnouncementsPage({ user }: { user: any; config?: any }) {
         )}
       </div>
 
-      {error && <Notice error={error} />}
+      {error && <Notice error={error} onClose={() => setError(null)} />}
 
       {/* Filter and Search Bar */}
       <div

@@ -21,6 +21,7 @@ export interface ActionProps extends Omit<
   successMessage?: string;
   busyLabel?: string;
   disabledReason?: string;
+  inlineError?: boolean;
 }
 
 export function Action({
@@ -32,6 +33,7 @@ export function Action({
   successMessage,
   busyLabel,
   disabledReason,
+  inlineError = false,
   ...buttonProps
 }: ActionProps) {
   const inFlight = useRef(false);
@@ -44,11 +46,17 @@ export function Action({
       <button
         {...buttonProps}
         type="button"
-        className={className}
+        className={`${className}${error ? " action-has-error" : ""}`.trim()}
         disabled={disabled || busy}
         aria-busy={busy}
         aria-label={label ?? buttonProps["aria-label"]}
-        title={disabled && disabledReason ? disabledReason : buttonProps.title}
+        title={
+          error
+            ? error.message
+            : disabled && disabledReason
+              ? disabledReason
+              : buttonProps.title
+        }
         aria-describedby={
           disabled && disabledReason
             ? reasonId
@@ -64,7 +72,9 @@ export function Action({
             if (result !== false && successMessage)
               notifyAction(successMessage);
           } catch (e) {
-            setError(e as Error);
+            const err = e as Error;
+            setError(err);
+            notifyAction(err.message || "Tindakan gagal dilakukan.", true);
           } finally {
             setBusy(false);
             inFlight.current = false;
@@ -74,7 +84,9 @@ export function Action({
         {busy && <LoaderCircle size={16} className="spin" aria-hidden="true" />}
         {busy && busyLabel ? busyLabel : children}
       </button>
-      {error && <Notice error={error} />}
+      {inlineError && error && (
+        <Notice error={error} onClose={() => setError(null)} />
+      )}
       {disabled && disabledReason && (
         <small id={reasonId} className="action-reason">
           {disabledReason}

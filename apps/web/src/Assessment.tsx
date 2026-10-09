@@ -1,6 +1,7 @@
 import { DraftRouteContext } from "./useLocalDraft";
 import { navigate } from "./router";
 import { confirmAction } from "./confirm";
+import { notifyAction } from "./feedback";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -1163,9 +1164,7 @@ function AttemptRunner({
         }
         if (snapshot === answerRef.current) dirty.current = false;
         setStatus(t.answerSaved);
-        setError(null);
       } catch (e) {
-        setError(e as Error);
         setStatus(t.answerSaveFailed);
         throw e;
       } finally {
@@ -1191,7 +1190,9 @@ function AttemptRunner({
         setSuccessSubmitted(true);
       }
     } catch (e) {
-      setError(e as Error);
+      const err = e as Error;
+      setError(err);
+      notifyAction(err.message, true);
     } finally {
       setSubmitting(false);
     }
@@ -1308,7 +1309,7 @@ function AttemptRunner({
           </button>
         </div>
       )}
-      {error && <Notice error={error} />}
+      {error && <Notice error={error} onClose={() => setError(null)} />}
       <fieldset disabled={submitting || remaining === 0}>
         {attempt.questionSnapshot.map((q: any, index: number) => (
           <article className="card answer-card" key={q.id} id={`q-${q.id}`}>
@@ -2275,7 +2276,7 @@ export function AssignmentPage({
                 )}
               </div>
               {receipt && (
-                <Notice>
+                <Notice onClose={() => setReceipt(null)}>
                   {t.submissionSuccess} · {date(receipt.submittedAt)} · {t.version}{" "}
                   {receipt.version} ·{" "}
                   {receipt.status === "LATE" ? t.late : t.onTime}
@@ -2306,6 +2307,7 @@ export function AssignmentPage({
                   );
                   setReceipt(result);
                   setShowSuccessModal(true);
+                  notifyAction(t.submissionSuccess);
                   info.reload();
                 }}
               >

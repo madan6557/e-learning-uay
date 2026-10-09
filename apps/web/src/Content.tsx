@@ -542,7 +542,7 @@ export function BlockEditor({
           ))}
         </select>
       </div>
-      {error && <Notice error={error} />}
+      {error && <Notice error={error} onClose={() => setError(null)} />}
     </div>
   );
 }
@@ -1353,7 +1353,7 @@ export function ResourceViewer({
               </Action>
             </div>
           )}
-        {error && <Notice error={error} />}
+        {error && <Notice error={error} onClose={() => setError(null)} />}
       </div>
     </Modal>
   );
@@ -1665,7 +1665,7 @@ function VideoViewer({
           </Action>
         </div>
       )}
-      {error && <Notice error={error} />}
+      {error && <Notice error={error} onClose={() => setError(null)} />}
       {error && !embed.isEmbed && (
         <Action
           busyLabel="Memuat ulang video…"

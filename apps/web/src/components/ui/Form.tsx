@@ -187,7 +187,9 @@ export function Form({
               window.dispatchEvent(new Event("notifications-changed"));
           }
         } catch (error) {
-          setError(error as Error);
+          const err = error as Error;
+          setError(err);
+          notifyAction(err.message || "Gagal menyimpan perubahan.", true);
         } finally {
           setBusy(false);
           inFlight.current = false;
@@ -199,7 +201,7 @@ export function Form({
       <fieldset disabled={busy || disabled || !!draft.recovery}>
         {children}
       </fieldset>
-      {error && <Notice error={error} />}
+      {error && <Notice error={error} onClose={() => setError(null)} />}
       {(disabled || submitDisabled) && disabledReason && (
         <p className="action-reason">{disabledReason}</p>
       )}

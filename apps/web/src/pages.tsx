@@ -1492,7 +1492,7 @@ export function ClassForm({
           onSaved();
         }}
       >
-        {error && <Notice error={error} />}
+        {error && <Notice error={error} onClose={() => setError(null)} />}
         <Field label={t.course}>
           <select required name="courseId">
             <option value="">{t.choose}</option>
@@ -1703,7 +1703,7 @@ export function ClassForm({
               {u.name}
             </label>
           ))}
-        {error && <Notice error={error} />}
+        {error && <Notice error={error} onClose={() => setError(null)} />}
       </Form>
     </Modal>
   );
@@ -1860,7 +1860,7 @@ export function AcademicGovernanceModal({
         {readOnly && (
           <p>Pengaturan global hanya dapat diubah oleh Super Admin.</p>
         )}
-        {saveError && <Notice error={saveError} />}
+        {saveError && <Notice error={saveError} onClose={() => setSaveError(null)} />}
         <fieldset
           disabled={readOnly || saving}
           style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}
@@ -2795,7 +2795,7 @@ export function CourseImportModal({
             </div>
           )}
 
-          {error && <Notice error={error} />}
+          {error && <Notice error={error} onClose={() => setError(null)} />}
 
           {loading && <Loading />}
 
@@ -3165,8 +3165,8 @@ export function Profile({
             >
               Hapus draft lokal
             </Action>
-            {cleared && <Notice>Draft lokal berhasil dihapus.</Notice>}
-            {failure && <Notice error={failure} />}
+            {cleared && <Notice onClose={() => setCleared(false)}>Draft lokal berhasil dihapus.</Notice>}
+            {failure && <Notice error={failure} onClose={() => setFailure(null)} />}
           </section>
         </div>
       </div>

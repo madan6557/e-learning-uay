@@ -201,9 +201,11 @@
     display: none;
   }
   .feedback-host {
+    left: 12px;
     right: 12px;
     bottom: calc(88px + env(safe-area-inset-bottom));
-    width: calc(100% - 24px);
+    width: auto;
+    max-width: 100%;
   }
   body:has(dialog[open]) .feedback-host {
     bottom: 16px;

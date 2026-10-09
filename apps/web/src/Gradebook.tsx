@@ -1,5 +1,6 @@
 import { useLocalDraft, SaveStatus } from "./useLocalDraft";
 import { useEffect, useState } from "react";
+import { notifyAction } from "./feedback";
 import { usePhoneLayout } from "./usePhoneLayout";
 import {
   Download,
@@ -729,6 +730,11 @@ export function Gradebook({
   useEffect(() => {
     if (!changedCount) setReason("");
   }, [changedCount]);
+  useEffect(() => {
+    if (!message) return;
+    const t = setTimeout(() => setMessage(""), 5000);
+    return () => clearTimeout(t);
+  }, [message]);
   const data = info.data;
 
   useEffect(() => {
@@ -874,9 +880,9 @@ export function Gradebook({
                         }
                       }
                       if (!batchChanges.length) {
-                        setMessage(
-                          "Tidak ada nilai kalkulasi otomatis yang tersedia untuk diterapkan.",
-                        );
+                        const msg = "Tidak ada nilai kalkulasi otomatis yang tersedia untuk diterapkan.";
+                        setMessage(msg);
+                        notifyAction(msg);
                         return false;
                       }
                       await api(
@@ -888,9 +894,9 @@ export function Gradebook({
                             "Penerapan kalkulasi otomatis sistem ke draf rekap nilai",
                         },
                       );
-                      setMessage(
-                        `${batchChanges.length} nilai saran otomatis berhasil diterapkan ke draf.`,
-                      );
+                      const msg = `${batchChanges.length} nilai saran otomatis berhasil diterapkan ke draf.`;
+                      setMessage(msg);
+                      notifyAction(msg);
                       info.reload();
                     }}
                   >
@@ -903,7 +909,7 @@ export function Gradebook({
           )}
         </div>
       </div>
-      {message && <Notice>{message}</Notice>}
+      {message && <Notice onClose={() => setMessage("")}>{message}</Notice>}
       {user?.role === "DEPARTMENT_ADMIN" && (
         <div className="callout note">
           Mode pratinjau rekap nilai: Anda dapat memantau capaian mahasiswa dan
@@ -980,7 +986,9 @@ export function Gradebook({
           );
           setChanges({});
           setReason("");
-          setMessage(changedCount + " nilai berhasil disimpan.");
+          const msg = changedCount + " nilai berhasil disimpan.";
+          setMessage(msg);
+          notifyAction(msg);
           info.reload();
         }}
       >
@@ -1199,6 +1207,7 @@ export function Gradebook({
                     {},
                   );
                   setMessage(t.saved);
+                  notifyAction(t.saved);
                   info.reload();
                 }}
               >
@@ -1219,6 +1228,7 @@ export function Gradebook({
                     { acknowledgeMissing: acknowledge },
                   );
                   setMessage(t.saved);
+                  notifyAction(t.saved);
                   info.reload();
                 }}
               >
@@ -1234,7 +1244,9 @@ export function Gradebook({
           userId={modal.userId}
           onClose={() => setModal(null)}
           onSaved={() => {
-            setMessage("Nilai draf berhasil disimpan.");
+            const msg = "Nilai draf berhasil disimpan.";
+            setMessage(msg);
+            notifyAction(msg);
             info.reload();
           }}
         />
@@ -1703,7 +1715,7 @@ export function ImportPanel({
             <input value={reason} onChange={(e) => setReason(e.target.value)} />
           </Field>
         )}
-        {error && <Notice error={error} />}{" "}
+        {error && <Notice error={error} onClose={() => setError(null)} />}
         {busy ? (
           <Loading />
         ) : !rows.length ? (

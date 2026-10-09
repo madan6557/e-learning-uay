@@ -2745,19 +2745,70 @@ hr {
   gap: 8px;
   pointer-events: none;
 }
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
 .feedback-item {
   position: relative;
   pointer-events: auto;
   border-radius: var(--radius, 10px);
   background: var(--surface, #fff);
   box-shadow: 0 6px 24px rgb(15 23 42 / 15%);
+  animation: toast-slide-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 .feedback-item .notice { margin: 0; padding-right: 42px; }
 .feedback-item > button { position: absolute; right: 6px; top: 8px; }
 .action-reason { display: block; color: var(--muted); font-size: .8125rem; line-height: 1.5; }
-.notice { align-items: flex-start; }
+
+@keyframes notice-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.notice {
+  align-items: flex-start;
+  animation: notice-appear 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 .notice > div { min-width: 0; overflow-wrap: anywhere; }
 .notice .retry-button { display: block; margin-top: 8px; }
+
+.toolbar > .notice {
+  flex-basis: 100%;
+  width: 100%;
+  order: 999;
+  margin: 6px 0 0 0;
+}
+
+td .notice {
+  margin: 4px 0;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+}
+
+.action-has-error {
+  outline: 2px solid #ef4444 !important;
+  outline-offset: 1px;
+}
+
+.quiz-save-status {
+  min-width: 155px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
 .announcement-split-container > * { min-width: 0; }
 .announcement-preview-scroll { overflow-wrap: anywhere; }
 @media (max-width: 767px) {
