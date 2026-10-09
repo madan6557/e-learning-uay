@@ -165,7 +165,7 @@ export function GuidePage({ user }: { user: { role?: unknown } | null }) {
               {article.controls?.length && (
                 <>
                   <h3>Pilihan dan tombol</h3>
-                  <div className="guide-table-scroll">
+                  <div className="guide-table-scroll phone-record-table">
                     <table>
                       <thead>
                         <tr>
@@ -178,8 +178,8 @@ export function GuidePage({ user }: { user: { role?: unknown } | null }) {
                         {article.controls.map((control, index) => (
                           <tr key={index}>
                             <th scope="row">{control.label}</th>
-                            <td>{control.value}</td>
-                            <td>{control.effect}</td>
+                            <td data-label="Contoh">{control.value}</td>
+                            <td data-label="Kegunaan">{control.effect}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -197,7 +197,7 @@ export function GuidePage({ user }: { user: { role?: unknown } | null }) {
               )}
               {article.gradeScales &&
                 Object.values(GRADE_SCALE_PRESETS).map((scale) => (
-                  <div key={scale.version}>
+                  <div className="phone-record-table" key={scale.version}>
                     <h3>Skala {scale.version}</h3>
                     <table>
                       <thead>
@@ -210,9 +210,9 @@ export function GuidePage({ user }: { user: { role?: unknown } | null }) {
                       <tbody>
                         {scale.bands.map((band) => (
                           <tr key={band.letter}>
-                            <td>≥ {band.minScore}</td>
-                            <td>{band.letter}</td>
-                            <td>{band.point.toFixed(2)}</td>
+                            <td data-label="Skor minimum">≥ {band.minScore}</td>
+                            <td data-label="Huruf mutu">{band.letter}</td>
+                            <td data-label="Indeks mutu">{band.point.toFixed(2)}</td>
                           </tr>
                         ))}
                       </tbody>

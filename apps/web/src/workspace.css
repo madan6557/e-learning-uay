@@ -46,6 +46,75 @@
 .topbar-right {
   justify-content: flex-end;
 }
+.grading-mode-field {
+  display: flex;
+  align-items: center;
+  gap: var(--icon-label-gap);
+  min-width: 0;
+  max-width: 100%;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+.grading-mode-field > span {
+  flex-shrink: 0;
+}
+.grading-mode-field select {
+  width: min(280px, 100%);
+  min-width: 0;
+}
+.attendance-code-card {
+  max-width: 100%;
+  padding: var(--space-6) 48px;
+}
+.attendance-code-value {
+  font-size: 3.5rem;
+  letter-spacing: 0.4rem;
+}
+.attendance-code-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.pagination-bar,
+.pagination-controls,
+.pagination-size,
+.pagination-pages,
+.pagination-numbers {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.pagination-bar {
+  justify-content: space-between;
+  border-top: 1px solid var(--border);
+  padding: var(--space-4) 0;
+  margin-top: var(--space-4);
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+.pagination-summary strong {
+  color: var(--foreground);
+}
+.pagination-controls {
+  margin-left: auto;
+}
+.pagination-size {
+  gap: var(--space-2);
+}
+.pagination-size select {
+  width: auto;
+}
+.pagination-pages,
+.pagination-numbers {
+  gap: var(--space-2);
+}
+.pagination-numbers button {
+  min-width: 40px;
+  padding-inline: var(--space-2);
+}
 .user-chip {
   display: flex;
   align-items: center;
@@ -839,7 +908,11 @@ td small {
   padding-bottom: 24px;
 }
 .modal-scroll > :where(:not(.modal-heading)) {
-  margin-inline: 28px;
+  margin-inline: var(--modal-gutter);
+}
+.modal-scroll > .modal-body {
+  margin-inline: 0;
+  padding: var(--space-5) var(--modal-gutter);
 }
 .clickable-grade-row {
   cursor: pointer;
@@ -858,7 +931,7 @@ td small {
   background: #fff;
   z-index: 3;
   border-bottom: 1px solid var(--line);
-  padding: 23px 28px;
+  padding: 23px var(--modal-gutter);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -870,7 +943,7 @@ td small {
 .modal-scroll > h3,
 .modal-scroll > .inline-form {
   margin: 0;
-  padding: 25px 28px;
+  padding: var(--space-6) var(--modal-gutter);
 }
 .modal-scroll > .form-grid,
 .modal-scroll > .toolbar,
@@ -879,10 +952,10 @@ td small {
 .modal-scroll > .notice,
 .modal-scroll > .import-summary,
 .modal-scroll > .form-actions {
-  margin: 20px 28px;
+  margin: var(--space-5) var(--modal-gutter);
 }
 .modal-scroll > .table-wrap {
-  margin: 20px 28px;
+  margin: var(--space-5) var(--modal-gutter);
   max-height: 50vh;
 }
 .modal-scroll > form + form {
@@ -2343,22 +2416,22 @@ hr {
     max-height: 94vh;
   }
   .modal-heading {
-    padding: 18px 20px;
+    padding: var(--space-4) var(--modal-gutter);
   }
   .modal-scroll > form,
   .modal-scroll > .resource-viewer {
-    padding: 20px;
+    padding: var(--space-5) var(--modal-gutter);
   }
   .modal-scroll > .form-grid,
   .modal-scroll > .toolbar,
   .modal-scroll > .field {
-    margin: 20px;
+    margin: var(--space-5) var(--modal-gutter);
   }
   .modal-scroll > :where(:not(.modal-heading)) {
-    margin-inline: 20px;
+    margin-inline: var(--modal-gutter);
   }
   .modal-scroll > .table-wrap {
-    margin-inline: 20px;
+    margin-inline: var(--modal-gutter);
   }
   .form-grid {
     grid-template-columns: 1fr;

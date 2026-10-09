@@ -1801,7 +1801,7 @@ export function AcademicGovernanceModal({
 
   return (
     <Modal title="Pengaturan & Tata Kelola Akademik" wide onClose={onClose}>
-      <form onSubmit={handleSave} style={{ padding: "8px 24px 28px 24px" }}>
+      <form onSubmit={handleSave}>
         <div
           style={{
             display: "flex",

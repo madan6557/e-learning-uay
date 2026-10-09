@@ -212,8 +212,9 @@ function StudentGradeReviewModal({
       onClose={onClose}
     >
       <div
+        className="modal-body"
         style={{
-          padding: "16px 24px 28px 24px",
+          padding: "var(--space-4) var(--modal-gutter) var(--space-6)",
           display: "flex",
           flexDirection: "column",
           gap: 16,
@@ -395,6 +396,7 @@ function StudentGradeReviewModal({
 
                 {cat.activities && cat.activities.length > 0 ? (
                   <div
+                    className="phone-record-table grade-review-activities"
                     style={{
                       marginBottom: 12,
                       background: "#f8fafc",
@@ -427,7 +429,7 @@ function StudentGradeReviewModal({
                       <tbody>
                         {cat.activities.map((act: any, idx: number) => (
                           <tr key={act.id || idx}>
-                            <td style={{ padding: "6px 10px" }}>
+                            <td className="record-title" style={{ padding: "6px 10px" }}>
                               <strong>{act.title}</strong>
                               <small
                                 style={{
@@ -439,6 +441,7 @@ function StudentGradeReviewModal({
                               </small>
                             </td>
                             <td
+                              data-label="Nilai riil"
                               style={{
                                 padding: "6px 10px",
                                 textAlign: "center",
@@ -449,6 +452,7 @@ function StudentGradeReviewModal({
                                 : "—"}
                             </td>
                             <td
+                              data-label="Skala 100"
                               style={{
                                 padding: "6px 10px",
                                 textAlign: "center",
@@ -458,6 +462,7 @@ function StudentGradeReviewModal({
                               {act.normalizedScore.toFixed(2)}
                             </td>
                             <td
+                              data-label="Status"
                               style={{
                                 padding: "6px 10px",
                                 textAlign: "right",

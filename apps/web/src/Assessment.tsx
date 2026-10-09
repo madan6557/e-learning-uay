@@ -927,13 +927,12 @@ export function QuizPage({
         {canGrade && (
           <div className="toolbar" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
             {quiz.questions.some((q: any) => ["ESSAY", "FILE_UPLOAD"].includes(q.type)) && (
-              <label style={{ display: "inline-flex", alignItems: "center", gap: 8, margin: 0, fontWeight: "normal", fontSize: 13, color: "var(--muted)" }}>
-                <span style={{ whiteSpace: "nowrap" }}>{t.gradingMode}</span>
+              <label className="grading-mode-field">
+                <span>{t.gradingMode}</span>
                 <select
                   aria-label={t.gradeByQuestion}
                   value={byQuestion}
                   onChange={(e) => setByQuestion(e.target.value)}
-                  style={{ width: "auto", minWidth: 180, maxWidth: 280 }}
                 >
                   <option value="">{t.allQuestions}</option>
                   {quiz.questions
@@ -1335,7 +1334,7 @@ function AttemptRunner({
       </div>
       {successSubmitted && (
         <Modal title="Kuis Berhasil Dikumpulkan" onClose={onDone}>
-          <div style={{ textAlign: "center", padding: "16px 8px" }}>
+          <div className="modal-body submission-success">
             <div
               style={{
                 width: 64,
@@ -2368,7 +2367,7 @@ export function AssignmentPage({
       )}
       {showSuccessModal && (
         <Modal title="Tugas Berhasil Dikumpulkan" onClose={() => setShowSuccessModal(false)}>
-          <div style={{ textAlign: "center", padding: "16px 8px" }}>
+          <div className="modal-body submission-success">
             <div
               style={{
                 width: 64,

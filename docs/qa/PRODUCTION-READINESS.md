@@ -93,6 +93,8 @@ Landing dan LoginButton tidak diubah pada koreksi ini maupun commit implementasi
 
 59 berkas dokumentasi dipindahkan ke `guides`, `architecture`, `integrations`, `requirements` (termasuk arsip), `presentations` dan `qa`. Hash sebelum/sesudah pemindahan diperiksa agar konten dokumen historis tidak hilang. Tautan relatif, generator Word/slide/paket panduan, katalog QA dan jalur sumber portal diselaraskan. [Indeks dokumentasi](../README.md) menjadi titik masuk. Word/PDF/PPTX historis dipertahankan; tidak ditulis ulang hanya untuk perubahan direktori.
 
+Audit jarak tambahan pada 9 Oktober memeriksa lima peran pada 320/390/600/768/1024/1440 px. Kolom ikon landing, gutter modal, margin field, pagination, filter koreksi kuis, kartu tinjauan nilai, tabel panduan, feedback dan kode proyektor diperbaiki. [Laporan dan bukti](production/spacing-audit/README.md) membedakan 504 pengukuran akhir halaman/mode, 246 pemeriksaan komponen terisolasi, serta riwayat temuan sebelum koreksi. Penerimaan staging di bawah tetap berlaku.
+
 ## Migrasi dan konfigurasi deployment
 
 Pengumuman resmi kini disimpan di PostgreSQL (`SystemAnnouncement`) dengan audit dan notifikasi dalam transaksi. Seed contoh hanya berjalan pada demo. Migrasi Prisma wajib dijalankan sebelum API versi ini diluncurkan. JSON lama tidak otomatis diimpor saat startup; jalankan migrasi eksplisit setelah backup:

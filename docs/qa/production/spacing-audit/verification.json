@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-09",
+  "scope": "Responsive spacing and shared UI components",
+  "commands": {
+    "npm run typecheck": { "exitCode": 0 },
+    "npm run build": { "exitCode": 0 },
+    "npm test": { "exitCode": 0, "tests": 97, "passed": 97 },
+    "npm run qa:run": {
+      "exitCode": 0,
+      "runId": "4a1852f7-268c-4b82-8f43-1e44319dda9d",
+      "domainTests": 158,
+      "integrationTests": 132,
+      "database": "elearning_test",
+      "mappedCases": { "total": 354, "pass": 163, "fail": 0, "blocked": 0, "notRun": 191 }
+    },
+    "npm audit --json": { "exitCode": 0, "vulnerabilities": 0 },
+    "git diff --check": { "exitCode": 0 }
+  },
+  "browser": {
+    "widths": [320, 390, 600, 768, 1024, 1440],
+    "database": "elearning_visual_test",
+    "roles": ["Super Admin", "Admin Prodi", "Dosen", "Mahasiswa", "Rektor"],
+    "finalPageMeasurements": 504,
+    "isolatedComponentMeasurements": 246,
+    "unresolvedFindingsInFinalMeasurements": 0
+  },
+  "limits": [
+    "Local demo data and fixture integrations do not establish campus staging acceptance.",
+    "Physical mobile devices and iOS were not tested.",
+    "Measurements exclude intentional horizontal scroll regions.",
+    "UI checks do not exercise every mutation or every runtime error state."
+  ]
+}

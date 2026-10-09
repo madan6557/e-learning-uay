@@ -18,6 +18,13 @@
     "Segoe UI", sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
 
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --icon-label-gap: var(--space-2);
+
   --background: oklch(0.972 0.004 250);
   --foreground: oklch(0.24 0.024 254);
   --surface: oklch(1 0 0);

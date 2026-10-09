@@ -69,14 +69,7 @@ export function Modal({
       <div className="modal-scroll">
         <div className="modal-heading">
           <h2 id={titleId}>{title}</h2>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              marginLeft: "auto",
-            }}
-          >
+          <div className="modal-heading-actions">
             {extraActions}
             <button
               type="button"

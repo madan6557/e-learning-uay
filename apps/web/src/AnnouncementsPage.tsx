@@ -881,6 +881,7 @@ function AnnouncementEditorModal({
       </div>
 
       <div
+        className="form-actions"
         style={{
           display: "flex",
           justifyContent: "flex-end",
@@ -1061,6 +1062,7 @@ function AnnouncementEditorModal({
               </div>
               <AnnouncementCard item={previewItem} isPreview />
               <div
+                className="form-actions"
                 style={{
                   display: "flex",
                   justifyContent: "flex-end",

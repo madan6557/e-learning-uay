@@ -1023,7 +1023,7 @@ export function Attendance({
           onClose={() => setModal(null)}
           wide
         >
-          <div style={{ textAlign: "center", padding: "16px 0" }}>
+          <div className="modal-body submission-success">
             <h3
               style={{
                 margin: "0 0 6px 0",
@@ -1045,12 +1045,12 @@ export function Attendance({
             </p>
 
             <div
+              className="attendance-code-card"
               style={{
                 display: "inline-block",
                 background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)",
                 border: "2px dashed #0284c7",
                 borderRadius: 16,
-                padding: "24px 48px",
                 marginBottom: 24,
               }}
             >
@@ -1067,10 +1067,9 @@ export function Attendance({
                 Kode Presensi 6 Karakter
               </div>
               <div
+                className="attendance-code-value"
                 style={{
-                  fontSize: "3.5rem",
                   fontWeight: 900,
-                  letterSpacing: "0.4rem",
                   color: "#0f172a",
                   fontFamily: "monospace",
                 }}
@@ -1079,7 +1078,7 @@ export function Attendance({
               </div>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "center", gap: 12 }}>
+            <div className="attendance-code-actions">
               <Action
                 type="button"
                 className="button"

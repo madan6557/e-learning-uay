@@ -153,7 +153,7 @@ export function HelpPage({ user }: { user: { role?: unknown } | null }) {
   }, [selectedArticle, allowedArticles]);
 
   return (
-    <div className="help-container" style={{ maxWidth: 960, margin: "0 auto", padding: "24px 16px" }}>
+    <div className="help-container" style={{ maxWidth: 960, margin: "0 auto" }}>
       {/* Header */}
       <div className="page-heading" style={{ marginBottom: 24 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -170,7 +170,7 @@ export function HelpPage({ user }: { user: { role?: unknown } | null }) {
 
       {selectedArticle ? (
         /* Article Detail View */
-        <div className="card" style={{ padding: 24, borderRadius: 12, border: "1px solid var(--border, #e2e8f0)", background: "var(--card-bg, #ffffff)" }}>
+        <div className="card help-article" style={{ borderRadius: 12, border: "1px solid var(--border, #e2e8f0)", background: "var(--card-bg, #ffffff)" }}>
           <button
             type="button"
             className="button secondary"
@@ -251,11 +251,11 @@ export function HelpPage({ user }: { user: { role?: unknown } | null }) {
           {selectedArticle.controls && selectedArticle.controls.length > 0 && (
             <section className="help-guide-section">
               <h3>Input, pilihan, dan tombol</h3>
-              <div className="help-guide-table">
+              <div className="help-guide-table phone-record-table">
                 <table>
                   <thead><tr><th>Kontrol di layar</th><th>Nilai atau contoh</th><th>Fungsi dan akibat</th></tr></thead>
                   <tbody>{selectedArticle.controls.map((control, index) => (
-                    <tr key={index}><th scope="row">{control.label}</th><td>{control.value}</td><td>{control.effect}</td></tr>
+                    <tr key={index}><th scope="row">{control.label}</th><td data-label="Nilai atau contoh">{control.value}</td><td data-label="Fungsi dan akibat">{control.effect}</td></tr>
                   ))}</tbody>
                 </table>
               </div>
@@ -282,10 +282,10 @@ export function HelpPage({ user }: { user: { role?: unknown } | null }) {
           {selectedArticle.gradeScales && Object.values(GRADE_SCALE_PRESETS).map(scale => (
             <section className="help-guide-section" key={scale.version}>
               <h3>Skala {scale.version}</h3>
-              <div className="help-guide-table">
+              <div className="help-guide-table phone-record-table">
                 <table>
                   <thead><tr><th>Skor minimum</th><th>Huruf mutu</th><th>Indeks mutu</th></tr></thead>
-                  <tbody>{scale.bands.map(band => <tr key={band.letter}><td>≥ {band.minScore}</td><td>{band.letter}</td><td>{band.point.toFixed(2).replace(".", ",")}</td></tr>)}</tbody>
+                  <tbody>{scale.bands.map(band => <tr key={band.letter}><td data-label="Skor minimum">≥ {band.minScore}</td><td data-label="Huruf mutu">{band.letter}</td><td data-label="Indeks mutu">{band.point.toFixed(2).replace(".", ",")}</td></tr>)}</tbody>
                 </table>
               </div>
             </section>

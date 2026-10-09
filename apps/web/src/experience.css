@@ -58,7 +58,8 @@ textarea {
   resize: vertical;
 }
 button svg,
-a svg {
+a svg,
+.lucide {
   flex-shrink: 0;
 }
 a.secondary {
@@ -100,8 +101,8 @@ a.secondary {
   padding-left: 20px;
 }
 .field {
-  margin-bottom: 18px;
-  gap: 8px;
+  margin-bottom: var(--space-5);
+  gap: var(--space-2);
 }
 .field > span:first-child,
 .field-title {
@@ -113,6 +114,15 @@ a.secondary {
 }
 .form-grid {
   align-items: start;
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+.form-grid > .field,
+.resource-metadata-grid > .field {
+  margin-bottom: 0;
+}
+.resource-metadata-grid {
+  margin-bottom: var(--space-5);
 }
 .check-row {
   min-height: 42px;
@@ -197,6 +207,7 @@ tbody tr:hover {
   }
 }
 .modal {
+  --modal-gutter: var(--space-6);
   --modal-max-height: calc(100dvh - 48px);
   width: min(620px, calc(100vw - 32px));
   max-height: var(--modal-max-height);
@@ -212,19 +223,31 @@ tbody tr:hover {
   top: 0;
   z-index: 5;
   background: white;
-  padding: 20px 24px;
+  padding: var(--space-5) var(--modal-gutter);
   border-bottom: 1px solid var(--line);
   align-items: center;
 }
 .modal-heading h2 {
   font-size: 1.2rem;
+  min-width: 0;
+}
+.modal-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--icon-label-gap);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.modal-scroll > .help-guide-zoom {
+  width: calc(100% - 2 * var(--modal-gutter));
+  margin-block: var(--space-5);
 }
 .modal-scroll > form {
   margin: 0;
-  padding: 24px 24px 0;
+  padding: var(--space-6) var(--modal-gutter) 0;
 }
 .modal-scroll > h3 {
-  margin: 20px 24px 0;
+  margin: var(--space-5) var(--modal-gutter) 0;
 }
 .modal fieldset {
   min-width: 0;
@@ -247,7 +270,11 @@ tbody tr:hover {
   margin: 0 0 18px;
 }
 .confirm-content {
-  padding: 24px;
+  padding: var(--modal-gutter);
+  margin-inline: 0;
+}
+.submission-success {
+  text-align: center;
 }
 .confirm-content p {
   margin-top: 0;
@@ -721,14 +748,15 @@ input.score-input.changed {
   }
   .modal,
   .modal.wide {
+    --modal-gutter: var(--space-5);
     --modal-max-height: calc(100dvh - 24px);
     width: calc(100vw - 20px);
   }
   .modal-heading {
-    padding: 16px;
+    padding: var(--space-4) var(--modal-gutter);
   }
   .modal-scroll > form {
-    padding: 18px 16px 0;
+    padding: var(--space-5) var(--modal-gutter) 0;
   }
   .batch-save-bar {
     bottom: 8px;
@@ -770,15 +798,20 @@ input.score-input.changed {
   }
   .landing-features article {
     display: grid;
-    grid-template-columns: 32px 1fr;
-    column-gap: 12px;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: var(--space-2) var(--space-4);
+    align-items: start;
+  }
+  .landing-features .feature-icon-wrapper {
+    grid-row: 1 / span 2;
+    margin-bottom: 0;
   }
   .landing-features h2 {
     margin: 0;
   }
   .landing-features p {
     grid-column: 2;
-    margin: 6px 0 0;
+    margin: 0;
   }
   .public-shell footer {
     padding: 20px 24px;
