@@ -1179,7 +1179,7 @@ for (const [idx, cfg] of classConfigs.entries()) {
         dynamicPayload: {
           provider: "YOUTUBE",
           url: "https://www.youtube.com/embed/2JYT5f2isg4",
-          durationSeconds: 300,
+          durationSeconds: 18528,
           minWatchPercent: 80,
         },
         isVisible: true,

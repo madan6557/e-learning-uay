@@ -1,0 +1,43 @@
+{
+  "verifiedAt": "2026-10-09T15:29:38.604Z",
+  "baseRevision": "99a3d9b8f2d4060222b820182480f576265d3572",
+  "workingCopy": true,
+  "qaRun": "60507b08-3389-455a-add4-fd44b706ea80",
+  "typecheck": "passed",
+  "fullBuild": "passed",
+  "finalWebBuild": "passed",
+  "unit": {
+    "exitCode": 0,
+    "tests": 115,
+    "fail": 0
+  },
+  "suites": [
+    {
+      "name": "domain",
+      "tests": 176,
+      "exitCode": 0
+    },
+    {
+      "name": "integration",
+      "tests": 133,
+      "exitCode": 0
+    }
+  ],
+  "audit": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "guide": "passed",
+  "viewportWidths": [
+    1440,
+    768,
+    390,
+    320
+  ],
+  "browserConsole": [],
+  "staging": "pending campus environment acceptance"
+}

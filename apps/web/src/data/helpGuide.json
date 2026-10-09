@@ -86,7 +86,7 @@
         "Klik Kelas saya untuk dosen/mahasiswa, atau Kelola kelas untuk admin. Cari kelas, lalu klik kartu kelas yang sesuai.",
         "Di dalam kelas, pilih Materi & aktivitas, Presensi, Rekap nilai, atau Pengumuman. Pengelola juga melihat Peserta, Bank soal, Berkas, dan Jejak audit.",
         "Saat mengisi editor, perhatikan status draf. Klik Simpan atau tombol publikasi agar perubahan terkirim ke server.",
-        "Jika muncul Ditemukan draf lokal yang lebih baru, pilih Pulihkan draf untuk melanjutkan atau Abaikan draf untuk memakai data server. Periksa kembali isian sebelum menyimpan."
+        "Jika ada draf sebelumnya, pemulihan bersifat opsional dan tidak mengunci aksi. Pilih Pulihkan draft jika ingin melanjutkan, Buang draft jika tidak diperlukan, atau mulai mengisi data baru untuk menjadikannya draf aktif. Periksa kembali isian sebelum menyimpan."
       ],
       "result": "Halaman yang dibuka sesuai kebutuhan. Perubahan penting memiliki pesan berhasil tersimpan.",
       "controls": [
@@ -121,7 +121,7 @@
           "effect": "Memasukkan draf lokal kembali ke editor. Belum mengirimkannya ke server."
         },
         {
-          "label": "Abaikan draf",
+          "label": "Buang draft",
           "value": "Tombol saat pemulihan tersedia",
           "effect": "Mengabaikan draf pemulihan dan kembali memakai data server."
         },
@@ -152,7 +152,8 @@
         }
       ],
       "notes": [
-        "Draf lokal hanya tersedia pada perangkat dan browser yang menyimpannya. Pesan draf lokal bukan bukti pekerjaan sudah diterima server."
+        "Draf lokal hanya tersedia pada perangkat dan browser yang menyimpannya. Pesan draf lokal bukan bukti pekerjaan sudah diterima server.",
+        "Setelah server mengonfirmasi simpan berhasil, draf lokal dibersihkan. Simpan gagal mempertahankan isian. Pada editor konten yang mempunyai versi server, draf dari versi lama dibersihkan saat editor dibuka dengan versi terbaru."
       ],
       "content": "",
       "figure": {
@@ -767,20 +768,20 @@
         "D3"
       ],
       "location": "Section kemudian Materi kemudian Video pembelajaran",
-      "preparation": "Siapkan video unggahan atau tautan sematan. Ketahui durasi aslinya.",
+      "preparation": "Siapkan rekaman MP4/WebM atau tautan video YouTube yang mengizinkan sematan.",
       "steps": [
         "Klik Materi pada Section lalu pilih Video pembelajaran. Isi Judul.",
-        "Pilih salah satu sumber: URL Video Embed (YouTube / External), atau unggah MP4/WebM jika kolom URL kosong.",
-        "Isi Durasi (detik), misalnya 600 untuk video 10 menit. Isi Tonton minimal (%), misalnya 85 untuk ambang 85 persen.",
+        "Pilih salah satu sumber: Tautan video (YouTube atau MP4/WebM), atau unggah MP4/WebM jika kolom tautan kosong.",
+        "Tunggu Durasi otomatis dibaca dari pratinjau pemutar. Durasi tidak perlu diisi. Jika gagal, periksa koneksi/izin sumber lalu pilih Baca ulang durasi. Isi Tonton minimal (%), misalnya 85 untuk ambang 85 persen.",
         "Atur jadwal jika diperlukan lalu Simpan dan Publikasikan. Buka materi dan periksa sumber video dapat dimuat.",
         "Untuk referensi/simulator/ruang daring, buat materi baru dan pilih Tautan referensi, Simulator virtual, atau Pertemuan daring. Masukkan Tautan lengkap lalu terbitkan."
       ],
       "result": "Video atau tautan tersedia dengan jadwal dan syarat penyelesaian yang benar.",
       "controls": [
         {
-          "label": "URL Video Embed (YouTube / External)",
-          "value": "URL sematan yang valid atau kosong untuk unggahan",
-          "effect": "Menggunakan sumber video eksternal. Contoh struktur https://www.youtube.com/embed/ID_VIDEO."
+          "label": "Tautan video (YouTube atau MP4/WebM)",
+          "value": "Tautan YouTube atau berkas MP4/WebM langsung yang diizinkan kampus; kosong untuk unggahan",
+          "effect": "Menggunakan sumber video eksternal yang durasi dan waktu pemutarannya dapat dibaca. Tautan watch, youtu.be, dan embed YouTube didukung."
         },
         {
           "label": "Berkas video",
@@ -788,14 +789,14 @@
           "effect": "Digunakan saat URL kosong. Video unggahan mendukung pencatatan waktu tonton."
         },
         {
-          "label": "Durasi (detik)",
-          "value": "Bilangan 1 sampai 36000, contoh 600",
-          "effect": "Durasi acuan pelacakan. Isi detik, bukan menit."
+          "label": "Durasi otomatis",
+          "value": "Durasi rekaman dari metadata pemutar, maksimal 10 jam",
+          "effect": "Dibaca otomatis sebelum penyimpanan untuk menghitung persentase tontonan. Pergantian sumber membaca ulang durasi dan mereset progres video lama."
         },
         {
           "label": "Tonton minimal (%)",
           "value": "Bilangan 1 sampai 100, default 85",
-          "effect": "Ambang tontonan untuk syarat progres video unggahan."
+          "effect": "Ambang tontonan untuk syarat progres video unggahan atau YouTube."
         },
         {
           "label": "Tautan",
@@ -809,13 +810,14 @@
         }
       ],
       "notes": [
-        "Video sematan memiliki tombol Tandai Selesai Menonton dan tidak menggunakan pengamatan waktu pemutar yang sama dengan video unggahan. Pilih unggahan bila pelacakan waktu tonton dibutuhkan."
+        "Progres video unggahan dan YouTube dicatat otomatis dari posisi pemutaran. Tidak ada tombol penyelesaian manual. Tautan yang tidak menyediakan metadata pemutar, seperti halaman Google Drive, gunakan sebagai Tautan referensi; siaran langsung gunakan sebagai Pertemuan daring.",
+        "Materi lama dengan durasi manual yang berbeda dari video perlu dibuka dan disimpan ulang oleh pengelola materi. Mahasiswa tidak dapat mengubah durasi materi melalui endpoint progres."
       ],
       "content": "",
       "figure": {
-        "src": "/help/tutorial/14-materi-video.png",
+        "src": "/help/tutorial/14-video-otomatis.jpg",
         "alt": "Mengatur video dan tautan pembelajaran dengan penanda merah",
-        "caption": "Penanda gambar: 1 URL video; 2 Durasi; 3 Ambang tonton"
+        "caption": "Pratinjau pemutar membaca durasi video secara otomatis."
       }
     },
     {

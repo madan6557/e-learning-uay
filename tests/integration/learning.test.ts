@@ -429,6 +429,128 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
       },
     );
     await suite.test(
+      "video duration corrections recalculate progress and replacement sources reset it",
+      async () => {
+        const body = {
+          title: "Automatic duration",
+          resourceType: "VIDEO_MEDIA",
+          isVisible: true,
+          dynamicPayload: {
+            url: "https://www.youtube.com/embed/M7lc1UVf-VE",
+            durationSeconds: 100,
+            minWatchPercent: 85,
+          },
+        };
+        const video = await request(
+          teacher,
+          `/sections/${section.id}/resources`,
+          "POST",
+          body,
+          201,
+        );
+        try {
+          await request(student, `/resources/${video.id}`, "PATCH", body, 403);
+          await request(
+            outsider,
+            `/resources/${video.id}/progress`,
+            "POST",
+            { position: 0 },
+            403,
+          );
+          await db.videoProgress.create({
+            data: {
+              userId: student.id,
+              resourceItemId: video.id,
+              watchedSeconds: 10,
+              lastPositionSeconds: 10,
+              percent: 10,
+            },
+          });
+          await request(teacher, `/resources/${video.id}`, "PATCH", {
+            ...body,
+            dynamicPayload: { ...body.dynamicPayload, durationSeconds: 20 },
+          });
+          let progress = await db.videoProgress.findUniqueOrThrow({
+            where: {
+              userId_resourceItemId: {
+                userId: student.id,
+                resourceItemId: video.id,
+              },
+            },
+          });
+          assert.equal(progress.percent, 50);
+          assert.equal(progress.watchedSeconds, 10);
+          await request(
+            student,
+            `/resources/${video.id}/progress`,
+            "POST",
+            { position: 21 },
+            400,
+          );
+          await request(teacher, `/resources/${video.id}`, "PATCH", {
+            ...body,
+            dynamicPayload: {
+              ...body.dynamicPayload,
+              url: "https://youtu.be/M7lc1UVf-VE",
+              durationSeconds: 20,
+            },
+          });
+          assert.equal(
+            await db.videoProgress.count({
+              where: { resourceItemId: video.id },
+            }),
+            1,
+          );
+          await request(teacher, `/resources/${video.id}`, "PATCH", {
+            ...body,
+            dynamicPayload: {
+              ...body.dynamicPayload,
+              url: "https://www.youtube.com/embed/2JYT5f2isg4",
+            },
+          });
+          assert.equal(
+            await db.videoProgress.count({
+              where: { resourceItemId: video.id },
+            }),
+            0,
+          );
+          await request(
+            teacher,
+            `/sections/${section.id}/resources`,
+            "POST",
+            {
+              ...body,
+              dynamicPayload: {
+                ...body.dynamicPayload,
+                url: "https://drive.google.com/file/d/abc/preview",
+              },
+            },
+            400,
+          );
+          await request(
+            teacher,
+            `/sections/${section.id}/resources`,
+            "POST",
+            { ...body, dynamicPayload: { url: body.dynamicPayload.url } },
+            400,
+          );
+          await db.resourceItem.update({
+            where: { id: video.id },
+            data: { dynamicPayload: { url: body.dynamicPayload.url } },
+          });
+          await request(
+            student,
+            `/resources/${video.id}/progress`,
+            "POST",
+            { position: 0 },
+            409,
+          );
+        } finally {
+          await db.resourceItem.delete({ where: { id: video.id } });
+        }
+      },
+    );
+    await suite.test(
       "idempotent versioned assignment submissions and draft grade secrecy",
       async () => {
         assignment = await request(

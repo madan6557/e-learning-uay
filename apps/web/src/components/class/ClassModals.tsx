@@ -29,6 +29,7 @@ export function SectionModal({ cls, section, onClose, onSaved }: SectionModalPro
     >
       <Form
         draftKey={`section:${section?.id ?? "new"}`}
+        draftVersion={section?.updatedAt}
         draftValue={{ description }}
         onRestoreDraft={(v) => {
           if (v.description !== undefined) setDescription(v.description);
@@ -184,6 +185,7 @@ export function ClassSettingsModal({ cls, onClose, onSaved }: ClassSettingsModal
     <Modal title={t.settings} onClose={onClose}>
       <Form
         draftKey="class-settings"
+        draftVersion={cls.updatedAt}
         onSubmit={async (f) => {
           const status = textValue(f, "status");
           if (

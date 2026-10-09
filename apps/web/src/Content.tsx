@@ -5,6 +5,9 @@ import hljs from "highlight.js/lib/common";
 import { ArticleTools } from "./ArticleTools";
 import { useEditorViewMode } from "./useEditorViewMode";
 import { importArticle } from "./articleImport";
+import { VideoMetadata, videoSourceKey } from "./components/VideoMetadata";
+import { VideoProgressViewer as VideoViewer } from "./components/VideoProgressViewer";
+import { validVideoDuration } from "../../../packages/shared/src/video";
 import {
   GripVertical,
   Plus,
@@ -574,11 +577,21 @@ export function ResourceEditor({
   });
   const change = setDraft;
   const payload = (data: any) =>
-    change({ ...draft, dynamicPayload: { ...draft.dynamicPayload, ...data } });
+    change((current: any) => ({
+      ...current,
+      dynamicPayload: { ...current.dynamicPayload, ...data },
+    }));
 
   const isRich = ["RICH_TEXT", "LAB_PRACTICUM"].includes(draft.resourceType);
   const { viewMode, setViewMode, canSplit } = useEditorViewMode();
   const [previewChecked, setPreviewChecked] = useState<string[]>([]);
+  const [videoMetadata, setVideoMetadata] = useState<{
+    source: string;
+    duration?: number;
+  }>({ source: "" });
+  const videoReady =
+    videoMetadata.source === videoSourceKey(draft.dynamicPayload) &&
+    validVideoDuration(videoMetadata.duration ?? 0);
 
   const editorFields = (
     <>
@@ -627,30 +640,53 @@ export function ResourceEditor({
       )}
       {draft.resourceType === "VIDEO_MEDIA" && (
         <>
-          <Field label="URL Video Embed (YouTube / External)">
+          <Field label="Tautan video (YouTube atau MP4/WebM)">
             <input
               type="url"
-              placeholder="https://www.youtube.com/embed/... atau https://..."
+              placeholder="https://www.youtube.com/watch?v=..."
               value={draft.dynamicPayload.url ?? ""}
-              onChange={(e) => payload({ url: e.target.value })}
+              onChange={(e) =>
+                payload({
+                  url: e.target.value,
+                  fileObjectId: undefined,
+                  fileName: undefined,
+                  durationSeconds: undefined,
+                })
+              }
             />
           </Field>
           {!draft.dynamicPayload.url && (
             <>
-              <p style={{ fontSize: 13, color: "var(--muted)", margin: "8px 0 4px" }}>
-                Atau unggah berkas video (MP4):
+              <p
+                style={{
+                  fontSize: 13,
+                  color: "var(--muted)",
+                  margin: "8px 0 4px",
+                }}
+              >
+                Atau unggah berkas video (MP4/WebM):
               </p>
               <FileUpload
                 classId={classId}
                 purpose="VIDEO"
                 accept="video/mp4,video/webm"
+                existingFile={
+                  draft.dynamicPayload.fileObjectId
+                    ? {
+                        id: draft.dynamicPayload.fileObjectId,
+                        name: draft.dynamicPayload.fileName ?? "Video materi tersimpan",
+                      }
+                    : undefined
+                }
                 onUploaded={(f) =>
-                  payload({ fileObjectId: f.id, fileName: f.name })
+                  payload({
+                    fileObjectId: f.id,
+                    fileName: f.name,
+                    url: undefined,
+                    durationSeconds: undefined,
+                  })
                 }
               />
-              {draft.dynamicPayload.fileObjectId && (
-                <p>{draft.dynamicPayload.fileName ?? t.saved}</p>
-              )}
             </>
           )}
         </>
@@ -668,19 +704,13 @@ export function ResourceEditor({
         </Field>
       )}
       {draft.resourceType === "VIDEO_MEDIA" && (
-        <div className="form-grid">
-          <Field label={t.duration}>
-            <input
-              type="number"
-              min={1}
-              max={36000}
-              required
-              value={draft.dynamicPayload.durationSeconds ?? ""}
-              onChange={(e) =>
-                payload({ durationSeconds: Number(e.target.value) })
-              }
-            />
-          </Field>
+        <>
+          <VideoMetadata
+            payload={draft.dynamicPayload}
+            onDetected={(source, duration) =>
+              setVideoMetadata({ source, duration })
+            }
+          />
           <Field label={t.watchThreshold}>
             <input
               type="number"
@@ -693,7 +723,7 @@ export function ResourceEditor({
               }
             />
           </Field>
-        </div>
+        </>
       )}
       {["EXTERNAL_LINK", "VIRTUAL_SIMULATOR", "TELECONFERENCE"].includes(
         draft.resourceType,
@@ -922,8 +952,11 @@ export function ResourceEditor({
       <Form
         draftKey={`resource:${resource?.id ?? sectionId}`}
         draftValue={draft}
+        draftVersion={resource?.updatedAt}
         onRestoreDraft={setDraft}
         onCancel={onClose}
+        submitDisabled={draft.resourceType === "VIDEO_MEDIA" && !videoReady}
+        disabledReason="Penyimpanan tersedia setelah durasi video berhasil dibaca. Periksa sumber video atau baca ulang durasinya."
         publication={{
           published: resource?.isVisible ?? false,
           onUnpublish: resource
@@ -939,7 +972,17 @@ export function ResourceEditor({
               ? `/resources/${resource.id}`
               : `/sections/${sectionId}/resources`,
             resource ? "PATCH" : "POST",
-            { ...draft, isVisible: intent === "publish" },
+            {
+              ...draft,
+              dynamicPayload:
+                draft.resourceType === "VIDEO_MEDIA"
+                  ? {
+                      ...draft.dynamicPayload,
+                      durationSeconds: videoMetadata.duration,
+                    }
+                  : draft.dynamicPayload,
+              isVisible: intent === "publish",
+            },
           );
           onSaved();
         }}
@@ -1298,6 +1341,7 @@ export function ResourceViewer({
         )}{" "}
         {resource.resourceType === "VIDEO_MEDIA" && (
           <VideoViewer
+            key={resource.id}
             resource={resource}
             previous={cls.progress.video.find(
               (v: any) => v.resourceItemId === resource.id,
@@ -1470,219 +1514,6 @@ function PdfViewer({
             Layanan berkas sedang dalam proses sinkronisasi dengan server penyimpanan. Anda dapat mengunduh berkas langsung menggunakan tombol di bawah.
           </p>
         </div>
-      )}
-    </div>
-  );
-}
-function parseEmbedUrl(url?: string): { isEmbed: boolean; embedUrl: string } {
-  if (!url) return { isEmbed: false, embedUrl: "" };
-  try {
-    const u = new URL(url);
-    if (u.hostname.includes("youtube.com") || u.hostname.includes("youtu.be")) {
-      let id = "";
-      if (u.hostname.includes("youtu.be")) {
-        id = u.pathname.slice(1);
-      } else if (u.pathname.includes("/embed/")) {
-        id = u.pathname.split("/embed/")[1];
-      } else {
-        id = u.searchParams.get("v") || "";
-      }
-      if (id) {
-        id = id.split("&")[0].split("?")[0];
-        return {
-          isEmbed: true,
-          embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0`,
-        };
-      }
-    }
-    if (u.hostname.includes("drive.google.com")) {
-      const match = url.match(/\/file\/d\/([^\/]+)/);
-      if (match) {
-        return {
-          isEmbed: true,
-          embedUrl: `https://drive.google.com/file/d/${match[1]}/preview`,
-        };
-      }
-    }
-    if (url.includes("/embed/")) {
-      return { isEmbed: true, embedUrl: url };
-    }
-  } catch {}
-  return { isEmbed: false, embedUrl: url };
-}
-
-function VideoViewer({
-  resource,
-  previous,
-  writable,
-}: {
-  resource: any;
-  previous: any;
-  writable: boolean;
-}) {
-  const payload = resource.dynamicPayload || {};
-  const embed = parseEmbedUrl(payload.url);
-  const ref = useRef<HTMLVideoElement>(null),
-    [url, setUrl] = useState(embed.isEmbed ? embed.embedUrl : ""),
-    [progress, setProgress] = useState(previous?.percent ?? 0),
-    [error, setError] = useState<Error | null>(null),
-    busy = useRef(false),
-    initialized = useRef(!writable),
-    watched = useRef(previous?.watchedSeconds ?? 0);
-
-  async function commit(position?: number) {
-    if (!writable || busy.current) return;
-    const pos = position !== undefined ? position : ref.current?.currentTime;
-    if (pos === undefined && !embed.isEmbed) return;
-    busy.current = true;
-    try {
-      const duration = payload.durationSeconds || 300;
-      const targetPos = pos !== undefined ? pos : duration;
-      const result = await api(`/resources/${resource.id}/progress`, "POST", {
-        position: Math.min(targetPos, duration),
-      });
-      watched.current = result.watchedSeconds;
-      initialized.current = true;
-      setProgress(result.percent);
-      setError(null);
-      if (ref.current && ref.current.currentTime > watched.current + 1)
-        ref.current.currentTime = watched.current;
-    } catch (e) {
-      setError(e as Error);
-    } finally {
-      busy.current = false;
-    }
-  }
-
-  useEffect(() => {
-    if (payload.url) {
-      if (!embed.isEmbed) setUrl(payload.url);
-      return;
-    }
-    if (payload.fileObjectId) {
-      api(
-        `/files/${payload.fileObjectId}/download-ticket`,
-        "POST",
-        { resourceId: resource.id, inline: true },
-      )
-        .then((ticket) => setUrl(ticket.url))
-        .catch(setError);
-    }
-  }, [resource.id, payload.fileObjectId, payload.url]);
-
-  useEffect(() => {
-    if (!writable || embed.isEmbed) return;
-    const timer = setInterval(() => {
-      const video = ref.current;
-      if (video && !video.paused) void commit();
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [resource.id, writable, embed.isEmbed]);
-
-  return (
-    <div className="video-viewer">
-      {embed.isEmbed ? (
-        <div
-          style={{
-            position: "relative",
-            width: "100%",
-            paddingBottom: "56.25%",
-            height: 0,
-            borderRadius: 8,
-            overflow: "hidden",
-            backgroundColor: "#000",
-            marginBottom: 16,
-          }}
-        >
-          <iframe
-            title={resource.title}
-            src={embed.embedUrl}
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-              border: 0,
-            }}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-          />
-        </div>
-      ) : (
-        url && (
-          <video
-            ref={ref}
-            src={url}
-            controls
-            controlsList="nodownload"
-            onError={() =>
-              setError(new Error("Video tidak dapat diputar. Periksa koneksi lalu coba muat ulang video."))
-            }
-            onLoadedMetadata={() => {
-              setError(null);
-              if (ref.current)
-                ref.current.currentTime = Math.min(
-                  previous?.lastPositionSeconds ?? 0,
-                  watched.current,
-                );
-              void commit();
-            }}
-            onPlay={() => {
-              if (!initialized.current) ref.current?.pause();
-              void commit();
-            }}
-            onPause={() => void commit()}
-            onEnded={() => void commit()}
-            onRateChange={() => {
-              if (writable && ref.current && ref.current.playbackRate > 1)
-                ref.current.playbackRate = 1;
-            }}
-            onSeeking={() => {
-              if (
-                writable &&
-                ref.current &&
-                ref.current.currentTime > watched.current + 0.5
-              )
-                ref.current.currentTime = watched.current;
-            }}
-          />
-        )
-      )}
-      <div className="progress-label">
-        <span>{t.watched}</span>
-        <strong>{Math.round(progress)}%</strong>
-      </div>
-      <progress value={progress} max={100} />
-      {embed.isEmbed && writable && progress < 100 && (
-        <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
-          <Action
-            className="button"
-            busyLabel="Menyimpan progres…"
-            run={() => commit(payload.durationSeconds || 300)}
-          >
-            Tandai Selesai Menonton
-          </Action>
-        </div>
-      )}
-      {error && <Notice error={error} onClose={() => setError(null)} />}
-      {error && !embed.isEmbed && (
-        <Action
-          busyLabel="Memuat ulang video…"
-          run={async () => {
-            if (payload.fileObjectId && !payload.url) {
-              const ticket = await api(`/files/${payload.fileObjectId}/download-ticket`, "POST", {
-                resourceId: resource.id,
-                inline: true,
-              });
-              if (ticket.url === url) ref.current?.load();
-              else setUrl(ticket.url);
-            } else ref.current?.load();
-            return false;
-          }}
-        >
-          Coba muat ulang video
-        </Action>
       )}
     </div>
   );

@@ -107,7 +107,7 @@ Bila login gagal, periksa identitas di SSO dan gunakan layanan bantuan akun kamp
 1. Klik Kelas saya untuk dosen/mahasiswa, atau Kelola kelas untuk admin. Cari kelas, lalu klik kartu kelas yang sesuai.
 2. Di dalam kelas, pilih Materi & aktivitas, Presensi, Rekap nilai, atau Pengumuman. Pengelola juga melihat Peserta, Bank soal, Berkas, dan Jejak audit.
 3. Saat mengisi editor, perhatikan status draf. Klik Simpan atau tombol publikasi agar perubahan terkirim ke server.
-4. Jika muncul Ditemukan draf lokal yang lebih baru, pilih Pulihkan draf untuk melanjutkan atau Abaikan draf untuk memakai data server. Periksa kembali isian sebelum menyimpan.
+4. Jika ada draf sebelumnya, pemulihan bersifat opsional dan tidak mengunci aksi. Pilih Pulihkan draft jika ingin melanjutkan, Buang draft jika tidak diperlukan, atau mulai mengisi data baru untuk menjadikannya draf aktif. Periksa kembali isian sebelum menyimpan.
 
 **Periksa hasil:** Halaman yang dibuka sesuai kebutuhan. Perubahan penting memiliki pesan berhasil tersimpan.
 
@@ -125,7 +125,7 @@ Penanda gambar: 1 Pengaturan kelas; 2 Tambah pertemuan; 3 Tab presensi
 | Cari kelas | Teks, misalnya IF2101 | Menyaring nama, kode mata kuliah, atau nama kelas. |
 | Filter status | Semua, Draf, Terbit, Diarsipkan sesuai tampilan | Membatasi daftar kelas pada status yang dipilih. |
 | Pulihkan draf | Tombol saat pemulihan tersedia | Memasukkan draf lokal kembali ke editor. Belum mengirimkannya ke server. |
-| Abaikan draf | Tombol saat pemulihan tersedia | Mengabaikan draf pemulihan dan kembali memakai data server. |
+| Buang draft | Tombol saat pemulihan tersedia | Mengabaikan draf pemulihan dan kembali memakai data server. |
 | Batal / Tutup | Tombol | Menutup editor. Jika ada perubahan, baca konfirmasi draf lokal yang muncul. |
 | Simpan Sebagai Draf | Tombol pada editor konten | Menyimpan konten ke server tanpa menerbitkannya kepada mahasiswa. |
 | Simpan dan Publikasikan | Tombol pada editor konten | Menyimpan dan menerbitkan konten. Akses tetap mengikuti status kelas, Section, dan jadwal. |
@@ -135,6 +135,8 @@ Penanda gambar: 1 Pengaturan kelas; 2 Tambah pertemuan; 3 Tab presensi
 ### Catatan penggunaan
 
 Draf lokal hanya tersedia pada perangkat dan browser yang menyimpannya. Pesan draf lokal bukan bukti pekerjaan sudah diterima server.
+
+Setelah server mengonfirmasi simpan berhasil, draf lokal dibersihkan. Simpan gagal mempertahankan isian. Pada editor konten yang mempunyai versi server, draf dari versi lama dibersihkan saat editor dibuka dengan versi terbaru.
 
 <a id="tutorial-u3"></a>
 
@@ -524,36 +526,38 @@ Bahan PPTX/DOCX yang ingin dibaca sebagai Modul PDF perlu dikonversi ke PDF terl
 
 **Buka:** Section kemudian Materi kemudian Video pembelajaran
 
-**Sebelum mulai:** Siapkan video unggahan atau tautan sematan. Ketahui durasi aslinya.
+**Sebelum mulai:** Siapkan rekaman MP4/WebM atau tautan video YouTube yang mengizinkan sematan.
 
 ### Langkah
 
 1. Klik Materi pada Section lalu pilih Video pembelajaran. Isi Judul.
-2. Pilih salah satu sumber: URL Video Embed (YouTube / External), atau unggah MP4/WebM jika kolom URL kosong.
-3. Isi Durasi (detik), misalnya 600 untuk video 10 menit. Isi Tonton minimal (%), misalnya 85 untuk ambang 85 persen.
+2. Pilih salah satu sumber: Tautan video (YouTube atau MP4/WebM), atau unggah MP4/WebM jika kolom tautan kosong.
+3. Tunggu Durasi otomatis dibaca dari pratinjau pemutar. Durasi tidak perlu diisi. Jika gagal, periksa koneksi/izin sumber lalu pilih Baca ulang durasi. Isi Tonton minimal (%), misalnya 85 untuk ambang 85 persen.
 4. Atur jadwal jika diperlukan lalu Simpan dan Publikasikan. Buka materi dan periksa sumber video dapat dimuat.
 5. Untuk referensi/simulator/ruang daring, buat materi baru dan pilih Tautan referensi, Simulator virtual, atau Pertemuan daring. Masukkan Tautan lengkap lalu terbitkan.
 
 **Periksa hasil:** Video atau tautan tersedia dengan jadwal dan syarat penyelesaian yang benar.
 
-![Mengatur video dan tautan pembelajaran dengan penanda merah](../images/tutorial/14-materi-video.png)
+![Mengatur video dan tautan pembelajaran dengan penanda merah](../images/tutorial/14-video-otomatis.jpg)
 
-Penanda gambar: 1 URL video; 2 Durasi; 3 Ambang tonton
+Pratinjau pemutar membaca durasi video secara otomatis.
 
 ### Input, pilihan, dan tombol
 
 | Kontrol di layar | Nilai atau contoh | Fungsi dan akibat |
 | --- | --- | --- |
-| URL Video Embed (YouTube / External) | URL sematan yang valid atau kosong untuk unggahan | Menggunakan sumber video eksternal. Contoh struktur https://www.youtube.com/embed/ID_VIDEO. |
+| Tautan video (YouTube atau MP4/WebM) | Tautan YouTube atau berkas MP4/WebM langsung yang diizinkan kampus; kosong untuk unggahan | Menggunakan sumber video eksternal yang durasi dan waktu pemutarannya dapat dibaca. Tautan watch, youtu.be, dan embed YouTube didukung. |
 | Berkas video | MP4/WebM, ikuti batas ukuran yang tampil | Digunakan saat URL kosong. Video unggahan mendukung pencatatan waktu tonton. |
-| Durasi (detik) | Bilangan 1 sampai 36000, contoh 600 | Durasi acuan pelacakan. Isi detik, bukan menit. |
-| Tonton minimal (%) | Bilangan 1 sampai 100, default 85 | Ambang tontonan untuk syarat progres video unggahan. |
+| Durasi otomatis | Durasi rekaman dari metadata pemutar, maksimal 10 jam | Dibaca otomatis sebelum penyimpanan untuk menghitung persentase tontonan. Pergantian sumber membaca ulang durasi dan mereset progres video lama. |
+| Tonton minimal (%) | Bilangan 1 sampai 100, default 85 | Ambang tontonan untuk syarat progres video unggahan atau YouTube. |
 | Tautan | URL lengkap untuk simulator, pertemuan daring, atau referensi | Menentukan halaman/ruang tujuan. Pastikan izin aksesnya sesuai mahasiswa. |
 | Dibuka pada / Ditutup pada | Tanggal-jam opsional | Mengendalikan jendela akses materi. |
 
 ### Catatan penggunaan
 
-Video sematan memiliki tombol Tandai Selesai Menonton dan tidak menggunakan pengamatan waktu pemutar yang sama dengan video unggahan. Pilih unggahan bila pelacakan waktu tonton dibutuhkan.
+Progres video unggahan dan YouTube dicatat otomatis dari posisi pemutaran. Tidak ada tombol penyelesaian manual. Tautan yang tidak menyediakan metadata pemutar, seperti halaman Google Drive, gunakan sebagai Tautan referensi; siaran langsung gunakan sebagai Pertemuan daring.
+
+Materi lama dengan durasi manual yang berbeda dari video perlu dibuka dan disimpan ulang oleh pengelola materi. Mahasiswa tidak dapat mengubah durasi materi melalui endpoint progres.
 
 <a id="tutorial-d4"></a>
 

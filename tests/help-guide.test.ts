@@ -26,9 +26,10 @@ test("33 imported tutorials retain their steps, control tables and packaged scre
   for (const article of tutorials) {
     assert.ok(article.location && article.preparation && article.result);
     assert.ok(article.controls!.length > 0);
-    assert.match(article.figure!.src, /^\/help\/tutorial\/[\w-]+\.png$/);
+    assert.match(article.figure!.src, /^\/help\/tutorial\/[\w-]+\.(?:png|jpg)$/);
     const image = readFileSync(resolve("apps/web/public", article.figure!.src.slice(1)));
-    assert.equal(image.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
+    if (article.figure!.src.endsWith(".png")) assert.equal(image.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
+    else assert.equal(image.subarray(0, 3).toString("hex"), "ffd8ff");
   }
   assert.doesNotMatch(JSON.stringify(helpArticles), /file:\/\/|<script|data-step|localStorage|25 MB|label WIB|masih menampilkan WIB|label menyebut digit|belum otomatis mengubah/i);
   // Original image filenames are retained; the text users read must use the current terminology.

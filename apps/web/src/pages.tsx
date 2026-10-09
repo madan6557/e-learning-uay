@@ -2372,6 +2372,7 @@ export function Catalog({
         >
           <Form
             draftKey={`course:${editing?.id ?? "new"}`}
+            draftVersion={editing.updatedAt}
             onSubmit={async (f) => {
               await api(
                 `/courses${editing.id ? `/${editing.id}` : ""}`,

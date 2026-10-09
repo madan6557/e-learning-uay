@@ -27,6 +27,10 @@ import {
 } from "../../../packages/shared/src/domain.js";
 import { classPath, contentPath } from "../../../packages/shared/src/urls.js";
 import { resourceFileIds, resourcesUsingFile } from "./files.js";
+import {
+  validVideoDuration,
+  videoSource,
+} from "../../../packages/shared/src/video.js";
 const purifier = createDOMPurify(new JSDOM("").window);
 const clean = (text: string) =>
   purifier.sanitize(text, {
@@ -117,11 +121,20 @@ export async function validateResource(raw: unknown, tx: any, classId: string) {
       "VIDEO_REQUIRED",
     );
     if (p.url) {
+      const source = videoSource(p.url);
       ensure(
-        config.embedOrigins.includes(new URL(p.url).origin),
+        config.embedOrigins.includes(new URL(p.url).origin) ||
+          (source.kind === "youtube" &&
+            config.embedOrigins.some(
+              (origin) =>
+                videoSource(`${origin}/${source.videoId}`).kind === "youtube" ||
+                videoSource(`${origin}/embed/${source.videoId}`).kind ===
+                  "youtube",
+            )),
         400,
         "EMBED_NOT_ALLOWED",
       );
+      ensure(source.kind !== "unsupported", 400, "VIDEO_SOURCE_UNSUPPORTED");
     }
   }
   if (
@@ -1365,6 +1378,47 @@ export function registerLearning(app: Express) {
           where: { id: before.id },
           data,
         });
+        if (after.resourceType === "VIDEO_MEDIA") {
+          const previousPayload = before.dynamicPayload as any;
+          const nextPayload = after.dynamicPayload as any;
+          const sourceKey = (payload: any) =>
+            payload.url ? videoSource(payload.url).url : payload.fileObjectId;
+          if (sourceKey(previousPayload) !== sourceKey(nextPayload)) {
+            await tx.videoProgress.deleteMany({
+              where: { resourceItemId: after.id },
+            });
+          } else if (
+            previousPayload.durationSeconds !== nextPayload.durationSeconds
+          ) {
+            for (const progress of await tx.videoProgress.findMany({
+              where: { resourceItemId: after.id },
+            })) {
+              const watchedSeconds = Math.min(
+                progress.watchedSeconds,
+                nextPayload.durationSeconds,
+              );
+              await tx.videoProgress.update({
+                where: {
+                  userId_resourceItemId: {
+                    userId: progress.userId,
+                    resourceItemId: progress.resourceItemId,
+                  },
+                },
+                data: {
+                  watchedSeconds,
+                  lastPositionSeconds: Math.min(
+                    progress.lastPositionSeconds,
+                    nextPayload.durationSeconds,
+                  ),
+                  percent:
+                    Math.round(
+                      (10000 * watchedSeconds) / nextPayload.durationSeconds,
+                    ) / 100,
+                },
+              });
+            }
+          }
+        }
         await audit(
           tx,
           req.context,
@@ -1399,6 +1453,11 @@ export function registerLearning(app: Express) {
         const userId = req.context.user.id;
         const resourceItemId = resource.id;
         if (resource.resourceType === "VIDEO_MEDIA") {
+          ensure(
+            validVideoDuration(payload.durationSeconds),
+            409,
+            "VIDEO_DURATION_REQUIRED",
+          );
           const { position } = z
             .object({
               position: z.number().nonnegative().max(payload.durationSeconds),

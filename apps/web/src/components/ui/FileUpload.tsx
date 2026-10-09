@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   UploadCloud,
   FileText,
@@ -17,6 +17,7 @@ export interface FileUploadProps {
   contextId?: string;
   onUploaded: (file: any) => void;
   accept?: string;
+  existingFile?: { id: string; name: string };
 }
 
 export function FileUpload({
@@ -25,6 +26,7 @@ export function FileUpload({
   contextId,
   onUploaded,
   accept,
+  existingFile,
 }: FileUploadProps) {
   const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState<Error | null>(null);
@@ -33,7 +35,10 @@ export function FileUpload({
     id: string;
     name: string;
     size?: number;
-  } | null>(null);
+  } | null>(existingFile ?? null);
+  useEffect(() => {
+    if (existingFile) setUploadedFile(existingFile);
+  }, [existingFile?.id, existingFile?.name]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = async (file: File) => {
@@ -183,10 +188,20 @@ export function FileUpload({
                   <strong>Pilih berkas</strong> atau seret dan lepas ke sini
                 </p>
                 <p className="dropzone-hint">
-                  Format: {cleanAcceptText()} (Maks. {uploadLimit(purpose) / 1024 / 1024} MB)
+                  Format: {cleanAcceptText()} (Maks.{" "}
+                  {uploadLimit(purpose) / 1024 / 1024} MB)
                 </p>
-                <p className="dropzone-compression-tip" style={{ fontSize: "0.76rem", color: "var(--muted, #64748b)", margin: "4px 0 0" }}>
-                  💡 Maksimal ukuran berkas {uploadLimit(purpose) / 1024 / 1024} MB. Jika ukuran berkas terlalu besar, gunakan kompresi PDF/dokumen atau arsipkan dalam format ZIP terlebih dahulu.
+                <p
+                  className="dropzone-compression-tip"
+                  style={{
+                    fontSize: "0.76rem",
+                    color: "var(--muted, #64748b)",
+                    margin: "4px 0 0",
+                  }}
+                >
+                  {purpose === "VIDEO"
+                    ? `Maksimal ${uploadLimit(purpose) / 1024 / 1024} MB. Jika video terlalu besar, kompres atau turunkan resolusinya; tetap gunakan format MP4/WebM.`
+                    : `Maksimal ukuran berkas ${uploadLimit(purpose) / 1024 / 1024} MB. Jika ukuran berkas terlalu besar, gunakan kompresi PDF/dokumen atau arsipkan dalam format ZIP terlebih dahulu.`}
                 </p>
               </div>
               <button

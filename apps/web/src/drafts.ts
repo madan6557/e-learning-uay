@@ -6,6 +6,7 @@ type Draft = {
   value: unknown;
   updatedAt: number;
   bytes: number;
+  baseVersion?: string;
 };
 export async function countDrafts(userId: string) {
   const db = await database();
@@ -46,6 +47,7 @@ export async function saveDraft(
   userId: string,
   entityId: string,
   value: unknown,
+  baseVersion?: string,
 ) {
   const key = `${userId}:${entityId}`;
   const bytes = new TextEncoder().encode(JSON.stringify(value)).length;
@@ -69,7 +71,14 @@ export async function saveDraft(
       store.delete(removed.key);
       total -= removed.bytes;
     }
-    store.put({ key, userId, value, updatedAt: Date.now(), bytes });
+    store.put({
+      key,
+      userId,
+      value,
+      baseVersion,
+      updatedAt: Date.now(),
+      bytes,
+    });
     await done;
   } finally {
     db.close();
@@ -90,14 +99,25 @@ export async function getDraft(userId: string, entityId: string) {
     db.close();
   }
 }
-export async function removeDraft(userId: string, entityId?: string) {
+export async function removeDraft(
+  userId: string,
+  entityId?: string,
+  expectedUpdatedAt?: number,
+) {
   const db = await database();
   try {
     const tx = db.transaction("drafts", "readwrite"),
       done = complete(tx),
       store = tx.objectStore("drafts");
-    if (entityId) store.delete(`${userId}:${entityId}`);
-    else {
+    if (entityId) {
+      const key = `${userId}:${entityId}`;
+      if (
+        expectedUpdatedAt === undefined ||
+        (await result<Draft | undefined>(store.get(key)))?.updatedAt ===
+          expectedUpdatedAt
+      )
+        store.delete(key);
+    } else {
       const all = await result<Draft[]>(store.getAll());
       for (const draft of all)
         if (draft.userId === userId) store.delete(draft.key);

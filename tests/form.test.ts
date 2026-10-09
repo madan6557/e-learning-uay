@@ -8,7 +8,7 @@ import { createRoot } from "react-dom/client";
 import { Form } from "../apps/web/src/lib.js";
 import { Profile } from "../apps/web/src/pages.js";
 import { DraftUserContext } from "../apps/web/src/useLocalDraft.js";
-import { removeDraft } from "../apps/web/src/drafts.js";
+import { getDraft, saveDraft, removeDraft } from "../apps/web/src/drafts.js";
 
 // The app build supplies the automatic JSX runtime; tsx's Node test runner
 // transpiles these components with the classic runtime.
@@ -75,6 +75,17 @@ test("a form returns to clean after its initial value is restored", async () => 
       );
       await new Promise((done) => setTimeout(done, 20));
     });
+    for (
+      let attempt = 0;
+      attempt < 100 &&
+      document.querySelector(".save-status")!.textContent !==
+        "Tersimpan di server";
+      attempt++
+    ) {
+      await act(async () => {
+        await new Promise((done) => setTimeout(done, 10));
+      });
+    }
     assert.equal(
       document.querySelector(".save-status")!.textContent,
       "Tersimpan di server",
@@ -227,6 +238,91 @@ test("withdrawing bypasses content submission and locks actions until completion
     assert.equal(document.querySelector("input")!.value, "");
   } finally {
     await act(async () => root.unmount());
+    dom.window.close();
+  }
+});
+
+test("pending recovery does not lock inputs, other actions, or saving current server content", async () => {
+  const dom = new JSDOM('<div id="root"></div>', {
+    url: "http://localhost/classes/test",
+  });
+  Object.assign(globalThis, {
+    window: dom.window,
+    document: dom.window.document,
+    location: dom.window.location,
+    FormData: dom.window.FormData,
+    indexedDB,
+    IS_REACT_ACT_ENVIRONMENT: true,
+  });
+  const root = createRoot(document.getElementById("root")!);
+  const userId = "optional-recovery-user",
+    entity = "#/classes/test:optional-recovery";
+  let saved: unknown,
+    extraActions = 0;
+  let completeSave!: () => void;
+  const savePending = new Promise<void>((resolve) => { completeSave = resolve; });
+  await saveDraft(
+    userId,
+    entity,
+    { fields: { title: ["Old local draft"] } },
+    "v1",
+  );
+  try {
+    await act(async () => {
+      root.render(
+        createElement(
+          DraftUserContext.Provider,
+          { value: userId },
+          createElement(
+            Form,
+            {
+              draftKey: "optional-recovery",
+              draftVersion: "v1",
+              onSubmit: async (data: FormData) => {
+                saved = data.get("title");
+                await savePending;
+              },
+            },
+            createElement("input", {
+              name: "title",
+              defaultValue: "Server title",
+            }),
+            createElement(
+              "button",
+              { type: "button", onClick: () => extraActions++ },
+              "Other action",
+            ),
+          ),
+        ),
+      );
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 30));
+    });
+    assert.match(document.body.textContent!, /Pemulihan opsional/);
+    assert.equal(document.querySelector("fieldset")!.disabled, false);
+    const other = [...document.querySelectorAll("button")].find(
+      (button) => button.textContent === "Other action",
+    )!;
+    await act(async () => other.click());
+    assert.equal(extraActions, 1);
+    const submit = document.querySelector<HTMLButtonElement>(
+      'button[type="submit"]',
+    )!;
+    assert.equal(submit.disabled, false);
+    await act(async () => submit.click());
+    assert.equal(document.querySelector("fieldset")!.disabled, true);
+    assert.ok([...document.querySelectorAll<HTMLButtonElement>(".recovery-banner button")].every(button => button.disabled));
+    await act(async () => {
+      completeSave();
+      await new Promise((resolve) => setTimeout(resolve, 30));
+    });
+    assert.equal(saved, "Server title");
+    assert.equal(await getDraft(userId, entity), undefined);
+    assert.doesNotMatch(document.body.textContent!, /Pemulihan opsional/);
+  } finally {
+    await act(async () => root.unmount());
+    await removeDraft(userId);
     dom.window.close();
   }
 });

@@ -127,6 +127,7 @@ export function useLocalDraft<T>(
   value: T,
   restore: (value: T) => void,
   enabled = true,
+  serverVersion?: string,
 ) {
   const userId = useContext(DraftUserContext);
   const encoded = JSON.stringify(value);
@@ -143,15 +144,26 @@ export function useLocalDraft<T>(
   const persist = (v: T) => {
     pending.current = pending.current
       .catch(() => {})
-      .then(() => saveDraft(userId, entity, v));
+      .then(() => saveDraft(userId, entity, v, serverVersion));
     return pending.current;
   };
   useEffect(() => {
     if (!enabled || !userId) return;
     let active = true;
     getDraft(userId, entity)
-      .then((d) => {
-        if (active && d) setRecovery(d);
+      .then(async (d) => {
+        if (!active || !d) return;
+        const outdated =
+          serverVersion &&
+          (d.baseVersion
+            ? d.baseVersion !== serverVersion
+            : Number.isFinite(Date.parse(serverVersion)) &&
+              d.updatedAt < Date.parse(serverVersion));
+        if (outdated) {
+          await removeDraft(userId, entity, d.updatedAt);
+          if (active)
+            setStatus("Draf lama dibersihkan · versi server lebih baru");
+        } else if (!latest.current.dirty) setRecovery(d);
       })
       .catch(() => {
         if (active)
@@ -167,8 +179,13 @@ export function useLocalDraft<T>(
       if (latest.current.dirty)
         void persist(latest.current.value).catch(() => {});
     };
-  }, [userId, entity, enabled]);
+  }, [userId, entity, enabled, serverVersion]);
   useEffect(() => {
+    // Starting a new edit chooses the current server version; recovery is optional.
+    if (dirty && recovery) {
+      setRecovery(null);
+      setStatus("Belum disimpan");
+    }
     if (dirty) edited.current = true;
     else if (edited.current && !recovery && userId) {
       edited.current = false;
@@ -254,14 +271,22 @@ export function SaveStatus({
       {draft.recovery && (
         <div className="recovery-banner">
           <span>
-            Draft ditemukan · {formatDateTime(draft.recovery.updatedAt)}
+            Draf sebelumnya tersedia ·{" "}
+            {formatDateTime(draft.recovery.updatedAt)}. Pemulihan opsional; Anda
+            dapat melanjutkan isian ini.
           </span>
-          <button type="button" className="secondary" onClick={draft.restore}>
+          <button
+            type="button"
+            className="secondary"
+            disabled={busy}
+            onClick={draft.restore}
+          >
             Pulihkan draft
           </button>
           <button
             type="button"
             className="text-button"
+            disabled={busy}
             onClick={() => {
               void draft
                 .discard()
@@ -279,11 +304,7 @@ export function SaveStatus({
         aria-live="polite"
         className={draft.dirty ? "save-status dirty" : "save-status"}
       >
-        {busy
-          ? "Menyimpan ke server"
-          : draft.recovery
-            ? "Draft menunggu pemulihan"
-            : draft.status}
+        {busy ? "Menyimpan ke server" : draft.status}
         {draft.dirty && " · belum dikirim ke server"}
       </span>
       {(draft.error || failure) && (

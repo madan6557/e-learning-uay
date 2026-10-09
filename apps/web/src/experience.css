@@ -3481,3 +3481,40 @@ main {
  .rector-workspace .topbar {padding-inline:12px;gap:8px;}
  .rector-workspace main {padding-inline:14px;}
 }
+
+/* Video metadata and playback share the same spacing across editor and reader. */
+.video-metadata {
+  display: grid;
+  gap: 16px;
+  margin-block: 16px;
+  min-width: 0;
+}
+.video-duration-status {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-muted);
+  overflow-wrap: anywhere;
+}
+.video-metadata > p { margin: 0; }
+.video-metadata > .video-player { max-width: 560px; }
+.video-metadata > .button { justify-self: start; }
+.video-player {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #0b1220;
+}
+.video-player > video, .video-player > iframe {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  border: 0;
+}
+.video-player > video { max-height: 65vh; object-fit: contain; }
+.video-player > iframe { min-height: 200px; }
+.video-viewer > .video-player { margin-bottom: 16px; }

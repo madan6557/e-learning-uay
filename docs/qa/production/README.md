@@ -6,6 +6,8 @@ Lingkungan lokal demo, database elearning_visual_test. Akun merupakan fixture, b
 
 ## Koreksi grace dan kartu ponsel, 9 Oktober
 
+[Durasi video otomatis dan draf opsional](video-duration/README.md) memuat pembaruan terbaru: metadata MP4/YouTube, progres nyata dan retry, editor tanpa penguncian draf, serta pembersihan draf setelah simpan atau pergantian versi server. Bukti mencakup empat lebar layar, 115 tes unit, dan 176 domain/UI + 133 integrasi.
+
 [Patrol akhir UI/UX](final-patrol/README.md) memuat pemeriksaan terbaru setelah penambahan editor rich text: modal AI bertingkat, feedback dalam dialog, label formulir, status simpan, dan 214 pengukuran pada 74 halaman/mode. QA terakhir pada patrol ini lulus 165 tes domain/UI dan 132 integrasi; gate staging kampus tetap berlaku.
 
 Audit lanjutan seluruh menu lima peran, komponen dan modal pada enam lebar layar tersedia di [audit jarak responsif](spacing-audit/README.md). Bukti ini mencakup koreksi ikon landing, gutter modal/formulir, pagination, tinjauan nilai, filter koreksi kuis, bantuan dan kode proyektor.

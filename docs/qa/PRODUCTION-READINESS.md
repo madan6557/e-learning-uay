@@ -10,15 +10,15 @@ Tanggal verifikasi: **8–9 Oktober 2026**, zona waktu Asia/Singapore. Acuan keb
 | --- | --- | --- |
 | TypeScript API dan web | Lulus | `npm run typecheck`; juga diperiksa oleh build penuh |
 | Build penuh | Lulus | `npm run build`: Prisma Client, TypeScript API/web, Vite production |
-| Domain, komponen UI, dan QA domain | 165 tes, exit 0 | [Hasil terstruktur](../../apps/qa/public/reports/latest.json), suite `domain` |
-| Integrasi API/PostgreSQL | 132 tes, exit 0 | Hasil terstruktur, suite `integration`; database `elearning_test` |
+| Domain, komponen UI, dan QA domain | 176 tes, exit 0 | [Hasil terstruktur](../../apps/qa/public/reports/latest.json), suite `domain` |
+| Integrasi API/PostgreSQL | 133 tes, exit 0 | Hasil terstruktur, suite `integration`; database `elearning_test` |
 | Katalog QA v5 | 163 lulus, 0 gagal, 191 belum dijalankan otomatis | [Ringkasan QA](AUTOMATED-RESULTS.md): P0 158 lulus/169 belum otomatis; P1 5/15; P2 0/7 |
 | Portal QA | 8 tes lulus; build lulus | `npm run qa:test`, `npm run qa:build` |
 | Audit dependensi | 0 kerentanan | `npm audit --json`; [ringkasan verifikasi](production/verification-results.json) |
 | Panduan dan tautan dokumentasi | Lulus | `npm run docs:guide:check`, perakitan folder panduan, pemeriksaan tautan relatif |
 | Browser desktop/tablet/ponsel | Halaman utama lima peran dan alur terpilih diperiksa | [Indeks screenshot dan pemeriksaan](production/README.md) |
 
-Run QA terakhir: `6fe17ae4-10c2-447b-8a3c-b502052ba82d`, selesai `2026-10-09T13:56:25.012Z` (9 Oktober, 21.56 GMT+8). Report mencatat base commit beserta penanda working copy karena verifikasi dilakukan sebelum commit koreksi. [Patrol akhir UI/UX](production/final-patrol/README.md) memuat koreksi modal AI, feedback dalam dialog, label, status penyimpanan, pesan Admin Prodi, filter Rektor, serta regresi login mode OIDC demo. Build penuh dan typecheck ulang lulus; audit dependensi tetap 0 kerentanan. [Pre-flight hasil build sebelumnya](production/grace-preflight-checks.json) memakai skrip workflow yang sama dan lulus tanpa Redis/secret webhook; konfigurasi grace tidak diubah pada patrol akhir.
+Run QA terakhir: `60507b08-3389-455a-add4-fd44b706ea80`, selesai `2026-10-09T15:29:38.604Z` (9 Oktober, 23.29 GMT+8). Report mencatat base commit beserta penanda working copy karena verifikasi dilakukan sebelum commit koreksi. [Durasi video dan draf](production/video-duration/README.md) memuat metadata otomatis, progres pemutaran nyata, pemulihan opsional, dan pembersihan draf sesuai versi server. [Patrol akhir UI/UX](production/final-patrol/README.md) memuat koreksi modal AI, feedback dalam dialog, label, status penyimpanan, pesan Admin Prodi, filter Rektor, serta regresi login mode OIDC demo. Build penuh, build web akhir, typecheck, dan 115 tes unit lulus; audit dependensi tetap 0 kerentanan. [Pre-flight hasil build sebelumnya](production/grace-preflight-checks.json) memakai skrip workflow yang sama dan lulus tanpa Redis/secret webhook; konfigurasi grace tidak diubah pada koreksi ini.
 
 `npm run dev:test` memakai **elearning_visual_test** dan penyimpanan berkas `.local/visual-test-files`, terpisah dari database penggunaan biasa. Ada 58 akun fixture: 1 Super Admin, 1 Rektor, 4 Admin Prodi, 12 Dosen, dan 40 Mahasiswa; 16 kelas pada 4 prodi. Database integrasi dibatasi oleh launcher pada nama berakhiran `_test`. Pengguna lintas prodi, dosen bukan pengampu, dan mahasiswa bukan peserta tersedia untuk pemeriksaan penolakan akses. Akun fixture Damar diperbaiki agar tidak menimpa identitas mahasiswa Dewi; tidak ada relasi pengampu yang menunjuk akun mahasiswa. Riwayat audit fixture lama dipertahankan, sehingga angka laporan demo tidak menjadi bukti aktivitas kampus nyata.
 

@@ -28,10 +28,17 @@ test("local drafts are isolated, recoverable and cleared after successful save",
   const rootEl = document.getElementById("root")!;
   let root: Root;
   let current: ReturnType<typeof useLocalDraft<any>>, update: (v: any) => void;
+  let serverVersion = "v1";
   function Editor() {
     const [value, setValue] = useState({ title: "Server", blocks: [] });
     update = setValue;
-    current = useLocalDraft("resource:test", value, setValue);
+    current = useLocalDraft(
+      "resource:test",
+      value,
+      setValue,
+      true,
+      serverVersion,
+    );
     return createElement("p", {}, value.title);
   }
   const mount = async () => {
@@ -129,6 +136,69 @@ test("local drafts are isolated, recoverable and cleared after successful save",
           await new Promise((r) => setTimeout(r, 30));
         });
         assert.equal(current!.dirty, false);
+        assert.equal(await getDraft("user-a", "resource:test"), undefined);
+        await act(async () => root.unmount());
+      },
+    );
+    await suite.test(
+      "new edits can replace optional recovery and still autosave",
+      async () => {
+        await saveDraft(
+          "user-a",
+          "resource:test",
+          { title: "Old draft", blocks: [] },
+          "v1",
+        );
+        await mount();
+        assert.ok(current!.recovery);
+        await act(async () => update({ title: "New edit", blocks: [] }));
+        assert.equal(current!.recovery, null);
+        await act(async () => {
+          await new Promise((resolve) => setTimeout(resolve, 1150));
+        });
+        assert.equal(
+          ((await getDraft("user-a", "resource:test"))!.value as any).title,
+          "New edit",
+        );
+        await act(async () => root.unmount());
+      },
+    );
+    await suite.test(
+      "a newer server revision removes stale content without offering recovery",
+      async () => {
+        serverVersion = "v2";
+        await mount();
+        assert.equal(current!.recovery, null);
+        assert.equal(await getDraft("user-a", "resource:test"), undefined);
+        assert.match(current!.status, /versi server lebih baru/);
+        assert.equal(rootEl.textContent, "Server");
+        await act(async () => root.unmount());
+      },
+    );
+    await suite.test(
+      "stale cleanup cannot delete a replacement draft written after inspection",
+      async () => {
+        await saveDraft("user-a", "race", { title: "Old" }, "v1");
+        const before = (await getDraft("user-a", "race"))!;
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        await saveDraft("user-a", "race", { title: "New" }, "v2");
+        await removeDraft("user-a", "race", before.updatedAt);
+        assert.equal(
+          ((await getDraft("user-a", "race"))!.value as any).title,
+          "New",
+        );
+      },
+    );
+    await suite.test(
+      "legacy drafts older than a server update are cleared using timestamps",
+      async () => {
+        await saveDraft("user-a", "resource:test", {
+          title: "Legacy",
+          blocks: [],
+        });
+        serverVersion = new Date(Date.now() + 1000).toISOString();
+        await mount();
+        assert.equal(current!.recovery, null);
         assert.equal(await getDraft("user-a", "resource:test"), undefined);
         await act(async () => root.unmount());
       },

@@ -629,7 +629,7 @@ test(
               isVisible: true,
               dynamicPayload: {
                 provider: "YOUTUBE",
-                url: "https://www.youtube.com/embed/qa",
+                url: "https://www.youtube.com/embed/M7lc1UVf-VE",
                 durationSeconds: 100,
               },
             },

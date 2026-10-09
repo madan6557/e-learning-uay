@@ -1607,7 +1607,7 @@ export function ImportPanel({
         <SaveStatus draft={draft} busy={busy || committing} />
       </div>
       <p>{t.importDescription}</p>
-      <fieldset disabled={busy || committing || !!draft.recovery}>
+      <fieldset disabled={busy || committing}>
         <div className="form-grid">
           <Field label={t.importKind}>
             <select
@@ -1884,13 +1884,8 @@ export function ImportPanel({
                 className="primary"
                 busyLabel="Menyimpan hasil impor…"
                 successMessage="Impor berhasil disimpan."
-                disabledReason={
-                  draft.recovery
-                    ? "Pulihkan atau buang draf terlebih dahulu."
-                    : "Pratinjau harus selesai dan semua masalah baris harus diperbaiki sebelum impor."
-                }
+                disabledReason="Pratinjau harus selesai dan semua masalah baris harus diperbaiki sebelum impor."
                 disabled={
-                  !!draft.recovery ||
                   !review ||
                   review.issues > 0 ||
                   review.ready === 0

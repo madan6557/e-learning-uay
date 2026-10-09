@@ -119,6 +119,9 @@ export function createApp() {
       contentSecurityPolicy: {
         directives: {
           upgradeInsecureRequests: isDemo ? null : [],
+          scriptSrc: ["'self'", "https://www.youtube.com"],
+          frameSrc: ["'self'", ...config.embedOrigins, "https://www.youtube-nocookie.com"],
+          mediaSrc: ["'self'", "blob:", ...config.fileOrigins, ...config.embedOrigins],
         },
       },
     }),

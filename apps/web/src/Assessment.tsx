@@ -419,6 +419,7 @@ export function QuizEditor({
     <Modal wide title={quiz ? t.edit : t.newQuiz} onClose={onClose}>
       <Form
         draftKey={`quiz:${quiz?.id ?? sectionId}`}
+        draftVersion={quiz?.updatedAt}
         publication={{
           published: quiz?.status === "PUBLISHED" && quiz?.isVisible,
           onUnpublish: quiz
@@ -1847,6 +1848,7 @@ export function AssignmentEditor({
     <Modal title={assignment ? t.edit : t.newAssignment} wide onClose={onClose}>
       <Form
         draftKey={`assignment-editor:${assignment?.id ?? sectionId}`}
+        draftVersion={assignment?.updatedAt}
         draftValue={{ instructions }}
         onRestoreDraft={(v) => {
           if (v.instructions !== undefined) setInstructions(v.instructions);
@@ -2493,6 +2495,7 @@ export function AssignmentPage({
           <h3>{grading.user.name}</h3>
           <Form
             draftKey={`submission-grading:${grading.id}`}
+            draftVersion={grading.updatedAt}
             submitLabel="Simpan semua penilaian"
             onSubmit={async (f) => {
               const reason = textValue(f, "reason");

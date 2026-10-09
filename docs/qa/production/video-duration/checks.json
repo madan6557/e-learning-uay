@@ -1,0 +1,71 @@
+{
+  "responsive": [
+    {
+      "disabled": false,
+      "duration": "Durasi otomatis0:05 · Dibaca dari video",
+      "durationInputs": [
+        "Tonton minimal (%)"
+      ],
+      "overflow": false,
+      "player": {
+        "right": 797.5,
+        "width": 560,
+        "x": 237.5
+      },
+      "viewport": 1440
+    },
+    {
+      "disabled": false,
+      "duration": "Durasi otomatis0:05 · Dibaca dari video",
+      "durationInputs": [
+        "Tonton minimal (%)"
+      ],
+      "overflow": false,
+      "player": {
+        "right": 601.5,
+        "width": 560,
+        "x": 41.5
+      },
+      "viewport": 768
+    },
+    {
+      "disabled": false,
+      "duration": "Durasi otomatis0:05 · Dibaca dari video",
+      "durationInputs": [
+        "Tonton minimal (%)"
+      ],
+      "overflow": false,
+      "player": {
+        "right": 349,
+        "width": 333,
+        "x": 16
+      },
+      "viewport": 390
+    },
+    {
+      "disabled": false,
+      "duration": "Durasi otomatis0:05 · Dibaca dari video",
+      "durationInputs": [
+        "Tonton minimal (%)"
+      ],
+      "overflow": false,
+      "player": {
+        "right": 279,
+        "width": 263,
+        "x": 16
+      },
+      "viewport": 320
+    }
+  ],
+  "youtube": {
+    "label": "Ditonton · 1:49 / 5:08:480,58%",
+    "manualCompletionButtons": 0,
+    "progress": "0.58"
+  },
+  "upload": {
+    "duration": 5,
+    "label": "Ditonton · 0:05 / 0:05100%",
+    "manualCompletionButtons": 0,
+    "progress": "100"
+  }
+}

@@ -31,6 +31,9 @@ test("clean paths retain history and unsaved drafts can cancel both links and Ba
   const root = createRoot(document.getElementById("root")!);
   const settle = () => act(async () => { await new Promise(r => setTimeout(r, 60)); });
   const answer = async (label: string) => {
+    for (let attempt = 0; attempt < 100 && ![...document.querySelectorAll("dialog button")].some(button => button.textContent === label); attempt++) {
+      await act(async () => { await new Promise(resolve => setTimeout(resolve, 10)); });
+    }
     await act(async () => {
       const button = [...document.querySelectorAll("dialog button")].find(b => b.textContent === label) as HTMLButtonElement;
       assert.ok(button, `confirmation button ${label}`);

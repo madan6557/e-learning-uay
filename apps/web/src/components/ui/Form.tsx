@@ -78,6 +78,7 @@ export interface FormProps {
   onCancel?: () => void;
   draftKey?: string;
   draftValue?: any;
+  draftVersion?: string;
   onRestoreDraft?: (value: any) => void;
   autosave?: boolean;
   disabled?: boolean;
@@ -100,6 +101,7 @@ export function Form({
   onCancel,
   draftKey = "form",
   draftValue,
+  draftVersion,
   onRestoreDraft,
   autosave = true,
   disabled = false,
@@ -127,6 +129,7 @@ export function Form({
       }, 0);
     },
     autosave,
+    draftVersion,
   );
 
   useLayoutEffect(() => {
@@ -137,7 +140,7 @@ export function Form({
   }, []);
 
   useEffect(() => {
-    onDirtyChange?.(draft.dirty || !!draft.recovery);
+    onDirtyChange?.(draft.dirty);
   }, [draft.dirty, draft.recovery, onDirtyChange]);
 
   return (
@@ -150,14 +153,7 @@ export function Form({
       }}
       onSubmit={async (e) => {
         e.preventDefault();
-        if (
-          inFlight.current ||
-          busy ||
-          disabled ||
-          submitDisabled ||
-          draft.recovery
-        )
-          return;
+        if (inFlight.current || busy || disabled || submitDisabled) return;
         inFlight.current = true;
         const data = new FormData(e.currentTarget);
         const submitter = (e.nativeEvent as SubmitEvent)
@@ -198,9 +194,7 @@ export function Form({
       }}
     >
       {autosave && <SaveStatus draft={draft} busy={busy} />}
-      <fieldset disabled={busy || disabled || !!draft.recovery}>
-        {children}
-      </fieldset>
+      <fieldset disabled={busy || disabled}>{children}</fieldset>
       {error && <Notice error={error} onClose={() => setError(null)} />}
       {(disabled || submitDisabled) && disabledReason && (
         <p className="action-reason">{disabledReason}</p>
@@ -228,7 +222,7 @@ export function Form({
           type="submit"
           value={publication ? "publish" : "save"}
           variant="primary"
-          disabled={busy || disabled || submitDisabled || !!draft.recovery}
+          disabled={busy || disabled || submitDisabled}
         >
           {busy &&
           pendingAction !== "draft" &&
@@ -251,17 +245,11 @@ export function Form({
                 : "submit"
             }
             value="draft"
-            disabled={busy || disabled || submitDisabled || !!draft.recovery}
+            disabled={busy || disabled || submitDisabled}
             onClick={
               publication.published && publication.onUnpublish
                 ? async () => {
-                    if (
-                      inFlight.current ||
-                      busy ||
-                      disabled ||
-                      submitDisabled ||
-                      draft.recovery
-                    )
+                    if (inFlight.current || busy || disabled || submitDisabled)
                       return;
                     inFlight.current = true;
                     setBusy(true);

@@ -444,11 +444,13 @@ function AnnouncementEditorModal({
       setAttachmentUrl(value.attachmentUrl);
       setAttachmentName(value.attachmentName);
     },
+    true,
+    editing.updatedAt,
   );
   const cancel = async () => {
     if (savingRef.current) return;
     if (
-      (draft.dirty || draft.recovery) &&
+      draft.dirty &&
       !(await confirmAction(
         "Perubahan belum dikirim ke server. Tutup editor dan simpan draf di perangkat ini?",
       ))
@@ -502,7 +504,7 @@ function AnnouncementEditorModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (savingRef.current || draft.recovery) return;
+    if (savingRef.current) return;
     savingRef.current = true;
     setSaving(true);
     setError(null);
@@ -900,7 +902,7 @@ function AnnouncementEditorModal({
         <button
           type="submit"
           className="primary"
-          disabled={saving || !!draft.recovery}
+          disabled={saving}
         >
           {saving
             ? "Menyimpan..."
@@ -982,7 +984,7 @@ function AnnouncementEditorModal({
       <form
         onSubmit={handleSubmit}
         style={{ margin: 0 }}
-        data-dirty={draft.dirty || draft.recovery ? "true" : undefined}
+        data-dirty={draft.dirty ? "true" : undefined}
         aria-busy={saving}
       >
         {!editing.id && (
@@ -992,7 +994,7 @@ function AnnouncementEditorModal({
           </p>
         )}
         <SaveStatus draft={draft} busy={saving} />
-        <fieldset disabled={saving || !!draft.recovery}>
+        <fieldset disabled={saving}>
           {viewMode === "split" ? (
             <div className="announcement-split-container">
               <div className="announcement-editor-left">{formFields}</div>
@@ -1081,7 +1083,7 @@ function AnnouncementEditorModal({
                 <button
                   type="submit"
                   className="primary"
-                  disabled={saving || !!draft.recovery}
+                  disabled={saving}
                 >
                   {saving
                     ? "Menyimpan..."
