@@ -30,7 +30,7 @@ export function Files({ classId, writable }: { classId: string; writable: boolea
       ) : files.loading && !files.data ? (
         <Loading />
       ) : (
-        <div className="card table-wrap">
+        <div className="card table-wrap phone-record-table">
           <table>
             <thead>
               <tr>
@@ -43,25 +43,27 @@ export function Files({ classId, writable }: { classId: string; writable: boolea
             <tbody>
               {pagination.paginatedItems.map((file) => (
                 <tr key={file.id}>
-                  <td>
+                  <td className="record-title">
                     {file.name}
                     <small className="block">
                       {(file.sizeBytes / 1024).toFixed(1)} KB
                     </small>
                   </td>
-                  <td>
+                  <td data-label={t.fileStatus}>
                     <Badge value={file.status} />
                   </td>
-                  <td>{date(file.createdAt)}</td>
-                  <td>
+                  <td data-label={t.timestamp}>{date(file.createdAt)}</td>
+                  <td className="record-actions">
                     {writable && ["READY", "TRASH"].includes(file.status) && (
                       <Action
+                        className={file.status === "TRASH" ? "secondary" : "danger"}
+                        successMessage={file.status === "TRASH" ? "Berkas dipulihkan." : "Berkas dipindahkan ke sampah."}
                         run={async () => {
                           if (
                             file.status === "READY" &&
                             !(await confirmAction(t.confirmTrash))
                           )
-                            return;
+                            return false;
                           await api(
                             `/files/${file.id}/${file.status === "TRASH" ? "restore" : "trash"}`,
                             "POST",

@@ -561,7 +561,7 @@ export function ActivityWaterfall({
         <summary>
           Seluruh riwayat aktivitas dalam periode ({events.length})
         </summary>
-        <div className="table-wrap">
+        <div className="table-wrap phone-record-table">
           <table>
             <thead>
               <tr>
@@ -573,12 +573,12 @@ export function ActivityWaterfall({
             <tbody>
               {events.map((a) => (
                 <tr key={a.id}>
-                  <td>
+                  <td data-label="Waktu lokal">
                     {date(a.at)}
                     <small>{clock(a.at)}</small>
                   </td>
-                  <td>{a.action}</td>
-                  <td>
+                  <td className="record-title">{a.action}</td>
+                  <td data-label="Kelas / objek">
                     {classes.find((c) => c.id === a.classId)?.title ??
                       a.objectName}
                   </td>

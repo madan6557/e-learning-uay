@@ -257,13 +257,13 @@ function productionConfigurationErrors() {
     invalid.push("AUTH_MODE=oidc");
   }
 
-  required("REDIS_URL", resolvedRedisUrl);
+  // Grace: Redis is optional; missing or unavailable Redis uses memory.
   required("SSO_ISSUER", process.env.SSO_ISSUER);
   required("SSO_CLIENT_ID", process.env.SSO_CLIENT_ID);
   // SSO_CLIENT_SECRET bersifat opsional (tidak diperlukan untuk Client bertipe Public dengan PKCE)
   required("SSO_AUDIENCE", process.env.SSO_AUDIENCE);
   required("SSO_REDIRECT_URI", process.env.SSO_REDIRECT_URI);
-  required("SSO_WEBHOOK_SECRET", process.env.SSO_WEBHOOK_SECRET);
+  // Grace: an unconfigured revocation webhook remains disabled with HTTP 503.
 
   const activeFileUrl =
     process.env.UAY_FILE_SERVICE_URL?.trim() ||
@@ -341,6 +341,11 @@ if (production) {
       `Production requires OIDC and valid configuration. Set or correct: ${invalid.join(", ")}.`,
     );
   }
+  if (!isDemo && !process.env.SSO_WEBHOOK_SECRET?.trim()) {
+    console.warn(
+      "[Auth] SSO_WEBHOOK_SECRET belum diisi: grace aktif; webhook pencabutan akun mengembalikan 503.",
+    );
+  }
 }
 export const db = new PrismaClient();
 export const redis = resolvedRedisUrl
@@ -356,7 +361,7 @@ if (redis) {
     console.log("[Cache] Redis terhubung: menggunakan Redis cluster/server."),
   );
   redis.on("error", (err) =>
-    console.error("[Cache] Redis connection error:", err.message),
+    console.error("[Cache] Redis connection error (fallback ke in-memory):", err.message),
   );
 } else {
   console.log(
@@ -365,15 +370,14 @@ if (redis) {
 }
 
 const memory = new Map<string, { value: string; expires: number }>();
-// Local and explicitly enabled hosted demo can use memory. Production requires Redis.
+// Preserve grace in all environments; memory is local to this API process.
 export const cache = {
   async get(key: string) {
     if (redis) {
       try {
         return await redis.get(key);
       } catch {
-        if (production && !isDemo)
-          throw new HttpError(503, "CACHE_UNAVAILABLE");
+        // Grace: use memory while Redis is unavailable.
       }
     }
     const item = memory.get(key);
@@ -387,8 +391,7 @@ export const cache = {
         await redis.set(key, value, "EX", seconds);
         return;
       } catch {
-        if (production && !isDemo)
-          throw new HttpError(503, "CACHE_UNAVAILABLE");
+        // Grace: use memory while Redis is unavailable.
       }
     }
     if (memory.size > 10000)
@@ -401,8 +404,7 @@ export const cache = {
         await redis.del(key);
         return;
       } catch {
-        if (production && !isDemo)
-          throw new HttpError(503, "CACHE_UNAVAILABLE");
+        // Grace: use memory while Redis is unavailable.
       }
     }
     memory.delete(key);
@@ -412,8 +414,7 @@ export const cache = {
       try {
         return await redis.getdel(key);
       } catch {
-        if (production && !isDemo)
-          throw new HttpError(503, "CACHE_UNAVAILABLE");
+        // Grace: use memory while Redis is unavailable.
       }
     }
     const value = await this.get(key);
@@ -434,8 +435,7 @@ export const cache = {
           ) <= limit
         );
       } catch {
-        if (production && !isDemo)
-          throw new HttpError(503, "CACHE_UNAVAILABLE");
+        // Grace: use memory while Redis is unavailable.
       }
     }
     const item = memory.get(key);

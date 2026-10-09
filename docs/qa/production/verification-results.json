@@ -77,5 +77,76 @@
     "brokenLinks": 0,
     "movedDocuments": 59,
     "guidePackaging": "8 files verified"
+  },
+  "followUp": {
+    "verifiedAt": "2026-10-09T01:58:47.621Z",
+    "scope": "Restore previous production grace and correct phone record cards, action styles and confirmation focus",
+    "qa": {
+      "runId": "91210b48-28ea-4c0a-8477-20d7733ab4cc",
+      "completedAt": "2026-10-09T01:56:34.143Z",
+      "baseRevision": "2dfd54a72dbf244d4cddaea3a497fe2dc381bdf1",
+      "suites": [
+        {
+          "name": "domain",
+          "exitCode": 0,
+          "blocked": false,
+          "diagnostic": "",
+          "tests": 158
+        },
+        {
+          "name": "integration",
+          "exitCode": 0,
+          "blocked": false,
+          "diagnostic": "",
+          "tests": 132
+        }
+      ],
+      "summary": {
+        "cases": 354,
+        "pass": 163,
+        "fail": 0,
+        "blocked": 0,
+        "not_run": 191
+      },
+      "regressionFindings": []
+    },
+    "commands": [
+      {
+        "command": "npm run build",
+        "exitCode": 0
+      },
+      {
+        "command": "npm run typecheck",
+        "exitCode": 0
+      },
+      {
+        "command": "npm run qa:run",
+        "exitCode": 0
+      },
+      {
+        "command": "npm audit --json",
+        "exitCode": 0
+      },
+      {
+        "command": "compiled workflow pre-flight with missing/unavailable Redis and missing webhook secret",
+        "exitCode": 0,
+        "cases": 2
+      }
+    ],
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "documentationLinks": {
+      "checked": 263,
+      "broken": 0
+    },
+    "browserEvidence": "grace-mobile-checks.json",
+    "preflightEvidence": "grace-preflight-checks.json",
+    "stagingAcceptance": "Still pending real campus integrations and the remaining acceptance gates"
   }
 }

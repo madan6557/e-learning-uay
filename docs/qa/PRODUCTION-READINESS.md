@@ -10,15 +10,15 @@ Tanggal verifikasi: **8–9 Oktober 2026**, zona waktu Asia/Singapore. Acuan keb
 | --- | --- | --- |
 | TypeScript API dan web | Lulus | `npm run typecheck`; juga diperiksa oleh build penuh |
 | Build penuh | Lulus | `npm run build`: Prisma Client, TypeScript API/web, Vite production |
-| Domain, komponen UI, dan QA domain | 155 tes, exit 0 | [Hasil terstruktur](../../apps/qa/public/reports/latest.json), suite `domain` |
-| Integrasi API/PostgreSQL | 130 tes, exit 0 | Hasil terstruktur, suite `integration`; database `elearning_test` |
+| Domain, komponen UI, dan QA domain | 158 tes, exit 0 | [Hasil terstruktur](../../apps/qa/public/reports/latest.json), suite `domain` |
+| Integrasi API/PostgreSQL | 132 tes, exit 0 | Hasil terstruktur, suite `integration`; database `elearning_test` |
 | Katalog QA v5 | 163 lulus, 0 gagal, 191 belum dijalankan otomatis | [Ringkasan QA](AUTOMATED-RESULTS.md): P0 158 lulus/169 belum otomatis; P1 5/15; P2 0/7 |
 | Portal QA | 8 tes lulus; build lulus | `npm run qa:test`, `npm run qa:build` |
 | Audit dependensi | 0 kerentanan | `npm audit --json`; [ringkasan verifikasi](production/verification-results.json) |
 | Panduan dan tautan dokumentasi | Lulus | `npm run docs:guide:check`, perakitan folder panduan, pemeriksaan tautan relatif |
 | Browser desktop/tablet/ponsel | Halaman utama lima peran dan alur terpilih diperiksa | [Indeks screenshot dan pemeriksaan](production/README.md) |
 
-Run QA akhir: `01471674-8dcb-4871-b437-f6cd33218b5c`, selesai `2026-10-08T19:31:59.080Z` (9 Oktober, 03.31 GMT+8). Report mencatat base commit beserta penanda working copy karena verifikasi dilakukan sebelum commit implementasi.
+Run QA terakhir: `91210b48-28ea-4c0a-8477-20d7733ab4cc`, selesai `2026-10-09T01:56:34.143Z` (9 Oktober, 09.56 GMT+8). Report mencatat base commit beserta penanda working copy karena verifikasi dilakukan sebelum commit koreksi. Run ini menggantikan hasil awal `01471674-8dcb-4871-b437-f6cd33218b5c` setelah koreksi grace dan regresi tombol katalog/SSO ditambahkan. Build penuh dan typecheck ulang lulus; audit dependensi tetap 0 kerentanan. [Pre-flight hasil build](production/grace-preflight-checks.json) memakai skrip workflow yang sama dan lulus tanpa Redis/secret webhook; ini merupakan bukti lokal, bukan perubahan konfigurasi VPS.
 
 `npm run dev:test` memakai **elearning_visual_test** dan penyimpanan berkas `.local/visual-test-files`, terpisah dari database penggunaan biasa. Ada 58 akun fixture: 1 Super Admin, 1 Rektor, 4 Admin Prodi, 12 Dosen, dan 40 Mahasiswa; 16 kelas pada 4 prodi. Database integrasi dibatasi oleh launcher pada nama berakhiran `_test`. Pengguna lintas prodi, dosen bukan pengampu, dan mahasiswa bukan peserta tersedia untuk pemeriksaan penolakan akses. Akun fixture Damar diperbaiki agar tidak menimpa identitas mahasiswa Dewi; tidak ada relasi pengampu yang menunjuk akun mahasiswa. Riwayat audit fixture lama dipertahankan, sehingga angka laporan demo tidak menjadi bukti aktivitas kampus nyata.
 
@@ -76,7 +76,7 @@ Semua baris berikut merupakan bukti **lokal**. “API” berarti permintaan lang
 | Resize dengan nilai belum disimpan | Browser: nilai UTS Bunga diubah menjadi 61, tetap 61 saat berpindah ponsel → desktop → ponsel, lalu dikembalikan tanpa menyimpan ke server; [bukti](production/gradebook-mobile-draft.jpg) |
 | Presensi mandiri nonaktif/tertutup | UI tidak menawarkan tombol yang ditolak API; error membedakan tenggat presensi dari sesi autentikasi habis; dosen tidak dapat mengirim check-in mahasiswa |
 | OIDC callback | Origin berasal dari konfigurasi terpercaya; endpoint `me` anonim tidak menghapus state; error pemuatan konfigurasi ditampilkan dan URL callback tidak diproses dua kali |
-| Redis gagal | [Konfigurasi production](../../tests/production-config.test.ts), [health](../../tests/integration/production-health.test.ts): sesi/revokasi/rate limit fail closed dengan 503; health memeriksa SQL dan Redis |
+| Grace Redis/webhook | [Konfigurasi production](../../tests/production-config.test.ts), [health](../../tests/integration/production-health.test.ts): Redis kosong/gagal memakai memori, database siap tetap 200 dengan penanda degraded; webhook tanpa secret tetap 503 dan akun uji tetap ditolak pada production non-demo |
 | Akses lintas scope/kelas | Tes permintaan API langsung memeriksa prodi asing, dosen nonpengampu, peserta nonaktif, kelas/course arsip, konten belum terbit serta file/pekerjaan privat |
 
 Gangguan header selama HMR pengembangan sudah diperbaiki. Typecheck/build akhir lulus dan [konsol browser sesudah perbaikan](production/phone-browser-console.json) tidak mencatat error/warning. Ini bukan simulasi menyeluruh semua kombinasi jaringan pada setiap halaman; kasus manual yang belum mempunyai bukti tetap memerlukan penerimaan pada katalog.
@@ -86,6 +86,10 @@ Gangguan header selama HMR pengembangan sudah diperbaiki. Typecheck/build akhir 
 Ponsel hingga 600 px memakai navigasi bawah sesuai peran, judul dan kontrol dengan ukuran tersendiri, jarak kartu yang lebih lega, pemilih bagian kelas, disclosure pengelolaan/nilai, kartu nilai per mahasiswa dan kartu peserta berlabel. Modal/editor menggunakan layar penuh. Nilai lokal tetap berada pada state bisnis yang sama ketika layout berganti. Tablet mempertahankan penyajian tabel dan navigasi yang sesuai lebarnya. Editor materi/pengumuman hanya menyediakan **Berdampingan mulai 1025 px**; pada tablet/ponsel tersedia Tulis dan Pratinjau.
 
 Lima peran diperiksa pada 1440, 768 dan 390 px. Pembacaan DOM tidak menemukan overflow horizontal tingkat halaman pada halaman yang dicatat dalam [bukti responsif](production/phone-viewport-checks.json). Tabel data lebar yang masih memakai scroll lokal tidak dianggap sebagai overflow halaman. Pemeriksaan ini belum menggantikan uji perangkat fisik/iOS, seluruh detail halaman, atau audit aksesibilitas formal.
+
+Koreksi 9 Oktober atas screenshot pengguna: padding baris dashboard dipulihkan menjadi 16 px; katalog, berkas, pengerjaan kuis, presensi, pratinjau impor dan daftar laporan menggunakan kartu berlabel pada ponsel. Tombol Hapus/Nonaktifkan memakai token warna, border dan tipografi UAY; tombol katalog sejajar dan label panjang dapat membungkus. Hapus katalog memakai Action bersama: konfirmasi/batal, proses, pencegahan klik ganda, error dengan baris tetap tersedia, serta pesan berhasil setelah server mengonfirmasi. Regresi tercatat pada [tes katalog](../../tests/catalog-actions.test.ts). [Pemeriksaan lanjutan](production/grace-mobile-checks.json) mencatat katalog pada 390/500/768/1440 px dan contoh peserta, presensi, kuis serta riwayat Rektor pada 390 px.
+
+Landing dan LoginButton tidak diubah pada koreksi ini maupun commit implementasi awal. Vercel utama diperiksa langsung: daftar akun tidak muncul pada landing; tombol SSO membuka pemilih akun pada provider demo Railway. [Regresi landing](../../tests/landing-sso.test.ts) memastikan membuka landing tidak meminta daftar akun dan klik SSO hanya meminta URL otorisasi, tanpa memilih akun langsung.
 
 59 berkas dokumentasi dipindahkan ke `guides`, `architecture`, `integrations`, `requirements` (termasuk arsip), `presentations` dan `qa`. Hash sebelum/sesudah pemindahan diperiksa agar konten dokumen historis tidak hilang. Tautan relatif, generator Word/slide/paket panduan, katalog QA dan jalur sumber portal diselaraskan. [Indeks dokumentasi](../README.md) menjadi titik masuk. Word/PDF/PPTX historis dipertahankan; tidak ditulis ulang hanya untuk perubahan direktori.
 
@@ -102,7 +106,7 @@ npm run db:migrate:announcements -- --file FILE_JSON --apply
 
 Perintah pertama importer merupakan dry run. Impor mempertahankan ID serta waktu sumber, memvalidasi seluruh data, dan melewati ID yang sudah ada agar tidak menimpa edit yang lebih baru. Jalankan kembali untuk membuktikan idempotensi. Operator harus memverifikasi jumlah/scope/penerima setelah migrasi; importer data historis tidak mengirim ulang seluruh notifikasi masa lalu.
 
-Untuk `NODE_ENV=production` dan `DEMO_MODE=false`, konfigurasi wajib mencakup OIDC, Redis, File Service dan secret pencabutan akun. Redis tidak boleh berganti diam-diam ke cache memori. Kegagalan layanan penting mengembalikan 503. PM2 memakai mode production dan API loopback; Nginx/HTTPS/backup/restore mengikuti [panduan VPS](../../deployment/HOSTINGER-PM2.md) dan [env native](../../deployment/.env.native.example). Aplikasi SSO dan File Service terpisah tidak diubah.
+Sesuai koreksi pengguna pada 9 Oktober, grace sebelumnya dipertahankan: untuk `NODE_ENV=production` dan `DEMO_MODE=false`, OIDC dan File Service tetap wajib, sedangkan Redis dan secret pencabutan akun boleh belum diisi. Redis kosong/gagal memakai memori per proses, dengan log dan penanda degraded pada health; webhook tanpa secret tetap 503. Memori tidak dibagikan antar-worker dan data sesi hilang saat restart. Ini menggantikan pengetatan startup pada implementasi awal. PM2 memakai mode production dan API loopback; Nginx/HTTPS/backup/restore mengikuti [panduan VPS](../../deployment/HOSTINGER-PM2.md) dan [env native](../../deployment/.env.native.example). Aplikasi SSO dan File Service terpisah tidak diubah.
 
 ## Penerimaan staging yang masih menunggu akses
 
@@ -110,7 +114,7 @@ Untuk `NODE_ENV=production` dan `DEMO_MODE=false`, konfigurasi wajib mencakup OI
 | --- | --- | --- |
 | SSO kampus nyata | Issuer/JWKS/audience/claim prodi, callback/PKCE, refresh/logout, akun nonaktif dan webhook revokasi sesi | Menunggu akses |
 | File Service kampus nyata | M2M repository, upload/finalisasi/scan, MIME/checksum, unduhan privat/Range, expired link, outage dan ACL | Menunggu akses |
-| Redis dan multi-instance | Sesi/revokasi/rate limit konsisten lintas worker; outage benar-benar 503 dan recovery | Menunggu akses |
+| Redis dan multi-instance | Sesi/revokasi/rate limit konsisten lintas worker; observabilitas grace dan pemulihan Redis; fallback memori dibatasi per proses | Menunggu akses |
 | VPS/Nginx/HTTPS | Sertifikat, cookie secure, proxy/origin, PM2 restart, health SQL/Redis dan observabilitas tanpa token/PII | Menunggu akses |
 | Backup/restore terisolasi | Backup terverifikasi checksum, restore ke database terpisah, pemeriksaan akses dan data hasil restore | Menunggu akses |
 | Pilot 50 mahasiswa | Login bersamaan, unggah/tugas/kuis/presensi, waktu respons dan kegagalan; penerimaan dosen/admin | Belum dilakukan |

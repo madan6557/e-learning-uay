@@ -1,0 +1,220 @@
+[
+  {
+    "page": "catalog",
+    "actions": [
+      {
+        "height": 44,
+        "label": "Aktifkan atau ubah",
+        "width": 149.5
+      },
+      {
+        "height": 44,
+        "label": "Hapus",
+        "width": 149.5
+      }
+    ],
+    "headerActions": [
+      {
+        "height": 44,
+        "label": "Tahun Ajaran: 2026/2027 Ganjil"
+      },
+      {
+        "height": 63.1875,
+        "label": "Impor Katalog"
+      },
+      {
+        "height": 63.1875,
+        "label": "Tambah mata kuliah"
+      }
+    ],
+    "pageWidth": 375,
+    "recordsDisplay": "grid",
+    "scrollWidth": 375,
+    "tableScrollWidth": 343,
+    "tableWidth": 343,
+    "viewport": 390
+  },
+  {
+    "page": "catalog",
+    "actions": [
+      {
+        "height": 44,
+        "label": "Aktifkan atau ubah",
+        "width": 204.5
+      },
+      {
+        "height": 44,
+        "label": "Hapus",
+        "width": 204.5
+      }
+    ],
+    "headerActions": [
+      {
+        "height": 44,
+        "label": "Tahun Ajaran: 2026/2027 Ganjil"
+      },
+      {
+        "height": 44,
+        "label": "Impor Katalog"
+      },
+      {
+        "height": 44,
+        "label": "Tambah mata kuliah"
+      }
+    ],
+    "pageWidth": 485,
+    "recordsDisplay": "grid",
+    "scrollWidth": 485,
+    "tableScrollWidth": 453,
+    "tableWidth": 453,
+    "viewport": 500
+  },
+  {
+    "page": "catalog",
+    "actions": [
+      {
+        "height": 40,
+        "label": "Aktifkan atau ubah",
+        "width": 150.40625
+      },
+      {
+        "height": 41.265625,
+        "label": "Hapus",
+        "width": 74.109375
+      }
+    ],
+    "headerActions": [
+      {
+        "height": 40,
+        "label": "Tahun Ajaran: 2026/2027 Ganjil"
+      },
+      {
+        "height": 40,
+        "label": "Impor Katalog"
+      },
+      {
+        "height": 40,
+        "label": "Tambah mata kuliah"
+      }
+    ],
+    "pageWidth": 768,
+    "recordsDisplay": "table-row",
+    "scrollWidth": 768,
+    "tableScrollWidth": 726,
+    "tableWidth": 728,
+    "viewport": 768
+  },
+  {
+    "page": "catalog",
+    "actions": [
+      {
+        "height": 40,
+        "label": "Aktifkan atau ubah",
+        "width": 150.40625
+      },
+      {
+        "height": 41.265625,
+        "label": "Hapus",
+        "width": 74.109375
+      }
+    ],
+    "headerActions": [
+      {
+        "height": 40,
+        "label": "Tahun Ajaran: 2026/2027 Ganjil"
+      },
+      {
+        "height": 40,
+        "label": "Impor Katalog"
+      },
+      {
+        "height": 40,
+        "label": "Tambah mata kuliah"
+      }
+    ],
+    "pageWidth": 1440,
+    "recordsDisplay": "table-row",
+    "scrollWidth": 1440,
+    "tableScrollWidth": 1349,
+    "tableWidth": 1350.515625,
+    "viewport": 1440
+  },
+  {
+    "page": "participants",
+    "danger": [
+      {
+        "background": "oklch(0.955 0.03 25)",
+        "height": 44,
+        "label": "Nonaktifkan peserta"
+      },
+      {
+        "background": "oklch(0.955 0.03 25)",
+        "height": 44,
+        "label": "Nonaktifkan peserta"
+      }
+    ],
+    "pageWidth": 375,
+    "recordsDisplay": "grid",
+    "scrollWidth": 375,
+    "viewport": 390
+  },
+  {
+    "page": "attendance-summary",
+    "labels": [
+      "Hadir",
+      "Izin",
+      "Sakit",
+      "Alpa",
+      "Terlambat",
+      "Kehadiran",
+      "Kelayakan ujian"
+    ],
+    "pageWidth": 375,
+    "recordsDisplay": "grid",
+    "scrollWidth": 375,
+    "viewport": 390
+  },
+  {
+    "page": "quiz-attempts",
+    "labels": [
+      "Pengerjaan",
+      "Status",
+      "Dikumpulkan",
+      "Nilai"
+    ],
+    "pageWidth": 375,
+    "recordsDisplay": "grid",
+    "scrollWidth": 375,
+    "viewport": 390
+  },
+  {
+    "page": "rector-activity",
+    "labels": [
+      "Waktu",
+      "Pelaku",
+      "Objek",
+      "Konteks"
+    ],
+    "pageWidth": 375,
+    "recordsDisplay": "grid",
+    "scrollWidth": 375,
+    "viewport": 390
+  },
+  {
+    "page": "rector-activity-final",
+    "actorName": "Dr. Aruna Prameswari",
+    "actorValueWidth": 164,
+    "cellPadding": "0px",
+    "pageWidth": 375,
+    "scrollWidth": 375,
+    "viewport": 390
+  },
+  {
+    "page": "admin-dashboard",
+    "viewport": 390,
+    "display": "grid",
+    "left": 17,
+    "padding": "16px",
+    "width": 341
+  }
+]

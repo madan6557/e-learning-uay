@@ -2141,7 +2141,7 @@ function ManualAttendanceModal({
       </div>
 
       <div
-        className="card table-wrap"
+        className="card table-wrap phone-record-table attendance-records"
         style={{ maxHeight: "55vh", overflowY: "auto", marginBottom: 20 }}
       >
         <table>
@@ -2155,13 +2155,13 @@ function ManualAttendanceModal({
           <tbody>
             {pagination.paginatedItems.map((m) => (
               <tr key={m.userId}>
-                <td>
+                <td className="record-title">
                   <div style={{ fontWeight: 600 }}>{m.name}</div>
                   <small style={{ color: "var(--muted, #64748b)" }}>
                     NIM: {m.identifierValue}
                   </small>
                 </td>
-                <td>
+                <td data-label="Status kehadiran" className="record-field">
                   {readOnly ? (
                     <AttendanceStatusBadge status={m.status} isOpen={false} />
                   ) : (
@@ -2207,7 +2207,7 @@ function ManualAttendanceModal({
                     </div>
                   )}
                 </td>
-                <td>
+                <td data-label="Catatan / izin" className="record-field">
                   {readOnly ? (
                     <span
                       style={{
@@ -2345,7 +2345,7 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
         </button>
       </div>
 
-      <div className="card table-wrap">
+      <div className="card table-wrap phone-record-table">
         <table>
           <thead>
             <tr>
@@ -2363,13 +2363,13 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
             {students.length > 0 ? (
               pagination.paginatedItems.map((item) => (
                 <tr key={item.user.id}>
-                  <td>
+                  <td className="record-title">
                     <div style={{ fontWeight: 600 }}>{item.user.name}</div>
                     <small style={{ color: "var(--muted, #64748b)" }}>
                       NIM: {item.user.identifierValue}
                     </small>
                   </td>
-                  <td
+                  <td data-label="Hadir"
                     style={{
                       textAlign: "center",
                       color: "#10b981",
@@ -2378,7 +2378,7 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
                   >
                     {item.presentCount}
                   </td>
-                  <td
+                  <td data-label="Izin"
                     style={{
                       textAlign: "center",
                       color: "#f59e0b",
@@ -2387,7 +2387,7 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
                   >
                     {item.excusedCount}
                   </td>
-                  <td
+                  <td data-label="Sakit"
                     style={{
                       textAlign: "center",
                       color: "#3b82f6",
@@ -2396,7 +2396,7 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
                   >
                     {item.sickCount}
                   </td>
-                  <td
+                  <td data-label="Alpa"
                     style={{
                       textAlign: "center",
                       color: "#ef4444",
@@ -2405,7 +2405,7 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
                   >
                     {item.absentCount}
                   </td>
-                  <td
+                  <td data-label="Terlambat"
                     style={{
                       textAlign: "center",
                       color: "#8b5cf6",
@@ -2414,10 +2414,10 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
                   >
                     {item.lateCount}
                   </td>
-                  <td style={{ textAlign: "center", fontWeight: 700 }}>
+                  <td data-label="Kehadiran" style={{ textAlign: "center", fontWeight: 700 }}>
                     {item.percentage}%
                   </td>
-                  <td style={{ textAlign: "center" }}>
+                  <td data-label="Kelayakan ujian" style={{ textAlign: "center" }}>
                     {item.isEligibleForExam ? (
                       <span
                         style={{

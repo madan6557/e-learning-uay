@@ -220,10 +220,22 @@
     gap: 16px;
   }
   .heading-with-action,
+  .app-shell .page-heading.heading-with-action,
   .class-heading {
     display: flex;
     flex-direction: column;
     align-items: stretch;
+  }
+  .page-heading.heading-with-action > .toolbar {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: stretch;
+    align-items: stretch;
+    width: 100%;
+  }
+  .page-heading.heading-with-action > .toolbar > button:only-child,
+  .page-heading.heading-with-action > .toolbar > button:first-child:nth-last-child(3) {
+    grid-column: 1 / -1;
   }
   .heading-with-action > button,
   .heading-with-action > .button {
@@ -352,12 +364,32 @@
     line-height: 1.3;
   }
   .agenda-row,
-  .activity-row,
   .notification-list article {
     gap: 12px;
     padding: 16px 0;
     align-items: flex-start;
     flex-wrap: wrap;
+  }
+  .app-shell .activity-row {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 10px 12px;
+    padding: 16px;
+  }
+  .activity-row > div {
+    grid-column: 2;
+  }
+  .activity-row .badge {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: start;
+    margin-left: 0;
+  }
+  .activity-row > svg {
+    grid-column: 3;
+    grid-row: 1;
+    align-self: center;
   }
   .agenda-row > div:not(.agenda-date) {
     min-width: 0;
@@ -472,11 +504,15 @@
   .modal .button,
   .app-shell button.primary,
   .app-shell button.secondary,
+  .app-shell button.danger,
   .modal button.primary,
-  .modal button.secondary {
+  .modal button.secondary,
+  .modal button.danger {
     font-size: 0.875rem !important;
     padding: 11px 14px;
     line-height: 1.4;
+    height: auto;
+    white-space: normal;
   }
   .app-shell .icon-button,
   .modal .icon-button {
@@ -572,6 +608,29 @@
   }
   .modal form .form-actions > button {
     width: 100%;
+  }
+  .modal.confirm-dialog {
+    margin: auto;
+    width: calc(100% - 32px);
+    max-width: calc(100% - 32px);
+    height: fit-content;
+    max-height: 80dvh;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    --modal-max-height: 80dvh;
+  }
+  .confirm-dialog .modal-scroll {
+    height: auto;
+    max-height: 80dvh;
+    padding: 0;
+  }
+  .confirm-dialog .confirm-content {
+    padding: 16px;
+  }
+  .confirm-dialog .form-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
   }
   .announcement-viewmode-bar {
     padding: 8px 0;
@@ -837,19 +896,92 @@
     flex: 0 0 36%;
     color: var(--muted-foreground);
     font-size: 0.8125rem;
+    text-align: left;
   }
   .phone-record-table td.record-title {
+    display: block;
     font-size: 1rem;
     font-weight: 600;
     padding-bottom: 8px;
+  }
+  .phone-record-table td.record-title small {
+    display: block;
+    font-weight: 400;
   }
   .phone-record-table .record-actions > button {
     width: 100%;
     margin-top: 4px;
   }
+  .phone-record-table .record-action-buttons {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+  }
+  .phone-record-table td.record-field {
+    display: grid;
+    gap: 8px;
+  }
+  .phone-record-table td.record-field input {
+    font-size: 1rem !important;
+  }
+  .phone-record-table.attendance-records {
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
+  .modal .phone-record-table {
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
   .phone-record-table .record-value {
     min-width: 0;
     flex: 1;
+  }
+  .catalog-table td.record-title {
+    grid-row: 1;
+    display: block;
+  }
+  .catalog-table td.record-title small {
+    max-width: none;
+    margin-top: 6px;
+    font-weight: 400;
+  }
+  .catalog-table .record-actions {
+    display: block;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .catalog-action-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+  .catalog-action-buttons > button:only-child {
+    grid-column: 1 / -1;
+  }
+  .catalog-action-buttons > .notice {
+    grid-column: 1 / -1;
+  }
+  .catalog-actions small {
+    max-width: none;
+  }
+  .app-shell .rector-dashboard .phone-record-table table {
+    min-width: 0;
+    width: 100%;
+  }
+  .app-shell .rector-dashboard .phone-record-table td {
+    width: auto;
+    max-width: none;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+  .phone-record-table .record-value > strong {
+    display: block;
+  }
+  .phone-record-table .record-value > .badge {
+    margin-top: 6px;
   }
   .app-shell .rector-dashboard .rector-tabs {
     grid-template-columns: 1fr 1fr;

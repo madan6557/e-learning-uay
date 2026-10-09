@@ -154,12 +154,16 @@ jobs:
             source /etc/uay-elearning-api
             set +a
             node --input-type=module -e '\''
+              let core;
               try {
-                const core = await import("./apps/api/dist/apps/api/src/core.js");
+                core = await import("./apps/api/dist/apps/api/src/core.js");
                 console.log("[PRE-FLIGHT] core.js loaded successfully. Config port:", core.config.port);
               } catch (err) {
                 console.error("[PRE-FLIGHT] FATAL CONFIG ERROR:", err.message);
-                process.exit(1);
+                process.exitCode = 1;
+              } finally {
+                core?.redis?.disconnect();
+                await core?.db.$disconnect();
               }
             '\''
             '

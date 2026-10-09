@@ -16,7 +16,7 @@ E-Learning UAY adalah platform pembelajaran terpadu berbasis web yang dirancang 
 | **Frontend** | React 19, TypeScript 5.9, Vite 7 | Single Page Application (SPA), Lucide icons |
 | **Backend API** | Express 5, TypeScript 5.9 | REST API `/api/v1`, Zod validation |
 | **Database ORM** | Prisma Client 6.19 | PostgreSQL 16 (Embedded untuk dev lokal) |
-| **Cache & Realtime** | Redis 7 wajib di production kampus | Sesi, pencabutan token, pembatasan akses; memori hanya untuk lokal/demo |
+| **Cache & Realtime** | Redis 7 dengan grace memori | Sesi, pencabutan token, pembatasan akses; memori hanya berlaku pada satu proses |
 | **Autentikasi** | Keycloak OpenID Connect (OIDC) | PKCE + Auth Code Flow, cookie berbasis sesi opaque |
 | **File Storage** | UAY File Service API (M2M) | Arsitektur *Zero-Binary* di database utama |
 | **Dokumen & Ekspor** | ExcelJS, PDFKit | Pembuatan laporan PDF Rektor & rekap nilai Excel |
@@ -347,7 +347,7 @@ taskkill /F /PID <PID_TERSEBUT>
 - Jangan pernah melakukan *hardcode* penambahan jam manual (`+ 8 jam`) pada logika query backend, karena fungsi utilitas di [`packages/shared/src/time.ts`](file:///e:/UVAYA/Project/E%20-%20Learning%20UAY/packages/shared/src/time.ts) telah mengelola konversi IANA time zone secara presisi.
 
 ### ⚠️ 4. Mode Redis (In-Memory Fallback)
-Fallback memori tersedia hanya pada lingkungan lokal atau demo. Dengan `NODE_ENV=production` dan `DEMO_MODE=false`, Redis wajib dikonfigurasi; gangguan operasi sesi atau pembatasan akses menghasilkan HTTP 503 `CACHE_UNAVAILABLE`. Health endpoint juga menghasilkan 503 saat PostgreSQL atau Redis wajib tidak tersedia. Rincian konfigurasi dan bukti penerimaan ada di [laporan kesiapan](docs/qa/PRODUCTION-READINESS.md).
+Grace sebelumnya dipertahankan, termasuk pada `NODE_ENV=production` dan `DEMO_MODE=false`. Redis yang belum diisi atau tidak tersedia memakai memori per proses; kondisi tersebut dicatat pada log dan health sebagai degraded. `SSO_WEBHOOK_SECRET` boleh belum diisi, tetapi endpoint pencabutan akun tetap mengembalikan 503 sampai secret tersedia. Health menghasilkan 503 ketika PostgreSQL gagal. Memori tidak dibagikan antar-worker dan data sesi hilang setelah restart. Rincian konfigurasi dan bukti penerimaan ada di [laporan kesiapan](docs/qa/PRODUCTION-READINESS.md).
 
 ---
 

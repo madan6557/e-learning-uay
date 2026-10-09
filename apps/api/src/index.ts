@@ -169,7 +169,7 @@ export function createApp() {
   );
   app.get("/api/health", async (_req, res) => {
     let databaseReady = false;
-    let redisReady = !production || isDemo;
+    let redisReady = false;
     try {
       await db.$queryRaw`SELECT 1`;
       databaseReady = true;
@@ -182,16 +182,23 @@ export function createApp() {
         redisReady = false;
       }
     }
-    const ready = databaseReady && (redisReady || !production || isDemo);
+    const ready = databaseReady;
     res
       .status(ready ? 200 : 503)
       .json({
         status: ready ? "ok" : "error",
         service: "elearning-uay",
         version: "0.1.0",
+        degraded:
+          !redisReady ||
+          (production && !isDemo && !process.env.SSO_WEBHOOK_SECRET?.trim()),
         checks: {
           database: databaseReady ? "ok" : "unavailable",
           redis: redis ? (redisReady ? "ok" : "unavailable") : "not_configured",
+          sessionStore: redisReady ? "redis" : "memory",
+          revocationWebhook: process.env.SSO_WEBHOOK_SECRET?.trim()
+            ? "configured"
+            : "not_configured",
         },
       });
   });

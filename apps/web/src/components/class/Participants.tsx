@@ -183,6 +183,8 @@ export function Participants({
                     {writable && (
                       <Action
                         className={m.isActive ? "danger" : "secondary"}
+                        busyLabel={m.isActive ? "Menonaktifkan…" : "Mengaktifkan…"}
+                        successMessage={m.isActive ? "Kepesertaan dinonaktifkan." : "Kepesertaan diaktifkan."}
                         run={async () => {
                           if (
                             m.isActive &&

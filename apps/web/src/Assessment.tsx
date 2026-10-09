@@ -963,7 +963,7 @@ export function QuizPage({
           </div>
         )}
       </div>
-      <div className="card table-wrap">
+      <div className="card table-wrap phone-record-table">
         <table>
           <thead>
             <tr>
@@ -979,18 +979,18 @@ export function QuizPage({
             {pagination.paginatedItems.map((a: any) => (
               <tr key={a.id}>
                 {quiz.canManage && (
-                  <td>
+                  <td className="record-title">
                     {a.user.name}
                     <small className="block">{a.user.identifierValue}</small>
                   </td>
                 )}
-                <td>{a.attemptNum}</td>
-                <td>
+                <td data-label={t.attempt}>{a.attemptNum}</td>
+                <td data-label={t.status}>
                   <Badge value={a.status} />
                   {a.forced && <small className="block">{t.timeExpired}</small>}
                 </td>
-                <td>{date(a.submittedAt)}</td>
-                <td>
+                <td data-label={t.submittedAt}>{date(a.submittedAt)}</td>
+                <td data-label={t.score}>
                   {a.score === undefined ? (
                     <small>{t.unpublishedScore}</small>
                   ) : (
@@ -1012,8 +1012,8 @@ export function QuizPage({
                     </div>
                   )}
                 </td>
-                <td>
-                  <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", flexWrap: "wrap", alignItems: "center" }}>
+                <td className="record-actions">
+                  <div className="record-action-buttons">
                     {canGrade && a.status !== "IN_PROGRESS" && (
                       <button className="secondary" onClick={() => setGrading(a)}>
                         {t.gradeAnswer}

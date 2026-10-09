@@ -37,11 +37,11 @@ const run = (script: string, overrides = {}) =>
       timeout: 15000,
     },
   );
-test("campus production requires Redis, OIDC and account revocation configuration", () => {
+test("campus production still requires OIDC and valid File Service configuration", () => {
   for (const overrides of [
-    { REDIS_URL: "" },
-    { SSO_WEBHOOK_SECRET: "" },
     { AUTH_MODE: "development" },
+    { SSO_ISSUER: "" },
+    { FILE_SERVICE_KEY: "" },
     { FILE_SERVICE_URL: "http://file-service.uay.ac.id.evil.example" },
   ]) {
     const result = run("await import('./apps/api/src/core.ts')", overrides);
@@ -49,17 +49,45 @@ test("campus production requires Redis, OIDC and account revocation configuratio
     assert.match(result.stderr, /Production configuration check failed/);
   }
 });
-test("Redis outage fails closed for sessions, revocation and rate limiting", () => {
+test("production grace accepts missing Redis and revocation secret without enabling demo mode", () => {
+  const result = run(
+    `
+    import assert from 'node:assert/strict';
+    const {cache, redis, db, isDemo, config} = await import('./apps/api/src/core.ts');
+    assert.equal(redis, null);
+    assert.equal(isDemo, false);
+    assert.equal(config.authMode, 'oidc');
+    await cache.set('session:test', 'session', 10);
+    assert.equal(await cache.get('session:test'), 'session');
+    await cache.del('session:test');
+    assert.equal(await cache.get('session:test'), null);
+    await db.$disconnect();
+    console.log('grace-verified');
+  `,
+    { REDIS_URL: "", SSO_WEBHOOK_SECRET: "" },
+  );
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /grace-verified/);
+  assert.match(result.stderr, /SSO_WEBHOOK_SECRET.*grace aktif/);
+});
+
+test("Redis outage preserves grace for sessions, single-use state and rate limiting", () => {
   const result = run(`
     import assert from 'node:assert/strict';
     const {cache, redis, db} = await import('./apps/api/src/core.ts');
     redis.disconnect();
-    for (const operation of [() => cache.get('session:test'), () => cache.set('session:test','session',10), () => cache.del('session:test'), () => cache.take('oidc:test'), () => cache.rate('auth:test',1,10)]) {
-      await assert.rejects(operation, error => error.status === 503 && error.code === 'CACHE_UNAVAILABLE');
-    }
+    await cache.set('session:test', 'session', 10);
+    assert.equal(await cache.get('session:test'), 'session');
+    await cache.del('session:test');
+    assert.equal(await cache.get('session:test'), null);
+    await cache.set('oidc:test', 'state', 10);
+    assert.equal(await cache.take('oidc:test'), 'state');
+    assert.equal(await cache.take('oidc:test'), null);
+    assert.equal(await cache.rate('auth:test', 1, 10), true);
+    assert.equal(await cache.rate('auth:test', 1, 10), false);
     await db.$disconnect();
-    console.log('fail-closed-verified');
+    console.log('outage-grace-verified');
   `);
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /fail-closed-verified/);
+  assert.match(result.stdout, /outage-grace-verified/);
 });

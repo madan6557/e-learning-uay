@@ -1,0 +1,17 @@
+{
+  "environment": "local compiled production API, fixture configuration; no VPS configuration changed",
+  "checks": [
+    {
+      "redis": "not-configured",
+      "secret": "not-configured",
+      "exitCode": 0,
+      "preflightPassed": true
+    },
+    {
+      "redis": "configured-unavailable",
+      "secret": "not-configured",
+      "exitCode": 0,
+      "preflightPassed": true
+    }
+  ]
+}

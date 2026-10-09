@@ -2193,9 +2193,7 @@ export function Catalog({
   const [editing, setEditing] = useState<any>(null),
     [governanceModal, setGovernanceModal] = useState(false),
     [importModal, setImportModal] = useState(false),
-    [departmentFilter, setDepartmentFilter] = useState(""),
-    [deletingId, setDeletingId] = useState<string | null>(null),
-    [deleteError, setDeleteError] = useState<Error | null>(null);
+    [departmentFilter, setDepartmentFilter] = useState("");
   const superAdmin = user.role === "SUPER_ADMIN";
   const canCreateCatalog =
     superAdmin ||
@@ -2213,17 +2211,9 @@ export function Catalog({
         `Hapus mata kuliah ${course.code} · ${course.title}? Tindakan ini tidak dapat dibatalkan.`,
       ))
     )
-      return;
-    setDeletingId(course.id);
-    setDeleteError(null);
-    try {
-      await api(`/courses/${course.id}`, "DELETE");
-      courses.reload();
-    } catch (error) {
-      setDeleteError(error as Error);
-    } finally {
-      setDeletingId(null);
-    }
+      return false;
+    await api(`/courses/${course.id}`, "DELETE");
+    courses.reload();
   };
   return (
     <>
@@ -2282,13 +2272,12 @@ export function Catalog({
           </label>
         </div>
       )}
-      {deleteError && <Notice error={deleteError} />}
       {courses.error ? (
         <Notice error={courses.error} />
       ) : courses.loading && !courses.data ? (
         <Loading />
       ) : (
-        <div className="table-wrap card">
+        <div className="table-wrap card phone-record-table catalog-table">
           <table>
             <thead>
               <tr>
@@ -2302,17 +2291,19 @@ export function Catalog({
             <tbody>
               {visibleCourses.map((c) => (
                 <tr key={c.id}>
-                  <td>{c.code}</td>
-                  <td>
+                  <td data-label={t.code}>{c.code}</td>
+                  <td className="record-title">
                     <strong>{c.title}</strong>
                     <small className="block">{c.description}</small>
                   </td>
-                  <td>{c.departmentCode}</td>
-                  <td>{c.credits}</td>
-                  <td>
+                  <td data-label={t.department}>
+                    {formatDepartmentScope(c.departmentCode)}
+                  </td>
+                  <td data-label={t.credits}>{c.credits}</td>
+                  <td data-label={t.status}>
                     <Badge value={c.status} />
                   </td>
-                  <td>
+                  <td className="record-actions">
                     {(() => {
                       const canManageCourse =
                         superAdmin ||
@@ -2332,26 +2323,33 @@ export function Catalog({
                         );
                       }
                       return (
-                        <div className="toolbar">
-                          <button
-                            className="secondary"
-                            onClick={() => setEditing(c)}
-                          >
-                            {c.status === "ARCHIVED"
-                              ? "Aktifkan atau ubah"
-                              : t.edit}
-                          </button>
-                          {c._count?.classes === 0 &&
-                          c._count?.questionBanks === 0 ? (
+                        <div className="catalog-actions">
+                          <div className="catalog-action-buttons">
                             <button
-                              type="button"
-                              className="danger"
-                              disabled={deletingId === c.id}
-                              onClick={() => void deleteCourse(c)}
+                              className="secondary"
+                              onClick={() => setEditing(c)}
                             >
-                              {deletingId === c.id ? "Menghapus…" : "Hapus"}
+                              {c.status === "ARCHIVED"
+                                ? "Aktifkan atau ubah"
+                                : t.edit}
                             </button>
-                          ) : (
+                            {c._count?.classes === 0 &&
+                            c._count?.questionBanks === 0 ? (
+                              <Action
+                                className="danger"
+                                label={`Hapus ${c.code} · ${c.title}`}
+                                busyLabel="Menghapus…"
+                                successMessage="Mata kuliah dihapus."
+                                run={() => deleteCourse(c)}
+                              >
+                                Hapus
+                              </Action>
+                            ) : null}
+                          </div>
+                          {!(
+                            c._count?.classes === 0 &&
+                            c._count?.questionBanks === 0
+                          ) && (
                             <small>
                               Kelas atau bank soal terkait; gunakan status
                               Arsip.
@@ -2824,7 +2822,7 @@ export function CourseImportModal({
               </div>
 
               <div
-                className="table-wrap card"
+                className="table-wrap card phone-record-table"
                 style={{ maxHeight: 280, overflowY: "auto" }}
               >
                 <table>
@@ -2861,14 +2859,14 @@ export function CourseImportModal({
                                   : undefined,
                           }}
                         >
-                          <td>{row.rowNumber}</td>
-                          <td>
+                          <td data-label="Baris">{row.rowNumber}</td>
+                          <td data-label="Kode">
                             <strong>{row.values?.code || "—"}</strong>
                           </td>
-                          <td>{row.values?.title || "—"}</td>
-                          <td>{row.values?.credits}</td>
-                          <td>{row.values?.departmentCode}</td>
-                          <td>
+                          <td className="record-title">{row.values?.title || "—"}</td>
+                          <td data-label="SKS">{row.values?.credits}</td>
+                          <td data-label="Prodi">{row.values?.departmentCode}</td>
+                          <td data-label="Status / catatan">
                             {isExcluded ? (
                               <span
                                 style={{ color: "var(--muted-foreground)" }}
@@ -2907,7 +2905,7 @@ export function CourseImportModal({
                               </span>
                             )}
                           </td>
-                          <td>
+                          <td className="record-actions">
                             <button
                               type="button"
                               className="secondary"

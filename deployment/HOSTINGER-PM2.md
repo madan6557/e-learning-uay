@@ -4,9 +4,9 @@ Panduan ini untuk production kampus, menggunakan Node.js >=22.12, PostgreSQL 15/
 
 ## Konfigurasi
 
-Salin `deployment/.env.native.example` menjadi `.env` di root proyek, batasi izin menjadi 600, lalu isi seluruh nilai nyata. `DEMO_MODE=false`, `AUTH_MODE=oidc`, HTTPS dan konfigurasi pencabutan akun wajib. Daftarkan callback backend `https://DOMAIN/api/v1/auth/callback` pada penyedia OIDC. Untuk klien PKCE public, `SSO_CLIENT_SECRET` boleh kosong. Konfigurasikan webhook pencabutan akun dengan secret yang sama di kedua layanan.
+Salin `deployment/.env.native.example` menjadi `.env` di root proyek, batasi izin menjadi 600, lalu isi nilai nyata. `DEMO_MODE=false`, `AUTH_MODE=oidc` dan HTTPS tetap wajib. Daftarkan callback backend `https://DOMAIN/api/v1/auth/callback` pada penyedia OIDC. Untuk klien PKCE public, `SSO_CLIENT_SECRET` boleh kosong. Grace sebelumnya dipertahankan: `REDIS_URL` dan `SSO_WEBHOOK_SECRET` boleh belum diisi tanpa menggagalkan startup atau pre-flight. Webhook pencabutan akun tetap mengembalikan 503 sampai secret dikonfigurasi; ketika diaktifkan, gunakan secret yang sama di kedua layanan.
 
-Gunakan Redis khusus dengan autentikasi dan akses jaringan terbatas; gangguan Redis mengembalikan 503, termasuk operasi sesi dan pembatasan akses. Tidak ada fallback memori untuk production kampus. File Service wajib memiliki kunci dan origin yang diizinkan. Penyimpanan lokal dan dokumen pengganti tidak digunakan sebagai pemulihan kegagalan layanan nyata.
+Gunakan Redis khusus dengan autentikasi dan akses jaringan terbatas untuk sesi dan pembatasan akses lintas worker. Ketika Redis belum diisi atau tidak tersedia, grace memakai memori dan mencatat kondisi pada log/health. Memori hanya berlaku pada satu proses; data sesi hilang setelah proses dimulai ulang dan tidak dibagikan antar-worker. File Service tetap wajib memiliki kunci dan origin yang diizinkan. Penyimpanan lokal dan dokumen pengganti tidak digunakan sebagai pemulihan kegagalan layanan nyata.
 
 PM2 menjalankan `elearning-uay`, memaksa `NODE_ENV=production` dan `DEMO_MODE=false`, dengan default API `127.0.0.1:3000`. Port API tidak perlu dibuka ke internet. Nginx menerima trafik publik dan mengganti header proxy; `TRUST_PROXY=1` hanya sesuai untuk satu proxy tepercaya langsung di depan API.
 
@@ -48,7 +48,7 @@ Nginx meneruskan `/api/` ke `127.0.0.1:3000`; aset Vite berada di `apps/web/dist
 
 ## Kesehatan, backup dan penerimaan
 
-`GET /api/health` mengembalikan 200 jika PostgreSQL dan Redis siap, dan 503 jika salah satunya gagal pada production kampus. Respons menyertakan hasil masing-masing dependency. Pemeriksaan ini tidak membuktikan SSO atau File Service; periksa `/api/v1/files/health` menggunakan sesi yang berwenang, serta login/upload/download nyata. Pantau 5xx, kegagalan dependency, latensi dan kapasitas PostgreSQL/Redis.
+`GET /api/health` mengembalikan 200 jika PostgreSQL siap dan 503 jika database gagal. Grace Redis tidak menggagalkan health: respons menandai `degraded: true`, `checks.redis` sebagai `not_configured`/`unavailable`, dan `checks.sessionStore: memory`. `checks.revocationWebhook` menunjukkan apakah secret sudah diisi, bukan bukti webhook nyata telah diuji. Pemeriksaan ini tidak membuktikan SSO atau File Service; periksa `/api/v1/files/health` menggunakan sesi yang berwenang, serta login/upload/download nyata. Pantau kondisi degraded, 5xx, kegagalan dependency, latensi dan kapasitas PostgreSQL/Redis.
 
 `deployment/scripts/backup-native.sh` membuat dump terkompresi dan checksum dengan izin terbatas. Simpan salinan terenkripsi di luar VPS dan uji restore ke database terisolasi, tanpa menghentikan production. `restore-native.sh` adalah prosedur penggantian database yang memerlukan konfirmasi operator, backup sebelum pemulihan dan penghentian proses `elearning-uay`; jangan gunakan skrip itu untuk latihan restore terisolasi.
 

@@ -4,6 +4,20 @@ Lingkungan lokal demo, database elearning_visual_test. Akun merupakan fixture, b
 
 [Laporan kesiapan](../PRODUCTION-READINESS.md) memuat batas bukti dan gate staging. [Hasil responsif](phone-viewport-checks.json) mencatat 57 pembacaan DOM pada 19 halaman/mode. [Konsol final](phone-browser-console.json) mencatat error pengembangan yang sudah diperbaiki dan hasil setelah perbaikan. [Ringkasan perintah dan audit](verification-results.json) melengkapi [report QA](../../../apps/qa/public/reports/latest.json).
 
+## Koreksi grace dan kartu ponsel, 9 Oktober
+
+Pemeriksaan lanjutan memakai database demo terisolasi yang sama, dengan dua mata kuliah dan satu kelas draf sementara khusus QA; data sementara dibersihkan setelah pemeriksaan. [Hasil DOM lanjutan](grace-mobile-checks.json) memuat katalog pada 390/500/768/1440 px, serta contoh kartu peserta, presensi, kuis dan riwayat Rektor pada 390 px. Screenshot ini melengkapi bukti awal di bawah.
+
+| Bukti | Yang diperiksa |
+| --- | --- |
+| [Katalog dan tombol aksi](mobile-catalog-actions-390.png) | Kartu berlabel, margin 16 px, tombol sejajar dan gaya Hapus |
+| [Jarak dashboard](mobile-dashboard-padding-390.png) | Ikon, teks, status dan panah mempunyai padding dalam kartu |
+| [Konfirmasi Hapus](mobile-confirmation-390.png) | Dialog ringkas, tombol sejajar, batal dan pengembalian fokus |
+| [Peserta](mobile-participants-390.png) | Kartu berlabel dan tombol Nonaktifkan mengikuti token UAY |
+| [Presensi](mobile-attendance-records-390.png) | Status lengkap menggunakan nama, termasuk kelayakan ujian |
+| [Hasil kuis](mobile-quiz-records-390.png) | Pengerjaan, status, waktu pengumpulan, nilai dan publikasi |
+| [Riwayat Rektor](mobile-rector-activity-390.png) | Nama pelaku tetap terbaca dan gaya tabel tidak menimpa padding kartu |
+
 ## Tampilan pada tiga ukuran
 
 1440 × 900 desktop; 768 × 1024 tablet; 390 × 844 ponsel. Editor tidak menyediakan Berdampingan pada dua ukuran terakhir. Screenshot memperlihatkan bagian layar yang sedang dibuka, bukan seluruh isi halaman.

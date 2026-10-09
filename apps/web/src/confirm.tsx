@@ -1,13 +1,21 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-type Confirmation = { message: string; resolve: (answer: boolean) => void };
+type Confirmation = {
+  message: string;
+  trigger: HTMLElement | null;
+  resolve: (answer: boolean) => void;
+};
 let current: Confirmation | null = null;
 const listeners = new Set<() => void>();
 export function confirmAction(message: string): Promise<boolean> {
   // A second click must not open competing confirmation flows.
   if (current) return Promise.resolve(false);
   return new Promise((resolve) => {
-    current = { message, resolve };
+    current = {
+      message,
+      trigger: document.activeElement as HTMLElement | null,
+      resolve,
+    };
     listeners.forEach((listener) => listener());
   });
 }
@@ -23,7 +31,15 @@ export function ConfirmationHost() {
   );
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
-    if (request) ref.current?.showModal();
+    if (!request) return;
+    const trigger = request.trigger;
+    ref.current?.showModal();
+    return () => {
+      // Wait for the action to leave its busy state before restoring focus.
+      setTimeout(() => {
+        if (trigger?.isConnected) trigger.focus();
+      }, 0);
+    };
   }, [request]);
   const finish = (answer: boolean) => {
     const pending = current;

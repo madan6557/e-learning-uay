@@ -1058,7 +1058,7 @@ export function registerAuth(app: Express) {
     }
   });
   app.post("/api/v1/auth/revocations", async (req, res) => {
-    const secret = process.env.SSO_WEBHOOK_SECRET;
+    const secret = process.env.SSO_WEBHOOK_SECRET?.trim();
     ensure(secret, 503, "SSO_CONFIGURATION");
     const timestamp = req.get("X-SSO-Timestamp") ?? "";
     const signature = req.get("X-SSO-Signature") ?? "";

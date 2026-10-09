@@ -1559,7 +1559,7 @@ function ClassProfile({
               </div>
             </div>
             {d.class.grading.length ? (
-              <div className="table-wrap">
+              <div className="table-wrap phone-record-table">
                 <table className="class-work-table">
                   <thead>
                     <tr>
@@ -1575,7 +1575,7 @@ function ClassProfile({
                       .filter((w) => w.current)
                       .map((w) => (
                         <tr key={w.id}>
-                          <td>
+                          <td className="record-title">
                             <strong>{w.title}</strong>
                             <small>
                               {w.kind === "KUIS_OTOMATIS"
@@ -1583,16 +1583,16 @@ function ClassProfile({
                                 : "Penilaian manual"}
                             </small>
                           </td>
-                          <td>{w.total}</td>
-                          <td>{w.graded}</td>
-                          <td>
+                          <td data-label="Total">{w.total}</td>
+                          <td data-label="Sudah dinilai">{w.graded}</td>
+                          <td data-label="Belum dinilai">
                             <Badge
                               tone={w.total > w.graded ? "amber" : "green"}
                             >
                               {w.total - w.graded}
                             </Badge>
                           </td>
-                          <td>{w.published}</td>
+                          <td data-label="Nilai terbit">{w.published}</td>
                         </tr>
                       ))}
                   </tbody>
@@ -1603,7 +1603,7 @@ function ClassProfile({
             )}
             <details className="secondary-detail">
               <summary>Waktu penilaian dan penerbitan</summary>
-              <div className="table-wrap">
+              <div className="table-wrap phone-record-table">
                 <table>
                   <thead>
                     <tr>
@@ -1618,10 +1618,10 @@ function ClassProfile({
                       .filter((w) => w.current)
                       .map((w) => (
                         <tr key={w.id}>
-                          <td>{w.title}</td>
-                          <td>{formatDate(w.pendingSince)}</td>
-                          <td>{formatDate(w.lastGradedAt)}</td>
-                          <td>{formatDate(w.lastPublishedAt)}</td>
+                          <td className="record-title">{w.title}</td>
+                          <td data-label="Menunggu sejak">{formatDate(w.pendingSince)}</td>
+                          <td data-label="Terakhir dinilai">{formatDate(w.lastGradedAt)}</td>
+                          <td data-label="Terakhir diterbitkan">{formatDate(w.lastPublishedAt)}</td>
                         </tr>
                       ))}
                   </tbody>
@@ -1681,7 +1681,7 @@ function ClassProfile({
               <summary>
                 Lihat pertemuan, materi, tugas, kuis, dan pengumuman
               </summary>
-              <div className="table-wrap">
+              <div className="table-wrap phone-record-table">
                 <table>
                   <thead>
                     <tr>
@@ -1693,14 +1693,14 @@ function ClassProfile({
                   <tbody>
                     {d.class.items.map((i) => (
                       <tr key={i.id}>
-                        <td>
+                        <td className="record-title">
                           <strong>{i.title}</strong>
                           {i.questionCount && (
                             <small>{i.questionCount} soal</small>
                           )}
                         </td>
-                        <td>{itemKind[i.kind]}</td>
-                        <td>
+                        <td data-label="Jenis">{itemKind[i.kind]}</td>
+                        <td data-label="Status">
                           <Badge
                             tone={
                               i.visible && i.status === "TERBIT"
@@ -1809,7 +1809,7 @@ function ActivityPage({
       />
       {d &&
         (d.items.length ? (
-          <div className="table-wrap">
+          <div className="table-wrap phone-record-table">
             <table>
               <thead>
                 <tr>
@@ -1823,31 +1823,33 @@ function ActivityPage({
               <tbody>
                 {d.items.map((a) => (
                   <tr key={a.id}>
-                    <td className="date-cell">{formatDate(a.at)}</td>
-                    <td>
-                      <strong>{a.actorName}</strong>
-                      <Badge
-                        tone={
-                          a.actorKind === "DOSEN"
-                            ? "blue"
-                            : a.actorKind === "SISTEM"
-                              ? "green"
-                              : "neutral"
-                        }
-                      >
-                        {a.actorKind === "DOSEN"
-                          ? "Dosen"
-                          : a.actorKind === "ADMIN"
-                            ? "Admin akademik"
-                            : "Proses otomatis"}
-                      </Badge>
+                    <td data-label="Waktu" className="date-cell">{formatDate(a.at)}</td>
+                    <td data-label="Pelaku">
+                      <div className="record-value">
+                        <strong>{a.actorName}</strong>
+                        <Badge
+                          tone={
+                            a.actorKind === "DOSEN"
+                              ? "blue"
+                              : a.actorKind === "SISTEM"
+                                ? "green"
+                                : "neutral"
+                          }
+                        >
+                          {a.actorKind === "DOSEN"
+                            ? "Dosen"
+                            : a.actorKind === "ADMIN"
+                              ? "Admin akademik"
+                              : "Proses otomatis"}
+                        </Badge>
+                      </div>
                     </td>
-                    <td>
+                    <td className="record-title">
                       {a.action}
                       <small>{categoryLabel[a.category]}</small>
                     </td>
-                    <td>{a.objectName}</td>
-                    <td>
+                    <td data-label="Objek">{a.objectName}</td>
+                    <td data-label="Konteks">
                       {a.classId
                         ? a.classId.toUpperCase()
                         : "Tanpa konteks kelas"}
