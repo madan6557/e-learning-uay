@@ -32,6 +32,8 @@ import {
   numberValue,
   Pagination,
   usePagination,
+  RichTextEditor,
+  formatContentHtml,
 } from "./lib";
 import { DownloadButton, Html } from "./Content";
 import {
@@ -113,11 +115,13 @@ export function QuestionEditor({
         </Field>
       </div>
       <Field label={t.text}>
-        <textarea
+        <RichTextEditor
+          compact
           required
-          value={q.text}
           rows={3}
-          onChange={(e) => change({ text: e.target.value })}
+          value={q.text}
+          onChange={(val) => change({ text: val })}
+          placeholder="Tuliskan pertanyaan butir soal (bisa diformat tebal, miring, poin, atau kode)..."
         />
       </Field>
       {[
@@ -367,9 +371,12 @@ export function QuestionEditor({
         </>
       )}
       <Field label={t.explanation}>
-        <textarea
+        <RichTextEditor
+          compact
+          rows={3}
           value={q.explanation ?? ""}
-          onChange={(e) => change({ explanation: e.target.value })}
+          onChange={(val) => change({ explanation: val })}
+          placeholder="Tuliskan pembahasan atau penjelasan jawaban..."
         />
       </Field>
     </div>
@@ -400,6 +407,7 @@ export function QuizEditor({
   const [releaseMode, setReleaseMode] = useState(
     quiz?.resultReleaseMode ?? "MANUAL",
   );
+  const [description, setDescription] = useState(quiz?.description ?? "");
   const total = questions.reduce((s, q) => s + q.points, 0);
   return (
     <Modal wide title={quiz ? t.edit : t.newQuiz} onClose={onClose}>
@@ -414,12 +422,13 @@ export function QuizEditor({
               }
             : undefined,
         }}
-        draftValue={{ questions, scoreMode, timerMode, releaseMode }}
+        draftValue={{ questions, scoreMode, timerMode, releaseMode, description }}
         onRestoreDraft={(v) => {
           setQuestions(v.questions);
           setScoreMode(v.scoreMode);
           setTimerMode(v.timerMode);
           setReleaseMode(v.releaseMode);
+          if (v.description !== undefined) setDescription(v.description);
         }}
         onCancel={onClose}
         onSubmit={async (f, intent) => {
@@ -453,8 +462,14 @@ export function QuizEditor({
         <Field label={t.title}>
           <input name="title" required defaultValue={quiz?.title} />
         </Field>
-        <Field label={t.description}>
-          <textarea name="description" defaultValue={quiz?.description} />
+        <Field label={`${t.description} (Format Teks Rapi)`}>
+          <RichTextEditor
+            name="description"
+            rows={4}
+            value={description}
+            onChange={setDescription}
+            placeholder="Tuliskan petunjuk atau deskripsi kuis..."
+          />
         </Field>
         <div className="form-grid">
           <Field label={t.category}>
@@ -716,7 +731,11 @@ export function QuizPage({
         <div>
           <div className="eyebrow">{t.quiz}</div>
           <h1>{quiz.title}</h1>
-          <p>{quiz.description}</p>
+          {quiz.description && (
+            <div className="formatted-content" style={{ marginTop: 8 }}>
+              <Html text={formatContentHtml(quiz.description)} inline={false} />
+            </div>
+          )}
         </div>
         <div className="toolbar">
           {isStudent ? (
@@ -1309,7 +1328,7 @@ function AttemptRunner({
               </span>
             </div>
             <h3>
-              <Html text={q.text} />
+              <Html text={formatContentHtml(q.text)} />
             </h3>
             <AnswerInput
               question={q}
@@ -1756,10 +1775,17 @@ export function AssignmentEditor({
   const categories = useApi<any[]>(
     `/course-classes/${classId}/grade-categories`,
   );
+  const [instructions, setInstructions] = useState(
+    assignment?.instructions ?? "",
+  );
   return (
     <Modal title={assignment ? t.edit : t.newAssignment} wide onClose={onClose}>
       <Form
         draftKey={`assignment-editor:${assignment?.id ?? sectionId}`}
+        draftValue={{ instructions }}
+        onRestoreDraft={(v) => {
+          if (v.instructions !== undefined) setInstructions(v.instructions);
+        }}
         onCancel={onClose}
         publication={{
           published: assignment?.isVisible ?? false,
@@ -1800,12 +1826,14 @@ export function AssignmentEditor({
         <Field label={t.title}>
           <input name="title" required defaultValue={assignment?.title} />
         </Field>
-        <Field label={t.instructions}>
-          <textarea
+        <Field label={`${t.instructions} (Format Teks Rapi)`}>
+          <RichTextEditor
             name="instructions"
             required
-            rows={6}
-            defaultValue={assignment?.instructions}
+            rows={7}
+            value={instructions}
+            onChange={setInstructions}
+            placeholder="Tuliskan petunjuk dan instruksi pengerjaan tugas dengan format teks rapi di sini..."
           />
         </Field>
         <div className="form-grid">
@@ -1917,6 +1945,7 @@ export function AssignmentPage({
   const info = useApi(`/assignments/${id}`);
   const [editing, setEditing] = useState(false),
     [grading, setGrading] = useState<any>(null),
+    [gradingFeedback, setGradingFeedback] = useState(""),
     [file, setFile] = useState<any>(null),
     [body, setBody] = useState(""),
     [link, setLink] = useState(""),
@@ -1976,7 +2005,9 @@ export function AssignmentPage({
       <div className="assessment-layout">
         <article className="card">
           <h2>{t.instructions}</h2>
-          <p className="preserve-lines">{a.instructions}</p>
+          <div className="formatted-content" style={{ marginTop: 8 }}>
+            <Html text={formatContentHtml(a.instructions)} inline={false} />
+          </div>
         </article>
         <aside className="card deadline-card">
           <Field label={t.deadline}>
@@ -2080,125 +2111,180 @@ export function AssignmentPage({
         );
       })()}
       {!a.canManage &&
-        (a.isClosed ? (
-          <div className="card assignment-closed-card">
-            <span
-              className={`closed-icon-wrap ${
-                a.hasSubmitted
-                  ? "is-completed"
-                  : a.isGradeLocked
-                    ? "is-locked"
-                    : ""
-              }`}
-            >
-              {a.hasSubmitted ? (
-                <CheckCircle2 size={28} />
-              ) : a.isGradeLocked ? (
-                <Lock size={28} />
-              ) : a.isCutoffPassed || a.isLateForbidden ? (
-                <Clock3 size={28} />
-              ) : (
-                <Lock size={28} />
+        (() => {
+          const currentAttemptCount = a.submissions?.length ?? 0;
+          const isAttemptLimitReached = currentAttemptCount >= a.maxAttempts;
+
+          if (a.isClosed) {
+            return (
+              <div className="card assignment-closed-card">
+                <span
+                  className={`closed-icon-wrap ${
+                    a.hasSubmitted
+                      ? "is-completed"
+                      : a.isGradeLocked
+                        ? "is-locked"
+                        : ""
+                  }`}
+                >
+                  {a.hasSubmitted ? (
+                    <CheckCircle2 size={28} />
+                  ) : a.isGradeLocked ? (
+                    <Lock size={28} />
+                  ) : a.isCutoffPassed || a.isLateForbidden ? (
+                    <Clock3 size={28} />
+                  ) : (
+                    <Lock size={28} />
+                  )}
+                </span>
+                <h2>{t.assignmentClosed}</h2>
+                <p className="closed-description">
+                  {a.isGradeLocked
+                    ? t.assignmentClosedGradeLocked
+                    : a.isCutoffPassed
+                      ? `${t.assignmentClosedCutoff} (${date(a.cutoffDate)})`
+                      : a.isLateForbidden
+                        ? `${t.assignmentClosedDeadline} (${date(a.deadline)})`
+                        : a.isClassArchived
+                          ? t.assignmentClosedArchived
+                          : t.assignmentClosed}
+                </p>
+                <div className="closed-actions">
+                  <button className="secondary" disabled>
+                    {t.quizClosedAction}
+                  </button>
+                  {a.classPath && (
+                    <a className="secondary" href={a.classPath}>
+                      {t.back}
+                    </a>
+                  )}
+                </div>
+              </div>
+            );
+          }
+
+          if (isAttemptLimitReached) {
+            return (
+              <div className="card assignment-closed-card">
+                <span className="closed-icon-wrap is-completed">
+                  <CheckCircle2 size={28} />
+                </span>
+                <h2>Batas Maksimal Pengumpulan Tercapai</h2>
+                <p className="closed-description">
+                  Anda telah mengumpulkan tugas ini sebanyak {a.maxAttempts} kali percobaan (batas maksimal pengerjaan). Pengumpulan Anda telah disimpan dengan aman dan sedang/telah dinilai oleh dosen pengampu.
+                </p>
+                {a.classPath && (
+                  <div className="closed-actions">
+                    <a className="secondary" href={a.classPath}>
+                      {t.back}
+                    </a>
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          return (
+            <section className="card submission-form">
+              <div style={{ marginBottom: 12 }}>
+                <h2>
+                  {a.hasSubmitted
+                    ? `Kumpulkan Ulang Tugas (Percobaan ${currentAttemptCount + 1} dari ${a.maxAttempts})`
+                    : t.submitAssignment}
+                </h2>
+                {a.hasSubmitted && (
+                  <div
+                    className="callout note"
+                    style={{
+                      margin: "8px 0 16px",
+                      padding: "10px 14px",
+                      borderRadius: 8,
+                      background: "rgba(2, 132, 199, 0.08)",
+                      border: "1px solid rgba(2, 132, 199, 0.2)",
+                      color: "var(--foreground, #0f172a)",
+                      fontSize: "0.88rem",
+                    }}
+                  >
+                    💡 <strong>Pengumpulan Ulang Tugas:</strong> Anda sudah mengumpulkan tugas ini sebelumnya (Versi {currentAttemptCount}). Selagi waktu pengumpulan masih dibuka sebelum batas akhir, Anda dapat mengumpulkan revisi atau perbaikan tugas. Versi terbaru (Versi {currentAttemptCount + 1}) akan menggantikan versi sebelumnya untuk dinilai dosen. Tersisa <strong>{a.maxAttempts - currentAttemptCount}</strong> kesempatan percobaan lagi.
+                  </div>
+                )}
+              </div>
+              {receipt && (
+                <Notice>
+                  {t.submissionSuccess} · {date(receipt.submittedAt)} · {t.version}{" "}
+                  {receipt.version} ·{" "}
+                  {receipt.status === "LATE" ? t.late : t.onTime}
+                </Notice>
               )}
-            </span>
-            <h2>{t.assignmentClosed}</h2>
-            <p className="closed-description">
-              {a.isGradeLocked
-                ? t.assignmentClosedGradeLocked
-                : a.isCutoffPassed
-                  ? `${t.assignmentClosedCutoff} (${date(a.cutoffDate)})`
-                  : a.isLateForbidden
-                    ? `${t.assignmentClosedDeadline} (${date(a.deadline)})`
-                    : a.isClassArchived
-                      ? t.assignmentClosedArchived
-                      : t.assignmentClosed}
-            </p>
-            <div className="closed-actions">
-              <button className="secondary" disabled>
-                {t.quizClosedAction}
-              </button>
-              {a.classPath && (
-                <a className="secondary" href={a.classPath}>
-                  {t.back}
-                </a>
-              )}
-            </div>
-          </div>
-        ) : (
-          <section className="card submission-form">
-          <h2>{t.submitAssignment}</h2>
-          {receipt && (
-            <Notice>
-              {t.submissionSuccess} · {date(receipt.submittedAt)} · {t.version}{" "}
-              {receipt.version} ·{" "}
-              {receipt.status === "LATE" ? t.late : t.onTime}
-            </Notice>
-          )}
-          <Form
-            draftKey={`submission:${id}`}
-            draftValue={{ body, link, file }}
-            onRestoreDraft={(v) => {
-              setBody(v.body);
-              setLink(v.link);
-              setFile(v.file);
-            }}
-            submitLabel={t.submitAssignment}
-            onSubmit={async () => {
-              const result = await api(
-                `/assignments/${id}/submissions`,
-                "POST",
-                {
-                  ...(body.trim() ? { textContent: body } : {}),
-                  ...(link.trim() ? { externalUrl: link } : {}),
-                  ...(file ? { fileObjectId: file.id } : {}),
-                },
-              );
-              setReceipt(result);
-              setShowSuccessModal(true);
-              info.reload();
-            }}
-          >
-            {a.allowedFormats.includes("TEXT") && (
-              <Field label={t.submissionText}>
-                <textarea
-                  rows={7}
-                  value={body}
-                  onChange={(e) => {
-                    setBody(e.target.value);
-                  }}
-                />
-              </Field>
-            )}
-            {a.allowedFormats.includes("LINK") && (
-              <Field label={t.submissionLink}>
-                <input
-                  type="url"
-                  value={link}
-                  onChange={(e) => {
-                    setLink(e.target.value);
-                  }}
-                />
-              </Field>
-            )}
-            {a.allowedFormats.some(
-              (f: string) => !["TEXT", "LINK"].includes(f),
-            ) && (
-              <FileUpload
-                classId={a.classId}
-                purpose="SUBMISSION"
-                contextId={id}
-                accept={a.allowedFormats
-                  .filter((f: string) => !["TEXT", "LINK"].includes(f))
-                  .map((f: string) => `.${f.toLowerCase()}`)
-                  .join(",")}
-                onUploaded={(f) => {
-                  setFile(f);
+              <Form
+                draftKey={`submission:${id}`}
+                draftValue={{ body, link, file }}
+                onRestoreDraft={(v) => {
+                  setBody(v.body);
+                  setLink(v.link);
+                  setFile(v.file);
                 }}
-              />
-            )}
-          </Form>
-        </section>
-      ))}
+                submitLabel={
+                  a.hasSubmitted
+                    ? `Kumpulkan Ulang (Versi ${currentAttemptCount + 1})`
+                    : t.submitAssignment
+                }
+                onSubmit={async () => {
+                  const result = await api(
+                    `/assignments/${id}/submissions`,
+                    "POST",
+                    {
+                      ...(body.trim() ? { textContent: body } : {}),
+                      ...(link.trim() ? { externalUrl: link } : {}),
+                      ...(file ? { fileObjectId: file.id } : {}),
+                    },
+                  );
+                  setReceipt(result);
+                  setShowSuccessModal(true);
+                  info.reload();
+                }}
+              >
+                {a.allowedFormats.includes("TEXT") && (
+                  <Field label={`${t.submissionText} (Format Teks Rapi)`}>
+                    <RichTextEditor
+                      value={body}
+                      onChange={setBody}
+                      rows={8}
+                      placeholder="Tuliskan jawaban atau laporan tugas Anda di sini dengan format teks yang rapi..."
+                    />
+                  </Field>
+                )}
+                {a.allowedFormats.includes("LINK") && (
+                  <Field label={t.submissionLink}>
+                    <input
+                      type="url"
+                      value={link}
+                      onChange={(e) => {
+                        setLink(e.target.value);
+                      }}
+                    />
+                  </Field>
+                )}
+                {a.allowedFormats.some(
+                  (f: string) => !["TEXT", "LINK"].includes(f),
+                ) && (
+                  <FileUpload
+                    classId={a.classId}
+                    purpose="SUBMISSION"
+                    contextId={id}
+                    accept={a.allowedFormats
+                      .filter((f: string) => !["TEXT", "LINK"].includes(f))
+                      .map((f: string) => `.${f.toLowerCase()}`)
+                      .join(",")}
+                    onUploaded={(f) => {
+                      setFile(f);
+                    }}
+                  />
+                )}
+              </Form>
+            </section>
+          );
+        })()}
       <div className="section-heading" style={{ flexWrap: "wrap", gap: 12 }}>
         <h2>{t.submissionHistory}</h2>
         {canGrade && (
@@ -2228,7 +2314,11 @@ export function AssignmentPage({
               </div>
               <Badge value={s.status} />
             </div>
-            {s.textContent && <p className="preserve-lines">{s.textContent}</p>}
+            {s.textContent && (
+              <div className="formatted-content" style={{ marginTop: 8 }}>
+                <Html text={formatContentHtml(s.textContent)} inline={false} />
+              </div>
+            )}
             {s.externalUrl && (
               <a
                 className="text-link"
@@ -2270,7 +2360,13 @@ export function AssignmentPage({
               </span>
               <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                 {canGrade && s.status !== "SUPERSEDED" && (
-                  <button className="secondary" onClick={() => setGrading(s)}>
+                  <button
+                    className="secondary"
+                    onClick={() => {
+                      setGrading(s);
+                      setGradingFeedback(s.feedback ?? "");
+                    }}
+                  >
                     {t.gradeSubmission}
                   </button>
                 )}
@@ -2290,7 +2386,9 @@ export function AssignmentPage({
             {s.feedback && (
               <div className="callout note">
                 <strong>{t.feedback}</strong>
-                <p>{s.feedback}</p>
+                <div className="formatted-content" style={{ marginTop: 4 }}>
+                  <Html text={formatContentHtml(s.feedback)} inline={false} />
+                </div>
               </div>
             )}
           </article>
@@ -2354,8 +2452,15 @@ export function AssignmentPage({
                 defaultValue={grading.score ?? ""}
               />
             </Field>
-            <Field label={t.feedback}>
-              <textarea name="feedback" defaultValue={grading.feedback} />
+            <Field label={`${t.feedback} (Format Teks Rapi)`}>
+              <RichTextEditor
+                compact
+                name="feedback"
+                rows={3}
+                value={gradingFeedback}
+                onChange={setGradingFeedback}
+                placeholder="Tuliskan catatan atau masukan penilaian untuk mahasiswa..."
+              />
             </Field>
             {grading.score !== null && (
               <Field label={t.reason} hint={t.reasonHint}>

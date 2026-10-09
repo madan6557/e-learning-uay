@@ -8,3 +8,4 @@ export * from "./Modal";
 export * from "./Notice";
 export * from "./Pagination";
 export * from "./ScoreInput";
+export * from "./RichTextEditor";

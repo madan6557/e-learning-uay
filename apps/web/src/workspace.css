@@ -2667,34 +2667,45 @@ hr {
   background: var(--input-bg, #ffffff);
   color: var(--foreground, #0f172a);
 }
-.announcement-content-body {
+.announcement-content-body,
+.formatted-content {
   font-size: 0.95rem;
   line-height: 1.74;
   color: var(--foreground, #334155);
 }
-.announcement-content-body p {
+.announcement-content-body p,
+.formatted-content p {
   margin: 0 0 10px;
 }
-.announcement-content-body p:last-child {
+.announcement-content-body p:last-child,
+.formatted-content p:last-child {
   margin-bottom: 0;
 }
 .announcement-content-body h2,
 .announcement-content-body h3,
-.announcement-content-body h4 {
+.announcement-content-body h4,
+.formatted-content h2,
+.formatted-content h3,
+.formatted-content h4 {
   margin: 16px 0 8px;
   color: var(--heading, #0f172a);
   font-weight: 700;
 }
 .announcement-content-body ul,
-.announcement-content-body ol {
+.announcement-content-body ol,
+.formatted-content ul,
+.formatted-content ol {
   margin: 8px 0 12px;
   padding-left: 24px;
 }
-.announcement-content-body li {
+.announcement-content-body li,
+.formatted-content li {
   margin-bottom: 5px;
 }
 .announcement-content-body blockquote,
-.announcement-content-body .callout-box {
+.announcement-content-body .callout-box,
+.formatted-content blockquote,
+.formatted-content .callout-box {
   border-left: 4px solid var(--primary, #0284c7);
   background: rgba(2, 132, 199, 0.07);
   padding: 12px 16px;
@@ -2702,18 +2713,21 @@ hr {
   border-radius: 0 8px 8px 0;
   font-style: normal;
 }
-.announcement-content-body hr {
+.announcement-content-body hr,
+.formatted-content hr {
   border: 0;
   border-top: 1px solid var(--border, #e2e8f0);
   margin: 16px 0;
 }
-.announcement-content-body a {
+.announcement-content-body a,
+.formatted-content a {
   color: var(--primary, #0284c7);
   text-decoration: underline;
   text-underline-offset: 3px;
   font-weight: 600;
 }
-.announcement-content-body code {
+.announcement-content-body code,
+.formatted-content code {
   font-family: var(--font-mono, monospace);
   background: var(--muted-soft, #f1f5f9);
   padding: 2px 6px;
