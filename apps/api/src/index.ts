@@ -47,6 +47,7 @@ import { registerFiles } from "./files.js";
 import { registerImports } from "./imports.js";
 import { registerAttendanceRoutes } from "./attendance.js";
 import { registerSystemAnnouncements } from "./system-announcements.js";
+import { registerDepartmentGovernance } from "./department-governance.js";
 import { registerRectorBridgeRoutes } from "./rector-bridge.js";
 import { rectorReporting } from "./rector/routes.js";
 import { FixtureDataSource } from "./rector/fixture.js";
@@ -219,7 +220,8 @@ export function createApp() {
     );
     if (
       !["GET", "HEAD", "OPTIONS"].includes(req.method) &&
-      req.path !== "/v1/auth/revocations"
+      req.path !== "/v1/auth/revocations" &&
+      !req.path.startsWith("/v1/system/siakad/")
     ) {
       const origin = req.get("Origin");
       const isAllowed = !!origin && config.allowedOrigins.includes(origin);
@@ -284,7 +286,7 @@ export function createApp() {
         req.method === "POST") ||
       req.path === "/courses" ||
       req.path.startsWith("/courses/") ||
-      req.path === "/system/settings" ||
+      req.path.startsWith("/system/") ||
       req.path.startsWith("/notifications/") ||
       req.path === "/system-announcements" ||
       req.path.startsWith("/system-announcements/") ||
@@ -301,6 +303,7 @@ export function createApp() {
   registerImports(app);
   registerAttendanceRoutes(app);
   registerSystemAnnouncements(app);
+  registerDepartmentGovernance(app);
   app.use("/api", (_req, res) =>
     res.status(404).json({ error: { code: "NOT_FOUND" } }),
   );

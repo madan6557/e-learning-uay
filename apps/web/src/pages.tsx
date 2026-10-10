@@ -30,7 +30,9 @@ import {
   ExternalLink,
   Megaphone,
   ArrowRight,
+  ShieldCheck,
 } from "lucide-react";
+import { DepartmentScopeModal } from "./components/DepartmentScopeModal";
 
 function getTimeGreeting(): string {
   const hour = new Date().getHours();
@@ -1075,6 +1077,7 @@ function AdminOverview({
   departments: string[];
 }) {
   const [governanceModal, setGovernanceModal] = useState(false);
+  const [departmentScopeModal, setDepartmentScopeModal] = useState(false);
   const departmentAdmin = user.role === "DEPARTMENT_ADMIN";
   const drafts = classes.filter((c) => c.status === "DRAFT");
   const scope = departmentAdmin
@@ -1105,6 +1108,15 @@ function AdminOverview({
           className="toolbar"
           style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
         >
+          {user.role === "SUPER_ADMIN" && (
+            <button
+              className="secondary"
+              onClick={() => setDepartmentScopeModal(true)}
+            >
+              <ShieldCheck size={16} />
+              Otoritas &amp; Lingkup Prodi
+            </button>
+          )}
           <button
             className="secondary"
             onClick={() => setGovernanceModal(true)}
@@ -1281,6 +1293,15 @@ function AdminOverview({
           onClose={() => setGovernanceModal(false)}
           onSaved={() => {
             onConfigChange?.();
+            reload();
+          }}
+        />
+      )}
+      {departmentScopeModal && (
+        <DepartmentScopeModal
+          isOpen={departmentScopeModal}
+          onClose={() => setDepartmentScopeModal(false)}
+          onUpdated={() => {
             reload();
           }}
         />
@@ -2192,6 +2213,7 @@ export function Catalog({
   const courses = useApi<any[]>("/courses");
   const [editing, setEditing] = useState<any>(null),
     [governanceModal, setGovernanceModal] = useState(false),
+    [departmentScopeModal, setDepartmentScopeModal] = useState(false),
     [importModal, setImportModal] = useState(false),
     [departmentFilter, setDepartmentFilter] = useState("");
   const superAdmin = user.role === "SUPER_ADMIN";
@@ -2223,6 +2245,15 @@ export function Catalog({
           <h1>{t.catalog}</h1>
         </div>
         <div className="toolbar">
+          {user.role === "SUPER_ADMIN" && (
+            <button
+              className="secondary"
+              onClick={() => setDepartmentScopeModal(true)}
+            >
+              <ShieldCheck size={16} />
+              Otoritas Prodi
+            </button>
+          )}
           {["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(user.role) && (
             <button
               className="secondary"
@@ -2478,6 +2509,15 @@ export function Catalog({
           user={user}
           onClose={() => setImportModal(false)}
           onSuccess={() => {
+            courses.reload();
+          }}
+        />
+      )}
+      {departmentScopeModal && (
+        <DepartmentScopeModal
+          isOpen={departmentScopeModal}
+          onClose={() => setDepartmentScopeModal(false)}
+          onUpdated={() => {
             courses.reload();
           }}
         />
