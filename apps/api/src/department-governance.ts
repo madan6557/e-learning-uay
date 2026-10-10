@@ -1,6 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import {
   db,
   ensure,
@@ -447,6 +447,212 @@ export function registerDepartmentGovernance(app: Express) {
         );
 
         return after;
+      }),
+    );
+  });
+
+  /**
+   * CREATE / PRE-PROVISION: Daftarkan pengguna/dosen baru secara manual oleh Super Admin.
+   * Mengizinkan penetapan Kaprodi/Dekan sebelum dosen pernah login via SSO kampus.
+   */
+  app.post("/api/v1/system/department-scopes/users", authenticate, async (req, res) => {
+    ensure(req.context.user.role === "SUPER_ADMIN", 403, "FORBIDDEN");
+
+    const data = z
+      .object({
+        identifierValue: z
+          .string()
+          .trim()
+          .min(3, "NIDN/NIP minimal 3 karakter")
+          .max(50),
+        identifierType: z.enum(["NIDN", "NIP", "NIM", "OTHER"]).default("NIDN"),
+        name: z.string().trim().min(2, "Nama minimal 2 karakter").max(150),
+        email: z.string().trim().email("Format email tidak valid").max(150),
+        username: z.string().trim().min(2).max(100).optional(),
+        role: z
+          .enum(["SUPER_ADMIN", "DEPARTMENT_ADMIN", "INSTRUCTOR"])
+          .default("DEPARTMENT_ADMIN"),
+        userType: z.enum(["LECTURER", "STAFF", "ADMIN"]).default("LECTURER"),
+        departmentScopes: z.array(z.string().trim().min(1)).default([]),
+      })
+      .parse(req.body);
+
+    const normalizedScopes = [
+      ...new Set(
+        data.departmentScopes.map(normalizeDepartmentCode).filter(Boolean),
+      ),
+    ];
+
+    res.json(
+      await mutate(req, async (tx) => {
+        // Cek apakah pengguna dengan identitas ini sudah ada di database
+        const existing = await tx.user.findFirst({
+          where: {
+            OR: [
+              { identifierValue: data.identifierValue },
+              { email: { equals: data.email, mode: "insensitive" as const } },
+              ...(data.username
+                ? [{ username: { equals: data.username, mode: "insensitive" as const } }]
+                : []),
+            ],
+          },
+        });
+
+        if (existing) {
+          // Jika sudah ada, perbarui data peran & lingkup prodinya
+          const updated = await tx.user.update({
+            where: { id: existing.id },
+            data: {
+              name: data.name || existing.name,
+              role: data.role,
+              departmentScopes: normalizedScopes,
+              status: "ACTIVE",
+            },
+            select: {
+              id: true,
+              name: true,
+              username: true,
+              email: true,
+              identifierValue: true,
+              identifierType: true,
+              role: true,
+              userType: true,
+              departmentScopes: true,
+              status: true,
+              lastLoginAt: true,
+            },
+          });
+
+          await audit(
+            tx,
+            req.context,
+            "UPDATE_PREPROVISIONED_USER",
+            "USER",
+            updated.id,
+            null,
+            existing,
+            updated,
+            `Memperbarui profil & otoritas pengguna pra-registrasi: ${updated.identifierValue}`,
+          );
+
+          return {
+            ok: true,
+            action: "UPDATED",
+            message: `Pengguna ${updated.name} (${updated.identifierValue}) sudah terdaftar dan otoritasnya berhasil diperbarui.`,
+            user: updated,
+          };
+        }
+
+        // Buat record pengguna pra-registrasi baru
+        const fallbackUsername =
+          data.username ||
+          data.email.split("@")[0].replace(/[^a-zA-Z0-9._-]/g, "");
+
+        const newUser = await tx.user.create({
+          data: {
+            ssoUserId: `preprovision:${randomUUID()}`,
+            identifierValue: data.identifierValue,
+            identifierType: data.identifierType,
+            name: data.name,
+            email: data.email.toLowerCase(),
+            username: fallbackUsername,
+            role: data.role,
+            userType: data.userType,
+            departmentScopes: normalizedScopes,
+            status: "ACTIVE",
+          },
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            email: true,
+            identifierValue: true,
+            identifierType: true,
+            role: true,
+            userType: true,
+            departmentScopes: true,
+            status: true,
+            lastLoginAt: true,
+          },
+        });
+
+        await audit(
+          tx,
+          req.context,
+          "CREATE_PREPROVISIONED_USER",
+          "USER",
+          newUser.id,
+          null,
+          null,
+          newUser,
+          `Mendaftarkan pengguna baru pra-registrasi: ${newUser.name} (${newUser.identifierValue}) dengan lingkup prodi ${normalizedScopes.join(",")}`,
+        );
+
+        return {
+          ok: true,
+          action: "CREATED",
+          message: `Dosen/Staf ${newUser.name} (${newUser.identifierValue}) berhasil didaftarkan. Akun akan tersambung otomatis saat login SSO.`,
+          user: newUser,
+        };
+      }),
+    );
+  });
+
+  /**
+   * DELETE: Hapus pengguna pra-registrasi jika belum pernah login atau berkegiatan akademik.
+   */
+  app.delete("/api/v1/system/department-scopes/users/:id", authenticate, async (req, res) => {
+    ensure(req.context.user.role === "SUPER_ADMIN", 403, "FORBIDDEN");
+
+    res.json(
+      await mutate(req, async (tx) => {
+        const target = await tx.user.findUnique({
+          where: { id: String(req.params.id) },
+        });
+        ensure(target, 404, "USER_NOT_FOUND");
+
+        // Cek apakah pengguna sudah memiliki riwayat aktivitas perkuliahan
+        const instructorCount = await tx.classInstructor.count({
+          where: { userId: target.id },
+        });
+        const enrollmentCount = await tx.enrollment.count({
+          where: { userId: target.id },
+        });
+
+        if (target.lastLoginAt || instructorCount > 0 || enrollmentCount > 0) {
+          // Hanya cabut otoritas jika sudah punya riwayat aktivitas
+          const updated = await tx.user.update({
+            where: { id: target.id },
+            data: { departmentScopes: [], role: "INSTRUCTOR" },
+          });
+          return {
+            ok: true,
+            action: "SCOPES_CLEARED",
+            message: `Otoritas prodi untuk ${target.name} telah dicabut karena akun sudah memiliki riwayat perkuliahan.`,
+            user: updated,
+          };
+        }
+
+        // Hapus permanen jika akun pra-registrasi belum pernah login atau berkegiatan
+        await tx.user.delete({ where: { id: target.id } });
+
+        await audit(
+          tx,
+          req.context,
+          "DELETE_PREPROVISIONED_USER",
+          "USER",
+          target.id,
+          null,
+          target,
+          null,
+          `Menghapus akun pra-registrasi: ${target.name} (${target.identifierValue})`,
+        );
+
+        return {
+          ok: true,
+          action: "DELETED",
+          message: `Akun pra-registrasi ${target.name} berhasil dihapus.`,
+        };
       }),
     );
   });

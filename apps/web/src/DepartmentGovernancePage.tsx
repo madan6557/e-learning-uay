@@ -15,6 +15,7 @@ import {
   FileSpreadsheet,
   ArrowUp,
   Check,
+  UserPlus,
 } from "lucide-react";
 import { api, Loading, Notice, Pagination, usePagination } from "./lib";
 import { confirmAction } from "./confirm";
@@ -46,6 +47,7 @@ interface UserRecord {
   userType: string;
   departmentScopes: string[];
   status: string;
+  lastLoginAt?: string | null;
 }
 
 export function DepartmentGovernancePage({
@@ -73,7 +75,7 @@ export function DepartmentGovernancePage({
   const [deptNotice, setDeptNotice] = useState<string | null>(null);
 
   // ==========================================
-  // STATE: USER SCOPE ASSIGNMENT
+  // STATE: USER SCOPE ASSIGNMENT & REGISTRATION
   // ==========================================
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -87,8 +89,19 @@ export function DepartmentGovernancePage({
   const [userSuccess, setUserSuccess] = useState<string | null>(null);
   const [userSaveError, setUserSaveError] = useState<Error | null>(null);
 
+  // Form State: Daftarkan Dosen / Staf Baru Manual (Pra-registrasi)
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
+  const [createUserIdentifier, setCreateUserIdentifier] = useState("");
+  const [createUserIdentifierType, setCreateUserIdentifierType] = useState<"NIDN" | "NIP" | "OTHER">("NIDN");
+  const [createUserName, setCreateUserName] = useState("");
+  const [createUserEmail, setCreateUserEmail] = useState("");
+  const [createUserRole, setCreateUserRole] = useState("DEPARTMENT_ADMIN");
+  const [createUserScopes, setCreateUserScopes] = useState<string[]>([]);
+  const [savingCreateUser, setSavingCreateUser] = useState(false);
+
   const editSectionRef = useRef<HTMLDivElement | null>(null);
   const deptFormRef = useRef<HTMLFormElement | null>(null);
+  const createUserFormRef = useRef<HTMLFormElement | null>(null);
 
   // ==========================================
   // STATE: SIAKAD SYNC BRIDGE
@@ -317,6 +330,99 @@ export function DepartmentGovernancePage({
       setUserSaveError(err);
     } finally {
       setSavingUser(false);
+    }
+  };
+
+  // ------------------------------------------
+  // HANDLERS: MANUAL USER REGISTRATION (PRE-PROVISION)
+  // ------------------------------------------
+  const openCreateUserForm = () => {
+    setEditingUser(null);
+    setIsCreatingUser(true);
+    setCreateUserIdentifier("");
+    setCreateUserIdentifierType("NIDN");
+    setCreateUserName("");
+    setCreateUserEmail("");
+    setCreateUserRole("DEPARTMENT_ADMIN");
+    setCreateUserScopes([]);
+    setUserSuccess(null);
+    setUserSaveError(null);
+    setTimeout(() => {
+      createUserFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  };
+
+  const cancelCreateUser = () => {
+    setIsCreatingUser(false);
+    setUserSaveError(null);
+  };
+
+  const toggleCreateScope = (code: string) => {
+    const norm = normalizeDepartmentCode(code);
+    if (createUserScopes.includes(norm)) {
+      setCreateUserScopes(createUserScopes.filter((s) => s !== norm));
+    } else {
+      setCreateUserScopes([...createUserScopes, norm]);
+    }
+  };
+
+  const selectAllCreateScopes = () => {
+    const allActive = departments
+      .filter((d) => d.isActive)
+      .map((d) => normalizeDepartmentCode(d.code));
+    setCreateUserScopes(allActive);
+  };
+
+  const clearAllCreateScopes = () => {
+    setCreateUserScopes([]);
+  };
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!createUserIdentifier.trim() || !createUserName.trim() || !createUserEmail.trim()) return;
+
+    setSavingCreateUser(true);
+    setUserSaveError(null);
+    setUserSuccess(null);
+    try {
+      const res = await api<any>("/system/department-scopes/users", "POST", {
+        identifierValue: createUserIdentifier.trim(),
+        identifierType: createUserIdentifierType,
+        name: createUserName.trim(),
+        email: createUserEmail.trim().toLowerCase(),
+        role: createUserRole,
+        departmentScopes: createUserScopes,
+      });
+
+      const msg = res?.message || `Pengguna ${createUserName.trim()} berhasil didaftarkan.`;
+      setUserSuccess(msg);
+      notifyAction(msg);
+      setIsCreatingUser(false);
+      await fetchUsers();
+    } catch (err: any) {
+      setUserSaveError(err);
+    } finally {
+      setSavingCreateUser(false);
+    }
+  };
+
+  const deletePreprovisionedUser = async (u: UserRecord) => {
+    const ok = await confirmAction(
+      `Hapus pendaftaran pengguna ${u.name} (${u.identifierValue})? Tindakan ini hanya dapat dilakukan jika akun belum memiliki riwayat aktivitas.`,
+    );
+    if (!ok) return;
+
+    try {
+      const res = await api<any>(`/system/department-scopes/users/${u.id}`, "DELETE");
+      const msg = res?.message || `Pengguna ${u.name} berhasil dihapus.`;
+      setUserSuccess(msg);
+      notifyAction(msg);
+      if (editingUser?.id === u.id) {
+        setEditingUser(null);
+      }
+      await fetchUsers();
+    } catch (err: any) {
+      setUserError(err);
     }
   };
 
@@ -861,6 +967,319 @@ export function DepartmentGovernancePage({
 
           {userError && <Notice error={userError} />}
 
+          {/* FORM DAFTARKAN DOSEN / STAF BARU (MANUAL PRE-PROVISION) */}
+          {isCreatingUser && (
+            <form
+              ref={createUserFormRef}
+              onSubmit={handleCreateUser}
+              style={{
+                marginBottom: 24,
+                padding: 22,
+                border: "2px solid var(--primary, #0284c7)",
+                borderRadius: 12,
+                backgroundColor: "var(--surface, #ffffff)",
+                boxShadow: "0 6px 20px rgba(2, 132, 199, 0.12)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  marginBottom: 16,
+                  paddingBottom: 12,
+                  borderBottom: "1px solid var(--border, #e2e8f0)",
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      fontSize: "0.78rem",
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      color: "var(--primary, #0284c7)",
+                      marginBottom: 4,
+                    }}
+                  >
+                    <UserPlus size={14} />
+                    Pendaftaran Pengguna &amp; Otoritas Awal
+                  </div>
+                  <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700 }}>
+                    Daftarkan Dosen / Kaprodi Baru
+                  </h3>
+                  <p
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "var(--muted-foreground, #64748b)",
+                      margin: "4px 0 0",
+                    }}
+                  >
+                    Mendaftarkan identitas dosen ke pangkalan data E-Learning agar dapat langsung ditetapkan sebagai Kaprodi/Dekan sebelum mereka login pertama kali via SSO.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  className="button secondary compact"
+                  onClick={cancelCreateUser}
+                  style={{ padding: "6px 10px" }}
+                  title="Batalkan pendaftaran"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {userSaveError && (
+                <div style={{ marginBottom: 16 }}>
+                  <Notice error={userSaveError} />
+                </div>
+              )}
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                  gap: 16,
+                  marginBottom: 16,
+                }}
+              >
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontWeight: 600,
+                      fontSize: "0.88rem",
+                      marginBottom: 6,
+                    }}
+                  >
+                    Nomor Identitas (NIDN / NIP) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: 1112089001"
+                    value={createUserIdentifier}
+                    onChange={(e) => setCreateUserIdentifier(e.target.value)}
+                    disabled={savingCreateUser}
+                    style={{ width: "100%" }}
+                  />
+                  <small style={{ color: "var(--muted-foreground, #64748b)", display: "block", marginTop: 4 }}>
+                    Sesuai dengan NIDN/NIP di SSO atau SIAKAD kampus.
+                  </small>
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontWeight: 600,
+                      fontSize: "0.88rem",
+                      marginBottom: 6,
+                    }}
+                  >
+                    Jenis Identitas *
+                  </label>
+                  <select
+                    value={createUserIdentifierType}
+                    onChange={(e) => setCreateUserIdentifierType(e.target.value as any)}
+                    disabled={savingCreateUser}
+                    style={{ width: "100%" }}
+                  >
+                    <option value="NIDN">NIDN (Nomor Induk Dosen Nasional)</option>
+                    <option value="NIP">NIP (Nomor Induk Pegawai)</option>
+                    <option value="OTHER">Lainnya / NIK</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontWeight: 600,
+                      fontSize: "0.88rem",
+                      marginBottom: 6,
+                    }}
+                  >
+                    Nama Lengkap &amp; Gelar *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: Dr. Budi Santoso, M.Kom."
+                    value={createUserName}
+                    onChange={(e) => setCreateUserName(e.target.value)}
+                    disabled={savingCreateUser}
+                    style={{ width: "100%" }}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontWeight: 600,
+                      fontSize: "0.88rem",
+                      marginBottom: 6,
+                    }}
+                  >
+                    Email Resmi Kampus *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="Contoh: budi.santoso@uay.ac.id"
+                    value={createUserEmail}
+                    onChange={(e) => setCreateUserEmail(e.target.value)}
+                    disabled={savingCreateUser}
+                    style={{ width: "100%" }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label
+                  style={{
+                    display: "block",
+                    fontWeight: 600,
+                    fontSize: "0.88rem",
+                    marginBottom: 6,
+                  }}
+                >
+                  Peran Aplikasi Awal
+                </label>
+                <select
+                  value={createUserRole}
+                  onChange={(e) => setCreateUserRole(e.target.value)}
+                  style={{ minWidth: 260, maxWidth: "100%" }}
+                  disabled={savingCreateUser}
+                >
+                  <option value="DEPARTMENT_ADMIN">
+                    DEPARTMENT_ADMIN (Admin Prodi / Kaprodi / Dekan)
+                  </option>
+                  <option value="INSTRUCTOR">
+                    INSTRUCTOR (Dosen Pengampu Murni)
+                  </option>
+                  <option value="SUPER_ADMIN">
+                    SUPER_ADMIN (Pengelola Sistem Seluruh Universitas)
+                  </option>
+                </select>
+              </div>
+
+              <div style={{ marginBottom: 20 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: 8,
+                    marginBottom: 10,
+                  }}
+                >
+                  <label style={{ fontWeight: 600, fontSize: "0.88rem" }}>
+                    Tugaskan Lingkup Program Studi ({createUserScopes.length} terpilih):
+                  </label>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      type="button"
+                      className="button secondary compact"
+                      onClick={selectAllCreateScopes}
+                      disabled={savingCreateUser}
+                      style={{ fontSize: "0.78rem", padding: "3px 8px" }}
+                    >
+                      Pilih Semua
+                    </button>
+                    <button
+                      type="button"
+                      className="button secondary compact"
+                      onClick={clearAllCreateScopes}
+                      disabled={savingCreateUser}
+                      style={{ fontSize: "0.78rem", padding: "3px 8px" }}
+                    >
+                      Kosongkan
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                    gap: 10,
+                    maxHeight: 240,
+                    overflowY: "auto",
+                    padding: 12,
+                    border: "1px solid var(--border, #cbd5e1)",
+                    borderRadius: 8,
+                    backgroundColor: "var(--surface-muted, #f8fafc)",
+                  }}
+                >
+                  {departments
+                    .filter((d) => d.isActive)
+                    .map((d) => {
+                      const isChecked = createUserScopes.includes(d.code);
+                      return (
+                        <label
+                          key={d.id}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            padding: "8px 10px",
+                            borderRadius: 6,
+                            backgroundColor: isChecked
+                              ? "rgba(2, 132, 199, 0.08)"
+                              : "var(--surface, #ffffff)",
+                            border: `1px solid ${isChecked ? "var(--primary, #0284c7)" : "var(--border, #e2e8f0)"}`,
+                            cursor: "pointer",
+                            fontSize: "0.85rem",
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => toggleCreateScope(d.code)}
+                            disabled={savingCreateUser}
+                          />
+                          <div>
+                            <strong>{d.code}</strong> - {d.name}
+                          </div>
+                        </label>
+                      );
+                    })}
+                </div>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+                <button
+                  type="button"
+                  className="button secondary"
+                  onClick={cancelCreateUser}
+                  disabled={savingCreateUser}
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="button primary"
+                  disabled={savingCreateUser}
+                >
+                  {savingCreateUser ? (
+                    <>
+                      <Loading />
+                      <span style={{ marginLeft: 8 }}>Mendaftarkan...</span>
+                    </>
+                  ) : (
+                    "Daftarkan Dosen / Kaprodi"
+                  )}
+                </button>
+              </div>
+            </form>
+          )}
+
           {/* EDIT FORM AT THE TOP (SESUAI REQUEST USER AGAR TIDAK DI BAWAH) */}
           {editingUser && (
             <div
@@ -1147,6 +1566,16 @@ export function DepartmentGovernancePage({
                 <RefreshCw size={15} />
                 <span>Segarkan</span>
               </button>
+              {!isCreatingUser && (
+                <button
+                  type="button"
+                  className="button primary"
+                  onClick={openCreateUserForm}
+                >
+                  <UserPlus size={16} />
+                  <span>Daftarkan Dosen / Kaprodi</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -1201,7 +1630,24 @@ export function DepartmentGovernancePage({
                           }}
                         >
                           <td data-label="Nama & Identitas">
-                            <div style={{ fontWeight: 600 }}>{u.name}</div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <span style={{ fontWeight: 600 }}>{u.name}</span>
+                              {!u.lastLoginAt && u.role !== "SUPER_ADMIN" && (
+                                <span
+                                  style={{
+                                    fontSize: "0.7rem",
+                                    padding: "1px 6px",
+                                    borderRadius: 4,
+                                    background: "rgba(245, 158, 11, 0.12)",
+                                    color: "#b45309",
+                                    fontWeight: 600,
+                                  }}
+                                  title="Didaftarkan manual oleh Admin, belum pernah login via SSO"
+                                >
+                                  Pra-registrasi
+                                </span>
+                              )}
+                            </div>
                             <div
                               style={{
                                 fontSize: "0.8rem",
@@ -1246,21 +1692,34 @@ export function DepartmentGovernancePage({
                             )}
                           </td>
                           <td data-label="Aksi" className="record-actions" style={{ textAlign: "right" }}>
-                            <button
-                              type="button"
-                              className={`button ${isEditing ? "primary" : "secondary"} compact`}
-                              style={{ padding: "4px 10px", fontSize: "0.78rem", minHeight: 32, height: 32 }}
-                              onClick={() => startEditUser(u)}
-                            >
-                              {isEditing ? (
-                                <>
-                                  <ArrowUp size={12} style={{ marginRight: 4 }} />
-                                  <span>Sedang Diedit</span>
-                                </>
-                              ) : (
-                                "Atur Lingkup"
+                            <div style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
+                              <button
+                                type="button"
+                                className={`button ${isEditing ? "primary" : "secondary"} compact`}
+                                style={{ padding: "4px 10px", fontSize: "0.78rem", minHeight: 32, height: 32 }}
+                                onClick={() => startEditUser(u)}
+                              >
+                                {isEditing ? (
+                                  <>
+                                    <ArrowUp size={12} style={{ marginRight: 4 }} />
+                                    <span>Sedang Diedit</span>
+                                  </>
+                                ) : (
+                                  "Atur Lingkup"
+                                )}
+                              </button>
+                              {!u.lastLoginAt && u.role !== "SUPER_ADMIN" && (
+                                <button
+                                  type="button"
+                                  className="button danger compact"
+                                  onClick={() => deletePreprovisionedUser(u)}
+                                  title="Hapus pendaftaran pra-registrasi"
+                                  style={{ padding: "4px 8px", minHeight: 32, height: 32 }}
+                                >
+                                  <Trash2 size={13} />
+                                </button>
                               )}
-                            </button>
+                            </div>
                           </td>
                         </tr>
                       );

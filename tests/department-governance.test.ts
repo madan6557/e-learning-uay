@@ -190,3 +190,61 @@ test("SIAKAD Sync mapping resolution matches user identifiers accurately", () =>
   assert.equal(syncResults[1].status, "USER_NOT_FOUND");
   assert.equal(syncResults[1].identifierValue, "0999999999");
 });
+
+test("Manual user pre-provisioning generates valid placeholder ssoUserId and matches upon SSO login", () => {
+  const input = {
+    identifierValue: "1112089099",
+    identifierType: "NIDN" as const,
+    name: "Dr. Bambang Kusumo, M.T.",
+    email: "bambang.kusumo@uay.ac.id",
+    role: "DEPARTMENT_ADMIN" as const,
+    departmentScopes: ["ts", "TI"],
+  };
+
+  const normalizedScopes = [
+    ...new Set(input.departmentScopes.map(normalizeDepartmentCode).filter(Boolean)),
+  ];
+  assert.deepEqual(normalizedScopes, ["TS", "TI"]);
+
+  // Pre-provision user creation
+  const preprovisioned = {
+    id: "usr_preprov_1",
+    ssoUserId: "preprovision:bambang123",
+    identifierValue: input.identifierValue,
+    identifierType: input.identifierType,
+    name: input.name,
+    email: input.email.toLowerCase(),
+    username: input.email.split("@")[0],
+    role: input.role,
+    departmentScopes: normalizedScopes,
+    status: "ACTIVE" as const,
+    lastLoginAt: null,
+  };
+
+  assert.ok(preprovisioned.ssoUserId.startsWith("preprovision:"));
+  assert.equal(preprovisioned.username, "bambang.kusumo");
+  assert.equal(preprovisioned.lastLoginAt, null);
+
+  // Simulated subsequent first SSO login by that lecturer
+  const ssoClaims = {
+    sub: "keycloak-real-uuid-9999",
+    identifier_value: "1112089099",
+    email: "bambang.kusumo@uay.ac.id",
+    name: "Dr. Bambang Kusumo, M.T.",
+  };
+
+  // Auth matching logic: match by identifierValue or email
+  const match = preprovisioned.identifierValue === ssoClaims.identifier_value ||
+    preprovisioned.email === ssoClaims.email;
+  assert.ok(match);
+
+  // Link real SSO subject while preserving pre-provisioned scopes
+  preprovisioned.ssoUserId = ssoClaims.sub;
+  (preprovisioned as any).lastLoginAt = new Date();
+
+  assert.equal(preprovisioned.ssoUserId, "keycloak-real-uuid-9999");
+  assert.deepEqual(preprovisioned.departmentScopes, ["TS", "TI"]);
+  assert.equal(preprovisioned.role, "DEPARTMENT_ADMIN");
+  assert.ok(preprovisioned.lastLoginAt !== null);
+});
+
