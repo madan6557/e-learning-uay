@@ -1,6 +1,6 @@
 .standalone-guide {
-  background: #f4f7fa;
-  color: #233c50;
+  background: var(--adaptive-surface, #f4f7fa);
+  color: var(--adaptive-text, #233c50);
   min-height: 100vh;
   font:
     17px/1.7 "Segoe UI",
@@ -8,7 +8,7 @@
     sans-serif;
 }
 .guide-banner {
-  background: #173e61;
+  background: var(--adaptive-emphasis-background, #173e61);
   color: #fff;
   display: flex;
   align-items: center;
@@ -29,12 +29,12 @@
   display: block;
   font-weight: 400;
   font-size: 15px;
-  color: #d7e6f0;
+  color: var(--adaptive-text-muted, #d7e6f0);
 }
 .guide-role {
   margin-left: auto;
   padding: 6px 14px;
-  border: 1px solid #b7cede;
+  border: 1px solid var(--adaptive-border, #b7cede);
   border-radius: 20px;
 }
 .guide-banner .button {
@@ -53,7 +53,7 @@
   align-self: start;
   max-height: 100vh;
   overflow: auto;
-  border-right: 1px solid #dbe4ec;
+  border-right: 1px solid var(--adaptive-border, #dbe4ec);
 }
 .guide-navigation label,
 .guide-back {
@@ -69,24 +69,24 @@
   font: inherit;
   padding: 10px 12px;
   margin: 8px 0;
-  border: 1px solid #b7c7d4;
+  border: 1px solid var(--adaptive-border, #b7c7d4);
   border-radius: 8px;
-  background: white;
+  background: var(--adaptive-surface, white);
 }
 .guide-navigation p {
   font-size: 15px;
-  color: #596e7e;
+  color: var(--adaptive-text-muted, #596e7e);
 }
 .guide-navigation nav a {
   display: block;
   text-decoration: none;
   padding: 10px 8px;
-  border-bottom: 1px solid #dbe4ec;
-  color: #173e61;
+  border-bottom: 1px solid var(--adaptive-border, #dbe4ec);
+  color: var(--adaptive-text, #173e61);
   font-size: 16px;
 }
 .guide-navigation a:hover {
-  background: #e4edf5;
+  background: var(--adaptive-info-soft, #e4edf5);
 }
 .guide-main {
   padding: 38px clamp(20px, 4vw, 60px);
@@ -113,12 +113,12 @@
   margin: 12px 0;
 }
 .guide-date {
-  color: #5c7283;
+  color: var(--adaptive-text-muted, #5c7283);
   font-size: 16px;
 }
 .guide-article {
-  background: white;
-  border: 1px solid #dbe4ec;
+  background: var(--adaptive-surface, white);
+  border: 1px solid var(--adaptive-border, #dbe4ec);
   border-radius: 12px;
   padding: 30px;
   margin: 0 0 28px;
@@ -126,12 +126,12 @@
   overflow-wrap: anywhere;
 }
 .guide-category {
-  color: #1d6986;
+  color: var(--adaptive-teal-text, #1d6986);
   font-size: 15px;
   font-weight: 700;
 }
 .guide-summary {
-  color: #546a7a;
+  color: var(--adaptive-text-muted, #546a7a);
 }
 .guide-article li {
   padding-left: 5px;
@@ -139,8 +139,8 @@
 }
 .guide-result,
 .guide-notes {
-  background: #eef5f8;
-  border-left: 4px solid #44859c;
+  background: var(--adaptive-teal-soft, #eef5f8);
+  border-left: 4px solid var(--adaptive-teal-border, #44859c);
   padding: 14px 18px;
 }
 .guide-article figure {
@@ -150,12 +150,12 @@
   display: block;
   max-width: 100%;
   height: auto;
-  border: 1px solid #dbe4ec;
+  border: 1px solid var(--adaptive-border, #dbe4ec);
   border-radius: 6px;
 }
 .guide-article figcaption {
   font-size: 15px;
-  color: #526879;
+  color: var(--adaptive-text-muted, #526879);
   margin-top: 8px;
 }
 .guide-table-scroll {
@@ -168,13 +168,13 @@
 }
 .guide-article th,
 .guide-article td {
-  border: 1px solid #dbe4ec;
+  border: 1px solid var(--adaptive-border, #dbe4ec);
   text-align: left;
   padding: 12px;
   vertical-align: top;
 }
 .guide-article thead {
-  background: #eaf1f6;
+  background: var(--adaptive-info-soft, #eaf1f6);
 }
 .guide-article tbody th {
   font-weight: 600;
@@ -182,7 +182,7 @@
 .guide-footer {
   padding: 22px 32px;
   text-align: center;
-  border-top: 1px solid #dbe4ec;
+  border-top: 1px solid var(--adaptive-border, #dbe4ec);
   font-size: 15px;
 }
 @media (max-width: 800px) {
@@ -200,7 +200,7 @@
     position: static;
     max-height: none;
     border-right: 0;
-    border-bottom: 1px solid #dbe4ec;
+    border-bottom: 1px solid var(--adaptive-border, #dbe4ec);
   }
   .guide-navigation nav {
     max-height: 200px;

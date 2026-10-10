@@ -1,6 +1,7 @@
 import { type ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
 import { Brand } from "./Brand";
+import { ThemeToggle } from "./ThemeToggle";
 import { LoginButton } from "./LoginButton";
 import { ErrorBoundary } from "../../ErrorBoundary";
 import labels from "../../../../../packages/shared/src/id.json";
@@ -24,6 +25,7 @@ export function PublicShell({
       <header className="public-header">
         <Brand />
         <nav aria-label="Menu publik">
+          <ThemeToggle />
           <LoginButton
             className="header-sso-btn"
             label="Masuk dengan SSO UAY"

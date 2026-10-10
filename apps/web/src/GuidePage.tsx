@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { BookOpen, Printer, Search, ArrowLeft } from "lucide-react";
 import { helpArticlesForRole, type HelpRole } from "./data/helpArticles";
 import { GRADE_SCALE_PRESETS } from "../../../packages/shared/src/domain";
+import { ThemeToggle } from "./components/layout/ThemeToggle";
 
 const labels: Record<HelpRole, string> = {
   STUDENT: "Mahasiswa",
@@ -56,6 +57,7 @@ export function GuidePage({ user }: { user: { role?: unknown } | null }) {
         <span className="guide-role">
           Panduan {role ? labels[role] : "tidak tersedia"}
         </span>
+        <ThemeToggle />
         <button
           className="button secondary"
           onClick={() => window.print()}

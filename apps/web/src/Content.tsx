@@ -114,7 +114,7 @@ export function Html({
   });
 
   if (inline) {
-    return <span dangerouslySetInnerHTML={{ __html: sanitized }} />;
+    return <span className="html-content" dangerouslySetInnerHTML={{ __html: sanitized }} />;
   }
   return <div className="html-content" dangerouslySetInnerHTML={{ __html: sanitized }} />;
 }
@@ -823,7 +823,7 @@ export function ResourceEditor({
               borderRadius: 5,
               fontSize: "0.76rem",
               fontWeight: 700,
-              background: "rgba(2, 132, 199, 0.12)",
+              background: "var(--adaptive-info-soft, rgba(2, 132, 199, 0.12))",
               color: "var(--primary, #0284c7)",
               letterSpacing: "0.02em",
             }}
@@ -837,8 +837,8 @@ export function ResourceEditor({
               borderRadius: 5,
               fontSize: "0.76rem",
               fontWeight: 600,
-              background: draft.isVisible ? "rgba(16, 185, 129, 0.12)" : "rgba(100, 116, 139, 0.12)",
-              color: draft.isVisible ? "#059669" : "#64748b",
+              background: draft.isVisible ? "var(--adaptive-success-soft, rgba(16, 185, 129, 0.12))" : "var(--adaptive-neutral-soft, rgba(100, 116, 139, 0.12))",
+              color: draft.isVisible ? "var(--adaptive-success-text, #059669)" : "var(--adaptive-text-muted, #64748b)",
             }}
           >
             {draft.isVisible ? "Status: Terbit" : "Status: Draf"}
@@ -861,7 +861,7 @@ export function ResourceEditor({
         }}
       >
         {draft.title.trim() || (
-          <span style={{ color: "#94a3b8", fontStyle: "italic", fontWeight: 400 }}>
+          <span style={{ color: "var(--adaptive-text-muted, #94a3b8)", fontStyle: "italic", fontWeight: 400 }}>
             Judul Materi Pembelajaran
           </span>
         )}
@@ -879,7 +879,7 @@ export function ResourceEditor({
           style={{
             padding: "32px 16px",
             textAlign: "center",
-            color: "#94a3b8",
+            color: "var(--adaptive-text-muted, #94a3b8)",
             fontStyle: "italic",
             background: "var(--surface-muted, #f8fafc)",
             borderRadius: 8,
@@ -1008,8 +1008,8 @@ export function ResourceEditor({
                 <span
                   style={{
                     fontSize: "0.74rem",
-                    background: "#e0f2fe",
-                    color: "#0369a1",
+                    background: "var(--adaptive-info-soft, #e0f2fe)",
+                    color: "var(--adaptive-info-text, #0369a1)",
                     padding: "2px 8px",
                     borderRadius: 12,
                     fontWeight: 600,

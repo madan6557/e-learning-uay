@@ -35,6 +35,8 @@ import "./styles.css";
 import "./workspace.css";
 import "./experience.css";
 import "./phone.css";
+import "./theme.css";
+import { ThemeProvider } from "./contexts/ThemeContext";
 
 import { PublicShell, AuthShell } from "./components/layout";
 import { Landing } from "./pages/Landing";
@@ -519,10 +521,10 @@ const isVercel =
     Boolean((import.meta.env as any).VITE_VERCEL_ENV));
 
 root.render(
-  <>
+  <ThemeProvider>
     <ConfirmationHost />
     <FeedbackHost />
     <App />
     {isVercel && <Analytics />}
-  </>,
+  </ThemeProvider>,
 );

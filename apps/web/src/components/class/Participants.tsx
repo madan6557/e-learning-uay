@@ -32,9 +32,9 @@ export function formatLastActive(
           display: "inline-flex",
           alignItems: "center",
           gap: 6,
-          background: "#ecfdf5",
-          color: "#15803d",
-          border: "1px solid #bbf7d0",
+          background: "var(--adaptive-success-soft, #ecfdf5)",
+          color: "var(--adaptive-success-text, #15803d)",
+          border: "1px solid var(--adaptive-success-border, #bbf7d0)",
           fontSize: "0.75rem",
           fontWeight: 700,
           padding: "2px 8px",
@@ -46,7 +46,7 @@ export function formatLastActive(
             width: 7,
             height: 7,
             borderRadius: "50%",
-            background: "#22c55e",
+            background: "var(--adaptive-success-fill, #22c55e)",
             boxShadow: "0 0 6px #22c55e",
           }}
         />
@@ -73,7 +73,7 @@ export function formatLastActive(
   const diffSec = Math.floor((Date.now() - d.getTime()) / 1000);
 
   if (diffSec < 60)
-    return <span style={{ color: "#15803d", fontWeight: 600 }}>Baru saja</span>;
+    return <span style={{ color: "var(--adaptive-success-text, #15803d)", fontWeight: 600 }}>Baru saja</span>;
   if (diffSec < 3600)
     return <span>{Math.floor(diffSec / 60)} menit yang lalu</span>;
   if (diffSec < 86400)

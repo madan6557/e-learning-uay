@@ -3,6 +3,7 @@ import {
   gradeScaleLabel,
 } from "../../../packages/shared/src/domain";
 import { confirmAction } from "./confirm";
+import { ThemePreferenceControl } from "./components/layout/ThemeToggle";
 import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
@@ -375,7 +376,7 @@ export function Dashboard({
                       color: "var(--success, #16a34a)",
                       fontSize: "0.82rem",
                       fontWeight: 600,
-                      background: "rgba(22, 163, 74, 0.08)",
+                      background: "var(--adaptive-success-soft, rgba(22, 163, 74, 0.08))",
                       padding: "4px 10px",
                       borderRadius: 16,
                       whiteSpace: "nowrap",
@@ -579,8 +580,8 @@ export function Dashboard({
                   marginBottom: 16,
                   padding: "12px 18px",
                   borderRadius: 10,
-                  background: "rgba(245, 158, 11, 0.08)",
-                  border: "1px solid rgba(245, 158, 11, 0.3)",
+                  background: "var(--adaptive-warning-soft, rgba(245, 158, 11, 0.08))",
+                  border: "1px solid var(--adaptive-warning-border, rgba(245, 158, 11, 0.3))",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
@@ -594,8 +595,8 @@ export function Dashboard({
                       width: 34,
                       height: 34,
                       borderRadius: "50%",
-                      background: "rgba(245, 158, 11, 0.15)",
-                      color: "#d97706",
+                      background: "var(--adaptive-warning-soft, rgba(245, 158, 11, 0.15))",
+                      color: "var(--adaptive-warning-text, #d97706)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -605,7 +606,7 @@ export function Dashboard({
                     <AlertTriangle size={18} />
                   </span>
                   <div>
-                    <strong style={{ fontSize: "0.92rem", color: "#92400e" }}>
+                    <strong style={{ fontSize: "0.92rem", color: "var(--adaptive-warning-text, #92400e)" }}>
                       Pengingat Batas Waktu Tugas ({urgentAssignments.length}{" "}
                       tugas mendekati deadline)
                     </strong>
@@ -613,7 +614,7 @@ export function Dashboard({
                       style={{
                         margin: "2px 0 0",
                         fontSize: "0.82rem",
-                        color: "#78350f",
+                        color: "var(--adaptive-warning-text, #78350f)",
                       }}
                     >
                       {urgentAssignments[0].classTitle}:{" "}
@@ -626,8 +627,8 @@ export function Dashboard({
                   href="/agenda"
                   className="button secondary sm"
                   style={{
-                    borderColor: "#d97706",
-                    color: "#b45309",
+                    borderColor: "var(--adaptive-warning-border, #d97706)",
+                    color: "var(--adaptive-warning-text, #b45309)",
                     fontWeight: 600,
                     fontSize: "0.82rem",
                     whiteSpace: "nowrap",
@@ -651,11 +652,11 @@ export function Dashboard({
                   padding: "14px 20px",
                   borderRadius: 10,
                   background: latestNotice.isImportant
-                    ? "linear-gradient(135deg, rgba(220, 38, 38, 0.06), rgba(239, 68, 68, 0.02))"
-                    : "rgba(2, 132, 199, 0.05)",
+                    ? "linear-gradient(135deg, var(--adaptive-danger-soft, rgba(220, 38, 38, 0.06)), var(--adaptive-danger-soft, rgba(239, 68, 68, 0.02)))"
+                    : "var(--adaptive-info-soft, rgba(2, 132, 199, 0.05))",
                   border: latestNotice.isImportant
-                    ? "1px solid rgba(220, 38, 38, 0.25)"
-                    : "1px solid rgba(2, 132, 199, 0.2)",
+                    ? "1px solid var(--adaptive-danger-border, rgba(220, 38, 38, 0.25))"
+                    : "1px solid var(--adaptive-info-border, rgba(2, 132, 199, 0.2))",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
@@ -679,9 +680,9 @@ export function Dashboard({
                       height: 36,
                       borderRadius: 10,
                       background: latestNotice.isImportant
-                        ? "rgba(220, 38, 38, 0.12)"
-                        : "rgba(2, 132, 199, 0.12)",
-                      color: latestNotice.isImportant ? "#dc2626" : "#0284c7",
+                        ? "var(--adaptive-danger-soft, rgba(220, 38, 38, 0.12))"
+                        : "var(--adaptive-info-soft, rgba(2, 132, 199, 0.12))",
+                      color: latestNotice.isImportant ? "var(--adaptive-danger-text, #dc2626)" : "var(--adaptive-info-text, #0284c7)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -705,8 +706,8 @@ export function Dashboard({
                           fontWeight: 700,
                           textTransform: "uppercase",
                           color: latestNotice.isImportant
-                            ? "#b91c1c"
-                            : "#0369a1",
+                            ? "var(--adaptive-danger-text, #b91c1c)"
+                            : "var(--adaptive-info-text, #0369a1)",
                         }}
                       >
                         {latestNotice.isImportant
@@ -1571,7 +1572,7 @@ export function ClassForm({
             </div>
             {search.trim().length > 0 && search.trim().length < 2 && (
               <small
-                style={{ display: "block", marginTop: 4, color: "#64748b" }}
+                style={{ display: "block", marginTop: 4, color: "var(--adaptive-text-muted, #64748b)" }}
               >
                 Ketik minimal 2 karakter untuk mencari dosen...
               </small>
@@ -1642,8 +1643,8 @@ export function ClassForm({
                   gap: 6,
                   padding: "4px 10px",
                   borderRadius: 16,
-                  background: "#e0f2fe",
-                  color: "#0369a1",
+                  background: "var(--adaptive-info-soft, #e0f2fe)",
+                  color: "var(--adaptive-info-text, #0369a1)",
                   fontSize: "0.85rem",
                   fontWeight: 500,
                 }}
@@ -1658,7 +1659,7 @@ export function ClassForm({
                     padding: 0,
                     fontSize: "1rem",
                     lineHeight: 1,
-                    color: "#0284c7",
+                    color: "var(--adaptive-info-text, #0284c7)",
                   }}
                   onClick={() => {
                     setSelected((prev) => prev.filter((id) => id !== u.id));
@@ -1844,9 +1845,9 @@ export function AcademicGovernanceModal({
         {message && (
           <div
             style={{
-              background: "#ecfdf5",
-              color: "#065f46",
-              border: "1px solid #a7f3d0",
+              background: "var(--adaptive-success-soft, #ecfdf5)",
+              color: "var(--adaptive-success-text, #065f46)",
+              border: "1px solid var(--adaptive-success-border, #a7f3d0)",
               padding: "10px 14px",
               borderRadius: 8,
               marginBottom: 16,
@@ -1906,8 +1907,8 @@ export function AcademicGovernanceModal({
 
               <div
                 style={{
-                  background: "#f8fafc",
-                  border: "1px solid #e2e8f0",
+                  background: "var(--adaptive-surface, #f8fafc)",
+                  border: "1px solid var(--adaptive-border, #e2e8f0)",
                   borderRadius: 10,
                   padding: "16px 18px",
                   marginBottom: 20,
@@ -1926,7 +1927,7 @@ export function AcademicGovernanceModal({
                   style={{
                     margin: "0 0 14px 0",
                     fontSize: "0.84rem",
-                    color: "#64748b",
+                    color: "var(--adaptive-text-muted, #64748b)",
                   }}
                 >
                   Daftar tahun akademik yang dapat dipilih dosen/admin saat
@@ -1950,11 +1951,11 @@ export function AcademicGovernanceModal({
                           display: "inline-flex",
                           alignItems: "center",
                           gap: 8,
-                          background: isActive ? "#0284c7" : "#ffffff",
-                          color: isActive ? "#ffffff" : "#1e293b",
+                          background: isActive ? "var(--adaptive-info-fill, #0284c7)" : "var(--adaptive-surface, #ffffff)",
+                          color: isActive ? "#ffffff" : "var(--adaptive-text, #1e293b)",
                           border: isActive
-                            ? "1px solid #0284c7"
-                            : "1px solid #cbd5e1",
+                            ? "1px solid var(--adaptive-info-border, #0284c7)"
+                            : "1px solid var(--adaptive-border, #cbd5e1)",
                           padding: "4px 12px",
                           borderRadius: 20,
                           fontSize: "0.84rem",
@@ -1983,7 +1984,7 @@ export function AcademicGovernanceModal({
                               background: "transparent",
                               border: "none",
                               cursor: "pointer",
-                              color: "#94a3b8",
+                              color: "var(--adaptive-text-muted, #94a3b8)",
                               padding: 0,
                               display: "inline-flex",
                               alignItems: "center",
@@ -2064,7 +2065,7 @@ export function AcademicGovernanceModal({
 
               <div
                 style={{
-                  border: "1px solid #e2e8f0",
+                  border: "1px solid var(--adaptive-border, #e2e8f0)",
                   borderRadius: 10,
                   overflow: "hidden",
                   marginBottom: 20,
@@ -2072,9 +2073,9 @@ export function AcademicGovernanceModal({
               >
                 <div
                   style={{
-                    background: "#f8fafc",
+                    background: "var(--adaptive-surface, #f8fafc)",
                     padding: "10px 16px",
-                    borderBottom: "1px solid #e2e8f0",
+                    borderBottom: "1px solid var(--adaptive-border, #e2e8f0)",
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
@@ -2086,8 +2087,8 @@ export function AcademicGovernanceModal({
                   <span
                     style={{
                       fontSize: "0.75rem",
-                      background: "#e0f2fe",
-                      color: "#0369a1",
+                      background: "var(--adaptive-info-soft, #e0f2fe)",
+                      color: "var(--adaptive-info-text, #0369a1)",
                       padding: "2px 8px",
                       borderRadius: 12,
                       fontWeight: 600,
@@ -2099,7 +2100,7 @@ export function AcademicGovernanceModal({
 
                 <table style={{ margin: 0, fontSize: "0.84rem" }}>
                   <thead>
-                    <tr style={{ background: "#f1f5f9" }}>
+                    <tr style={{ background: "var(--adaptive-surface, #f1f5f9)" }}>
                       <th style={{ padding: "8px 12px" }}>Huruf Mutu</th>
                       <th style={{ padding: "8px 12px" }}>Batas Nilai Riil</th>
                       <th style={{ padding: "8px 12px" }}>Bobot IP</th>
@@ -2118,7 +2119,7 @@ export function AcademicGovernanceModal({
                           style={{
                             padding: "8px 12px",
                             fontWeight: 700,
-                            color: "#0284c7",
+                            color: "var(--adaptive-info-text, #0284c7)",
                           }}
                         >
                           {b.point.toFixed(2)}
@@ -2131,8 +2132,8 @@ export function AcademicGovernanceModal({
 
               <div
                 style={{
-                  background: "rgba(2, 132, 199, 0.05)",
-                  border: "1px solid rgba(2, 132, 199, 0.2)",
+                  background: "var(--adaptive-info-soft, rgba(2, 132, 199, 0.05))",
+                  border: "1px solid var(--adaptive-info-border, rgba(2, 132, 199, 0.2))",
                   borderRadius: 8,
                   padding: "12px 16px",
                   fontSize: "0.84rem",
@@ -2157,7 +2158,7 @@ export function AcademicGovernanceModal({
             display: "flex",
             justifyContent: "flex-end",
             gap: 10,
-            borderTop: "1px solid #e2e8f0",
+            borderTop: "1px solid var(--adaptive-border, #e2e8f0)",
             paddingTop: 16,
           }}
         >
@@ -2693,8 +2694,8 @@ export function CourseImportModal({
               display: "inline-flex",
               padding: 12,
               borderRadius: "50%",
-              background: "rgba(34, 197, 94, 0.1)",
-              color: "#16a34a",
+              background: "var(--adaptive-success-soft, rgba(34, 197, 94, 0.1))",
+              color: "var(--adaptive-success-text, #16a34a)",
               marginBottom: 12,
             }}
           >
@@ -2812,9 +2813,9 @@ export function CourseImportModal({
               >
                 <div style={{ fontSize: "0.88rem", fontWeight: 600 }}>
                   Pratinjau Impor:{" "}
-                  <span style={{ color: "#16a34a" }}>{review.ready} Siap</span>
+                  <span style={{ color: "var(--adaptive-success-text, #16a34a)" }}>{review.ready} Siap</span>
                   {review.issues > 0 && (
-                    <span style={{ color: "#dc2626", marginLeft: 8 }}>
+                    <span style={{ color: "var(--adaptive-danger-text, #dc2626)", marginLeft: 8 }}>
                       • {review.issues} Perlu Diperiksa
                     </span>
                   )}{" "}
@@ -2854,9 +2855,9 @@ export function CourseImportModal({
                             background: isExcluded
                               ? "var(--muted-soft)"
                               : !isReady && !hasConflict
-                                ? "rgba(239, 68, 68, 0.05)"
+                                ? "var(--adaptive-danger-soft, rgba(239, 68, 68, 0.05))"
                                 : hasConflict
-                                  ? "rgba(245, 158, 11, 0.05)"
+                                  ? "var(--adaptive-warning-soft, rgba(245, 158, 11, 0.05))"
                                   : undefined,
                           }}
                         >
@@ -2876,7 +2877,7 @@ export function CourseImportModal({
                               </span>
                             ) : isReady ? (
                               <span
-                                style={{ color: "#16a34a", fontWeight: 600 }}
+                                style={{ color: "var(--adaptive-success-text, #16a34a)", fontWeight: 600 }}
                               >
                                 {row.existingId
                                   ? "Siap Ditimpa"
@@ -2884,7 +2885,7 @@ export function CourseImportModal({
                               </span>
                             ) : (
                               <span
-                                style={{ color: "#dc2626", fontSize: "0.8rem" }}
+                                style={{ color: "var(--adaptive-danger-text, #dc2626)", fontSize: "0.8rem" }}
                               >
                                 {issuesList
                                   .map((issue: string) => {
@@ -3119,6 +3120,10 @@ export function Profile({
           </dl>
         </section>
         <div className="profile-side">
+          <section className="card">
+            <h2>Tampilan</h2>
+            <ThemePreferenceControl />
+          </section>
           <section className="card">
             <h2>Kelola identitas</h2>
             <p>

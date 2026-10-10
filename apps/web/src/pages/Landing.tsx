@@ -47,14 +47,14 @@ export function Landing({
             maxWidth: 1040,
             margin: "24px auto -8px auto",
             padding: "14px 20px",
-            backgroundColor: "#fef2f2",
-            border: "1px solid #fecaca",
+            backgroundColor: "var(--adaptive-danger-soft, #fef2f2)",
+            border: "1px solid var(--adaptive-danger-border, #fecaca)",
             borderRadius: "10px",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             gap: "16px",
-            color: "#991b1b",
+            color: "var(--adaptive-danger-text, #991b1b)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -67,7 +67,7 @@ export function Landing({
                 style={{
                   margin: "3px 0 0 0",
                   fontSize: "0.88rem",
-                  color: "#b91c1c",
+                  color: "var(--adaptive-danger-text, #b91c1c)",
                 }}
               >
                 {getAuthErrorMessage(authError)}
@@ -82,7 +82,7 @@ export function Landing({
               style={{
                 background: "transparent",
                 border: "none",
-                color: "#991b1b",
+                color: "var(--adaptive-danger-text, #991b1b)",
                 fontSize: "1.1rem",
                 cursor: "pointer",
                 padding: "4px 8px",

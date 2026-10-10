@@ -794,8 +794,8 @@ export function QuizPage({
           <div
             className="card"
             style={{
-              background: "linear-gradient(135deg, rgba(2, 132, 199, 0.08), rgba(2, 132, 199, 0.02))",
-              border: "1px solid rgba(2, 132, 199, 0.25)",
+              background: "linear-gradient(135deg, var(--adaptive-info-soft, rgba(2, 132, 199, 0.08)), var(--adaptive-info-soft, rgba(2, 132, 199, 0.02)))",
+              border: "1px solid var(--adaptive-info-border, rgba(2, 132, 199, 0.25))",
               borderRadius: 12,
               padding: "20px 24px",
               marginBottom: 20,
@@ -808,14 +808,14 @@ export function QuizPage({
           >
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                <span className="eyebrow" style={{ color: "#0284c7", fontWeight: 700 }}>
+                <span className="eyebrow" style={{ color: "var(--adaptive-info-text, #0284c7)", fontWeight: 700 }}>
                   HASIL &amp; NILAI KUIS
                 </span>
                 <Badge value={latestAttempt.status} />
               </div>
               <h3 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 700 }}>
                 {hasScore ? (
-                  <>Nilai Anda: <span style={{ color: "#0284c7" }}>{Number.isInteger(latestAttempt.score) ? latestAttempt.score : latestAttempt.score.toFixed(1)}</span> / 100</>
+                  <>Nilai Anda: <span style={{ color: "var(--adaptive-info-text, #0284c7)" }}>{Number.isInteger(latestAttempt.score) ? latestAttempt.score : latestAttempt.score.toFixed(1)}</span> / 100</>
                 ) : (
                   "Nilai Sedang Dalam Proses Penilaian / Belum Dipublikasikan"
                 )}
@@ -835,8 +835,8 @@ export function QuizPage({
                     borderRadius: 20,
                     fontSize: "0.85rem",
                     fontWeight: 600,
-                    background: "rgba(22, 163, 74, 0.12)",
-                    color: "#16a34a",
+                    background: "var(--adaptive-success-soft, rgba(22, 163, 74, 0.12))",
+                    color: "var(--adaptive-success-text, #16a34a)",
                   }}
                 >
                   <CheckCircle2 size={16} /> Nilai Resmi Terbit
@@ -851,8 +851,8 @@ export function QuizPage({
                     borderRadius: 20,
                     fontSize: "0.85rem",
                     fontWeight: 600,
-                    background: "rgba(234, 179, 8, 0.12)",
-                    color: "#ca8a04",
+                    background: "var(--adaptive-warning-soft, rgba(234, 179, 8, 0.12))",
+                    color: "var(--adaptive-warning-text, #ca8a04)",
                   }}
                 >
                   <Clock3 size={16} /> Menunggu Publikasi Nilai
@@ -1323,8 +1323,8 @@ function AttemptRunner({
                       fontSize: "0.75rem",
                       padding: "2px 8px",
                       borderRadius: 12,
-                      background: "#dcfce7",
-                      color: "#15803d",
+                      background: "var(--adaptive-success-soft, #dcfce7)",
+                      color: "var(--adaptive-success-text, #15803d)",
                       fontWeight: 500,
                     }}
                   >
@@ -1368,8 +1368,8 @@ function AttemptRunner({
                 width: 64,
                 height: 64,
                 borderRadius: "50%",
-                background: "rgba(22, 163, 74, 0.12)",
-                color: "#16a34a",
+                background: "var(--adaptive-success-soft, rgba(22, 163, 74, 0.12))",
+                color: "var(--adaptive-success-text, #16a34a)",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -1482,7 +1482,7 @@ function OrderingAnswer({
             display: "inline-flex",
             alignItems: "center",
             gap: 6,
-            ...(isSaved ? { borderColor: "#16a34a", color: "#16a34a" } : {}),
+            ...(isSaved ? { borderColor: "var(--adaptive-success-border, #16a34a)", color: "var(--adaptive-success-text, #16a34a)" } : {}),
           }}
           onClick={handleConfirm}
         >
@@ -1501,7 +1501,7 @@ function OrderingAnswer({
               display: "inline-flex",
               alignItems: "center",
               gap: 6,
-              color: "#16a34a",
+              color: "var(--adaptive-success-text, #16a34a)",
               fontWeight: 500,
               fontSize: "0.88rem",
             }}
@@ -1510,7 +1510,7 @@ function OrderingAnswer({
             Urutan sudah dikonfirmasi & tersimpan
           </span>
         ) : (
-          <span style={{ color: "#d97706", fontSize: "0.85rem" }}>
+          <span style={{ color: "var(--adaptive-warning-text, #d97706)", fontSize: "0.85rem" }}>
             ⚠ Tekan tombol "Konfirmasi" untuk menyimpan urutan jawaban Anda.
           </span>
         )}
@@ -1616,8 +1616,8 @@ function AnswerInput({
           <div
             style={{
               padding: "10px 14px",
-              background: "rgba(2, 132, 199, 0.08)",
-              border: "1px solid rgba(2, 132, 199, 0.25)",
+              background: "var(--adaptive-info-soft, rgba(2, 132, 199, 0.08))",
+              border: "1px solid var(--adaptive-info-border, rgba(2, 132, 199, 0.25))",
               borderRadius: 8,
               marginBottom: 10,
               fontSize: "0.88rem",
@@ -2102,8 +2102,8 @@ export function AssignmentPage({
           <div
             className="card"
             style={{
-              background: "linear-gradient(135deg, rgba(2, 132, 199, 0.08), rgba(2, 132, 199, 0.02))",
-              border: "1px solid rgba(2, 132, 199, 0.25)",
+              background: "linear-gradient(135deg, var(--adaptive-info-soft, rgba(2, 132, 199, 0.08)), var(--adaptive-info-soft, rgba(2, 132, 199, 0.02)))",
+              border: "1px solid var(--adaptive-info-border, rgba(2, 132, 199, 0.25))",
               borderRadius: 12,
               padding: "20px 24px",
               marginBottom: 20,
@@ -2116,17 +2116,17 @@ export function AssignmentPage({
           >
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                <span className="eyebrow" style={{ color: "#0284c7", fontWeight: 700 }}>
+                <span className="eyebrow" style={{ color: "var(--adaptive-info-text, #0284c7)", fontWeight: 700 }}>
                   HASIL PENILAIAN TUGAS
                 </span>
                 <Badge value={latestSubmission.status} />
                 {latestSubmission.status === "LATE" && (
-                  <span style={{ fontSize: "0.75rem", color: "#dc2626", fontWeight: 600 }}>Terlambat</span>
+                  <span style={{ fontSize: "0.75rem", color: "var(--adaptive-danger-text, #dc2626)", fontWeight: 600 }}>Terlambat</span>
                 )}
               </div>
               <h3 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 700 }}>
                 {hasScore ? (
-                  <>Nilai Anda: <span style={{ color: "#0284c7" }}>{Number.isInteger(latestSubmission.score) ? latestSubmission.score : latestSubmission.score.toFixed(1)}</span> / {a.maxScore}</>
+                  <>Nilai Anda: <span style={{ color: "var(--adaptive-info-text, #0284c7)" }}>{Number.isInteger(latestSubmission.score) ? latestSubmission.score : latestSubmission.score.toFixed(1)}</span> / {a.maxScore}</>
                 ) : (
                   "Tugas Terkirim · Menunggu Penilaian / Publikasi Dosen"
                 )}
@@ -2151,8 +2151,8 @@ export function AssignmentPage({
                     borderRadius: 20,
                     fontSize: "0.85rem",
                     fontWeight: 600,
-                    background: "rgba(22, 163, 74, 0.12)",
-                    color: "#16a34a",
+                    background: "var(--adaptive-success-soft, rgba(22, 163, 74, 0.12))",
+                    color: "var(--adaptive-success-text, #16a34a)",
                   }}
                 >
                   <CheckCircle2 size={16} /> Sudah Dinilai &amp; Terbit
@@ -2167,8 +2167,8 @@ export function AssignmentPage({
                     borderRadius: 20,
                     fontSize: "0.85rem",
                     fontWeight: 600,
-                    background: "rgba(234, 179, 8, 0.12)",
-                    color: "#ca8a04",
+                    background: "var(--adaptive-warning-soft, rgba(234, 179, 8, 0.12))",
+                    color: "var(--adaptive-warning-text, #ca8a04)",
                   }}
                 >
                   <Clock3 size={16} /> Menunggu Nilai Dosen
@@ -2267,8 +2267,8 @@ export function AssignmentPage({
                       margin: "8px 0 16px",
                       padding: "10px 14px",
                       borderRadius: 8,
-                      background: "rgba(2, 132, 199, 0.08)",
-                      border: "1px solid rgba(2, 132, 199, 0.2)",
+                      background: "var(--adaptive-info-soft, rgba(2, 132, 199, 0.08))",
+                      border: "1px solid var(--adaptive-info-border, rgba(2, 132, 199, 0.2))",
                       color: "var(--foreground, #0f172a)",
                       fontSize: "0.88rem",
                     }}
@@ -2550,8 +2550,8 @@ export function AssignmentPage({
                 width: 64,
                 height: 64,
                 borderRadius: "50%",
-                background: "rgba(22, 163, 74, 0.12)",
-                color: "#16a34a",
+                background: "var(--adaptive-success-soft, rgba(22, 163, 74, 0.12))",
+                color: "var(--adaptive-success-text, #16a34a)",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",

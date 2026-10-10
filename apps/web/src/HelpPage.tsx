@@ -189,7 +189,7 @@ export function HelpPage({ user }: { user: { role?: unknown } | null }) {
                 textTransform: "uppercase",
                 letterSpacing: 0.5,
                 color: "var(--primary, #0284c7)",
-                background: "rgba(2, 132, 199, 0.1)",
+                background: "var(--adaptive-info-soft, rgba(2, 132, 199, 0.1))",
                 padding: "3px 10px",
                 borderRadius: 20,
               }}
@@ -216,8 +216,8 @@ export function HelpPage({ user }: { user: { role?: unknown } | null }) {
           {selectedArticle.steps && selectedArticle.steps.length > 0 && (
             <div
               style={{
-                background: "rgba(2, 132, 199, 0.05)",
-                border: "1px solid rgba(2, 132, 199, 0.2)",
+                background: "var(--adaptive-info-soft, rgba(2, 132, 199, 0.05))",
+                border: "1px solid var(--adaptive-info-border, rgba(2, 132, 199, 0.2))",
                 borderRadius: 10,
                 padding: "16px 20px",
                 marginBottom: 24,
@@ -389,7 +389,7 @@ export function HelpPage({ user }: { user: { role?: unknown } | null }) {
                       fontSize: "0.82rem",
                       fontWeight: active ? 700 : 500,
                       cursor: "pointer",
-                      background: active ? "var(--primary, #0284c7)" : "var(--chip-bg, #f1f5f9)",
+                      background: active ? "var(--action-background, var(--primary, #0284c7))" : "var(--chip-bg, #f1f5f9)",
                       color: active ? "#ffffff" : "var(--foreground, #334155)",
                       transition: "all 0.15s ease",
                     }}
@@ -401,7 +401,7 @@ export function HelpPage({ user }: { user: { role?: unknown } | null }) {
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.8rem", color: "var(--muted, #64748b)" }}>
-              <ShieldCheck size={16} style={{ color: "#10b981" }} />
+              <ShieldCheck size={16} style={{ color: "var(--adaptive-success-text, #10b981)" }} />
               <span>
                 Menampilkan {filteredArticles.length} panduan untuk peran: <strong>{userRole && roleLabels[userRole] || "Role belum dikenali"}</strong>. Nama, angka, dan tanggal pada gambar adalah contoh.
               </span>
@@ -438,7 +438,7 @@ export function HelpPage({ user }: { user: { role?: unknown } | null }) {
                       width: 40,
                       height: 40,
                       borderRadius: 10,
-                      background: "rgba(2, 132, 199, 0.1)",
+                      background: "var(--adaptive-info-soft, rgba(2, 132, 199, 0.1))",
                       color: "var(--primary, #0284c7)",
                       display: "flex",
                       alignItems: "center",
@@ -534,7 +534,7 @@ export function HelpPage({ user }: { user: { role?: unknown } | null }) {
                   gap: 8,
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#16a34a" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--adaptive-success-text, #16a34a)" }}>
                   <MessageSquare size={18} />
                   <strong style={{ fontSize: "0.95rem" }}>WhatsApp Helpdesk</strong>
                 </div>
@@ -595,7 +595,7 @@ export function HelpPage({ user }: { user: { role?: unknown } | null }) {
                   gap: 8,
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#d97706" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--adaptive-warning-text, #d97706)" }}>
                   <KeyRound size={18} />
                   <strong style={{ fontSize: "0.95rem" }}>Reset Kata Sandi SSO</strong>
                 </div>
@@ -626,7 +626,7 @@ export function HelpPage({ user }: { user: { role?: unknown } | null }) {
                   gap: 8,
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#64748b" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--adaptive-text-muted, #64748b)" }}>
                   <Clock size={18} />
                   <strong style={{ fontSize: "0.95rem" }}>Jam Pelayanan</strong>
                 </div>

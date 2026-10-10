@@ -19,6 +19,7 @@ import {
 import { Action, Loading } from "../ui";
 import { Breadcrumbs, IconButton, UserChip } from "../../ui";
 import { Brand } from "./Brand";
+import { ThemeToggle } from "./ThemeToggle";
 import { ErrorBoundary } from "../../ErrorBoundary";
 import { api } from "../../services/api";
 import labels from "../../../../../packages/shared/src/id.json";
@@ -320,6 +321,7 @@ export function AuthShell({
             />
           </div>
           <div className="topbar-right">
+            <ThemeToggle />
             {demo && (
               <span className="environment-badge">
                 <span className="badge-dot" />

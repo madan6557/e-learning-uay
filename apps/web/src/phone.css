@@ -97,9 +97,9 @@
   .phone-environment {
     display: block;
     padding: 6px 16px;
-    border-bottom: 1px solid #ead9b4;
-    background: #fffbeb;
-    color: #854d0e;
+    border-bottom: 1px solid var(--adaptive-warning-border, #ead9b4);
+    background: var(--adaptive-warning-soft, #fffbeb);
+    color: var(--adaptive-warning-text, #854d0e);
     font-size: 0.75rem;
     text-align: center;
   }

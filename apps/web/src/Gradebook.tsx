@@ -267,7 +267,7 @@ function StudentGradeReviewModal({
               </div>
               <div
                 style={{
-                  background: "#0284c7",
+                  background: "var(--adaptive-info-fill, #0284c7)",
                   color: "#ffffff",
                   padding: "6px 14px",
                   borderRadius: 8,
@@ -337,8 +337,8 @@ function StudentGradeReviewModal({
                     </h3>
                     <span
                       style={{
-                        background: "rgba(2, 132, 199, 0.1)",
-                        color: "#0284c7",
+                        background: "var(--adaptive-info-soft, rgba(2, 132, 199, 0.1))",
+                        color: "var(--adaptive-info-text, #0284c7)",
                         fontWeight: 700,
                         fontSize: "0.75rem",
                         padding: "2px 8px",
@@ -350,8 +350,8 @@ function StudentGradeReviewModal({
                     {cat.isMandatory && (
                       <span
                         style={{
-                          background: "#fef3c7",
-                          color: "#92400e",
+                          background: "var(--adaptive-warning-soft, #fef3c7)",
+                          color: "var(--adaptive-warning-text, #92400e)",
                           fontWeight: 700,
                           fontSize: "0.75rem",
                           padding: "2px 8px",
@@ -365,7 +365,7 @@ function StudentGradeReviewModal({
                       style={{
                         fontSize: "0.75rem",
                         color: "var(--muted, #64748b)",
-                        background: "#f1f5f9",
+                        background: "var(--adaptive-surface, #f1f5f9)",
                         padding: "2px 8px",
                         borderRadius: 12,
                       }}
@@ -381,8 +381,8 @@ function StudentGradeReviewModal({
                       <div
                         style={{
                           fontSize: "0.82rem",
-                          background: "#dcfce7",
-                          color: "#15803d",
+                          background: "var(--adaptive-success-soft, #dcfce7)",
+                          color: "var(--adaptive-success-text, #15803d)",
                           padding: "4px 10px",
                           borderRadius: 6,
                           fontWeight: 600,
@@ -400,15 +400,15 @@ function StudentGradeReviewModal({
                     className="phone-record-table grade-review-activities"
                     style={{
                       marginBottom: 12,
-                      background: "#f8fafc",
+                      background: "var(--adaptive-surface, #f8fafc)",
                       borderRadius: 6,
-                      border: "1px solid #e2e8f0",
+                      border: "1px solid var(--adaptive-border, #e2e8f0)",
                       overflow: "hidden",
                     }}
                   >
                     <table style={{ margin: 0, fontSize: "0.82rem" }}>
                       <thead>
-                        <tr style={{ background: "#f1f5f9" }}>
+                        <tr style={{ background: "var(--adaptive-surface, #f1f5f9)" }}>
                           <th style={{ padding: "6px 10px" }}>Aktivitas</th>
                           <th
                             style={{ padding: "6px 10px", textAlign: "center" }}
@@ -472,7 +472,7 @@ function StudentGradeReviewModal({
                               <span
                                 style={{
                                   fontSize: "0.75rem",
-                                  color: "#64748b",
+                                  color: "var(--adaptive-text-muted, #64748b)",
                                 }}
                               >
                                 {act.status}
@@ -487,7 +487,7 @@ function StudentGradeReviewModal({
                   <div
                     style={{
                       padding: "8px 12px",
-                      background: "#f8fafc",
+                      background: "var(--adaptive-surface, #f8fafc)",
                       borderRadius: 6,
                       fontSize: "0.82rem",
                       color: "var(--muted, #64748b)",
@@ -505,10 +505,10 @@ function StudentGradeReviewModal({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    background: "#ffffff",
+                    background: "var(--adaptive-surface, #ffffff)",
                     padding: "8px 12px",
                     borderRadius: 6,
-                    border: "1px solid #e2e8f0",
+                    border: "1px solid var(--adaptive-border, #e2e8f0)",
                     flexWrap: "wrap",
                     gap: 8,
                   }}
@@ -597,7 +597,7 @@ function StudentGradeReviewModal({
           style={{
             position: "sticky",
             bottom: -28,
-            background: "rgba(255, 255, 255, 0.95)",
+            background: "var(--adaptive-surface-glass, rgba(255, 255, 255, 0.95))",
             backdropFilter: "blur(8px)",
             padding: "16px 0 8px 0",
             borderTop: "1px solid var(--border, #e2e8f0)",
@@ -1093,8 +1093,8 @@ export function Gradebook({
                             }
                             style={{
                               fontSize: "0.72rem",
-                              background: "rgba(2, 132, 199, 0.1)",
-                              color: "#0284c7",
+                              background: "var(--adaptive-info-soft, rgba(2, 132, 199, 0.1))",
+                              color: "var(--adaptive-info-text, #0284c7)",
                               padding: "1px 6px",
                               borderRadius: 4,
                               fontWeight: 600,
@@ -1310,7 +1310,7 @@ export function Gradebook({
                       padding: 12,
                       marginBottom: 12,
                       background: isMandatory
-                        ? "rgba(2, 132, 199, 0.03)"
+                        ? "var(--adaptive-info-soft, rgba(2, 132, 199, 0.03))"
                         : "transparent",
                     }}
                   >
@@ -1346,7 +1346,7 @@ export function Gradebook({
                             <span
                               style={{
                                 fontSize: "0.72rem",
-                                background: "#0284c7",
+                                background: "var(--adaptive-info-fill, #0284c7)",
                                 color: "#fff",
                                 padding: "2px 6px",
                                 borderRadius: 4,

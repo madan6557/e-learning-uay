@@ -59,33 +59,33 @@ const CATEGORY_LABELS: Record<
 > = {
   SURAT_EDARAN: {
     label: "Surat Edaran",
-    color: "#dc2626",
-    bg: "rgba(220, 38, 38, 0.08)",
+    color: "var(--adaptive-danger-text, #dc2626)",
+    bg: "var(--adaptive-danger-soft, rgba(220, 38, 38, 0.08))",
   },
   AKADEMIK: {
     label: "Akademik",
-    color: "#0284c7",
-    bg: "rgba(2, 132, 199, 0.08)",
+    color: "var(--adaptive-info-text, #0284c7)",
+    bg: "var(--adaptive-info-soft, rgba(2, 132, 199, 0.08))",
   },
   REGISTRASI: {
     label: "Registrasi & KRS",
-    color: "#7c3aed",
-    bg: "rgba(124, 58, 237, 0.08)",
+    color: "var(--adaptive-violet-text, #7c3aed)",
+    bg: "var(--adaptive-info-soft, rgba(124, 58, 237, 0.08))",
   },
   LIBUR: {
     label: "Libur & Cuti",
-    color: "#d97706",
-    bg: "rgba(217, 119, 6, 0.08)",
+    color: "var(--adaptive-warning-text, #d97706)",
+    bg: "var(--adaptive-warning-soft, rgba(217, 119, 6, 0.08))",
   },
   KEGIATAN: {
     label: "Agenda Kampus",
-    color: "#16a34a",
-    bg: "rgba(22, 163, 74, 0.08)",
+    color: "var(--adaptive-success-text, #16a34a)",
+    bg: "var(--adaptive-success-soft, rgba(22, 163, 74, 0.08))",
   },
   UMUM: {
     label: "Pengumuman Umum",
-    color: "#475569",
-    bg: "rgba(71, 85, 105, 0.08)",
+    color: "var(--adaptive-text, #475569)",
+    bg: "var(--adaptive-neutral-soft, rgba(71, 85, 105, 0.08))",
   },
 };
 
@@ -146,7 +146,7 @@ export function AnnouncementCard({
         padding: "20px 24px",
         borderRadius: 12,
         border: item.isImportant
-          ? "2px solid rgba(220, 38, 38, 0.4)"
+          ? "2px solid var(--adaptive-danger-border, rgba(220, 38, 38, 0.4))"
           : "1px solid var(--border, #e2e8f0)",
         background: item.isImportant
           ? "rgba(254, 242, 242, 0.35)"
@@ -199,8 +199,8 @@ export function AnnouncementCard({
                 gap: 4,
                 fontSize: "0.74rem",
                 fontWeight: 700,
-                color: "#b91c1c",
-                background: "#fee2e2",
+                color: "var(--adaptive-danger-text, #b91c1c)",
+                background: "var(--adaptive-danger-soft, #fee2e2)",
                 padding: "3px 10px",
                 borderRadius: 16,
               }}
@@ -267,7 +267,7 @@ export function AnnouncementCard({
                 style={{
                   padding: "4px 10px",
                   fontSize: "0.8rem",
-                  color: "#dc2626",
+                  color: "var(--adaptive-danger-text, #dc2626)",
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 4,
@@ -350,7 +350,7 @@ export function AnnouncementCard({
               gap: 6,
               fontSize: "0.82rem",
               color: "var(--primary, #0284c7)",
-              borderColor: "rgba(2, 132, 199, 0.3)",
+              borderColor: "var(--adaptive-info-border, rgba(2, 132, 199, 0.3))",
             }}
           >
             <FileText size={14} />
@@ -1019,8 +1019,8 @@ function AnnouncementEditorModal({
                   <span
                     style={{
                       fontSize: "0.74rem",
-                      background: "#e0f2fe",
-                      color: "#0369a1",
+                      background: "var(--adaptive-info-soft, #e0f2fe)",
+                      color: "var(--adaptive-info-text, #0369a1)",
                       padding: "2px 8px",
                       borderRadius: 12,
                       fontWeight: 600,
@@ -1303,7 +1303,7 @@ export function AnnouncementsPage({ user }: { user: any; config?: any }) {
                   fontWeight: active ? 700 : 500,
                   cursor: "pointer",
                   background: active
-                    ? "var(--primary, #0284c7)"
+                    ? "var(--action-background, var(--primary, #0284c7))"
                     : "var(--chip-bg, #f1f5f9)",
                   color: active ? "#ffffff" : "var(--foreground, #334155)",
                   transition: "all 0.15s ease",

@@ -3,6 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#183d32" />
+    <script src="/theme-init.js"></script>
     <title>Panduan Artikel Berbasis Blok — E-Learning UAY</title>
     <style>
       * {
@@ -111,6 +113,16 @@
         border-top: 1px solid #d9e3ed;
         margin-top: 36px;
         padding-top: 16px;
+      }
+      @media screen {
+        :root[data-theme="dark"] { color-scheme: dark; }
+        :root[data-theme="dark"] body { background: #0f1724; color: #e5edf5; }
+        :root[data-theme="dark"] main { background: #182333; }
+        :root[data-theme="dark"] :is(.eyebrow, h2, a) { color: #9ccfff; }
+        :root[data-theme="dark"] .muted { color: #acbacd; }
+        :root[data-theme="dark"] :is(header, footer, th, td, pre) { border-color: #36475e; }
+        :root[data-theme="dark"] :is(code, pre, th) { background: #1c293b; }
+        :root[data-theme="dark"] .note { background: #1b354e; border-color: #9ccfff; }
       }
       @media (max-width: 680px) {
         main {

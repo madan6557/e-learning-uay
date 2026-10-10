@@ -243,8 +243,8 @@ export function ClassCloneModal({ cls, config, onClose }: ClassCloneModalProps) 
       <p>{t.cloneDescription}</p>
       <div
         style={{
-          background: "rgba(2, 132, 199, 0.06)",
-          border: "1px solid rgba(2, 132, 199, 0.2)",
+          background: "var(--adaptive-info-soft, rgba(2, 132, 199, 0.06))",
+          border: "1px solid var(--adaptive-info-border, rgba(2, 132, 199, 0.2))",
           borderRadius: 8,
           padding: "10px 14px",
           marginBottom: 16,

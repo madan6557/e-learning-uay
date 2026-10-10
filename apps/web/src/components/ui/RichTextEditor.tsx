@@ -380,9 +380,9 @@ export function RichTextEditor({
             type="button"
             style={{
               background:
-                "linear-gradient(135deg, rgba(124, 58, 237, 0.09), rgba(2, 132, 199, 0.09))",
-              color: "#7c3aed",
-              borderColor: "rgba(124, 58, 237, 0.35)",
+                "linear-gradient(135deg, var(--adaptive-info-soft, rgba(124, 58, 237, 0.09)), var(--adaptive-info-soft, rgba(2, 132, 199, 0.09)))",
+              color: "var(--adaptive-violet-text, #7c3aed)",
+              borderColor: "var(--adaptive-info-border, rgba(124, 58, 237, 0.35))",
               fontWeight: 600,
             }}
             onClick={() => {
@@ -397,7 +397,7 @@ export function RichTextEditor({
             type="button"
             style={{
               background:
-                mode === "edit" ? "var(--primary, #0284c7)" : "#ffffff",
+                mode === "edit" ? "var(--action-background, var(--primary, #0284c7))" : "var(--adaptive-surface, #ffffff)",
               color: mode === "edit" ? "#ffffff" : "var(--foreground, #334155)",
               borderColor:
                 mode === "edit" ? "var(--primary, #0284c7)" : undefined,
@@ -413,7 +413,7 @@ export function RichTextEditor({
             type="button"
             style={{
               background:
-                mode === "preview" ? "var(--primary, #0284c7)" : "#ffffff",
+                mode === "preview" ? "var(--action-background, var(--primary, #0284c7))" : "var(--adaptive-surface, #ffffff)",
               color:
                 mode === "preview" ? "#ffffff" : "var(--foreground, #334155)",
               borderColor:

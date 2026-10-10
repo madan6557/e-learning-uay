@@ -50,43 +50,43 @@ const statusLabels: Record<
 > = {
   PRESENT: {
     label: "Hadir",
-    bg: "#ecfdf5",
-    text: "#065f46",
-    border: "#a7f3d0",
-    dot: "#10b981",
-    color: "#10b981",
+    bg: "var(--adaptive-success-soft, #ecfdf5)",
+    text: "var(--adaptive-success-text, #065f46)",
+    border: "var(--adaptive-success-border, #a7f3d0)",
+    dot: "var(--adaptive-success-text, #10b981)",
+    color: "var(--adaptive-success-text, #10b981)",
   },
   EXCUSED: {
     label: "Izin",
-    bg: "#fef3c7",
-    text: "#92400e",
-    border: "#fde68a",
-    dot: "#f59e0b",
-    color: "#f59e0b",
+    bg: "var(--adaptive-warning-soft, #fef3c7)",
+    text: "var(--adaptive-warning-text, #92400e)",
+    border: "var(--adaptive-warning-border, #fde68a)",
+    dot: "var(--adaptive-warning-text, #f59e0b)",
+    color: "var(--adaptive-warning-text, #f59e0b)",
   },
   SICK: {
     label: "Sakit",
-    bg: "#eff6ff",
-    text: "#1d4ed8",
-    border: "#bfdbfe",
-    dot: "#3b82f6",
-    color: "#3b82f6",
+    bg: "var(--adaptive-info-soft, #eff6ff)",
+    text: "var(--adaptive-info-text, #1d4ed8)",
+    border: "var(--adaptive-border, #bfdbfe)",
+    dot: "var(--adaptive-info-text, #3b82f6)",
+    color: "var(--adaptive-info-text, #3b82f6)",
   },
   ABSENT: {
     label: "Tidak Hadir (Alpa)",
-    bg: "#fef2f2",
-    text: "#991b1b",
-    border: "#fecaca",
-    dot: "#ef4444",
-    color: "#ef4444",
+    bg: "var(--adaptive-danger-soft, #fef2f2)",
+    text: "var(--adaptive-danger-text, #991b1b)",
+    border: "var(--adaptive-danger-border, #fecaca)",
+    dot: "var(--adaptive-danger-text, #ef4444)",
+    color: "var(--adaptive-danger-text, #ef4444)",
   },
   LATE: {
     label: "Terlambat",
-    bg: "#f5f3ff",
-    text: "#6b21a8",
-    border: "#ddd6fe",
-    dot: "#8b5cf6",
-    color: "#8b5cf6",
+    bg: "var(--adaptive-violet-soft, #f5f3ff)",
+    text: "var(--adaptive-violet-text, #6b21a8)",
+    border: "var(--adaptive-border, #ddd6fe)",
+    dot: "var(--adaptive-violet-text, #8b5cf6)",
+    color: "var(--adaptive-violet-text, #8b5cf6)",
   },
 };
 
@@ -125,9 +125,9 @@ function AttendanceStatusBadge({
           gap: 5,
           fontSize: "0.8rem",
           fontWeight: 600,
-          color: "#b45309",
-          background: "#fffbeb",
-          border: "1px solid #fde68a",
+          color: "var(--adaptive-warning-text, #b45309)",
+          background: "var(--adaptive-warning-soft, #fffbeb)",
+          border: "1px solid var(--adaptive-warning-border, #fde68a)",
           padding: "3px 10px",
           borderRadius: 999,
         }}
@@ -140,10 +140,10 @@ function AttendanceStatusBadge({
 
   const fallback = {
     label: "Belum Ada Data",
-    bg: "#f8fafc",
-    text: "#64748b",
-    border: "#e2e8f0",
-    dot: "#94a3b8",
+    bg: "var(--adaptive-surface, #f8fafc)",
+    text: "var(--adaptive-text-muted, #64748b)",
+    border: "var(--adaptive-border, #e2e8f0)",
+    dot: "var(--adaptive-text-muted, #94a3b8)",
   };
   const cfg = (status && statusLabels[status]) || fallback;
 
@@ -233,7 +233,7 @@ export function Attendance({
         <div
           className="active-attendance-banner"
           style={{
-            background: "linear-gradient(135deg, #0284c7 0%, #0369a1 100%)",
+            background: "linear-gradient(135deg, var(--adaptive-info-fill, #0284c7) 0%, var(--adaptive-emphasis-background, #0369a1) 100%)",
             color: "#ffffff",
             padding: "20px 24px",
             borderRadius: 12,
@@ -275,7 +275,7 @@ export function Attendance({
                     width: 8,
                     height: 8,
                     borderRadius: "50%",
-                    background: "#4ade80",
+                    background: "var(--adaptive-success-fill, #4ade80)",
                     boxShadow: "0 0 8px #4ade80",
                     display: "inline-block",
                   }}
@@ -310,8 +310,8 @@ export function Attendance({
           <button
             type="button"
             style={{
-              background: "#ffffff",
-              color: "#0369a1",
+              background: "var(--adaptive-surface, #ffffff)",
+              color: "var(--adaptive-info-text, #0369a1)",
               fontWeight: 700,
               fontSize: "0.88rem",
               padding: "10px 22px",
@@ -391,8 +391,8 @@ export function Attendance({
                   fontSize: "0.85rem",
                   fontWeight: activeTab === "sessions" ? 700 : 500,
                   background:
-                    activeTab === "sessions" ? "#ffffff" : "transparent",
-                  color: activeTab === "sessions" ? "#0f172a" : "#64748b",
+                    activeTab === "sessions" ? "var(--adaptive-surface, #ffffff)" : "transparent",
+                  color: activeTab === "sessions" ? "var(--adaptive-text, #0f172a)" : "var(--adaptive-text-muted, #64748b)",
                   cursor: "pointer",
                   boxShadow:
                     activeTab === "sessions"
@@ -411,8 +411,8 @@ export function Attendance({
                   borderRadius: 6,
                   fontSize: "0.85rem",
                   fontWeight: activeTab === "recap" ? 700 : 500,
-                  background: activeTab === "recap" ? "#ffffff" : "transparent",
-                  color: activeTab === "recap" ? "#0f172a" : "#64748b",
+                  background: activeTab === "recap" ? "var(--adaptive-surface, #ffffff)" : "transparent",
+                  color: activeTab === "recap" ? "var(--adaptive-text, #0f172a)" : "var(--adaptive-text-muted, #64748b)",
                   cursor: "pointer",
                   boxShadow:
                     activeTab === "recap"
@@ -470,7 +470,7 @@ export function Attendance({
                     padding: "18px 20px",
                     borderRadius: 12,
                     border: isCurrentlyOpen
-                      ? "1.5px solid #38bdf8"
+                      ? "1.5px solid var(--adaptive-teal-border, #38bdf8)"
                       : "1px solid var(--border, #e2e8f0)",
                     background: "var(--card-bg, #ffffff)",
                     display: "flex",
@@ -508,9 +508,9 @@ export function Attendance({
                       {isCurrentlyOpen ? (
                         <span
                           style={{
-                            background: "#ecfdf5",
-                            color: "#15803d",
-                            border: "1px solid #bbf7d0",
+                            background: "var(--adaptive-success-soft, #ecfdf5)",
+                            color: "var(--adaptive-success-text, #15803d)",
+                            border: "1px solid var(--adaptive-success-border, #bbf7d0)",
                             fontSize: "0.72rem",
                             fontWeight: 700,
                             padding: "2px 8px",
@@ -525,7 +525,7 @@ export function Attendance({
                               width: 6,
                               height: 6,
                               borderRadius: "50%",
-                              background: "#22c55e",
+                              background: "var(--adaptive-success-fill, #22c55e)",
                             }}
                           />
                           Sesi Dibuka
@@ -533,9 +533,9 @@ export function Attendance({
                       ) : isScheduledFuture ? (
                         <span
                           style={{
-                            background: "#f0f9ff",
-                            color: "#0369a1",
-                            border: "1px solid #bae6fd",
+                            background: "var(--adaptive-info-soft, #f0f9ff)",
+                            color: "var(--adaptive-info-text, #0369a1)",
+                            border: "1px solid var(--adaptive-border, #bae6fd)",
                             fontSize: "0.72rem",
                             fontWeight: 700,
                             padding: "2px 8px",
@@ -551,9 +551,9 @@ export function Attendance({
                       ) : (
                         <span
                           style={{
-                            background: "#f8fafc",
-                            color: "#64748b",
-                            border: "1px solid #e2e8f0",
+                            background: "var(--adaptive-surface, #f8fafc)",
+                            color: "var(--adaptive-text-muted, #64748b)",
+                            border: "1px solid var(--adaptive-border, #e2e8f0)",
                             fontSize: "0.72rem",
                             fontWeight: 600,
                             padding: "2px 8px",
@@ -571,9 +571,9 @@ export function Attendance({
                       {s.requiresCode ? (
                         <span
                           style={{
-                            background: "#fffbeb",
-                            color: "#92400e",
-                            border: "1px solid #fde68a",
+                            background: "var(--adaptive-warning-soft, #fffbeb)",
+                            color: "var(--adaptive-warning-text, #92400e)",
+                            border: "1px solid var(--adaptive-warning-border, #fde68a)",
                             fontSize: "0.72rem",
                             fontWeight: 600,
                             padding: "2px 8px",
@@ -588,9 +588,9 @@ export function Attendance({
                       ) : (
                         <span
                           style={{
-                            background: "#f0fdf4",
-                            color: "#166534",
-                            border: "1px solid #dcfce7",
+                            background: "var(--adaptive-success-soft, #f0fdf4)",
+                            color: "var(--adaptive-success-text, #166534)",
+                            border: "1px solid var(--adaptive-success-border, #dcfce7)",
                             fontSize: "0.72rem",
                             fontWeight: 600,
                             padding: "2px 8px",
@@ -628,9 +628,9 @@ export function Attendance({
                             alignItems: "center",
                             gap: 4,
                             fontSize: "0.78rem",
-                            color: "#166534",
-                            background: "#f0fdf4",
-                            border: "1px solid #dcfce7",
+                            color: "var(--adaptive-success-text, #166534)",
+                            background: "var(--adaptive-success-soft, #f0fdf4)",
+                            border: "1px solid var(--adaptive-success-border, #dcfce7)",
                             padding: "2px 8px",
                             borderRadius: 6,
                             fontWeight: 500,
@@ -695,19 +695,19 @@ export function Attendance({
                           borderRadius: 8,
                         }}
                       >
-                        <span style={{ color: "#15803d", fontWeight: 600 }}>
+                        <span style={{ color: "var(--adaptive-success-text, #15803d)", fontWeight: 600 }}>
                           Hadir: {s.stats.presentCount}
                         </span>
-                        <span style={{ color: "#b45309", fontWeight: 500 }}>
+                        <span style={{ color: "var(--adaptive-warning-text, #b45309)", fontWeight: 500 }}>
                           Izin: {s.stats.excusedCount}
                         </span>
-                        <span style={{ color: "#1d4ed8", fontWeight: 500 }}>
+                        <span style={{ color: "var(--adaptive-info-text, #1d4ed8)", fontWeight: 500 }}>
                           Sakit: {s.stats.sickCount}
                         </span>
-                        <span style={{ color: "#7c3aed", fontWeight: 500 }}>
+                        <span style={{ color: "var(--adaptive-violet-text, #7c3aed)", fontWeight: 500 }}>
                           Terlambat: {s.stats.lateCount}
                         </span>
-                        <span style={{ color: "#b91c1c", fontWeight: 500 }}>
+                        <span style={{ color: "var(--adaptive-danger-text, #b91c1c)", fontWeight: 500 }}>
                           Alpa: {s.stats.absentCount}
                         </span>
                         <span
@@ -806,9 +806,9 @@ export function Attendance({
                               padding: "7px 12px",
                               borderRadius: 8,
                               cursor: "pointer",
-                              background: s.isOpen ? "#fee2e2" : "#f0fdf4",
-                              color: s.isOpen ? "#991b1b" : "#166534",
-                              border: `1px solid ${s.isOpen ? "#fecaca" : "#bbf7d0"}`,
+                              background: s.isOpen ? "var(--adaptive-danger-soft, #fee2e2)" : "var(--adaptive-success-soft, #f0fdf4)",
+                              color: s.isOpen ? "var(--adaptive-danger-text, #991b1b)" : "var(--adaptive-success-text, #166534)",
+                              border: `1px solid ${s.isOpen ? "var(--adaptive-danger-border, #fecaca)" : "var(--adaptive-success-border, #bbf7d0)"}`,
                               fontWeight: 600,
                             }}
                             run={async () => {
@@ -1043,8 +1043,8 @@ export function Attendance({
               className="attendance-code-card"
               style={{
                 display: "inline-block",
-                background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)",
-                border: "2px dashed #0284c7",
+                background: "linear-gradient(135deg, var(--adaptive-info-soft, #f0f9ff) 0%, var(--adaptive-info-soft, #e0f2fe) 100%)",
+                border: "2px dashed var(--adaptive-info-border, #0284c7)",
                 borderRadius: 16,
                 marginBottom: 24,
               }}
@@ -1053,7 +1053,7 @@ export function Attendance({
                 style={{
                   fontSize: "0.85rem",
                   fontWeight: 700,
-                  color: "#0369a1",
+                  color: "var(--adaptive-info-text, #0369a1)",
                   textTransform: "uppercase",
                   letterSpacing: 1,
                   marginBottom: 4,
@@ -1065,7 +1065,7 @@ export function Attendance({
                 className="attendance-code-value"
                 style={{
                   fontWeight: 900,
-                  color: "#0f172a",
+                  color: "var(--adaptive-text, #0f172a)",
                   fontFamily: "monospace",
                 }}
               >
@@ -1078,7 +1078,7 @@ export function Attendance({
                 type="button"
                 className="button"
                 style={{
-                  background: modal.session.isOpen ? "#ef4444" : "#10b981",
+                  background: modal.session.isOpen ? "var(--adaptive-danger-fill, #ef4444)" : "var(--adaptive-success-fill, #10b981)",
                   color: "#ffffff",
                   display: "inline-flex",
                   alignItems: "center",
@@ -1218,8 +1218,8 @@ export function Attendance({
                   width: 56,
                   height: 56,
                   borderRadius: "50%",
-                  background: "#dcfce7",
-                  color: "#16a34a",
+                  background: "var(--adaptive-success-soft, #dcfce7)",
+                  color: "var(--adaptive-success-text, #16a34a)",
                   display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -1743,7 +1743,7 @@ export function ScheduleSessionModal({
                   style={{
                     fontWeight: 700,
                     fontSize: "0.95rem",
-                    color: isOpen ? "#15803d" : "#64748b",
+                    color: isOpen ? "var(--adaptive-success-text, #15803d)" : "var(--adaptive-text-muted, #64748b)",
                     marginTop: 2,
                   }}
                 >
@@ -1756,9 +1756,9 @@ export function ScheduleSessionModal({
                 type="button"
                 className="button"
                 style={{
-                  background: isOpen ? "#fee2e2" : "#dcfce7",
-                  color: isOpen ? "#991b1b" : "#15803d",
-                  border: `1px solid ${isOpen ? "#fecaca" : "#bbf7d0"}`,
+                  background: isOpen ? "var(--adaptive-danger-soft, #fee2e2)" : "var(--adaptive-success-soft, #dcfce7)",
+                  color: isOpen ? "var(--adaptive-danger-text, #991b1b)" : "var(--adaptive-success-text, #15803d)",
+                  border: `1px solid ${isOpen ? "var(--adaptive-danger-border, #fecaca)" : "var(--adaptive-success-border, #bbf7d0)"}`,
                   fontSize: "0.82rem",
                   padding: "6px 14px",
                   borderRadius: 8,
@@ -2138,7 +2138,7 @@ function ManualAttendanceModal({
             }}
             onClick={markAllPresent}
           >
-            <CheckCircle2 size={16} style={{ color: "#10b981" }} />
+            <CheckCircle2 size={16} style={{ color: "var(--adaptive-success-text, #10b981)" }} />
             <span>Tandai Semua Hadir</span>
           </button>
         )}
@@ -2199,8 +2199,8 @@ function ManualAttendanceModal({
                               fontSize: "0.75rem",
                               fontWeight: isSelected ? 700 : 500,
                               cursor: "pointer",
-                              background: isSelected ? conf.color : "#f1f5f9",
-                              color: isSelected ? "#ffffff" : "#475569",
+                              background: isSelected ? conf.color : "var(--adaptive-surface, #f1f5f9)",
+                              color: isSelected ? "var(--primary-foreground, #ffffff)" : "var(--adaptive-text, #475569)",
                               transition: "all 0.1s ease",
                             }}
                           >
@@ -2376,7 +2376,7 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
                   <td data-label="Hadir"
                     style={{
                       textAlign: "center",
-                      color: "#10b981",
+                      color: "var(--adaptive-success-text, #10b981)",
                       fontWeight: 600,
                     }}
                   >
@@ -2385,7 +2385,7 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
                   <td data-label="Izin"
                     style={{
                       textAlign: "center",
-                      color: "#f59e0b",
+                      color: "var(--adaptive-warning-text, #f59e0b)",
                       fontWeight: 600,
                     }}
                   >
@@ -2394,7 +2394,7 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
                   <td data-label="Sakit"
                     style={{
                       textAlign: "center",
-                      color: "#3b82f6",
+                      color: "var(--adaptive-info-text, #3b82f6)",
                       fontWeight: 600,
                     }}
                   >
@@ -2403,7 +2403,7 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
                   <td data-label="Alpa"
                     style={{
                       textAlign: "center",
-                      color: "#ef4444",
+                      color: "var(--adaptive-danger-text, #ef4444)",
                       fontWeight: 600,
                     }}
                   >
@@ -2412,7 +2412,7 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
                   <td data-label="Terlambat"
                     style={{
                       textAlign: "center",
-                      color: "#8b5cf6",
+                      color: "var(--adaptive-violet-text, #8b5cf6)",
                       fontWeight: 600,
                     }}
                   >
@@ -2425,8 +2425,8 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
                     {item.isEligibleForExam ? (
                       <span
                         style={{
-                          background: "#dcfce7",
-                          color: "#15803d",
+                          background: "var(--adaptive-success-soft, #dcfce7)",
+                          color: "var(--adaptive-success-text, #15803d)",
                           padding: "3px 8px",
                           borderRadius: 12,
                           fontSize: "0.75rem",
@@ -2438,8 +2438,8 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
                     ) : (
                       <span
                         style={{
-                          background: "#fee2e2",
-                          color: "#b91c1c",
+                          background: "var(--adaptive-danger-soft, #fee2e2)",
+                          color: "var(--adaptive-danger-text, #b91c1c)",
                           padding: "3px 8px",
                           borderRadius: 12,
                           fontSize: "0.75rem",

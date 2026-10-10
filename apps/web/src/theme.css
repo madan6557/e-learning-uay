@@ -1,0 +1,241 @@
+/* Shared tokens cover the application, portals, and lazily loaded rector UI.
+   Adaptive tokens retain the existing light palette through local fallbacks. */
+@media screen {
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --background: #0f1724;
+    --foreground: #e5edf5;
+    --surface: #182333;
+    --surface-muted: #1c293b;
+    --card: var(--surface);
+    --primary: #8bc4fa;
+    --primary-foreground: #10253a;
+    --primary-hover: #b4d9ff;
+    --secondary: #26364a;
+    --secondary-foreground: #e5edf5;
+    --muted-surface: #202e40;
+    --muted-foreground: #acbacd;
+    --accent-surface: #203b55;
+    --accent-foreground: #b4d9ff;
+    --accent-strong: #294b6b;
+    --destructive: #ffaaa5;
+    --destructive-foreground: #281513;
+    --danger-soft: #3e242b;
+    --success: #8ad8b2;
+    --success-foreground: #10291e;
+    --success-soft: #18392f;
+    --warning: #f3ce83;
+    --warning-foreground: #30230b;
+    --warning-soft: #3b301c;
+    --warning-on-soft: #f3ce83;
+    --info: #9ccfff;
+    --info-foreground: #10253a;
+    --info-soft: #1b354e;
+    --neutral-soft: #263448;
+    --neutral-on-soft: #acbacd;
+    --border: #36475e;
+    --border-strong: #526982;
+    --input: #526982;
+    --ring: #9ccfff;
+    --sidebar: #141e2d;
+    --sidebar-foreground: #d8e4f0;
+    --sidebar-accent: #203b55;
+    --sidebar-accent-foreground: #b4d9ff;
+    --sidebar-border: #36475e;
+    --chart-1: #8bc4fa;
+    --chart-2: #8bd4d3;
+    --chart-3: #8ad8b2;
+    --chart-4: #f3ce83;
+    --chart-5: #ffaaa5;
+    --chart-neutral: #8095ad;
+    --chart-violet: #c9b5ff;
+    --shadow-panel: 0 1px 3px rgb(0 0 0 / 24%);
+    --shadow-raised: 0 8px 24px rgb(0 0 0 / 32%);
+    --muted: var(--muted-foreground);
+    --line: var(--border);
+    --shadow: var(--shadow-panel);
+
+    /* Legacy aliases used by inline forms, cards, and notification filters. */
+    --card-bg: var(--card);
+    --input-bg: var(--surface-muted);
+    --surface-subtle: var(--surface-muted);
+    --chip-bg: var(--secondary);
+    --muted-soft: var(--muted-surface);
+    --border-subtle: var(--border);
+    --text: var(--foreground);
+    --heading: var(--foreground);
+    --fg: var(--foreground);
+    --brand: var(--primary);
+    --brand-soft: var(--accent-surface);
+    --neutral-subtle: var(--surface-muted);
+    --action-background: #285f92;
+    --action-background-hover: #1e486f;
+    --overlay: rgb(0 0 0 / 65%);
+
+    --adaptive-text: var(--foreground);
+    --adaptive-text-muted: var(--muted-foreground);
+    --adaptive-surface: var(--surface);
+    --adaptive-surface-muted: var(--surface-muted);
+    --adaptive-surface-glass: rgb(24 35 51 / 95%);
+    --adaptive-border: var(--border);
+    --adaptive-emphasis-background: #173651;
+    --adaptive-code-surface: #101923;
+    --adaptive-neutral-soft: var(--neutral-soft);
+    --adaptive-danger-text: var(--destructive);
+    --adaptive-danger-soft: var(--danger-soft);
+    --adaptive-danger-border: #85434a;
+    --adaptive-danger-fill: #a63f49;
+    --adaptive-info-text: var(--info);
+    --adaptive-info-soft: var(--info-soft);
+    --adaptive-info-border: #3d6a95;
+    --adaptive-info-fill: var(--action-background);
+    --adaptive-success-text: var(--success);
+    --adaptive-success-soft: var(--success-soft);
+    --adaptive-success-border: #387c60;
+    --adaptive-success-fill: #277452;
+    --adaptive-warning-text: var(--warning);
+    --adaptive-warning-soft: var(--warning-soft);
+    --adaptive-warning-border: #88703c;
+    --adaptive-warning-fill: #8b681e;
+    --adaptive-teal-text: #8bd4d3;
+    --adaptive-teal-soft: #19373d;
+    --adaptive-teal-border: #3d7e80;
+    --adaptive-teal-fill: #276e73;
+    --adaptive-violet-text: #c9b5ff;
+    --adaptive-violet-soft: #302747;
+    --adaptive-violet-border: #6b5697;
+    --adaptive-violet-fill: #614896;
+  }
+
+  :root[data-theme="dark"] :is(.public-shell, .standalone-guide, .rector-dashboard) {
+    background: var(--background);
+  }
+
+  :root[data-theme="dark"] .welcome-panel :is(p, small, .welcome-emblem),
+  :root[data-theme="dark"] .final-grade-card :is(svg, span, small) {
+    color: #d8e4f0;
+  }
+  :root[data-theme="dark"] .welcome-panel .button.light {
+    color: var(--primary);
+    background: var(--surface);
+  }
+  :root[data-theme="dark"] dialog::backdrop,
+  :root[data-theme="dark"] .nav-scrim {
+    background: var(--overlay);
+  }
+  :root[data-theme="dark"] .rector-dashboard :is(.academic, .time-span, .color-materi, .color-kelas, .color-asesmen, .color-pengumuman) {
+    background: var(--chart-1);
+  }
+  :root[data-theme="dark"] .rector-dashboard :is(.login, .progress-track span) {
+    background: var(--chart-2);
+  }
+  :root[data-theme="dark"] .rector-dashboard :is(.access, .time-span.connection, .time-span.akses, .time-span.login, .time-span.logout, .color-login, .color-logout, .color-akses) {
+    background: var(--chart-neutral);
+  }
+  :root[data-theme="dark"] .rector-dashboard .time-span.connection {
+    border-color: var(--chart-neutral);
+  }
+  :root[data-theme="dark"] .rector-dashboard :is(.time-span.penilaian, .color-penilaian) {
+    background: var(--chart-violet);
+  }
+  :root[data-theme="dark"] .rector-dashboard :is(.time-span.publikasi, .time-span.koreksi, .color-publikasi, .color-koreksi) {
+    background: var(--chart-3);
+  }
+  :root[data-theme="dark"] .rector-dashboard .time-span.unknown {
+    background: repeating-linear-gradient(135deg, var(--chart-4) 0 4px, var(--warning-soft) 4px 8px);
+    border-color: var(--chart-4);
+  }
+
+  /* Authored HTML may contain pasted light colors. Its screen presentation
+     follows the theme without modifying the saved document. */
+  :root[data-theme="dark"] :is(.html-content, .reading-content, .formatted-content) [style*="color"] {
+    color: inherit !important;
+  }
+  :root[data-theme="dark"] :is(.html-content, .reading-content, .formatted-content) [style*="background"] {
+    background-color: transparent !important;
+    background-image: none !important;
+  }
+  :root[data-theme="dark"] :is(.html-content, .reading-content, .formatted-content) mark {
+    color: var(--warning);
+    background: var(--warning-soft);
+  }
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--foreground);
+  background: var(--surface);
+  cursor: pointer;
+}
+.theme-toggle:hover {
+  background: var(--secondary);
+}
+.theme-toggle:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 3px;
+}
+.public-header nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.theme-preference {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+  color: var(--foreground);
+}
+.theme-preference select {
+  width: 100%;
+}
+@media (max-width: 600px) {
+  .app-shell .topbar-right {
+    gap: 4px;
+  }
+  .public-header {
+    gap: 8px;
+    padding: 16px;
+  }
+  .public-header nav {
+    gap: 8px;
+  }
+  .public-header .theme-toggle svg {
+    display: block;
+  }
+  .public-header .brand {
+    font-size: 1.1rem;
+  }
+  .public-header .header-sso-btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding-inline: 12px;
+  }
+}
+@media (max-width: 380px) {
+  .phone-brand span {
+    display: none;
+  }
+  .public-header .brand-name {
+    font-size: 0.75rem;
+    overflow: visible;
+  }
+  .public-header .brand {
+    gap: 6px;
+  }
+}
+@media print {
+  .theme-toggle,
+  .theme-preference {
+    display: none !important;
+  }
+}
