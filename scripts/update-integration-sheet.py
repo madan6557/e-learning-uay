@@ -22,7 +22,7 @@ def replace(page, rect, text, size=9, color=navy):
     result = page.insert_textbox(fitz.Rect(rect), text, fontsize=size, fontname='helv', color=color, lineheight=1.4)
     if result < 0: raise RuntimeError(f'Text did not fit: {text[:60]}')
 
-replace(doc[0], (423,44,550,94), 'No. Dokumen: UAY-INT-2026-001\nTanggal: 06 Oktober 2026\nVersi: 1.1 (Akses Rektor)\nKlasifikasi: Internal Teknis', 7)
+replace(doc[0], (423,44,550,94), 'No. Dokumen: UAY-INT-2026-001\nTanggal: 10 Oktober 2026\nVersi: 1.2 (Prod-Test S3)\nKlasifikasi: Internal Teknis', 7)
 replace(doc[1], (47,641,290,771),
     'Daftarkan 5 role pada client elearning-uay:\n'
     'SUPER_ADMIN: Administrator utama / IT pusat.\n'
@@ -33,6 +33,68 @@ replace(doc[1], (47,641,290,771),
     'Permintaan akun dan batas akses rektor: halaman 9-10.', 8.5)
 replace(doc[7], (228,178,446,220),
     'Jika beberapa role diberikan, urutan: SUPER_ADMIN > RECTOR > DEPARTMENT_ADMIN > INSTRUCTOR > STUDENT. Akun rektor hanya diberi RECTOR.', 8)
+
+def add_s3_railway_card(page):
+    x0, y0, x1, y1 = 40.125, 538.0, 555.363, 792.0
+    page.insert_textbox(
+        fitz.Rect(39.75, 523.0, 550.0, 536.0),
+        "Opsi Prod-Test: Penyimpanan S3 Railway (Hanya Storage di Railway, Sisanya VPS Kampus)",
+        fontname="helv",
+        fontsize=8.5,
+        color=(0.059, 0.231, 0.376),
+    )
+    shape = page.new_shape()
+    shape.draw_rect(fitz.Rect(x0, y0, x1, y1), radius=0.015)
+    shape.finish(
+        fill=(0.1176, 0.1608, 0.2314),
+        color=(0.200, 0.2549, 0.3333),
+        width=0.75,
+    )
+    shape.commit()
+
+    f_reg = Path("C:/Windows/Fonts/consola.ttf")
+    f_bld = Path("C:/Windows/Fonts/consolab.ttf")
+    f_ita = Path("C:/Windows/Fonts/consolai.ttf")
+    has_consolas = f_reg.exists() and f_bld.exists() and f_ita.exists()
+
+    lines = [
+        ("# ====================================================================", "comment"),
+        ("# VARIAN PROD-TEST: PENYIMPANAN S3 RAILWAY (TIGRIS OBJECT STORAGE)", "comment"),
+        ("# Digunakan saat pengujian produksi sebelum UAY File Service live.", "comment"),
+        ("# Seluruh variabel di atas (Domain, DB, SSO) tetap sama, HANYA storage diganti:", "comment"),
+        ("# ====================================================================", "comment"),
+        ("FILE_STORAGE_DRIVER=s3", "keyval"),
+        ("FILE_SERVICE_TYPE=s3", "keyval"),
+        ("# Kredensial S3 Railway Tigris (Obyek Penyimpanan)", "comment"),
+        ("S3_ENDPOINT=https://t3.storageapi.dev", "keyval"),
+        ("S3_REGION=auto", "keyval"),
+        ("S3_BUCKET=arranged-lounge-j7sbw8iq1", "keyval"),
+        ("S3_ACCESS_KEY_ID=tid_zImBpKfObONAYpHBoICnphxCNDKgcIbhCRWjkcPiaHWpnvTAfT", "keyval"),
+        ("S3_SECRET_ACCESS_KEY=IsiDenganSecretAccessKeyRailwayTigris", "keyval"),
+        ("S3_FORCE_PATH_STYLE=true", "keyval"),
+        ("S3_KEY_PREFIX=uploads", "keyval"),
+        ("# Domain Asal yang Diizinkan (S3 Railway & Domain Produksi Kampus)", "comment"),
+        ("FILE_ALLOWED_ORIGINS=https://t3.storageapi.dev,https://e-learning.uay.ac.id", "keyval"),
+    ]
+
+    curr_y = 553.0
+    line_height = 13.5
+    for text, ltype in lines:
+        if ltype == "comment":
+            color = (0.58, 0.639, 0.722)
+            fname = "Consolas-Italic" if has_consolas else "Courier-Oblique"
+            ffile = str(f_ita) if has_consolas else None
+        else:
+            color = (0.22, 0.741, 0.973)
+            fname = "Consolas-Bold" if has_consolas else "Courier-Bold"
+            ffile = str(f_bld) if has_consolas else None
+
+        kwargs = {"fontname": fname, "fontsize": 7.8, "color": color}
+        if ffile: kwargs["fontfile"] = ffile
+        page.insert_text(fitz.Point(51.0, curr_y), text, **kwargs)
+        curr_y += line_height
+
+add_s3_railway_card(doc[4])
 
 styles=getSampleStyleSheet()
 styles.add(ParagraphStyle(name='BodyUAY',fontName='Helvetica',fontSize=10.5,leading=15,textColor=HexColor('#273747'),spaceAfter=8))
@@ -75,7 +137,7 @@ for i,page in enumerate(doc):
         page.add_redact_annot(rect+(-2,-1,2,2),fill=(1,1,1))
     page.apply_redactions(images=0,graphics=0)
     page.insert_textbox(fitz.Rect(190,814,405,834),f'Halaman {i+1} dari {len(doc)}',fontname='helv',fontsize=8,align=1,color=muted)
-doc.set_metadata({'title':'Lembar Data dan ENV Integrasi UAY - Revisi 1.1 - Akses Rektor','author':'Universitas Achmad Yani','subject':'Permintaan role RECTOR dengan akses laporan akademik hanya baca'})
+doc.set_metadata({'title':'Lembar Data dan ENV Integrasi UAY - Revisi 1.2 - S3 Railway Prod-Test','author':'Universitas Achmad Yani','subject':'Spesifikasi integrasi UAY SSO, UAY File Service, Akses Rektor, dan S3 Railway Prod-Test'})
 staged=root/'tmp/pdfs/LEMBAR_DATA_DAN_ENV_INTEGRASI_UAY-revisi.pdf'
 doc.save(staged,garbage=4,deflate=True)
 doc.close()
