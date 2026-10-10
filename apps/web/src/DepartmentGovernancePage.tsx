@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Building2,
   ShieldCheck,
@@ -17,7 +17,7 @@ import {
   Check,
   UserPlus,
 } from "lucide-react";
-import { api, Loading, Notice, Pagination, usePagination } from "./lib";
+import { api, Loading, Notice, Pagination, usePagination, Modal } from "./lib";
 import { confirmAction } from "./confirm";
 import { notifyAction } from "./feedback";
 import {
@@ -98,10 +98,6 @@ export function DepartmentGovernancePage({
   const [createUserRole, setCreateUserRole] = useState("DEPARTMENT_ADMIN");
   const [createUserScopes, setCreateUserScopes] = useState<string[]>([]);
   const [savingCreateUser, setSavingCreateUser] = useState(false);
-
-  const editSectionRef = useRef<HTMLDivElement | null>(null);
-  const deptFormRef = useRef<HTMLFormElement | null>(null);
-  const createUserFormRef = useRef<HTMLFormElement | null>(null);
 
   // ==========================================
   // STATE: SIAKAD SYNC BRIDGE
@@ -194,9 +190,6 @@ export function DepartmentGovernancePage({
     setDeptFormFaculty("");
     setDeptFormIsActive(true);
     setDeptNotice(null);
-    setTimeout(() => {
-      deptFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 50);
   };
 
   const openEditDeptForm = (dept: DepartmentRecord) => {
@@ -207,9 +200,6 @@ export function DepartmentGovernancePage({
     setDeptFormFaculty(dept.faculty || "");
     setDeptFormIsActive(dept.isActive);
     setDeptNotice(null);
-    setTimeout(() => {
-      deptFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 50);
   };
 
   const cancelDeptForm = () => {
@@ -281,9 +271,6 @@ export function DepartmentGovernancePage({
     setSelectedRole(u.role);
     setUserSaveError(null);
     setUserSuccess(null);
-    setTimeout(() => {
-      editSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 50);
   };
 
   const cancelEditUser = () => {
@@ -347,9 +334,6 @@ export function DepartmentGovernancePage({
     setCreateUserScopes([]);
     setUserSuccess(null);
     setUserSaveError(null);
-    setTimeout(() => {
-      createUserFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 50);
   };
 
   const cancelCreateUser = () => {
@@ -547,189 +531,151 @@ export function DepartmentGovernancePage({
       {/* ========================================================= */}
       {activeTab === "PRODI" && (
         <div>
-          {/* FORM TAMBAH / EDIT PROGRAM STUDI (DI ATAS) */}
+          {/* MODAL TAMBAH / EDIT PROGRAM STUDI */}
           {(isCreatingDept || editingDept) && (
-            <form
-              ref={deptFormRef}
-              onSubmit={saveDepartment}
-              style={{
-                padding: 22,
-                marginBottom: 24,
-                border: "1px solid var(--border, #cbd5e1)",
-                borderRadius: 12,
-                backgroundColor: "var(--surface, #ffffff)",
-                boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
-              }}
+            <Modal
+              title={
+                isCreatingDept
+                  ? "Tambah Program Studi Baru"
+                  : `Edit Program Studi: ${editingDept?.code}`
+              }
+              onClose={cancelDeptForm}
+              busy={savingDept}
             >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: 16,
-                  paddingBottom: 12,
-                  borderBottom: "1px solid var(--border, #e2e8f0)",
-                }}
-              >
-                <div>
-                  <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700 }}>
-                    {isCreatingDept
-                      ? "Tambah Program Studi Baru"
-                      : `Edit Program Studi: ${editingDept?.code}`}
-                  </h3>
-                  <p
-                    style={{
-                      margin: "4px 0 0",
-                      fontSize: "0.85rem",
-                      color: "var(--muted-foreground, #64748b)",
-                    }}
-                  >
-                    Tentukan kode unik dan nama resmi prodi yang diakui pangkalan data.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className="button secondary compact"
-                  onClick={cancelDeptForm}
-                  style={{ padding: "6px 10px" }}
-                  title="Batalkan perubahan"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-                  gap: 16,
-                  marginBottom: 16,
-                }}
-              >
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      fontWeight: 600,
-                      fontSize: "0.88rem",
-                      marginBottom: 6,
-                    }}
-                  >
-                    Kode Program Studi *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Contoh: IF, TS, TI, MAN..."
-                    value={deptFormCode}
-                    onChange={(e) => setDeptFormCode(e.target.value.toUpperCase())}
-                    disabled={savingDept}
-                    style={{ width: "100%", textTransform: "uppercase" }}
-                  />
-                  <small
-                    style={{
-                      color: "var(--muted-foreground, #64748b)",
-                      display: "block",
-                      marginTop: 4,
-                    }}
-                  >
-                    Harus unik dan menjadi rujukan sistem kelas/SIAKAD.
-                  </small>
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      fontWeight: 600,
-                      fontSize: "0.88rem",
-                      marginBottom: 6,
-                    }}
-                  >
-                    Nama Lengkap Program Studi *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Contoh: Informatika, Teknik Sipil..."
-                    value={deptFormName}
-                    onChange={(e) => setDeptFormName(e.target.value)}
-                    disabled={savingDept}
-                    style={{ width: "100%" }}
-                  />
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      fontWeight: 600,
-                      fontSize: "0.88rem",
-                      marginBottom: 6,
-                    }}
-                  >
-                    Fakultas / Unit Pengampu (Opsional)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Contoh: Fakultas Teknik"
-                    value={deptFormFaculty}
-                    onChange={(e) => setDeptFormFaculty(e.target.value)}
-                    disabled={savingDept}
-                    style={{ width: "100%" }}
-                  />
-                </div>
-              </div>
-
-              <div style={{ marginBottom: 20 }}>
-                <label
+              <form onSubmit={saveDepartment}>
+                <div
                   style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 10,
-                    cursor: "pointer",
-                    userSelect: "none",
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                    gap: 16,
+                    marginBottom: 16,
                   }}
                 >
-                  <input
-                    type="checkbox"
-                    checked={deptFormIsActive}
-                    onChange={(e) => setDeptFormIsActive(e.target.checked)}
-                    disabled={savingDept}
-                  />
-                  <span style={{ fontWeight: 600, fontSize: "0.9rem" }}>
-                    Status Aktif (Tersedia untuk pembukaan kelas dan penugasan Kaprodi)
-                  </span>
-                </label>
-              </div>
+                  <div>
+                    <label
+                      style={{
+                        display: "block",
+                        fontWeight: 600,
+                        fontSize: "0.88rem",
+                        marginBottom: 6,
+                      }}
+                    >
+                      Kode Program Studi *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Contoh: IF, TS, TI, MAN..."
+                      value={deptFormCode}
+                      onChange={(e) => setDeptFormCode(e.target.value.toUpperCase())}
+                      disabled={savingDept}
+                      style={{ width: "100%", textTransform: "uppercase" }}
+                    />
+                    <small
+                      style={{
+                        color: "var(--muted-foreground, #64748b)",
+                        display: "block",
+                        marginTop: 4,
+                      }}
+                    >
+                      Harus unik dan menjadi rujukan sistem kelas/SIAKAD.
+                    </small>
+                  </div>
 
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
-                <button
-                  type="button"
-                  className="button secondary"
-                  onClick={cancelDeptForm}
-                  disabled={savingDept}
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="button primary"
-                  disabled={savingDept}
-                >
-                  {savingDept ? (
-                    <>
-                      <Loading />
-                      <span style={{ marginLeft: 8 }}>Menyimpan...</span>
-                    </>
-                  ) : isCreatingDept ? (
-                    "Tambahkan Program Studi"
-                  ) : (
-                    "Simpan Perubahan"
-                  )}
-                </button>
-              </div>
-            </form>
+                  <div>
+                    <label
+                      style={{
+                        display: "block",
+                        fontWeight: 600,
+                        fontSize: "0.88rem",
+                        marginBottom: 6,
+                      }}
+                    >
+                      Nama Lengkap Program Studi *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Contoh: Informatika, Teknik Sipil..."
+                      value={deptFormName}
+                      onChange={(e) => setDeptFormName(e.target.value)}
+                      disabled={savingDept}
+                      style={{ width: "100%" }}
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      style={{
+                        display: "block",
+                        fontWeight: 600,
+                        fontSize: "0.88rem",
+                        marginBottom: 6,
+                      }}
+                    >
+                      Fakultas / Unit Pengampu (Opsional)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Contoh: Fakultas Teknik"
+                      value={deptFormFaculty}
+                      onChange={(e) => setDeptFormFaculty(e.target.value)}
+                      disabled={savingDept}
+                      style={{ width: "100%" }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: 20 }}>
+                  <label
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 10,
+                      cursor: "pointer",
+                      userSelect: "none",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={deptFormIsActive}
+                      onChange={(e) => setDeptFormIsActive(e.target.checked)}
+                      disabled={savingDept}
+                    />
+                    <span style={{ fontWeight: 600, fontSize: "0.9rem" }}>
+                      Status Aktif (Tersedia untuk pembukaan kelas dan penugasan Kaprodi)
+                    </span>
+                  </label>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+                  <button
+                    type="button"
+                    className="button secondary"
+                    onClick={cancelDeptForm}
+                    disabled={savingDept}
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="button primary"
+                    disabled={savingDept}
+                  >
+                    {savingDept ? (
+                      <>
+                        <Loading />
+                        <span style={{ marginLeft: 8 }}>Menyimpan...</span>
+                      </>
+                    ) : isCreatingDept ? (
+                      "Tambahkan Program Studi"
+                    ) : (
+                      "Simpan Perubahan"
+                    )}
+                  </button>
+                </div>
+              </form>
+            </Modal>
           )}
 
           {/* TOOLBAR FILTER & AKSI MASTER PRODI */}
@@ -967,382 +913,291 @@ export function DepartmentGovernancePage({
 
           {userError && <Notice error={userError} />}
 
-          {/* FORM DAFTARKAN DOSEN / STAF BARU (MANUAL PRE-PROVISION) */}
+          {/* MODAL DAFTARKAN DOSEN / STAF BARU (MANUAL PRE-PROVISION) */}
           {isCreatingUser && (
-            <form
-              ref={createUserFormRef}
-              onSubmit={handleCreateUser}
-              style={{
-                marginBottom: 24,
-                padding: 22,
-                border: "2px solid var(--primary, #0284c7)",
-                borderRadius: 12,
-                backgroundColor: "var(--surface, #ffffff)",
-                boxShadow: "0 6px 20px rgba(2, 132, 199, 0.12)",
-              }}
+            <Modal
+              wide
+              title="Daftarkan Dosen / Kaprodi Baru"
+              onClose={cancelCreateUser}
+              busy={savingCreateUser}
             >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  marginBottom: 16,
-                  paddingBottom: 12,
-                  borderBottom: "1px solid var(--border, #e2e8f0)",
-                }}
-              >
-                <div>
-                  <div
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                      fontSize: "0.78rem",
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      color: "var(--primary, #0284c7)",
-                      marginBottom: 4,
-                    }}
-                  >
-                    <UserPlus size={14} />
-                    Pendaftaran Pengguna &amp; Otoritas Awal
-                  </div>
-                  <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700 }}>
-                    Daftarkan Dosen / Kaprodi Baru
-                  </h3>
-                  <p
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "var(--muted-foreground, #64748b)",
-                      margin: "4px 0 0",
-                    }}
-                  >
-                    Mendaftarkan identitas dosen ke pangkalan data E-Learning agar dapat langsung ditetapkan sebagai Kaprodi/Dekan sebelum mereka login pertama kali via SSO.
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  className="button secondary compact"
-                  onClick={cancelCreateUser}
-                  style={{ padding: "6px 10px" }}
-                  title="Batalkan pendaftaran"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-
-              {userSaveError && (
-                <div style={{ marginBottom: 16 }}>
-                  <Notice error={userSaveError} />
-                </div>
-              )}
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                  gap: 16,
-                  marginBottom: 16,
-                }}
-              >
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      fontWeight: 600,
-                      fontSize: "0.88rem",
-                      marginBottom: 6,
-                    }}
-                  >
-                    Nomor Identitas (NIDN / NIP) *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Contoh: 1112089001"
-                    value={createUserIdentifier}
-                    onChange={(e) => setCreateUserIdentifier(e.target.value)}
-                    disabled={savingCreateUser}
-                    style={{ width: "100%" }}
-                  />
-                  <small style={{ color: "var(--muted-foreground, #64748b)", display: "block", marginTop: 4 }}>
-                    Sesuai dengan NIDN/NIP di SSO atau SIAKAD kampus.
-                  </small>
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      fontWeight: 600,
-                      fontSize: "0.88rem",
-                      marginBottom: 6,
-                    }}
-                  >
-                    Jenis Identitas *
-                  </label>
-                  <select
-                    value={createUserIdentifierType}
-                    onChange={(e) => setCreateUserIdentifierType(e.target.value as any)}
-                    disabled={savingCreateUser}
-                    style={{ width: "100%" }}
-                  >
-                    <option value="NIDN">NIDN (Nomor Induk Dosen Nasional)</option>
-                    <option value="NIP">NIP (Nomor Induk Pegawai)</option>
-                    <option value="OTHER">Lainnya / NIK</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      fontWeight: 600,
-                      fontSize: "0.88rem",
-                      marginBottom: 6,
-                    }}
-                  >
-                    Nama Lengkap &amp; Gelar *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Contoh: Dr. Budi Santoso, M.Kom."
-                    value={createUserName}
-                    onChange={(e) => setCreateUserName(e.target.value)}
-                    disabled={savingCreateUser}
-                    style={{ width: "100%" }}
-                  />
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      fontWeight: 600,
-                      fontSize: "0.88rem",
-                      marginBottom: 6,
-                    }}
-                  >
-                    Email Resmi Kampus *
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="Contoh: budi.santoso@uay.ac.id"
-                    value={createUserEmail}
-                    onChange={(e) => setCreateUserEmail(e.target.value)}
-                    disabled={savingCreateUser}
-                    style={{ width: "100%" }}
-                  />
-                </div>
-              </div>
-
-              <div style={{ marginBottom: 16 }}>
-                <label
+              <form onSubmit={handleCreateUser}>
+                <p
                   style={{
-                    display: "block",
-                    fontWeight: 600,
-                    fontSize: "0.88rem",
-                    marginBottom: 6,
+                    fontSize: "0.85rem",
+                    color: "var(--muted-foreground, #64748b)",
+                    margin: "0 0 16px",
                   }}
                 >
-                  Peran Aplikasi Awal
-                </label>
-                <select
-                  value={createUserRole}
-                  onChange={(e) => setCreateUserRole(e.target.value)}
-                  style={{ minWidth: 260, maxWidth: "100%" }}
-                  disabled={savingCreateUser}
-                >
-                  <option value="DEPARTMENT_ADMIN">
-                    DEPARTMENT_ADMIN (Admin Prodi / Kaprodi / Dekan)
-                  </option>
-                  <option value="INSTRUCTOR">
-                    INSTRUCTOR (Dosen Pengampu Murni)
-                  </option>
-                  <option value="SUPER_ADMIN">
-                    SUPER_ADMIN (Pengelola Sistem Seluruh Universitas)
-                  </option>
-                </select>
-              </div>
+                  Mendaftarkan identitas dosen ke pangkalan data E-Learning agar dapat langsung ditetapkan sebagai Kaprodi/Dekan sebelum mereka login pertama kali via SSO.
+                </p>
 
-              <div style={{ marginBottom: 20 }}>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    flexWrap: "wrap",
-                    gap: 8,
-                    marginBottom: 10,
-                  }}
-                >
-                  <label style={{ fontWeight: 600, fontSize: "0.88rem" }}>
-                    Tugaskan Lingkup Program Studi ({createUserScopes.length} terpilih):
-                  </label>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button
-                      type="button"
-                      className="button secondary compact"
-                      onClick={selectAllCreateScopes}
-                      disabled={savingCreateUser}
-                      style={{ fontSize: "0.78rem", padding: "3px 8px" }}
-                    >
-                      Pilih Semua
-                    </button>
-                    <button
-                      type="button"
-                      className="button secondary compact"
-                      onClick={clearAllCreateScopes}
-                      disabled={savingCreateUser}
-                      style={{ fontSize: "0.78rem", padding: "3px 8px" }}
-                    >
-                      Kosongkan
-                    </button>
+                {userSaveError && (
+                  <div style={{ marginBottom: 16 }}>
+                    <Notice error={userSaveError} />
                   </div>
-                </div>
+                )}
 
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-                    gap: 10,
-                    maxHeight: 240,
-                    overflowY: "auto",
-                    padding: 12,
-                    border: "1px solid var(--border, #cbd5e1)",
-                    borderRadius: 8,
-                    backgroundColor: "var(--surface-muted, #f8fafc)",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                    gap: 16,
+                    marginBottom: 16,
                   }}
                 >
-                  {departments
-                    .filter((d) => d.isActive)
-                    .map((d) => {
-                      const isChecked = createUserScopes.includes(d.code);
-                      return (
-                        <label
-                          key={d.id}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                            padding: "8px 10px",
-                            borderRadius: 6,
-                            backgroundColor: isChecked
-                              ? "rgba(2, 132, 199, 0.08)"
-                              : "var(--surface, #ffffff)",
-                            border: `1px solid ${isChecked ? "var(--primary, #0284c7)" : "var(--border, #e2e8f0)"}`,
-                            cursor: "pointer",
-                            fontSize: "0.85rem",
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() => toggleCreateScope(d.code)}
-                            disabled={savingCreateUser}
-                          />
-                          <div>
-                            <strong>{d.code}</strong> - {d.name}
-                          </div>
-                        </label>
-                      );
-                    })}
-                </div>
-              </div>
+                  <div>
+                    <label
+                      style={{
+                        display: "block",
+                        fontWeight: 600,
+                        fontSize: "0.88rem",
+                        marginBottom: 6,
+                      }}
+                    >
+                      Nomor Identitas (NIDN / NIP) *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Contoh: 1112089001"
+                      value={createUserIdentifier}
+                      onChange={(e) => setCreateUserIdentifier(e.target.value)}
+                      disabled={savingCreateUser}
+                      style={{ width: "100%" }}
+                    />
+                    <small style={{ color: "var(--muted-foreground, #64748b)", display: "block", marginTop: 4 }}>
+                      Sesuai dengan NIDN/NIP di SSO atau SIAKAD kampus.
+                    </small>
+                  </div>
 
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
-                <button
-                  type="button"
-                  className="button secondary"
-                  onClick={cancelCreateUser}
-                  disabled={savingCreateUser}
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="button primary"
-                  disabled={savingCreateUser}
-                >
-                  {savingCreateUser ? (
-                    <>
-                      <Loading />
-                      <span style={{ marginLeft: 8 }}>Mendaftarkan...</span>
-                    </>
-                  ) : (
-                    "Daftarkan Dosen / Kaprodi"
-                  )}
-                </button>
-              </div>
-            </form>
+                  <div>
+                    <label
+                      style={{
+                        display: "block",
+                        fontWeight: 600,
+                        fontSize: "0.88rem",
+                        marginBottom: 6,
+                      }}
+                    >
+                      Jenis Identitas *
+                    </label>
+                    <select
+                      value={createUserIdentifierType}
+                      onChange={(e) => setCreateUserIdentifierType(e.target.value as any)}
+                      disabled={savingCreateUser}
+                      style={{ width: "100%" }}
+                    >
+                      <option value="NIDN">NIDN (Nomor Induk Dosen Nasional)</option>
+                      <option value="NIP">NIP (Nomor Induk Pegawai)</option>
+                      <option value="OTHER">Lainnya / NIK</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label
+                      style={{
+                        display: "block",
+                        fontWeight: 600,
+                        fontSize: "0.88rem",
+                        marginBottom: 6,
+                      }}
+                    >
+                      Nama Lengkap &amp; Gelar *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Contoh: Dr. Budi Santoso, M.Kom."
+                      value={createUserName}
+                      onChange={(e) => setCreateUserName(e.target.value)}
+                      disabled={savingCreateUser}
+                      style={{ width: "100%" }}
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      style={{
+                        display: "block",
+                        fontWeight: 600,
+                        fontSize: "0.88rem",
+                        marginBottom: 6,
+                      }}
+                    >
+                      Email Resmi Kampus *
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="Contoh: budi.santoso@uay.ac.id"
+                      value={createUserEmail}
+                      onChange={(e) => setCreateUserEmail(e.target.value)}
+                      disabled={savingCreateUser}
+                      style={{ width: "100%" }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: 16 }}>
+                  <label
+                    style={{
+                      display: "block",
+                      fontWeight: 600,
+                      fontSize: "0.88rem",
+                      marginBottom: 6,
+                    }}
+                  >
+                    Peran Aplikasi Awal
+                  </label>
+                  <select
+                    value={createUserRole}
+                    onChange={(e) => setCreateUserRole(e.target.value)}
+                    style={{ minWidth: 260, maxWidth: "100%" }}
+                    disabled={savingCreateUser}
+                  >
+                    <option value="DEPARTMENT_ADMIN">
+                      DEPARTMENT_ADMIN (Admin Prodi / Kaprodi / Dekan)
+                    </option>
+                    <option value="INSTRUCTOR">
+                      INSTRUCTOR (Dosen Pengampu Murni)
+                    </option>
+                    <option value="SUPER_ADMIN">
+                      SUPER_ADMIN (Pengelola Sistem Seluruh Universitas)
+                    </option>
+                  </select>
+                </div>
+
+                <div style={{ marginBottom: 20 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: 8,
+                      marginBottom: 10,
+                    }}
+                  >
+                    <label style={{ fontWeight: 600, fontSize: "0.88rem" }}>
+                      Tugaskan Lingkup Program Studi ({createUserScopes.length} terpilih):
+                    </label>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button
+                        type="button"
+                        className="button secondary compact"
+                        onClick={selectAllCreateScopes}
+                        disabled={savingCreateUser}
+                        style={{ fontSize: "0.78rem", padding: "3px 8px" }}
+                      >
+                        Pilih Semua
+                      </button>
+                      <button
+                        type="button"
+                        className="button secondary compact"
+                        onClick={clearAllCreateScopes}
+                        disabled={savingCreateUser}
+                        style={{ fontSize: "0.78rem", padding: "3px 8px" }}
+                      >
+                        Kosongkan
+                      </button>
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                      gap: 10,
+                      maxHeight: 240,
+                      overflowY: "auto",
+                      padding: 12,
+                      border: "1px solid var(--border, #cbd5e1)",
+                      borderRadius: 8,
+                      backgroundColor: "var(--surface-muted, #f8fafc)",
+                    }}
+                  >
+                    {departments
+                      .filter((d) => d.isActive)
+                      .map((d) => {
+                        const isChecked = createUserScopes.includes(d.code);
+                        return (
+                          <label
+                            key={d.id}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 8,
+                              padding: "8px 10px",
+                              borderRadius: 6,
+                              backgroundColor: isChecked
+                                ? "rgba(2, 132, 199, 0.08)"
+                                : "var(--surface, #ffffff)",
+                              border: `1px solid ${isChecked ? "var(--primary, #0284c7)" : "var(--border, #e2e8f0)"}`,
+                              cursor: "pointer",
+                              fontSize: "0.85rem",
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => toggleCreateScope(d.code)}
+                              disabled={savingCreateUser}
+                            />
+                            <div>
+                              <strong>{d.code}</strong> - {d.name}
+                            </div>
+                          </label>
+                        );
+                      })}
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 20 }}>
+                  <button
+                    type="button"
+                    className="button secondary"
+                    onClick={cancelCreateUser}
+                    disabled={savingCreateUser}
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="button primary"
+                    disabled={savingCreateUser}
+                  >
+                    {savingCreateUser ? (
+                      <>
+                        <Loading />
+                        <span style={{ marginLeft: 8 }}>Mendaftarkan...</span>
+                      </>
+                    ) : (
+                      "Daftarkan Dosen / Kaprodi"
+                    )}
+                  </button>
+                </div>
+              </form>
+            </Modal>
           )}
 
-          {/* EDIT FORM AT THE TOP (SESUAI REQUEST USER AGAR TIDAK DI BAWAH) */}
+          {/* MODAL PENETAPAN OTORITAS PRODI */}
           {editingUser && (
-            <div
-              ref={editSectionRef}
-              style={{
-                marginBottom: 24,
-                padding: 22,
-                border: "2px solid var(--primary, #0284c7)",
-                borderRadius: 12,
-                backgroundColor: "var(--surface, #ffffff)",
-                boxShadow: "0 6px 20px rgba(2, 132, 199, 0.12)",
-              }}
+            <Modal
+              wide
+              title={`Penetapan Otoritas: ${editingUser.name}`}
+              onClose={cancelEditUser}
+              busy={savingUser}
             >
               <div
                 style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
+                  fontSize: "0.85rem",
+                  color: "var(--muted-foreground, #64748b)",
                   marginBottom: 16,
-                  paddingBottom: 12,
-                  borderBottom: "1px solid var(--border, #e2e8f0)",
                 }}
               >
-                <div>
-                  <div
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                      fontSize: "0.78rem",
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      color: "var(--primary, #0284c7)",
-                      marginBottom: 4,
-                    }}
-                  >
-                    <ShieldCheck size={14} />
-                    Panel Penetapan Otoritas Prodi
-                  </div>
-                  <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700 }}>
-                    Penetapan Otoritas: {editingUser.name}
-                  </h3>
-                  <div
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "var(--muted-foreground, #64748b)",
-                      marginTop: 4,
-                    }}
-                  >
-                    {editingUser.identifierType}: <strong>{editingUser.identifierValue}</strong> ·{" "}
-                    Email: <strong>{editingUser.email}</strong>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  className="button secondary compact"
-                  onClick={cancelEditUser}
-                  style={{ padding: "6px 10px" }}
-                  title="Tutup panel edit"
-                >
-                  <X size={16} />
-                </button>
+                {editingUser.identifierType}: <strong>{editingUser.identifierValue}</strong> ·{" "}
+                Email: <strong>{editingUser.email}</strong>
               </div>
 
               {userSaveError && (
@@ -1478,7 +1333,7 @@ export function DepartmentGovernancePage({
                 </div>
               </div>
 
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 20 }}>
                 <button
                   type="button"
                   className="button secondary"
@@ -1503,7 +1358,7 @@ export function DepartmentGovernancePage({
                   )}
                 </button>
               </div>
-            </div>
+            </Modal>
           )}
 
           {/* TOOLBAR SEARCH & ROLE FILTER */}
