@@ -14,6 +14,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Megaphone,
+  Building2,
 } from "lucide-react";
 import { Action, Loading } from "../ui";
 import { Breadcrumbs, IconButton, UserChip } from "../../ui";
@@ -136,7 +137,10 @@ export function AuthShell({
     : [
         ["/dashboard", LayoutDashboard, t.dashboard],
         ...(user.role === "SUPER_ADMIN"
-          ? [["/rector", ClipboardCheck, "Pemantauan Akademik"]]
+          ? [
+              ["/rector", ClipboardCheck, "Pemantauan Akademik"],
+              ["/departments", Building2, "Program Studi & Otoritas"],
+            ]
           : []),
         ...(admin ? [["/catalog", LibraryBig, t.catalog]] : []),
         ["/classes", BookOpen, admin ? t.manageClasses : t.myClasses],

@@ -71,6 +71,11 @@ const QuizPage = lazy(() =>
 const AssignmentPage = lazy(() =>
   import("./Assessment").then((m) => ({ default: m.AssignmentPage })),
 );
+const DepartmentGovernancePage = lazy(() =>
+  import("./DepartmentGovernancePage").then((m) => ({
+    default: m.DepartmentGovernancePage,
+  })),
+);
 
 function AuthCallbackPage({
   config,
@@ -444,6 +449,22 @@ function App() {
         </a>
       </Empty>
     );
+  else if (section === "departments")
+    page =
+      user.role === "SUPER_ADMIN" ? (
+        <DepartmentGovernancePage user={user} config={config.data} />
+      ) : (
+        <Empty>
+          <h1>Akses Dibatasi</h1>
+          <p>
+            Pengelolaan program studi dan otoritas akademik hanya dapat diakses
+            oleh Super Administrator.
+          </p>
+          <a className="button" href="/dashboard">
+            Kembali ke beranda
+          </a>
+        </Empty>
+      );
   else if (section === "announcements")
     page = <AnnouncementsPage user={user} config={config.data} />;
   else if (section === "profile")
