@@ -27,6 +27,7 @@ import {
 import {
   db,
   ensure,
+  HttpError,
   config,
   production,
   isDemo,
@@ -312,12 +313,24 @@ export async function setRemoteFileId(
 }
 
 // ---------------------------------------------------------------------------
-// Official UAY File Service Client (DOKUMENTASI_API_ENDPOINT.pdf)
+// Official UAY File Service Client (Repository-scoped API v1)
 // ---------------------------------------------------------------------------
 
 export function getUayEndpoint(path: string): string {
   const base = config.fileUrl.replace(/\/+$/, "");
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
+
+  // If path is an explicit /v1/ route or health, route cleanly to /v1 or root
+  if (
+    cleanPath.startsWith("/v1/") ||
+    cleanPath === "/health" ||
+    cleanPath.startsWith("/health")
+  ) {
+    const rootBase = base.replace(/\/api\/v1$|\/v1$|\/api$/, "");
+    return `${rootBase}${cleanPath}`;
+  }
+
+  // Legacy fallback for old /api/v1 endpoints
   if (base.endsWith("/api/v1")) {
     if (cleanPath.startsWith("/api/v1/")) {
       return `${base}${cleanPath.slice("/api/v1".length)}`;
@@ -350,7 +363,14 @@ export function getUayHeaders(options?: {
   };
 
   const bearerToken =
-    options?.token || (isJwt(config.fileKey) ? config.fileKey : undefined);
+    options?.token ||
+    (isJwt(config.fileKey) ? config.fileKey : undefined) ||
+    (isJwt(process.env.FILE_SERVICE_TOKEN)
+      ? process.env.FILE_SERVICE_TOKEN
+      : undefined) ||
+    (isJwt(process.env.UAY_FILE_SERVICE_TOKEN)
+      ? process.env.UAY_FILE_SERVICE_TOKEN
+      : undefined);
   if (bearerToken) {
     headers["Authorization"] = `Bearer ${bearerToken}`;
   }
@@ -373,25 +393,39 @@ export async function uayUpload(params: {
   actorId?: string;
   requestId?: string;
 }) {
+  const repoId =
+    params.repositoryId ||
+    config.fileRepoId ||
+    process.env.UAY_FILE_SERVICE_REPOSITORY_ID ||
+    process.env.FILE_SERVICE_REPOSITORY_ID ||
+    "00000000-0000-0000-0000-000000000001";
+
   const formData = new FormData();
   formData.append(
     "file",
     new Blob([params.fileBuffer as any], { type: params.mimeType }),
     params.fileName,
   );
-  formData.append(
-    "repository_id",
-    params.repositoryId ||
-      config.fileRepoId ||
-      "00000000-0000-0000-0000-000000000001",
-  );
+
+  // Modern File-Service fields (camelCase)
+  if (params.folderId) {
+    formData.append("folderId", params.folderId);
+  }
+  if (params.resourceType && params.resourceId) {
+    formData.append("contextType", params.resourceType);
+    formData.append("contextId", params.resourceId);
+  }
+
+  // Backwards-compatibility fields for legacy test fixtures
+  formData.append("repository_id", repoId);
   formData.append("visibility", params.visibility || "private");
   if (params.resourceType)
     formData.append("resource_type", params.resourceType);
   if (params.resourceId) formData.append("resource_id", params.resourceId);
   if (params.folderId) formData.append("folder_id", params.folderId);
 
-  const res = await serviceFetch("file_service", getUayEndpoint("/files"), {
+  const endpoint = getUayEndpoint(`/v1/repositories/${repoId}/files`);
+  const res = await serviceFetch("file_service", endpoint, {
     method: "POST",
     headers: getUayHeaders({
       actorId: params.actorId,
@@ -399,49 +433,136 @@ export async function uayUpload(params: {
     }),
     body: formData,
   });
-  ensure(res.ok, 502, "FILE_SERVICE_REJECTED");
-  const uploaded = await serviceJson(res);
-  const fileId = uploaded.fileId || uploaded.id;
+
+  if (!res.ok) {
+    let errBody: any;
+    try {
+      errBody = await res.json();
+    } catch {
+      // ignore
+    }
+    const errMsg =
+      errBody?.error?.message ||
+      errBody?.message ||
+      errBody?.error ||
+      `FILE_SERVICE_REJECTED (${res.status})`;
+    console.error(
+      `[UAY File Service Upload Error] ${res.status} on ${endpoint}:`,
+      errMsg,
+      errBody ? JSON.stringify(errBody) : "",
+    );
+    throw new HttpError(
+      res.status === 404
+        ? 404
+        : res.status === 403
+          ? 403
+          : res.status === 400
+            ? 400
+            : 502,
+      "FILE_SERVICE_REJECTED",
+      { status: res.status, message: errMsg, endpoint },
+    );
+  }
+
+  const raw = await serviceJson(res);
+  const data = raw?.data ?? raw;
+  const fileId = data?.fileId || data?.id;
   ensure(typeof fileId === "string", 502, "FILE_SERVICE_INVALID_RESPONSE");
-  return { ...uploaded, id: fileId, fileId };
+  return { ...data, id: fileId, fileId };
 }
 
 export async function uayGetMetadata(
   fileId: string,
-  options?: { actorId?: string; requestId?: string },
+  options?: { actorId?: string; requestId?: string; repositoryId?: string },
 ) {
+  const repoId =
+    options?.repositoryId ||
+    config.fileRepoId ||
+    process.env.UAY_FILE_SERVICE_REPOSITORY_ID ||
+    process.env.FILE_SERVICE_REPOSITORY_ID ||
+    "00000000-0000-0000-0000-000000000001";
+
+  const endpoint = getUayEndpoint(
+    `/v1/repositories/${repoId}/files/${encodeURIComponent(fileId)}`,
+  );
   const res = await serviceFetch(
     "file_service",
-    getUayEndpoint(`/files/${encodeURIComponent(fileId)}/metadata`),
+    endpoint,
     {
       method: "GET",
       headers: getUayHeaders(options),
     },
     { idempotent: true },
   );
-  ensure(res.ok, res.status === 404 ? 404 : 502, "FILE_SERVICE_REJECTED");
-  const meta = await serviceJson(res);
+
+  if (!res.ok) {
+    let errBody: any;
+    try {
+      errBody = await res.json();
+    } catch {
+      // ignore
+    }
+    const errMsg =
+      errBody?.error?.message ||
+      errBody?.message ||
+      errBody?.error ||
+      `FILE_SERVICE_REJECTED (${res.status})`;
+    console.error(
+      `[UAY File Service Metadata Error] ${res.status} on ${endpoint}:`,
+      errMsg,
+    );
+    throw new HttpError(
+      res.status === 404 ? 404 : 502,
+      "FILE_SERVICE_REJECTED",
+      { status: res.status, message: errMsg, endpoint },
+    );
+  }
+
+  const raw = await serviceJson(res);
+  const meta = raw?.data ?? raw;
+  const id = meta.fileId || meta.id;
+  const originalName = meta.originalName || meta.original_name;
+  const sizeBytes = meta.sizeBytes ?? meta.size_bytes;
+  const mimeType = meta.mimeType || meta.mime_type;
+  const status = meta.status || "active";
   ensure(
-    typeof meta.fileId === "string" &&
-      typeof meta.originalName === "string" &&
-      Number.isSafeInteger(meta.sizeBytes) &&
-      meta.sizeBytes > 0 &&
-      typeof meta.mimeType === "string" &&
-      typeof meta.status === "string",
+    typeof id === "string" &&
+      typeof originalName === "string" &&
+      Number.isSafeInteger(sizeBytes) &&
+      sizeBytes > 0 &&
+      typeof mimeType === "string",
     502,
     "FILE_SERVICE_INVALID_RESPONSE",
   );
-  return meta;
+  return {
+    ...meta,
+    fileId: id,
+    id,
+    originalName,
+    sizeBytes,
+    mimeType,
+    status,
+  };
 }
 
 export async function uayStreamFile(
   fileId: string,
   rangeHeader?: string,
-  options?: { actorId?: string; requestId?: string },
+  options?: { actorId?: string; requestId?: string; repositoryId?: string },
 ) {
+  const repoId =
+    options?.repositoryId ||
+    config.fileRepoId ||
+    process.env.UAY_FILE_SERVICE_REPOSITORY_ID ||
+    process.env.FILE_SERVICE_REPOSITORY_ID ||
+    "00000000-0000-0000-0000-000000000001";
+
+  const endpoint = getUayEndpoint(
+    `/v1/repositories/${repoId}/files/${encodeURIComponent(fileId)}/download`,
+  );
   const res = await serviceFetch(
     "file_service",
-    getUayEndpoint(`/files/${encodeURIComponent(fileId)}`),
+    endpoint,
     {
       method: "GET",
       headers: getUayHeaders({
@@ -457,27 +578,48 @@ export async function uayStreamFile(
 
 export async function uayTrash(
   fileId: string,
-  options?: { actorId?: string; requestId?: string },
+  options?: { actorId?: string; requestId?: string; repositoryId?: string },
 ) {
+  const repoId =
+    options?.repositoryId ||
+    config.fileRepoId ||
+    process.env.UAY_FILE_SERVICE_REPOSITORY_ID ||
+    process.env.FILE_SERVICE_REPOSITORY_ID ||
+    "00000000-0000-0000-0000-000000000001";
+
+  const endpoint = getUayEndpoint(
+    `/v1/repositories/${repoId}/files/${encodeURIComponent(fileId)}`,
+  );
   const res = await serviceFetch(
     "file_service",
-    getUayEndpoint(`/files/${encodeURIComponent(fileId)}`),
+    endpoint,
     {
       method: "DELETE",
       headers: getUayHeaders(options),
     },
   );
   ensure(res.ok, 502, "FILE_SERVICE_REJECTED");
-  return serviceJson(res);
+  const raw = await serviceJson(res);
+  return raw?.data ?? raw;
 }
 
 export async function uayRestore(
   fileId: string,
-  options?: { actorId?: string; requestId?: string },
+  options?: { actorId?: string; requestId?: string; repositoryId?: string },
 ) {
+  const repoId =
+    options?.repositoryId ||
+    config.fileRepoId ||
+    process.env.UAY_FILE_SERVICE_REPOSITORY_ID ||
+    process.env.FILE_SERVICE_REPOSITORY_ID ||
+    "00000000-0000-0000-0000-000000000001";
+
+  const endpoint = getUayEndpoint(
+    `/v1/repositories/${repoId}/files/${encodeURIComponent(fileId)}/restore`,
+  );
   const res = await serviceFetch(
     "file_service",
-    getUayEndpoint(`/files/${encodeURIComponent(fileId)}/restore`),
+    endpoint,
     {
       method: "POST",
       headers: getUayHeaders(options),
@@ -485,16 +627,26 @@ export async function uayRestore(
     },
   );
   ensure(res.ok, 502, "FILE_SERVICE_REJECTED");
-  return serviceJson(res);
+  const raw = await serviceJson(res);
+  return raw?.data ?? raw;
 }
 
 export async function uayGetRepositories(options?: {
   actorId?: string;
   requestId?: string;
+  repositoryId?: string;
 }) {
+  const repoId =
+    options?.repositoryId ||
+    config.fileRepoId ||
+    process.env.UAY_FILE_SERVICE_REPOSITORY_ID ||
+    process.env.FILE_SERVICE_REPOSITORY_ID ||
+    "00000000-0000-0000-0000-000000000001";
+
+  const endpoint = getUayEndpoint(`/v1/repositories/${repoId}`);
   const res = await serviceFetch(
     "file_service",
-    getUayEndpoint("/repositories"),
+    endpoint,
     {
       method: "GET",
       headers: getUayHeaders(options),
@@ -502,16 +654,9 @@ export async function uayGetRepositories(options?: {
     { idempotent: true },
   );
   ensure(res.ok, 502, "FILE_SERVICE_REJECTED");
-  const repos = await serviceJson(res);
-  ensure(
-    Array.isArray(repos) &&
-      repos.every(
-        (r) => r && typeof r.id === "string" && typeof r.name === "string",
-      ),
-    502,
-    "FILE_SERVICE_INVALID_RESPONSE",
-  );
-  return repos;
+  const raw = await serviceJson(res);
+  const data = raw?.data ?? raw;
+  return Array.isArray(data) ? data : [data];
 }
 
 export function createSignedDownloadToken(
@@ -624,6 +769,10 @@ const allowedTypes = new Set([
   "video/webm",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/msword",
+  "application/vnd.ms-excel",
+  "application/vnd.ms-powerpoint",
 ]);
 
 const blockedExtensions = /\.(html?|svg|js|mjs|exe|dll|bat|cmd|ps1|sh|msi)$/i;
