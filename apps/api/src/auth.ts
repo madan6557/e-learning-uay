@@ -360,46 +360,169 @@ async function verifyAccess(token: string) {
 export async function fetchSsoMeProfile(
   accessToken: string,
 ): Promise<Record<string, any> | null> {
-  if (!config.ssoApiBaseUrl) return null;
-  try {
-    const url = `${config.ssoApiBaseUrl.replace(/\/+$/, "")}/auth/me`;
-    const res = await serviceFetch(
-      "sso-api",
-      url,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      },
-      { idempotent: true, attempts: 2, timeoutMs: 3500 },
-    );
-    if (!res.ok) return null;
-    const body: any = await res.json();
-    const data = body?.data ?? body;
-    if (!data || typeof data !== "object") return null;
-    return {
-      ...(Array.isArray(data.roles) && data.roles.length > 0
-        ? { roles: data.roles }
-        : {}),
-      ...(data.user_type ? { user_type: data.user_type } : {}),
-      ...(data.status ? { account_status: data.status } : {}),
-      ...(data.username ? { preferred_username: data.username } : {}),
-      ...(data.official_identifier
-        ? { official_identifier: data.official_identifier }
-        : {}),
-      ...(data.identifier_type
-        ? { identifier_type: data.identifier_type }
-        : {}),
-      ...(data.identifier_value
-        ? { identifier_value: data.identifier_value }
-        : {}),
-    };
-  } catch {
-    return null;
+  const candidateBases: string[] = [];
+  if (config.ssoApiBaseUrl)
+    candidateBases.push(config.ssoApiBaseUrl.replace(/\/+$/, ""));
+  if (process.env.SSO_API_BASE_URL)
+    candidateBases.push(process.env.SSO_API_BASE_URL.replace(/\/+$/, ""));
+  if (process.env.SSO_BACKEND_URL)
+    candidateBases.push(process.env.SSO_BACKEND_URL.replace(/\/+$/, ""));
+  if (config.issuer) {
+    try {
+      const issuerUrl = new URL(config.issuer);
+      candidateBases.push(`${issuerUrl.origin}/api`);
+      candidateBases.push(issuerUrl.origin);
+    } catch {}
   }
+  if (candidateBases.length === 0) return null;
+
+  for (const base of candidateBases) {
+    try {
+      const url = `${base}/auth/me`;
+      const res = await serviceFetch(
+        "sso-api",
+        url,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+        { idempotent: true, attempts: 2, timeoutMs: 3500 },
+      );
+      if (!res.ok) continue;
+      const body: any = await res.json();
+      const data = body?.data ?? body;
+      if (!data || typeof data !== "object") continue;
+      return {
+        ...(Array.isArray(data.roles) && data.roles.length > 0
+          ? { roles: data.roles }
+          : {}),
+        ...(data.user_type ? { user_type: data.user_type } : {}),
+        ...(data.status ? { account_status: data.status } : {}),
+        ...(data.username ? { preferred_username: data.username } : {}),
+        ...(data.official_identifier
+          ? { official_identifier: data.official_identifier }
+          : {}),
+        ...(data.identifier_type
+          ? { identifier_type: data.identifier_type }
+          : {}),
+        ...(data.identifier_value
+          ? { identifier_value: data.identifier_value }
+          : {}),
+      };
+    } catch {}
+  }
+  return null;
 }
+function extractUserType(
+  raw: any,
+  officialType?: string,
+): "STUDENT" | "LECTURER" | "STAFF" | "ADMIN" | null {
+  const candidates: any[] = [
+    raw.user_type,
+    raw.userType,
+    raw.attributes?.user_type?.[0],
+    raw.attributes?.user_type,
+    raw.attributes?.userType?.[0],
+    raw.attributes?.userType,
+  ];
+  for (const c of candidates) {
+    if (typeof c === "string" && c.trim()) {
+      const clean = c.trim().toUpperCase();
+      if (clean === "LECTURER" || clean === "DOSEN" || clean === "PENGAJAR")
+        return "LECTURER";
+      if (clean === "STUDENT" || clean === "MAHASISWA" || clean === "MHS")
+        return "STUDENT";
+      if (clean === "STAFF" || clean === "KARYAWAN" || clean === "TENDIK")
+        return "STAFF";
+      if (
+        clean === "ADMIN" ||
+        clean === "ADMINISTRATOR" ||
+        clean === "SUPER_ADMIN"
+      )
+        return "ADMIN";
+    }
+  }
+
+  // Official identifier or identifier type (NIDN is uniquely for lecturers, NIM for students)
+  const rawIdType =
+    officialType ||
+    raw.identifier_type ||
+    raw.identifierType ||
+    raw.attributes?.identifier_type?.[0] ||
+    raw.attributes?.identifier_type;
+  if (typeof rawIdType === "string") {
+    const cleanId = rawIdType.trim().toUpperCase();
+    if (cleanId === "NIDN") return "LECTURER";
+    if (cleanId === "NIM") return "STUDENT";
+  }
+
+  // Email or username domain clues
+  const emailOrUser = String(
+    raw.email || raw.preferred_username || "",
+  ).toLowerCase();
+  if (
+    emailOrUser.includes("@dosen.uay.ac.id") ||
+    emailOrUser.includes(".dosen@")
+  )
+    return "LECTURER";
+  if (emailOrUser.includes("@mhs.uay.ac.id") || emailOrUser.includes(".mhs@"))
+    return "STUDENT";
+  if (emailOrUser.includes("@staff.uay.ac.id")) return "STAFF";
+
+  return null;
+}
+
 async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
   const claims: any = { ...rawClaims };
+
+  // Extract official_identifier and user_type attributes upfront
+  const rawOfficialIdentifier =
+    (rawClaims.official_identifier as string) ||
+    (rawClaims.officialIdentifier as string) ||
+    ((rawClaims as any).attributes?.official_identifier?.[0] as string) ||
+    ((rawClaims as any).attributes?.official_identifier as string);
+
+  let officialType: string | undefined;
+  let officialValue: string | undefined;
+  if (rawOfficialIdentifier) {
+    const match = String(rawOfficialIdentifier)
+      .trim()
+      .match(/^(NIM|NIP|NIDN)\s+(.+)$/i);
+    if (match) {
+      officialType = match[1].toUpperCase();
+      officialValue = match[2].trim();
+    } else {
+      officialValue = String(rawOfficialIdentifier).trim();
+    }
+  }
+
+  const detectedUserType = extractUserType(rawClaims, officialType);
+  if (detectedUserType) {
+    claims.user_type = detectedUserType;
+  }
+
+  if (rawOfficialIdentifier && !claims.official_identifier) {
+    claims.official_identifier = rawOfficialIdentifier;
+  }
+  if (officialValue && !claims.identifier_value) {
+    claims.identifier_value = officialValue;
+  }
+  if (officialType && !claims.identifier_type) {
+    claims.identifier_type = officialType;
+  }
+  if (!claims.identifier_type && (rawClaims as any).attributes?.identifier_type) {
+    const attrType = Array.isArray((rawClaims as any).attributes.identifier_type)
+      ? (rawClaims as any).attributes.identifier_type[0]
+      : (rawClaims as any).attributes.identifier_type;
+    if (attrType) claims.identifier_type = attrType;
+  }
+  if (!claims.identifier_value && (rawClaims as any).attributes?.identifier_value) {
+    const attrVal = Array.isArray((rawClaims as any).attributes.identifier_value)
+      ? (rawClaims as any).attributes.identifier_value[0]
+      : (rawClaims as any).attributes.identifier_value;
+    if (attrVal) claims.identifier_value = attrVal;
+  }
 
   // 1. Gather all possible role strings from token
   const explicitRoles: string[] = [
@@ -430,13 +553,13 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
   const candidateRoles: string[] = [
     ...explicitRoles,
     ...(!hasExplicitRole
-      ? rawClaims.user_type === "ADMIN"
+      ? detectedUserType === "ADMIN"
         ? ["SUPER_ADMIN"]
-        : rawClaims.user_type === "LECTURER"
+        : detectedUserType === "LECTURER"
           ? ["INSTRUCTOR"]
-          : rawClaims.user_type === "STAFF"
+          : detectedUserType === "STAFF"
             ? ["DEPARTMENT_ADMIN"]
-            : rawClaims.user_type === "STUDENT"
+            : detectedUserType === "STUDENT"
               ? ["STUDENT"]
               : []
       : []),
@@ -449,55 +572,6 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
     (rawClaims.username as string) ||
     null;
   const rawEmail = (rawClaims.email as string) || null;
-
-  // Extract official_identifier and user_type attributes if available
-  const rawOfficialIdentifier =
-    (rawClaims.official_identifier as string) ||
-    (rawClaims.officialIdentifier as string) ||
-    ((rawClaims as any).attributes?.official_identifier?.[0] as string) ||
-    ((rawClaims as any).attributes?.official_identifier as string);
-
-  let officialType: string | undefined;
-  let officialValue: string | undefined;
-  if (rawOfficialIdentifier) {
-    const match = String(rawOfficialIdentifier)
-      .trim()
-      .match(/^(NIM|NIP|NIDN)\s+(.+)$/i);
-    if (match) {
-      officialType = match[1].toUpperCase();
-      officialValue = match[2].trim();
-    } else {
-      officialValue = String(rawOfficialIdentifier).trim();
-    }
-  }
-
-  if (rawOfficialIdentifier && !claims.official_identifier) {
-    claims.official_identifier = rawOfficialIdentifier;
-  }
-  if (officialValue && !claims.identifier_value) {
-    claims.identifier_value = officialValue;
-  }
-  if (officialType && !claims.identifier_type) {
-    claims.identifier_type = officialType;
-  }
-  if (!claims.user_type && (rawClaims as any).attributes?.user_type) {
-    const attrUserType = Array.isArray((rawClaims as any).attributes.user_type)
-      ? (rawClaims as any).attributes.user_type[0]
-      : (rawClaims as any).attributes.user_type;
-    if (attrUserType) claims.user_type = attrUserType;
-  }
-  if (!claims.identifier_type && (rawClaims as any).attributes?.identifier_type) {
-    const attrType = Array.isArray((rawClaims as any).attributes.identifier_type)
-      ? (rawClaims as any).attributes.identifier_type[0]
-      : (rawClaims as any).attributes.identifier_type;
-    if (attrType) claims.identifier_type = attrType;
-  }
-  if (!claims.identifier_value && (rawClaims as any).attributes?.identifier_value) {
-    const attrVal = Array.isArray((rawClaims as any).attributes.identifier_value)
-      ? (rawClaims as any).attributes.identifier_value[0]
-      : (rawClaims as any).attributes.identifier_value;
-    if (attrVal) claims.identifier_value = attrVal;
-  }
 
   const rawIdVal =
     officialValue ||
@@ -588,9 +662,17 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
     claims.roles = validRoles;
     claims.role = validRoles[0];
   } else if (existingUser) {
-    claims.roles = [existingUser.role];
-    claims.role = existingUser.role;
-    if (!claims.user_type) claims.user_type = existingUser.userType;
+    const upgradedRole =
+      (existingUser.role === "STUDENT" || existingUser.role === "INSTRUCTOR") &&
+      (detectedUserType === "STAFF" || validRoles.includes("DEPARTMENT_ADMIN"))
+        ? "DEPARTMENT_ADMIN"
+        : existingUser.role === "STUDENT" &&
+            (detectedUserType === "LECTURER" || validRoles.includes("INSTRUCTOR"))
+          ? "INSTRUCTOR"
+          : existingUser.role;
+    claims.roles = [upgradedRole];
+    claims.role = upgradedRole;
+    if (!claims.user_type) claims.user_type = detectedUserType || existingUser.userType;
     if (!claims.name) claims.name = existingUser.name;
     if (!claims.email) claims.email = existingUser.email;
     if (!claims.identifier_value)
@@ -598,8 +680,16 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
     if (!claims.department_scopes)
       claims.department_scopes = existingUser.departmentScopes;
   } else {
-    claims.roles = ["STUDENT"];
-    claims.role = "STUDENT";
+    const fallbackRole =
+      detectedUserType === "LECTURER"
+        ? "INSTRUCTOR"
+        : detectedUserType === "ADMIN"
+          ? "SUPER_ADMIN"
+          : detectedUserType === "STAFF"
+            ? "DEPARTMENT_ADMIN"
+            : "STUDENT";
+    claims.roles = [fallbackRole];
+    claims.role = fallbackRole;
   }
 
   if (
@@ -668,20 +758,41 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
       const currentUser = await tx.user.findUniqueOrThrow({
         where: { id: existingUser.id },
       });
-      const finalRole =
-        currentUser.authoritySource !== "SSO"
-          ? currentUser.role
-          : isAdminIdentifier || validRoles.includes("SUPER_ADMIN")
-            ? ("SUPER_ADMIN" as const)
-            : validRoles.length > 0
-              ? data.role
-              : existingUser.role;
+      let finalRole:
+        | "SUPER_ADMIN"
+        | "DEPARTMENT_ADMIN"
+        | "INSTRUCTOR"
+        | "STUDENT"
+        | "RECTOR";
+      if (isAdminIdentifier || validRoles.includes("SUPER_ADMIN")) {
+        finalRole = "SUPER_ADMIN";
+      } else if (validRoles.includes("RECTOR")) {
+        finalRole = "RECTOR";
+      } else if (
+        (detectedUserType === "STAFF" || validRoles.includes("DEPARTMENT_ADMIN")) &&
+        (currentUser.role === "INSTRUCTOR" || currentUser.role === "STUDENT")
+      ) {
+        finalRole = "DEPARTMENT_ADMIN";
+      } else if (
+        (detectedUserType === "LECTURER" || validRoles.includes("INSTRUCTOR")) &&
+        currentUser.role === "STUDENT"
+      ) {
+        finalRole = "INSTRUCTOR";
+      } else if (currentUser.authoritySource === "SSO" && validRoles.length > 0) {
+        finalRole = data.role as any;
+      } else if (validRoles.length > 0 && currentUser.departmentScopes.length === 0) {
+        finalRole = data.role as any;
+      } else {
+        finalRole = currentUser.role;
+      }
       const finalUserType =
         finalRole === "SUPER_ADMIN"
           ? ("ADMIN" as const)
-          : rawClaims.user_type
-            ? data.userType
-            : existingUser.userType;
+          : finalRole === "DEPARTMENT_ADMIN"
+            ? ("STAFF" as const)
+            : finalRole === "INSTRUCTOR"
+              ? ("LECTURER" as const)
+              : detectedUserType || existingUser.userType;
       const finalDeptScopes =
         currentUser.authoritySource !== "SSO"
           ? currentUser.departmentScopes

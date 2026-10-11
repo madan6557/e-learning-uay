@@ -18,6 +18,9 @@ import {
   Users,
   ArrowDownToLine,
   CheckCircle2,
+  UploadCloud,
+  Download,
+  FileSpreadsheet,
 } from "lucide-react";
 import {
   api,
@@ -30,6 +33,7 @@ import {
 } from "./lib";
 import { confirmAction } from "./confirm";
 import { notifyAction } from "./feedback";
+import { parseCsv } from "./csv";
 import {
   formatDepartmentDisplay,
   normalizeDepartmentCode,
@@ -61,8 +65,9 @@ interface UserRecord {
 }
 const roleNames: Record<string, string> = {
   SUPER_ADMIN: "Super Admin",
-  DEPARTMENT_ADMIN: "Admin Prodi / Kaprodi / Dekan",
+  DEPARTMENT_ADMIN: "Admin Prodi",
   INSTRUCTOR: "Dosen",
+  STUDENT: "Mahasiswa",
 };
 const initialDept = { code: "", name: "", faculty: "", isActive: true };
 const initialUser = {
@@ -249,6 +254,166 @@ function ScopePicker({
   );
 }
 
+function downloadUserCsvTemplate() {
+  const content =
+    'name,email,user_type,identifier_type,identifier_value,status\r\n' +
+    '"Ahmad Fauzi",ahmad.fauzi@elearning.com,STUDENT,NIM,26552000001,ACTIVE\r\n' +
+    '"Siti Nurhaliza",siti.nurhaliza@elearning.com,STUDENT,NIM,26552000002,ACTIVE\r\n' +
+    '"Budi Santoso",budi.santoso@elearning.com,STUDENT,NIM,26552000003,ACTIVE\r\n' +
+    '"Dewi Lestari",dewi.lestari@elearning.com,STUDENT,NIM,26512000001,ACTIVE\r\n' +
+    '"Rian Hidayat",rian.hidayat@elearning.com,STUDENT,NIM,26622000001,ACTIVE\r\n' +
+    '"Putri Rahayu",putri.rahayu@elearning.com,STUDENT,NIM,26612000001,ACTIVE\r\n' +
+    '"Dr. Ir. Hendra Gunawan, M.T.",hendra.gunawan@elearning.com,LECTURER,NIDN,0415037801,ACTIVE\r\n' +
+    '"Dr. Nurul Hidayati, S.Kom., M.Kom.",nurul.hidayati@elearning.com,LECTURER,NIDN,0422088202,ACTIVE\r\n' +
+    '"Agus Supriyanto, S.T., M.T.",agus.supriyanto@elearning.com,LECTURER,NIDN,0411128503,ACTIVE\r\n' +
+    '"Prof. Dr. Suryanto, M.M.",suryanto@elearning.com,LECTURER,NIP,197508122003121001,ACTIVE\r\n' +
+    '"Andi Kurniawan, S.AP.",andi.kurniawan@elearning.com,STAFF,NIP,198802102012011003,ACTIVE\r\n' +
+    '"Dewi Anggraini, S.Kom.",dewi.anggraini@elearning.com,STAFF,NIP,199106242018022004,ACTIVE\r\n';
+  const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "uay-account-import-template.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function parseUserImportCsv(text: string) {
+  if (!text.trim()) {
+    throw new Error("Berkas CSV kosong.");
+  }
+  const parsed = parseCsv(text.trim());
+  if (parsed.length < 2) {
+    throw new Error(
+      "Format CSV minimal harus memiliki 1 baris header dan 1 baris data pengguna.",
+    );
+  }
+  const headerRow = parsed[0].map((h) =>
+    h.trim().toLowerCase().replace(/[\s_-]+/g, ""),
+  );
+  const nameIdx = headerRow.findIndex((h) =>
+    ["name", "nama", "namalengkap", "fullname"].includes(h),
+  );
+  const emailIdx = headerRow.findIndex((h) =>
+    ["email", "surel", "emailaddress"].includes(h),
+  );
+  const userTypeIdx = headerRow.findIndex((h) =>
+    ["usertype", "user_type", "tipe", "tipepengguna", "type"].includes(h),
+  );
+  const idTypeIdx = headerRow.findIndex((h) =>
+    ["identifiertype", "identifier_type", "jenisidentitas", "idtype"].includes(
+      h,
+    ),
+  );
+  const idValIdx = headerRow.findIndex((h) =>
+    [
+      "identifiervalue",
+      "identifier_value",
+      "nomoridentitas",
+      "idvalue",
+      "nim",
+      "nidn",
+      "nip",
+    ].includes(h),
+  );
+  const statusIdx = headerRow.findIndex((h) =>
+    ["status", "keaktifan"].includes(h),
+  );
+  const roleIdx = headerRow.findIndex((h) => ["role", "peran"].includes(h));
+  const scopeIdx = headerRow.findIndex((h) =>
+    [
+      "departmentscopes",
+      "scopes",
+      "prodi",
+      "jurusan",
+      "department_scopes",
+    ].includes(h),
+  );
+
+  if (nameIdx === -1 || emailIdx === -1) {
+    throw new Error(
+      "Kolom header 'name' dan 'email' wajib ada pada baris pertama CSV.",
+    );
+  }
+  if (idValIdx === -1 && idTypeIdx === -1) {
+    throw new Error(
+      "Kolom header 'identifier_value' (nomor identitas) wajib ada pada CSV.",
+    );
+  }
+
+  const rows = parsed
+    .slice(1)
+    .map((r, i) => {
+      const name = nameIdx !== -1 ? String(r[nameIdx] ?? "").trim() : "";
+      const email = emailIdx !== -1 ? String(r[emailIdx] ?? "").trim() : "";
+      let rawIdType =
+        idTypeIdx !== -1 ? String(r[idTypeIdx] ?? "").trim().toUpperCase() : "";
+      const idVal = idValIdx !== -1 ? String(r[idValIdx] ?? "").trim() : "";
+      let rawUserType =
+        userTypeIdx !== -1
+          ? String(r[userTypeIdx] ?? "").trim().toUpperCase()
+          : "";
+      const status =
+        statusIdx !== -1 && r[statusIdx]
+          ? String(r[statusIdx]).trim().toUpperCase()
+          : "ACTIVE";
+      const role =
+        roleIdx !== -1 && r[roleIdx]
+          ? String(r[roleIdx]).trim().toUpperCase()
+          : "";
+      const departmentScopes =
+        scopeIdx !== -1 && r[scopeIdx] ? String(r[scopeIdx]).trim() : "";
+
+      if (!rawIdType) {
+        if (rawUserType === "STUDENT" || rawUserType === "MAHASISWA")
+          rawIdType = "NIM";
+        else if (rawUserType === "LECTURER" || rawUserType === "DOSEN")
+          rawIdType = "NIDN";
+        else if (rawUserType === "STAFF") rawIdType = "NIP";
+        else rawIdType = "NIDN";
+      }
+      if (!rawUserType) {
+        if (rawIdType === "NIM") rawUserType = "STUDENT";
+        else if (rawIdType === "NIDN") rawUserType = "LECTURER";
+        else if (rawIdType === "NIP") rawUserType = "STAFF";
+        else rawUserType = "LECTURER";
+      }
+
+      let targetRole = role;
+      if (!targetRole) {
+        if (rawUserType === "STUDENT" || rawUserType === "MAHASISWA") {
+          targetRole = "STUDENT";
+        } else if (rawUserType === "ADMIN" || rawUserType === "SUPER_ADMIN") {
+          targetRole = "SUPER_ADMIN";
+        } else if (rawUserType === "STAFF") {
+          targetRole = "DEPARTMENT_ADMIN";
+        } else {
+          targetRole = "INSTRUCTOR";
+        }
+      }
+
+      return {
+        rowNumber: i + 2,
+        name,
+        email,
+        user_type: rawUserType,
+        identifier_type: rawIdType,
+        identifier_value: idVal,
+        status,
+        role: targetRole,
+        department_scopes: departmentScopes,
+      };
+    })
+    .filter((row) => row.name && row.email && row.identifier_value);
+
+  if (rows.length === 0) {
+    throw new Error(
+      "Tidak ada baris data akun valid yang ditemukan di file CSV.",
+    );
+  }
+  return rows;
+}
+
 export function DepartmentGovernancePage({
   user,
 }: {
@@ -289,6 +454,12 @@ export function DepartmentGovernancePage({
   const [ssoSyncing, setSsoSyncing] = useState<boolean>(false);
   const [ssoSyncResult, setSsoSyncResult] = useState<any>(null);
   const [ssoSyncError, setSsoSyncError] = useState<Error | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importRows, setImportRows] = useState<any[]>([]);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<any>(null);
+  const [importError, setImportError] = useState<string | null>(null);
   const pending = useRef(new Set<string>());
   const deptRequest = useRef(0),
     userRequest = useRef(0);
@@ -532,7 +703,7 @@ export function DepartmentGovernancePage({
       if (!dryRun) {
         if (
           !(await confirmAction(
-            `Sinkronkan ${ssoSyncResult?.total ?? ""} pengguna dari SSO ke E-Learning? Akun baru akan didaftarkan sebagai pra-registrasi dan profil akun yang sudah ada akan diselaraskan. Otoritas Kaprodi/Dekan tetap aman.`,
+            `Sinkronkan ${ssoSyncResult?.total ?? ""} pengguna dari SSO ke E-Learning? Akun baru akan didaftarkan sebagai pra-registrasi dan profil akun yang sudah ada akan diselaraskan. Otoritas pengguna tetap aman.`,
           ))
         ) {
           return;
@@ -556,6 +727,50 @@ export function DepartmentGovernancePage({
     } finally {
       pending.current.delete("ssoSync");
       setSsoSyncing(false);
+    }
+  };
+
+  const handleImportFileSelect = (selectedFile: File) => {
+    setImportFile(selectedFile);
+    setImportResult(null);
+    setImportError(null);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = String(e.target?.result ?? "");
+        const rows = parseUserImportCsv(text);
+        setImportRows(rows);
+      } catch (err: any) {
+        setImportRows([]);
+        setImportError(err?.message || "Gagal membaca format berkas CSV.");
+      }
+    };
+    reader.onerror = () => {
+      setImportRows([]);
+      setImportError("Gagal membaca berkas.");
+    };
+    reader.readAsText(selectedFile);
+  };
+
+  const runUserImport = async () => {
+    if (!importRows.length) return;
+    setImporting(true);
+    setImportError(null);
+    try {
+      const res: any = await api(
+        "/system/department-scopes/users/import",
+        "POST",
+        { rows: importRows },
+      );
+      setImportResult(res);
+      notifyAction(
+        `Import selesai: ${res.summary?.created ?? 0} pengguna dibuat, ${res.summary?.updated ?? 0} diselaraskan.`,
+      );
+      await fetchUsers();
+    } catch (err: any) {
+      setImportError(err?.message || "Gagal melakukan import pengguna.");
+    } finally {
+      setImporting(false);
     }
   };
 
@@ -759,7 +974,7 @@ export function DepartmentGovernancePage({
               </Action>
               <button
                 type="button"
-                className="secondary"
+                className="primary"
                 onClick={() => {
                   setShowSsoSync(true);
                   setSsoSyncResult(null);
@@ -768,14 +983,6 @@ export function DepartmentGovernancePage({
               >
                 <ArrowDownToLine size={18} />
                 Tarik Pengguna dari SSO
-              </button>
-              <button
-                type="button"
-                className="primary"
-                onClick={() => openUser()}
-              >
-                <UserPlus size={18} />
-                Daftarkan Pengguna
               </button>
             </div>
           </div>
@@ -1160,6 +1367,7 @@ export function DepartmentGovernancePage({
                     >
                       <option value="NIDN">NIDN</option>
                       <option value="NIP">NIP</option>
+                      <option value="NIM">NIM</option>
                       <option value="OTHER">Lainnya</option>
                     </select>
                   </label>
@@ -1271,7 +1479,7 @@ export function DepartmentGovernancePage({
         >
           <div className="sso-sync-container">
             <p>
-              Tarik daftar akun pengguna (Dosen, Staf, Administrator) yang terdaftar pada aplikasi E-Learning di UAY SSO. Akun baru akan didaftarkan sebagai pra-registrasi dan tersambung otomatis saat login SSO. Otoritas Kaprodi / Dekan yang sudah diatur di E-Learning tidak akan terhapus.
+              Tarik daftar akun pengguna (Dosen, Staf, Administrator) yang terdaftar pada aplikasi E-Learning di UAY SSO. Akun baru akan didaftarkan sebagai pra-registrasi dan tersambung otomatis saat login SSO. Otoritas pengguna yang sudah diatur di E-Learning tidak akan terhapus.
             </p>
 
             <div className="governance-form-grid sso-sync-filters">
@@ -1410,6 +1618,314 @@ export function DepartmentGovernancePage({
                   >
                     <CheckCircle2 size={16} />
                     {ssoSyncing ? "Menyimpan…" : "Konfirmasi & Simpan Pengguna"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
+
+      {showImportModal && (
+        <Modal
+          title="Import Pengguna dari CSV"
+          onClose={() => {
+            if (!importing) setShowImportModal(false);
+          }}
+          busy={importing}
+          className="governance-modal sso-sync-modal"
+          wide
+        >
+          <div className="sso-sync-container">
+            <p>
+              Daftarkan pengguna (Dosen, Mahasiswa, Staf) secara massal
+              menggunakan file CSV dengan format standar yang sama dengan SSO (
+              <code>uay-account-import-template.csv</code>). Akun akan didaftarkan
+              sebagai pra-registrasi dan otomatis tersambung saat login SSO
+              pertama kali.
+            </p>
+
+            <div
+              className="governance-actions"
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                margin: "14px 0",
+              }}
+            >
+              <button
+                type="button"
+                className="secondary"
+                onClick={downloadUserCsvTemplate}
+                title="Unduh templat CSV format SSO"
+              >
+                <Download size={16} />
+                Unduh Templat CSV
+              </button>
+              {importFile && (
+                <button
+                  type="button"
+                  className="secondary"
+                  disabled={importing}
+                  onClick={() => {
+                    setImportFile(null);
+                    setImportRows([]);
+                    setImportResult(null);
+                    setImportError(null);
+                  }}
+                >
+                  Ganti Berkas
+                </button>
+              )}
+            </div>
+
+            {!importResult ? (
+              <>
+                <div
+                  className="card"
+                  style={{
+                    border: "2px dashed var(--line, #cbd5e1)",
+                    borderRadius: 8,
+                    padding: 24,
+                    textAlign: "center",
+                    cursor: "pointer",
+                    background: "var(--surface-muted, #f8fafc)",
+                    marginBottom: 16,
+                  }}
+                  onClick={() => {
+                    const el = document.getElementById("user-csv-input");
+                    if (el) el.click();
+                  }}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const f = e.dataTransfer.files?.[0];
+                    if (f) handleImportFileSelect(f);
+                  }}
+                >
+                  <input
+                    id="user-csv-input"
+                    type="file"
+                    accept=".csv,text/csv"
+                    style={{ display: "none" }}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleImportFileSelect(f);
+                    }}
+                  />
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    {importFile ? (
+                      <FileSpreadsheet
+                        size={32}
+                        style={{ color: "var(--primary, #0284c7)" }}
+                      />
+                    ) : (
+                      <UploadCloud
+                        size={32}
+                        style={{ color: "var(--primary, #0284c7)" }}
+                      />
+                    )}
+                    <strong>
+                      {importFile
+                        ? importFile.name
+                        : "Pilih berkas CSV atau seret ke sini"}
+                    </strong>
+                    <small className="governance-subtext">
+                      Kolom wajib: <code>name, email, identifier_value</code> &bull; Kolom tipe: <code>user_type, identifier_type, status</code>
+                    </small>
+                  </div>
+                </div>
+
+                {importError && <Notice error={importError} />}
+
+                {importRows.length > 0 && (
+                  <div className="sso-sync-results">
+                    <div className="sso-sync-stats-grid">
+                      <div className="sso-stat-card">
+                        <span className="stat-num">{importRows.length}</span>
+                        <span className="stat-label">Total Akun di CSV</span>
+                      </div>
+                      <div className="sso-stat-card new">
+                        <span className="stat-num">
+                          {
+                            importRows.filter((r) => r.role === "INSTRUCTOR")
+                              .length
+                          }
+                        </span>
+                        <span className="stat-label">Dosen</span>
+                      </div>
+                      <div className="sso-stat-card existing">
+                        <span className="stat-num">
+                          {
+                            importRows.filter((r) => r.role === "STUDENT")
+                              .length
+                          }
+                        </span>
+                        <span className="stat-label">Mahasiswa</span>
+                      </div>
+                    </div>
+
+                    <div className="sso-sync-preview-list">
+                      <div className="sso-sync-list-header">
+                        <strong>Pratinjau Akun ({importRows.length})</strong>
+                        <small>Periksa data sebelum memproses import</small>
+                      </div>
+                      <div className="sso-sync-scroll-area">
+                        <table className="sso-preview-table">
+                          <thead>
+                            <tr>
+                              <th>Baris</th>
+                              <th>Nama &amp; Email</th>
+                              <th>Identitas</th>
+                              <th>Tipe SSO</th>
+                              <th>Peran E-Learning</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {importRows.map((r, idx) => (
+                              <tr key={idx}>
+                                <td>{r.rowNumber}</td>
+                                <td>
+                                  <strong>{r.name}</strong>
+                                  <div className="governance-subtext">
+                                    {r.email}
+                                  </div>
+                                </td>
+                                <td>
+                                  <span className="pill neutral">
+                                    {r.identifier_type}: {r.identifier_value}
+                                  </span>
+                                </td>
+                                <td>{r.user_type}</td>
+                                <td>
+                                  <span className="governance-role-badge">
+                                    {roleNames[r.role] ?? r.role}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    <div className="governance-modal-actions">
+                      <button
+                        type="button"
+                        className="secondary"
+                        onClick={() => setShowImportModal(false)}
+                        disabled={importing}
+                      >
+                        Batal
+                      </button>
+                      <button
+                        type="button"
+                        className="primary"
+                        disabled={importing || importRows.length === 0}
+                        onClick={runUserImport}
+                      >
+                        <CheckCircle2 size={16} />
+                        {importing
+                          ? "Memproses Import…"
+                          : `Proses Import (${importRows.length} Pengguna)`}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="sso-sync-results">
+                <div className="sso-sync-stats-grid">
+                  <div className="sso-stat-card">
+                    <span className="stat-num">
+                      {importResult.summary?.total ?? 0}
+                    </span>
+                    <span className="stat-label">Total Diproses</span>
+                  </div>
+                  <div className="sso-stat-card new">
+                    <span className="stat-num">
+                      {importResult.summary?.created ?? 0}
+                    </span>
+                    <span className="stat-label">Akun Dibuat</span>
+                  </div>
+                  <div className="sso-stat-card existing">
+                    <span className="stat-num">
+                      {importResult.summary?.updated ?? 0}
+                    </span>
+                    <span className="stat-label">Diselaraskan</span>
+                  </div>
+                </div>
+
+                <div className="sso-sync-preview-list">
+                  <div className="sso-sync-list-header">
+                    <strong>
+                      Hasil Import ({importResult.results?.length ?? 0})
+                    </strong>
+                    <small>Laporan status pendaftaran akun</small>
+                  </div>
+                  <div className="sso-sync-scroll-area">
+                    <table className="sso-preview-table">
+                      <thead>
+                        <tr>
+                          <th>Baris</th>
+                          <th>Nama &amp; Identitas</th>
+                          <th>Peran</th>
+                          <th>Status</th>
+                          <th>Keterangan</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {importResult.results?.map((res: any, idx: number) => (
+                          <tr key={idx}>
+                            <td>{res.rowNumber}</td>
+                            <td>
+                              <strong>{res.name}</strong>
+                              <div className="governance-subtext">
+                                {res.identifierType} {res.identifierValue} &bull;{" "}
+                                {res.email}
+                              </div>
+                            </td>
+                            <td>{roleNames[res.role] ?? res.role}</td>
+                            <td>
+                              <span
+                                className={`pill ${res.status === "CREATED" ? "success" : res.status === "UPDATED" ? "neutral" : "danger"}`}
+                              >
+                                {res.status === "CREATED"
+                                  ? "Dibuat"
+                                  : res.status === "UPDATED"
+                                    ? "Diperbarui"
+                                    : "Gagal"}
+                              </span>
+                            </td>
+                            <td>
+                              <small>{res.message}</small>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="governance-modal-actions">
+                  <button
+                    type="button"
+                    className="primary"
+                    onClick={() => {
+                      setShowImportModal(false);
+                      setImportFile(null);
+                      setImportRows([]);
+                      setImportResult(null);
+                    }}
+                  >
+                    Selesai
                   </button>
                 </div>
               </div>

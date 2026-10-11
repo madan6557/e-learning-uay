@@ -24,6 +24,7 @@ import {
   normalizeDepartmentCode,
   siakadScopeSyncPayloadSchema,
 } from "../../../packages/shared/src/departments.js";
+import { normalizeRole } from "../../../packages/shared/src/sso.js";
 
 const authorityRoles = [
   "SUPER_ADMIN",
@@ -505,12 +506,24 @@ export function registerDepartmentGovernance(app: Express) {
         typeof req.query.department === "string"
           ? normalizeDepartmentCode(req.query.department)
           : "";
-      if (roleFilter) z.enum(authorityRoles).parse(roleFilter);
+      const manageableRoles = [
+        "SUPER_ADMIN",
+        "DEPARTMENT_ADMIN",
+        "INSTRUCTOR",
+        "STUDENT",
+      ] as const;
+      if (roleFilter && roleFilter !== "ALL") {
+        z.enum(manageableRoles).parse(roleFilter);
+      }
 
       const users = await db.user.findMany({
         where: {
           status: "ACTIVE",
-          role: roleFilter ? (roleFilter as any) : { in: [...authorityRoles] },
+          role: roleFilter
+            ? roleFilter === "ALL"
+              ? { in: [...manageableRoles] }
+              : (roleFilter as any)
+            : { in: [...authorityRoles] },
           ...(departmentFilter
             ? { departmentScopes: { has: departmentFilter } }
             : {}),
@@ -671,9 +684,11 @@ export function registerDepartmentGovernance(app: Express) {
           email: z.string().trim().email("Format email tidak valid").max(150),
           username: z.string().trim().min(2).max(100).optional(),
           role: z
-            .enum(["SUPER_ADMIN", "DEPARTMENT_ADMIN", "INSTRUCTOR"])
+            .enum(["SUPER_ADMIN", "DEPARTMENT_ADMIN", "INSTRUCTOR", "STUDENT"])
             .default("DEPARTMENT_ADMIN"),
-          userType: z.enum(["LECTURER", "STAFF", "ADMIN"]).default("LECTURER"),
+          userType: z
+            .enum(["LECTURER", "STAFF", "ADMIN", "STUDENT"])
+            .default("LECTURER"),
           departmentScopes: z
             .array(z.string().trim().min(1))
             .max(20)
@@ -718,7 +733,9 @@ export function registerDepartmentGovernance(app: Express) {
               409,
               "PREPROVISION_IDENTITY_CONFLICT",
             );
-            await validateAuthority(tx, normalizedScopes, data.role, existing);
+            if (data.role !== "STUDENT") {
+              await validateAuthority(tx, normalizedScopes, data.role, existing);
+            }
             // Jika sudah ada, perbarui data peran & lingkup prodinya
             const updated = await tx.user.update({
               where: { id: existing.id },
@@ -768,7 +785,9 @@ export function registerDepartmentGovernance(app: Express) {
             data.username ||
             data.email.split("@")[0].replace(/[^a-zA-Z0-9._-]/g, "");
 
-          await validateAuthority(tx, normalizedScopes, data.role);
+          if (data.role !== "STUDENT") {
+            await validateAuthority(tx, normalizedScopes, data.role);
+          }
           ensure(
             !(await tx.user.findUnique({
               where: { username: fallbackUsername },
@@ -823,6 +842,233 @@ export function registerDepartmentGovernance(app: Express) {
             action: "CREATED",
             message: `Dosen/Staf ${newUser.name} (${newUser.identifierValue}) berhasil didaftarkan. Akun akan tersambung otomatis saat login SSO.`,
             user: newUser,
+          };
+        }),
+      );
+    },
+  );
+
+  /**
+   * BATCH IMPORT: Import daftar pengguna secara massal menggunakan templat CSV yang sama dengan SSO.
+   * Format: name, email, user_type, identifier_type, identifier_value, status, [role], [department_scopes]
+   */
+  app.post(
+    "/api/v1/system/department-scopes/users/import",
+    authenticate,
+    async (req, res) => {
+      ensure(req.context.user.role === "SUPER_ADMIN", 403, "FORBIDDEN");
+
+      const payload = z
+        .object({
+          rows: z
+            .array(
+              z.object({
+                name: z.string().trim().min(1, "Nama wajib diisi"),
+                email: z.string().trim().email("Format email tidak valid"),
+                user_type: z.string().trim().optional(),
+                identifier_type: z.string().trim().optional(),
+                identifier_value: z
+                  .string()
+                  .trim()
+                  .min(1, "Nomor identitas wajib diisi"),
+                status: z.string().trim().optional(),
+                role: z.string().trim().optional(),
+                department_scopes: z
+                  .union([z.string(), z.array(z.string())])
+                  .optional(),
+              }),
+            )
+            .min(1, "Minimal 1 baris data diperlukan"),
+        })
+        .parse(req.body);
+
+      res.json(
+        await mutate(req, async (tx) => {
+          const results: Array<{
+            rowNumber: number;
+            name: string;
+            email: string;
+            identifierType: string;
+            identifierValue: string;
+            role: string;
+            status: "CREATED" | "UPDATED" | "FAILED";
+            message: string;
+          }> = [];
+
+          let createdCount = 0;
+          let updatedCount = 0;
+          let failedCount = 0;
+
+          for (const [index, row] of payload.rows.entries()) {
+            const rowNumber = index + 1;
+            try {
+              const rawIdType = (row.identifier_type || "").toUpperCase();
+              const rawUserType = (row.user_type || "").toUpperCase();
+
+              // Deteksi identifierType
+              let identifierType: "NIM" | "NIDN" | "NIP" | "OTHER" = "NIDN";
+              if (["NIM", "NIDN", "NIP", "OTHER"].includes(rawIdType)) {
+                identifierType = rawIdType as any;
+              } else if (rawUserType === "STUDENT" || rawUserType === "MAHASISWA") {
+                identifierType = "NIM";
+              } else if (rawUserType === "LECTURER" || rawUserType === "DOSEN") {
+                identifierType = "NIDN";
+              } else if (rawUserType === "STAFF") {
+                identifierType = "NIP";
+              }
+
+              // Deteksi userType
+              let userType: "STUDENT" | "LECTURER" | "STAFF" | "ADMIN" = "LECTURER";
+              if (["STUDENT", "MAHASISWA"].includes(rawUserType) || identifierType === "NIM") {
+                userType = "STUDENT";
+              } else if (["LECTURER", "DOSEN"].includes(rawUserType) || identifierType === "NIDN") {
+                userType = "LECTURER";
+              } else if (["STAFF", "KARYAWAN", "TENDIK"].includes(rawUserType)) {
+                userType = "STAFF";
+              } else if (["ADMIN", "SUPER_ADMIN"].includes(rawUserType)) {
+                userType = "ADMIN";
+              }
+
+              // Deteksi role
+              let targetRole: "SUPER_ADMIN" | "DEPARTMENT_ADMIN" | "INSTRUCTOR" | "STUDENT" = "INSTRUCTOR";
+              const rawRole = (row.role || "").toUpperCase();
+              if (["SUPER_ADMIN", "DEPARTMENT_ADMIN", "INSTRUCTOR", "STUDENT"].includes(rawRole)) {
+                targetRole = rawRole as any;
+              } else if (userType === "STUDENT") {
+                targetRole = "STUDENT";
+              } else if (userType === "ADMIN") {
+                targetRole = "SUPER_ADMIN";
+              } else if (userType === "STAFF") {
+                targetRole = "DEPARTMENT_ADMIN";
+              } else {
+                targetRole = "INSTRUCTOR";
+              }
+
+              // Normalisasi departmentScopes
+              let scopes: string[] = [];
+              if (Array.isArray(row.department_scopes)) {
+                scopes = row.department_scopes;
+              } else if (typeof row.department_scopes === "string") {
+                scopes = row.department_scopes.split(/[,;\s]+/);
+              }
+              const normalizedScopes = [
+                ...new Set(scopes.map(normalizeDepartmentCode).filter(Boolean)),
+              ];
+
+              const email = row.email.toLowerCase();
+              const identifierValue = row.identifier_value;
+              const fallbackUsername =
+                email.split("@")[0].replace(/[^a-zA-Z0-9._-]/g, "") ||
+                identifierValue;
+
+              // Cari pengguna yang sudah ada
+              const existing = await tx.user.findFirst({
+                where: {
+                  OR: [
+                    { identifierValue },
+                    { email: { equals: email, mode: "insensitive" as const } },
+                  ],
+                },
+              });
+
+              if (existing) {
+                const isPreprovision = existing.ssoUserId.startsWith("preprovision:");
+                await tx.user.update({
+                  where: { id: existing.id },
+                  data: {
+                    name: row.name || existing.name,
+                    userType,
+                    identifierType,
+                    identifierValue,
+                    role: targetRole,
+                    ...(normalizedScopes.length > 0 ? { departmentScopes: normalizedScopes } : {}),
+                    ...(isPreprovision ? { authoritySource: "LOCAL" } : {}),
+                  },
+                });
+
+                updatedCount++;
+                results.push({
+                  rowNumber,
+                  name: row.name,
+                  email,
+                  identifierType,
+                  identifierValue,
+                  role: targetRole,
+                  status: "UPDATED",
+                  message: `Akun sudah terdaftar, profil dan peran diselaraskan (${targetRole}).`,
+                });
+              } else {
+                const existingUsername = await tx.user.findUnique({
+                  where: { username: fallbackUsername },
+                });
+                const resolvedUsername = existingUsername
+                  ? `${fallbackUsername}-${randomBytes(2).toString("hex")}`
+                  : fallbackUsername;
+
+                await tx.user.create({
+                  data: {
+                    ssoUserId: `preprovision:${randomUUID()}`,
+                    identifierValue,
+                    identifierType,
+                    name: row.name,
+                    email,
+                    username: resolvedUsername,
+                    role: targetRole,
+                    userType,
+                    departmentScopes: normalizedScopes,
+                    authoritySource: "LOCAL",
+                    status: (row.status || "ACTIVE").toUpperCase() === "DISABLED" ? "DISABLED" : "ACTIVE",
+                  },
+                });
+
+                createdCount++;
+                results.push({
+                  rowNumber,
+                  name: row.name,
+                  email,
+                  identifierType,
+                  identifierValue,
+                  role: targetRole,
+                  status: "CREATED",
+                  message: `Berhasil didaftarkan sebagai ${targetRole} (pra-registrasi).`,
+                });
+              }
+            } catch (err: any) {
+              failedCount++;
+              results.push({
+                rowNumber,
+                name: row.name,
+                email: row.email,
+                identifierType: row.identifier_type || "NIDN",
+                identifierValue: row.identifier_value,
+                role: row.role || "INSTRUCTOR",
+                status: "FAILED",
+                message: err?.message || "Gagal memproses baris akun ini.",
+              });
+            }
+          }
+
+          await audit(
+            tx,
+            req.context,
+            "IMPORT_PREPROVISIONED_USERS",
+            "USER",
+            req.context.user.id,
+            null,
+            null,
+            { createdCount, updatedCount, failedCount, total: payload.rows.length },
+            `Import batch ${payload.rows.length} pengguna: ${createdCount} dibuat, ${updatedCount} diperbarui, ${failedCount} gagal`,
+          );
+
+          return {
+            ok: true,
+            summary: {
+              total: payload.rows.length,
+              created: createdCount,
+              updated: updatedCount,
+              failed: failedCount,
+            },
+            results,
           };
         }),
       );
@@ -1302,6 +1548,47 @@ export function registerDepartmentGovernance(app: Express) {
     return allUsers;
   }
 
+  function resolveSsoRole(
+    ssoUser: any,
+  ): "SUPER_ADMIN" | "DEPARTMENT_ADMIN" | "INSTRUCTOR" | "STUDENT" {
+    // 1. Cek hak akses aplikasi spesifik dari SSO (application_access)
+    if (
+      Array.isArray(ssoUser.application_access) &&
+      ssoUser.application_access.length > 0
+    ) {
+      for (const access of ssoUser.application_access) {
+        const roleName = access?.role?.name || access?.role;
+        const normalized = normalizeRole(String(roleName ?? ""));
+        if (normalized && normalized !== "RECTOR") return normalized;
+      }
+    }
+    if (Array.isArray(ssoUser.roles) && ssoUser.roles.length > 0) {
+      for (const r of ssoUser.roles) {
+        const normalized = normalizeRole(String(r));
+        if (normalized && normalized !== "RECTOR") return normalized;
+      }
+    }
+    if (typeof ssoUser.role === "string") {
+      const normalized = normalizeRole(ssoUser.role);
+      if (normalized && normalized !== "RECTOR") return normalized;
+    }
+
+    // 2. Berdasarkan tipe pengguna SSO (user_type)
+    const rawType = String(
+      ssoUser.user_type || ssoUser.userType || "",
+    ).toUpperCase();
+    if (rawType === "ADMIN" || rawType === "SUPER_ADMIN") return "SUPER_ADMIN";
+    if (rawType === "STAFF" || rawType === "TENDIK" || rawType === "KARYAWAN")
+      return "DEPARTMENT_ADMIN";
+    if (
+      rawType === "LECTURER" ||
+      rawType === "DOSEN" ||
+      rawType === "PENGAJAR"
+    )
+      return "INSTRUCTOR";
+    return "STUDENT";
+  }
+
   /**
    * Menarik daftar pengguna dari SSO untuk aplikasi E-Learning.
    * Super Admin dapat melihat pratinjau (dryRun) atau melakukan sinkronisasi profil/pendaftaran akun.
@@ -1362,12 +1649,7 @@ export function registerDepartmentGovernance(app: Express) {
           });
 
           const existing = matches[0];
-          const proposedRole =
-            ssoUser.user_type === "ADMIN"
-              ? "SUPER_ADMIN"
-              : ssoUser.user_type === "LECTURER" || ssoUser.user_type === "STAFF"
-                ? "INSTRUCTOR"
-                : "STUDENT";
+          const targetRole = resolveSsoRole(ssoUser);
 
           processedResults.push({
             ssoUserId: ssoSub || ssoUser.user_id,
@@ -1387,7 +1669,7 @@ export function registerDepartmentGovernance(app: Express) {
             status: existing ? "ALREADY_EXISTS" : "NEW",
             action: existing ? "SYNC_PROFILE" : "CREATE",
             currentRole: existing?.role ?? null,
-            proposedRole: existing ? existing.role : proposedRole,
+            proposedRole: targetRole,
             departmentScopes: existing?.departmentScopes ?? [],
           });
         }
@@ -1448,8 +1730,10 @@ export function registerDepartmentGovernance(app: Express) {
 
           const existing = matches[0];
 
+          const targetRole = resolveSsoRole(ssoUser);
+
           if (existing) {
-            // Perbarui data profil dari SSO tanpa menimpa peran atau cakupan prodi lokal
+            // Perbarui data profil dari SSO dan selaraskan peran jika berbeda
             const updated = await tx.user.update({
               where: { id: existing.id },
               data: {
@@ -1457,6 +1741,11 @@ export function registerDepartmentGovernance(app: Express) {
                 email,
                 username: username || existing.username,
                 userType: ssoUser.user_type,
+                role: targetRole,
+                authoritySource:
+                  existing.departmentScopes?.length > 0
+                    ? existing.authoritySource
+                    : "SSO",
                 status: ssoUser.status === "ACTIVE" ? "ACTIVE" : existing.status,
               },
             });
@@ -1478,12 +1767,6 @@ export function registerDepartmentGovernance(app: Express) {
           } else {
             // Buat pengguna baru dengan penanda pra-registrasi atau sub Keycloak asli
             const targetSsoUserId = ssoSub || `preprovision:${randomUUID()}`;
-            const targetRole =
-              ssoUser.user_type === "ADMIN"
-                ? "SUPER_ADMIN"
-                : ssoUser.user_type === "LECTURER" || ssoUser.user_type === "STAFF"
-                  ? "INSTRUCTOR"
-                  : "STUDENT";
 
             const finalUsername = username || identifierVal;
             const existingUsername = await tx.user.findUnique({
@@ -1504,7 +1787,7 @@ export function registerDepartmentGovernance(app: Express) {
                 role: targetRole,
                 userType: ssoUser.user_type,
                 departmentScopes: [],
-                authoritySource: "LOCAL",
+                authoritySource: "SSO",
                 status: "ACTIVE",
               },
             });
