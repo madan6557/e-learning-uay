@@ -484,22 +484,15 @@ export async function uayUpload(params: {
     params.fileName,
   );
 
-  // Modern File-Service fields (camelCase)
+  // File-Service accepts at most 3 non-file fields (folderId, contextType, contextId)
+  // Multer rejects any request with > 3 non-file fields (LIMIT_FIELD_COUNT -> 400 Bad Request)
   if (params.folderId) {
     formData.append("folderId", params.folderId);
   }
   if (params.resourceType && params.resourceId) {
-    formData.append("contextType", params.resourceType);
-    formData.append("contextId", params.resourceId);
+    formData.append("contextType", String(params.resourceType).slice(0, 100));
+    formData.append("contextId", String(params.resourceId).slice(0, 255));
   }
-
-  // Backwards-compatibility fields for legacy test fixtures
-  formData.append("repository_id", repoId);
-  formData.append("visibility", params.visibility || "private");
-  if (params.resourceType)
-    formData.append("resource_type", params.resourceType);
-  if (params.resourceId) formData.append("resource_id", params.resourceId);
-  if (params.folderId) formData.append("folder_id", params.folderId);
 
   const token = params.token || (await getUayServiceToken());
   const endpoint = getUayEndpoint(`/v1/repositories/${repoId}/files`);
