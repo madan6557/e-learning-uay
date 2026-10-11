@@ -1203,8 +1203,19 @@ export function registerDepartmentGovernance(app: Express) {
 
     const allUsers: any[] = [];
     let page = 1;
-    const limit = 50;
+    const limit = 20;
     let totalPages = 1;
+    let activeClientId = options.clientId;
+
+    if (!options.accessToken && !isDemo) {
+      ensure(false, 401, "SSO_AUTHENTICATION_REQUIRED");
+    }
+
+    const clientCandidates = [
+      options.clientId,
+      "uay-elearning",
+      "elearning-uay",
+    ].filter((v, i, a) => Boolean(v) && a.indexOf(v) === i);
 
     while (page <= totalPages && page <= 20) {
       const query = new URLSearchParams({
@@ -1213,8 +1224,6 @@ export function registerDepartmentGovernance(app: Express) {
       });
       if (options.search) query.set("search", options.search);
 
-      const targetUrl = `${apiBase}/applications/client/${encodeURIComponent(options.clientId)}/users?${query}`;
-
       const headers: Record<string, string> = {
         Accept: "application/json",
       };
@@ -1222,22 +1231,41 @@ export function registerDepartmentGovernance(app: Express) {
         headers["Authorization"] = `Bearer ${options.accessToken}`;
       }
 
-      let res = await serviceFetch(
-        "sso-api",
-        targetUrl,
-        { headers },
-        { idempotent: true, attempts: 2, timeoutMs: 5000 },
-      );
+      let res: globalThis.Response | null = null;
 
-      if (!res.ok && res.status === 404 && !apiBase.endsWith("/v1")) {
-        const fallbackUrl = `${apiBase}/v1/applications/client/${encodeURIComponent(options.clientId)}/users?${query}`;
-        res = await serviceFetch(
+      for (const candidate of clientCandidates) {
+        const targetUrl = `${apiBase}/applications/client/${encodeURIComponent(candidate)}/users?${query}`;
+        const attemptRes = await serviceFetch(
           "sso-api",
-          fallbackUrl,
+          targetUrl,
           { headers },
           { idempotent: true, attempts: 2, timeoutMs: 5000 },
         );
+
+        if (attemptRes.ok || (attemptRes.status !== 404 && attemptRes.status !== 400)) {
+          res = attemptRes;
+          activeClientId = candidate;
+          break;
+        }
+
+        // Jika 404, coba endpoint tanpa /api jika apiBase mengandung /api
+        if (!apiBase.endsWith("/v1")) {
+          const fallbackUrl = `${apiBase}/v1/applications/client/${encodeURIComponent(candidate)}/users?${query}`;
+          const fallbackRes = await serviceFetch(
+            "sso-api",
+            fallbackUrl,
+            { headers },
+            { idempotent: true, attempts: 2, timeoutMs: 5000 },
+          );
+          if (fallbackRes.ok) {
+            res = fallbackRes;
+            activeClientId = candidate;
+            break;
+          }
+        }
       }
+
+      ensure(res, 502, "SSO_USERS_FETCH_FAILED");
 
       if (res.status === 401) {
         ensure(false, 401, "SSO_AUTHENTICATION_REQUIRED");
@@ -1255,11 +1283,19 @@ export function registerDepartmentGovernance(app: Express) {
       );
 
       const body: any = await res.json();
-      const data = body?.data ?? body;
-      if (Array.isArray(data)) {
-        allUsers.push(...data);
-      }
-      totalPages = body?.meta?.total_pages || 1;
+      const data = Array.isArray(body?.data?.data)
+        ? body.data.data
+        : Array.isArray(body?.data)
+          ? body.data
+          : Array.isArray(body)
+            ? body
+            : [];
+
+      allUsers.push(...data);
+      totalPages =
+        body?.data?.meta?.total_pages ??
+        body?.meta?.total_pages ??
+        1;
       page++;
     }
 
@@ -1279,7 +1315,10 @@ export function registerDepartmentGovernance(app: Express) {
 
       const rawUsers = await fetchUsersFromSso({
         accessToken: req.context.accessToken,
-        clientId: config.clientId || "elearning-uay",
+        clientId:
+          process.env.SSO_APPLICATION_CLIENT_ID ||
+          config.clientId ||
+          "uay-elearning",
         search: payload.search,
       });
 
