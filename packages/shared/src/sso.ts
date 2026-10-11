@@ -152,6 +152,7 @@ export const identityClaims = z
     user_type: userType.optional(),
     identifier_type: identifierType.optional(),
     identifier_value: z.string().min(1).optional(),
+    official_identifier: z.string().min(1).optional(),
     roles: z.array(z.string()).optional(),
     role: z.string().optional(),
     student_staff_number: z.string().min(1).optional(),
@@ -176,13 +177,57 @@ export const identityClaims = z
       return z.NEVER;
     }
 
-    const identifierValue =
+    // 1. Parse official_identifier if available (e.g. "NIP 2111016210015", "NIDN 0412058001", "NIM 20260001", or "2111016210015")
+    let officialType: IdentifierType | undefined;
+    let officialValue: string | undefined;
+    if (claims.official_identifier) {
+      const trimmed = claims.official_identifier.trim();
+      const match = trimmed.match(/^(NIM|NIP|NIDN)\s+(.+)$/i);
+      if (match) {
+        officialType = match[1].toUpperCase() as IdentifierType;
+        officialValue = match[2].trim();
+      } else {
+        officialValue = trimmed;
+      }
+    }
+
+    // 2. Determine raw identifier candidate
+    let rawIdentifier =
+      officialValue ??
       claims.identifier_value ??
       claims.student_staff_number ??
       claims.preferred_username ??
       claims.sub;
 
-    const resolvedUserType = claims.user_type ?? defaultUserType(role);
+    // 3. If identifier is formatted like username (e.g. 2111016210015@staff.uay.ac.id), extract identifier part & domain
+    let inferredTypeFromDomain: IdentifierType | undefined;
+    let inferredUserTypeFromDomain: UserType | undefined;
+    if (rawIdentifier && typeof rawIdentifier === "string" && rawIdentifier.includes("@")) {
+      const parts = rawIdentifier.split("@");
+      const domain = parts[1]?.toLowerCase();
+      if (domain === "mhs.uay.ac.id") {
+        inferredTypeFromDomain = "NIM";
+        inferredUserTypeFromDomain = "STUDENT";
+      } else if (domain === "dosen.uay.ac.id") {
+        inferredTypeFromDomain = "NIDN";
+        inferredUserTypeFromDomain = "LECTURER";
+      } else if (domain === "staff.uay.ac.id") {
+        inferredTypeFromDomain = "NIP";
+        inferredUserTypeFromDomain = "STAFF";
+      }
+      rawIdentifier = parts[0].trim();
+    }
+
+    const resolvedUserType =
+      claims.user_type ?? inferredUserTypeFromDomain ?? defaultUserType(role);
+
+    const resolvedIdentifierType =
+      claims.identifier_type ??
+      officialType ??
+      inferredTypeFromDomain ??
+      defaultIdentifierType(resolvedUserType);
+
+    const identifierValue = rawIdentifier;
 
     const name =
       claims.name && claims.name.trim().length > 0
@@ -200,8 +245,7 @@ export const identityClaims = z
       email,
       username: claims.preferred_username ?? null,
       userType: resolvedUserType,
-      identifierType:
-        claims.identifier_type ?? defaultIdentifierType(resolvedUserType),
+      identifierType: resolvedIdentifierType,
       identifierValue,
       role,
       departmentScopes: [

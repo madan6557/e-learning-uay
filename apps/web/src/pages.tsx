@@ -3083,10 +3083,33 @@ export function Profile({
             </div>
             <div>
               <dt>
-                {(t.identifierTypes as any)[user.identifierType] ??
-                  "Nomor identitas"}
+                {(() => {
+                  const effectiveType =
+                    user.userType === "ADMIN" || user.userType === "STAFF"
+                      ? "NIP"
+                      : user.userType === "STUDENT"
+                        ? "NIM"
+                        : user.userType === "LECTURER"
+                          ? (user.identifierType === "NIP" ? "NIP" : "NIDN")
+                          : (user.identifierType || "OTHER");
+                  return (
+                    (t.identifierTypes as any)[effectiveType] ??
+                    "Nomor identitas"
+                  );
+                })()}
               </dt>
-              <dd>{user.identifierValue || "Belum tersedia"}</dd>
+              <dd>
+                {(() => {
+                  if (!user.identifierValue) return "Belum tersedia";
+                  if (
+                    typeof user.identifierValue === "string" &&
+                    user.identifierValue.includes("@")
+                  ) {
+                    return user.identifierValue.split("@")[0];
+                  }
+                  return user.identifierValue;
+                })()}
+              </dd>
             </div>
             <div>
               <dt>Jenis pengguna</dt>

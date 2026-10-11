@@ -43,6 +43,8 @@ Mulai dari [laporan kesiapan production](qa/PRODUCTION-READINESS.md) untuk perub
 ---
 
 ## 4. Integrasi Layanan Kampus (SSO & File Service)
+- **[Panduan Integrasi Aplikasi dengan File Service.md](Panduan%20Integrasi%20Aplikasi%20dengan%20File%20Service.md)**: Panduan resmi integrasi backend E-Learning dengan UAY File Service, konfigurasi mandiri melalui Repository Sandbox, dan checklist kesiapan production.
+- **[Arsitektur Pengelolaan Identitas.md](Arsitektur%20Pengelolaan%20Identitas.md)**: Desain arsitektur otentikasi terpusat dan manajemen identitas SSO Keycloak.
 - **[Review Kebutuhan Integrasi SSO UAY - E-Learning.pdf](integrations/sso/Review%20Kebutuhan%20Integrasi%20SSO%20UAY%20-%20E-Learning.pdf)**: Analisis kebutuhan integrasi Keycloak OpenID Connect.
 - **[Pengajuan Teknis Integrasi SSO UAY - E-Learning (Ringkas).pdf](integrations/sso/Pengajuan%20Teknis%20Integrasi%20SSO%20UAY%20-%20E-Learning%20(Ringkas).pdf)**: Surat pengajuan teknis integrasi SSO ke pengelola infrastruktur kampus.
 - **[Dokumen Teknis SSO UAY.docx](integrations/sso/Dokumen%20Teknis%20SSO%20UAY.docx)**: Dokumen teknis spesifikasi protokol SSO.

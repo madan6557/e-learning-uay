@@ -75,6 +75,46 @@ test("SSO identity resolves preferred_username as academic identifier when ident
   assert.equal(resolved.identifierType, "NIM");
 });
 
+test("SSO identity resolves official_identifier and adjusts identifier type based on user_type", () => {
+  // 1. Staff / Admin with official_identifier "NIP 2111016210015"
+  const staff = identityClaims.parse({
+    sub: "00000000-0000-4000-8000-000000000003",
+    name: "Muhammad Rizky",
+    email: "rizky@staff.uay.ac.id",
+    official_identifier: "NIP 2111016210015",
+    user_type: "STAFF",
+    roles: ["SUPER_ADMIN"],
+  });
+  assert.equal(staff.identifierValue, "2111016210015");
+  assert.equal(staff.identifierType, "NIP");
+  assert.equal(staff.userType, "STAFF");
+
+  // 2. Lecturer with official_identifier "NIDN 0415037801"
+  const dosen = identityClaims.parse({
+    sub: "00000000-0000-4000-8000-000000000004",
+    name: "Dr. Hendra",
+    email: "hendra@dosen.uay.ac.id",
+    official_identifier: "NIDN 0415037801",
+    user_type: "LECTURER",
+    roles: ["INSTRUCTOR"],
+  });
+  assert.equal(dosen.identifierValue, "0415037801");
+  assert.equal(dosen.identifierType, "NIDN");
+  assert.equal(dosen.userType, "LECTURER");
+
+  // 3. Username fallback with email domain "2111016210015@staff.uay.ac.id"
+  const fallbackStaff = identityClaims.parse({
+    sub: "00000000-0000-4000-8000-000000000005",
+    name: "Staff UAY",
+    email: "staff@example.test",
+    preferred_username: "2111016210015@staff.uay.ac.id",
+    roles: ["DEPARTMENT_ADMIN"],
+  });
+  assert.equal(fallbackStaff.identifierValue, "2111016210015");
+  assert.equal(fallbackStaff.identifierType, "NIP");
+  assert.equal(fallbackStaff.userType, "STAFF");
+});
+
 test("clearAllAuthCookies clears all session and oidc cookies across paths", async () => {
   const { clearAllAuthCookies } = await import("../apps/api/src/auth.js");
   const cleared: { name: string; options: any }[] = [];

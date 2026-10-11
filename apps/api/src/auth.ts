@@ -383,8 +383,15 @@ export async function fetchSsoMeProfile(
         : {}),
       ...(data.user_type ? { user_type: data.user_type } : {}),
       ...(data.status ? { account_status: data.status } : {}),
-      ...(data.username
-        ? { preferred_username: data.username, identifier_value: data.username }
+      ...(data.username ? { preferred_username: data.username } : {}),
+      ...(data.official_identifier
+        ? { official_identifier: data.official_identifier }
+        : {}),
+      ...(data.identifier_type
+        ? { identifier_type: data.identifier_type }
+        : {}),
+      ...(data.identifier_value
+        ? { identifier_value: data.identifier_value }
         : {}),
     };
   } catch {
@@ -442,11 +449,68 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
     (rawClaims.username as string) ||
     null;
   const rawEmail = (rawClaims.email as string) || null;
-  const identifierVal =
+
+  // Extract official_identifier and user_type attributes if available
+  const rawOfficialIdentifier =
+    (rawClaims.official_identifier as string) ||
+    (rawClaims.officialIdentifier as string) ||
+    ((rawClaims as any).attributes?.official_identifier?.[0] as string) ||
+    ((rawClaims as any).attributes?.official_identifier as string);
+
+  let officialType: string | undefined;
+  let officialValue: string | undefined;
+  if (rawOfficialIdentifier) {
+    const match = String(rawOfficialIdentifier)
+      .trim()
+      .match(/^(NIM|NIP|NIDN)\s+(.+)$/i);
+    if (match) {
+      officialType = match[1].toUpperCase();
+      officialValue = match[2].trim();
+    } else {
+      officialValue = String(rawOfficialIdentifier).trim();
+    }
+  }
+
+  if (rawOfficialIdentifier && !claims.official_identifier) {
+    claims.official_identifier = rawOfficialIdentifier;
+  }
+  if (officialValue && !claims.identifier_value) {
+    claims.identifier_value = officialValue;
+  }
+  if (officialType && !claims.identifier_type) {
+    claims.identifier_type = officialType;
+  }
+  if (!claims.user_type && (rawClaims as any).attributes?.user_type) {
+    const attrUserType = Array.isArray((rawClaims as any).attributes.user_type)
+      ? (rawClaims as any).attributes.user_type[0]
+      : (rawClaims as any).attributes.user_type;
+    if (attrUserType) claims.user_type = attrUserType;
+  }
+  if (!claims.identifier_type && (rawClaims as any).attributes?.identifier_type) {
+    const attrType = Array.isArray((rawClaims as any).attributes.identifier_type)
+      ? (rawClaims as any).attributes.identifier_type[0]
+      : (rawClaims as any).attributes.identifier_type;
+    if (attrType) claims.identifier_type = attrType;
+  }
+  if (!claims.identifier_value && (rawClaims as any).attributes?.identifier_value) {
+    const attrVal = Array.isArray((rawClaims as any).attributes.identifier_value)
+      ? (rawClaims as any).attributes.identifier_value[0]
+      : (rawClaims as any).attributes.identifier_value;
+    if (attrVal) claims.identifier_value = attrVal;
+  }
+
+  const rawIdVal =
+    officialValue ||
     (rawClaims.identifier_value as string) ||
+    ((rawClaims as any).attributes?.identifier_value?.[0] as string) ||
     (rawClaims.student_staff_number as string) ||
     username ||
     ssoUserId;
+  const cleanIdVal =
+    rawIdVal && typeof rawIdVal === "string" && rawIdVal.includes("@")
+      ? rawIdVal.split("@")[0].trim()
+      : rawIdVal;
+  const identifierVal = cleanIdVal;
 
   // Optional super-admin identifiers from environment variable only
   const adminIdentifiers = (
@@ -565,11 +629,11 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
       `${String(username || ssoUserId).replace(/[^a-zA-Z0-9._-]/g, "")}@uay.ac.id`;
   }
 
-  if (!claims.identifier_value) {
+  if (!claims.identifier_value && !claims.official_identifier) {
     claims.identifier_value =
       existingUser?.identifierValue ||
       claims.student_staff_number ||
-      username ||
+      (username && username.includes("@") ? username.split("@")[0].trim() : username) ||
       ssoUserId;
   }
 
@@ -630,6 +694,8 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
           name: data.name || existingUser.name,
           username: data.username || existingUser.username,
           email: existingUser.email || data.email,
+          identifierType: data.identifierType || existingUser.identifierType,
+          identifierValue: data.identifierValue || existingUser.identifierValue,
           role: finalRole,
           userType: finalUserType,
           departmentScopes: finalDeptScopes,
