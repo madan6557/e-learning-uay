@@ -1137,7 +1137,14 @@ export function registerDepartmentGovernance(app: Express) {
     clientId: string;
     search?: string;
   }): Promise<any[]> {
-    const baseUrl = (config.ssoApiBaseUrl || "").trim().replace(/\/+$/, "");
+    let baseUrl = (config.ssoApiBaseUrl || "").trim().replace(/\/+$/, "");
+    if (!baseUrl && config.issuer) {
+      try {
+        const issuerUrl = new URL(config.issuer);
+        baseUrl = `${issuerUrl.origin}/api`;
+      } catch {}
+    }
+
     if (!baseUrl) {
       if (isDemo) {
         return [
@@ -1188,6 +1195,12 @@ export function registerDepartmentGovernance(app: Express) {
       ensure(false, 503, "SSO_API_BASE_URL_NOT_CONFIGURED");
     }
 
+    // Pastikan baseUrl mengarah ke API (/api atau /api/v1)
+    const apiBase =
+      baseUrl.endsWith("/api") || baseUrl.endsWith("/api/v1")
+        ? baseUrl
+        : `${baseUrl}/api`;
+
     const allUsers: any[] = [];
     let page = 1;
     const limit = 50;
@@ -1200,11 +1213,11 @@ export function registerDepartmentGovernance(app: Express) {
       });
       if (options.search) query.set("search", options.search);
 
-      const targetUrl = baseUrl.endsWith("/api/v1")
-        ? `${baseUrl}/applications/client/${encodeURIComponent(options.clientId)}/users?${query}`
-        : `${baseUrl}/applications/client/${encodeURIComponent(options.clientId)}/users?${query}`;
+      const targetUrl = `${apiBase}/applications/client/${encodeURIComponent(options.clientId)}/users?${query}`;
 
-      const headers: Record<string, string> = {};
+      const headers: Record<string, string> = {
+        Accept: "application/json",
+      };
       if (options.accessToken) {
         headers["Authorization"] = `Bearer ${options.accessToken}`;
       }
@@ -1216,8 +1229,8 @@ export function registerDepartmentGovernance(app: Express) {
         { idempotent: true, attempts: 2, timeoutMs: 5000 },
       );
 
-      if (!res.ok && res.status === 404 && !baseUrl.endsWith("/api/v1")) {
-        const fallbackUrl = `${baseUrl}/api/v1/applications/client/${encodeURIComponent(options.clientId)}/users?${query}`;
+      if (!res.ok && res.status === 404 && !apiBase.endsWith("/v1")) {
+        const fallbackUrl = `${apiBase}/v1/applications/client/${encodeURIComponent(options.clientId)}/users?${query}`;
         res = await serviceFetch(
           "sso-api",
           fallbackUrl,
@@ -1226,7 +1239,21 @@ export function registerDepartmentGovernance(app: Express) {
         );
       }
 
+      if (res.status === 401) {
+        ensure(false, 401, "SSO_AUTHENTICATION_REQUIRED");
+      }
+      if (res.status === 403) {
+        ensure(false, 403, "SSO_ACCESS_DENIED");
+      }
       ensure(res.ok, 502, "SSO_USERS_FETCH_FAILED");
+
+      const contentType = res.headers.get("content-type") || "";
+      ensure(
+        contentType.includes("application/json"),
+        502,
+        "SSO_USERS_FETCH_FAILED",
+      );
+
       const body: any = await res.json();
       const data = body?.data ?? body;
       if (Array.isArray(data)) {

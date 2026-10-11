@@ -571,8 +571,7 @@ export function DepartmentGovernancePage({
           </div>
           <h1>Program Studi &amp; Otoritas</h1>
           <p>
-            Kelola program studi, penugasan Kaprodi dan Dekan, serta
-            sinkronisasi dari SIAKAD.
+            Kelola program studi serta penugasan Kaprodi dan Dekan.
           </p>
         </div>
       </div>
@@ -581,7 +580,6 @@ export function DepartmentGovernancePage({
           [
             ["PRODI", Building2, "Master Program Studi"],
             ["MANUAL", ShieldCheck, "Otoritas Kaprodi & Dekan"],
-            ["SIAKAD", Code, "Integrasi SIAKAD"],
           ] as const
         ).map(([tab, Icon, title]) => (
           <button
