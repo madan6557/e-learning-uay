@@ -192,3 +192,51 @@ test("video seeks, replay, fast playback and competing heartbeats cannot inflate
     100,
   );
 });
+
+test("fresh video start and background tab latency record progress accurately without freezing", () => {
+  const start = new Date("2026-09-01T00:00:00Z");
+  // 1. Fresh start, initial 5s sample:
+  const first = advanceVideo(
+    { watchedSeconds: 0, lastPositionSeconds: 0, updatedAt: start },
+    5,
+    100,
+    start,
+  );
+  assert.equal(first.watchedSeconds, 5);
+  assert.equal(first.lastPositionSeconds, 5);
+  assert.equal(first.percent, 5);
+
+  // 2. Normal second 5s sample at 10s:
+  const second = advanceVideo(
+    { ...first, updatedAt: start },
+    10,
+    100,
+    new Date(+start + 5000),
+  );
+  assert.equal(second.watchedSeconds, 10);
+  assert.equal(second.lastPositionSeconds, 10);
+  assert.equal(second.percent, 10);
+
+  // 3. Background tab delay of 12 seconds (advancing to 22s):
+  const third = advanceVideo(
+    { ...second, updatedAt: new Date(+start + 5000) },
+    22,
+    100,
+    new Date(+start + 17000),
+  );
+  assert.equal(third.watchedSeconds, 22);
+  assert.equal(third.lastPositionSeconds, 22);
+  assert.equal(third.percent, 22);
+
+  // 4. Normal continuation after background tab:
+  const fourth = advanceVideo(
+    { ...third, updatedAt: new Date(+start + 17000) },
+    27,
+    100,
+    new Date(+start + 22000),
+  );
+  assert.equal(fourth.watchedSeconds, 27);
+  assert.equal(fourth.lastPositionSeconds, 27);
+  assert.equal(fourth.percent, 27);
+});
+

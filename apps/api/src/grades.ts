@@ -86,6 +86,7 @@ export async function calculateGradebook(
     tx.resourceItem.findMany({
       where: { section: { classId, isVisible: true }, isVisible: true },
       include: {
+        section: { select: { startDate: true } },
         videoProgresses: { where: onlyUserId ? { userId: onlyUserId } : {} },
         slideProgresses: { where: onlyUserId ? { userId: onlyUserId } : {} },
         downloads: { where: onlyUserId ? { userId: onlyUserId } : {} },
@@ -147,10 +148,17 @@ export async function calculateGradebook(
     GRADE_SCALE_PRESETS[cls?.gradeScaleVersion ?? "2026.1"] ??
     DEFAULT_GRADE_SCALE;
 
+  const now = new Date();
+  const availableResources = resources.filter(
+    (r) =>
+      (!r.availableFrom || now >= r.availableFrom) &&
+      (!r.section?.startDate || now >= r.section.startDate),
+  );
+
   const rows = enrollments.map(({ user }) => {
     const progress = round(
-      resources.length
-        ? resources.reduce((sum, r) => {
+      availableResources.length
+        ? availableResources.reduce((sum, r) => {
             const p = r.dynamicPayload as any;
             let percent = 0;
             if (r.resourceType === "VIDEO_MEDIA") {
@@ -185,7 +193,7 @@ export async function calculateGradebook(
                 : 0;
             }
             return sum + percent;
-          }, 0) / resources.length
+          }, 0) / availableResources.length
         : 0,
     );
 

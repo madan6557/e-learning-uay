@@ -25,6 +25,7 @@ import {
   blockSchema,
   advanceVideo,
   webUrl,
+  round,
 } from "../../../packages/shared/src/domain.js";
 import { classPath, contentPath } from "../../../packages/shared/src/urls.js";
 import { normalizeDepartmentCode } from "../../../packages/shared/src/departments.js";
@@ -1630,7 +1631,7 @@ export function registerLearning(app: Express) {
             previous ?? {
               watchedSeconds: 0,
               lastPositionSeconds: 0,
-              updatedAt: new Date(),
+              updatedAt: new Date(Date.now() - Math.min(position, 10) * 1000),
             },
             position,
             payload.durationSeconds,
@@ -1643,15 +1644,37 @@ export function registerLearning(app: Express) {
           });
         }
         if (resource.resourceType === "DOCUMENT") {
-          const { page } = z
-            .object({ page: z.number().int().min(1).max(payload.totalPages) })
+          const { page, totalPages } = z
+            .object({
+              page: z.number().int().min(1).max(10000),
+              totalPages: z.number().int().min(1).max(10000).optional(),
+            })
             .parse(req.body);
+          const effectiveTotalPages = Math.max(
+            payload.totalPages ?? 1,
+            totalPages ?? 1,
+            page,
+          );
+          if (effectiveTotalPages !== payload.totalPages) {
+            await tx.resourceItem.update({
+              where: { id: resourceItemId },
+              data: {
+                dynamicPayload: {
+                  ...payload,
+                  totalPages: effectiveTotalPages,
+                },
+              },
+            });
+          }
           const before = await tx.slideProgress.findUnique({
             where: { userId_resourceItemId: { userId, resourceItemId } },
           });
           const pages = [
             ...new Set([...(before?.viewedPages ?? []), page]),
           ].sort((a, b) => a - b);
+          const percent = round(
+            Math.min(100, (pages.length / effectiveTotalPages) * 100),
+          );
           return tx.slideProgress.upsert({
             where: { userId_resourceItemId: { userId, resourceItemId } },
             create: {
@@ -1659,12 +1682,12 @@ export function registerLearning(app: Express) {
               resourceItemId,
               viewedPages: pages,
               currentPage: page,
-              percent: (pages.length / payload.totalPages) * 100,
+              percent,
             },
             update: {
               viewedPages: pages,
               currentPage: page,
-              percent: (pages.length / payload.totalPages) * 100,
+              percent,
             },
           });
         }

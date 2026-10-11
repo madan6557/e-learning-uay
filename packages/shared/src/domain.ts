@@ -366,27 +366,45 @@ export function advanceVideo(
   duration: number,
   now: Date,
 ) {
+  const previousAt = previous.updatedAt ? new Date(previous.updatedAt) : now;
   const elapsed = Math.max(
     0,
-    (now.getTime() - previous.updatedAt.getTime()) / 1000,
+    (now.getTime() - previousAt.getTime()) / 1000,
   );
   const delta = position - previous.lastPositionSeconds;
-  const credit =
-    delta >= 0 && delta <= Math.min(elapsed + 0.5, 8)
-      ? Math.min(delta, elapsed)
-      : 0;
-  // Credit only the contiguous frontier: replaying or seeking cannot inflate completion.
-  const watchedSeconds = Math.min(
-    duration,
-    Math.max(
-      previous.watchedSeconds,
-      previous.lastPositionSeconds <= previous.watchedSeconds + 0.5
-        ? previous.lastPositionSeconds + credit
-        : previous.watchedSeconds,
-    ),
-  );
+  // Video playback at ~1x wall-clock speed with reasonable network/timer jitter tolerance
+  const isNormalPlayback = delta >= 0 && delta <= elapsed + 1.5;
+  const credit = isNormalPlayback
+    ? Math.min(delta, Math.max(elapsed, delta), 30)
+    : 0;
+
+  let watchedSeconds = previous.watchedSeconds;
+  if (
+    previous.watchedSeconds === 0 &&
+    previous.lastPositionSeconds === 0 &&
+    position <= 10
+  ) {
+    // Initial start within reasonable first-heartbeat window
+    watchedSeconds = Math.min(duration, position);
+  } else if (position > previous.watchedSeconds) {
+    // Advancing past previously watched frontier
+    watchedSeconds = Math.min(
+      duration,
+      Math.max(previous.watchedSeconds, previous.watchedSeconds + credit),
+    );
+  } else if (
+    previous.lastPositionSeconds <= previous.watchedSeconds + 0.5 &&
+    credit > 0
+  ) {
+    // Advancing along contiguous frontier
+    watchedSeconds = Math.min(
+      duration,
+      Math.max(previous.watchedSeconds, previous.lastPositionSeconds + credit),
+    );
+  }
+
   return {
-    watchedSeconds,
+    watchedSeconds: round(watchedSeconds),
     lastPositionSeconds: position,
     percent: round((100 * watchedSeconds) / duration),
   };

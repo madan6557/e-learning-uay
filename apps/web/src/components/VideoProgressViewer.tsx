@@ -33,7 +33,8 @@ export function VideoProgressViewer({
   const lastSample = useRef<VideoSample | undefined>(undefined);
   const matchesDuration =
     validVideoDuration(payload.durationSeconds) &&
-    Math.abs(duration - payload.durationSeconds) <= 1;
+    Math.abs(duration - payload.durationSeconds) <=
+      Math.max(3, payload.durationSeconds * 0.05);
   const watchLimit = () =>
     Math.min(
       payload.durationSeconds || Infinity,
@@ -48,7 +49,8 @@ export function VideoProgressViewer({
       !writable ||
       busy.current ||
       !validVideoDuration(payload.durationSeconds) ||
-      Math.abs(sample.duration - payload.durationSeconds) > 1
+      Math.abs(sample.duration - payload.durationSeconds) >
+        Math.max(3, payload.durationSeconds * 0.05)
     )
       return;
     busy.current = true;

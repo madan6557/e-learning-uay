@@ -272,15 +272,17 @@ export function ClassPage({
   const isResourceDone = (r: any) => {
     if (!cls?.progress) return false;
     if (r.resourceType === "VIDEO_MEDIA") {
+      const minPercent = r.dynamicPayload?.minWatchPercent ?? 85;
       return (
         (cls.progress.video?.find((p: any) => p.resourceItemId === r.id)
-          ?.percent ?? 0) >= 80
+          ?.percent ?? 0) >= minPercent
       );
     }
     if (r.resourceType === "DOCUMENT") {
+      const minPercent = r.dynamicPayload?.minSlidePercent ?? 80;
       return (
         (cls.progress.slides?.find((p: any) => p.resourceItemId === r.id)
-          ?.percent ?? 0) >= 80
+          ?.percent ?? 0) >= minPercent
       );
     }
     return [

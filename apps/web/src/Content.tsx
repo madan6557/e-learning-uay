@@ -1419,7 +1419,24 @@ export function ResourceViewer({
         {["TELECONFERENCE", "EXTERNAL_LINK"].includes(
           resource.resourceType,
         ) && (
-          <a className="button" href={p.url} target="_blank" rel="noreferrer">
+          <a
+            className="button"
+            href={p.url}
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => {
+              if (writable && !done) {
+                api(`/resources/${resource.id}/progress`, "POST", {
+                  checklistIds: [],
+                })
+                  .then(() => {
+                    setDone(true);
+                    reload();
+                  })
+                  .catch(() => {});
+              }
+            }}
+          >
             {resource.title}
             <ExternalLink size={16} />
           </a>
@@ -1524,7 +1541,10 @@ function PdfViewer({
       task = pdfPage.render({ canvasContext: c.getContext("2d"), viewport });
       await task.promise;
       if (active && writable)
-        await api(`/resources/${resourceId}/progress`, "POST", { page });
+        await api(`/resources/${resourceId}/progress`, "POST", {
+          page,
+          totalPages: count,
+        });
     };
     render().catch((e) => {
       if (e.name !== "RenderingCancelledException") setError(e);
