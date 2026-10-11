@@ -1,0 +1,652 @@
+.departments-governance-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-5) 0;
+  min-width: 0;
+}
+.departments-governance-page .eyebrow,
+.governance-integration h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.departments-governance-page .page-heading {
+  margin-bottom: var(--space-6);
+}
+.departments-governance-page .page-heading p {
+  margin-top: var(--space-2);
+  color: var(--muted-foreground);
+}
+.governance-tabs,
+.governance-toolbar,
+.governance-actions,
+.governance-tags,
+.governance-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+.governance-tabs {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+.governance-toolbar {
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+.governance-search {
+  position: relative;
+  flex: 1 1 240px;
+  min-width: 0;
+}
+.governance-search svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--muted-foreground);
+}
+.governance-search input {
+  width: 100%;
+  padding-left: 40px;
+}
+.governance-filter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.governance-filter select {
+  max-width: 260px;
+  min-width: 0;
+}
+.departments-governance-page td {
+  overflow-wrap: anywhere;
+}
+.departments-governance-page table {
+  width: 100%;
+}
+.governance-subtext {
+  display: block;
+  color: var(--muted-foreground);
+  margin-top: 6px;
+}
+.governance-user-details,
+.governance-scope-details {
+  min-width: 0;
+}
+.governance-user-details > .pill {
+  display: inline-block;
+  margin-top: var(--space-2);
+}
+.governance-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: 40px 16px;
+}
+.governance-empty {
+  padding: var(--space-6);
+  text-align: center;
+}
+.governance-form-fields {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.governance-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+.governance-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-weight: 600;
+  margin-bottom: var(--space-4);
+  min-width: 0;
+}
+.governance-field input,
+.governance-field select,
+.governance-field textarea {
+  width: 100%;
+  min-width: 0;
+}
+.governance-field small,
+.governance-scope small {
+  color: var(--muted-foreground);
+  font-weight: 400;
+  line-height: 1.5;
+}
+.governance-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.governance-form-actions {
+  justify-content: flex-end;
+  border-top: 1px solid var(--border);
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+}
+.governance-scopes {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  min-width: 0;
+}
+.governance-scopes legend {
+  padding: 0 6px;
+  font-weight: 600;
+}
+.governance-scope-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.governance-scope-header .governance-actions button {
+  min-height: 38px;
+  padding: 6px 14px;
+}
+.governance-scope-search {
+  position: relative;
+  flex: 1 1 200px;
+  max-width: 320px;
+}
+.governance-scope-search svg {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+.governance-scope-search input {
+  width: 100%;
+  padding-left: 32px;
+  height: 36px;
+  font-size: 0.875rem;
+}
+.governance-scope-admin-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: var(--space-4);
+  background: var(--accent-surface);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-lg);
+  margin-top: var(--space-3);
+}
+.governance-scope-admin-note svg {
+  color: var(--primary);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.governance-scope-admin-note strong {
+  display: block;
+  margin-bottom: 4px;
+}
+.governance-scope-admin-note p {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.governance-scope-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  max-height: 360px;
+  overflow-y: auto;
+}
+.governance-scope {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  min-width: 0;
+}
+.governance-scope.selected {
+  border-color: var(--primary);
+  background: var(--accent-surface);
+}
+.governance-scope input {
+  flex: 0 0 auto;
+  margin-top: 3px;
+}
+.governance-scope-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.governance-scope-code {
+  font-weight: 700;
+  font-size: 0.8125rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--surface-muted, rgba(120, 120, 120, 0.1));
+  border: 1px solid var(--border);
+  color: var(--foreground);
+  flex-shrink: 0;
+}
+.governance-scope-name {
+  font-size: 0.875rem;
+}
+.governance-scope-status {
+  display: block;
+  width: 100%;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+.governance-scope-empty {
+  padding: var(--space-4);
+  text-align: center;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  grid-column: 1 / -1;
+}
+.governance-role-badge {
+  display: inline-block;
+  font-weight: 500;
+}
+.governance-integration {
+  padding: var(--space-6);
+}
+.governance-integration details {
+  margin: var(--space-4) 0;
+  overflow-wrap: anywhere;
+}
+.governance-integration textarea {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+}
+.governance-integration > small {
+  display: block;
+  margin: var(--space-3) 0;
+  color: var(--muted-foreground);
+}
+.governance-result {
+  margin-top: var(--space-6);
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-4);
+}
+.governance-result ul {
+  padding: 0;
+  list-style: none;
+}
+.governance-result li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  margin-top: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow-wrap: anywhere;
+}
+@media (max-width: 900px) {
+  .departments-governance-page .phone-record-table {
+    padding: 0;
+    background: transparent;
+    border: 0;
+    overflow: visible;
+  }
+  .departments-governance-page .phone-record-table table {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+  .departments-governance-page .phone-record-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .departments-governance-page .phone-record-table tbody {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+  }
+  .departments-governance-page .phone-record-table tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface);
+    min-width: 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+  .departments-governance-page .phone-record-table td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+    border: 0;
+    padding: 0;
+    white-space: normal;
+    min-width: 0;
+    line-height: 1.6;
+  }
+  .departments-governance-page .phone-record-table td[data-label]::before {
+    content: attr(data-label);
+    flex: 0 0 32%;
+    color: var(--muted-foreground);
+    font-size: 0.8125rem;
+    text-align: left;
+  }
+  .departments-governance-page .phone-record-table td.record-title {
+    display: block;
+    font-size: 1rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 10px;
+    margin-bottom: 2px;
+  }
+  .departments-governance-page .phone-record-table td.record-actions {
+    display: block;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+    margin-top: 4px;
+  }
+  .departments-governance-page .phone-record-table td.record-actions::before {
+    display: none;
+  }
+  .departments-governance-page
+    .phone-record-table
+    .record-actions
+    .governance-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    gap: 8px;
+  }
+  .departments-governance-page .phone-record-table button {
+    min-height: 44px;
+    height: auto;
+    white-space: normal;
+  }
+}
+@media (max-width: 767px) {
+  .departments-governance-page {
+    padding: var(--space-3) 0;
+  }
+  .departments-governance-page .page-heading {
+    margin-bottom: var(--space-4);
+  }
+  .departments-governance-page .page-heading h1 {
+    font-size: 1.5rem;
+    line-height: 1.25;
+  }
+  .departments-governance-page .page-heading p {
+    font-size: 0.875rem;
+  }
+
+  /* Compact Horizontal Tab Bar */
+  .governance-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 8px;
+    padding-bottom: 8px;
+    margin-bottom: var(--space-4);
+    border-bottom: 1px solid var(--border);
+    scrollbar-width: none;
+  }
+  .governance-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .governance-tabs button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding: 8px 14px;
+    font-size: 0.875rem;
+    min-height: 40px;
+    border-radius: var(--radius-full, 9999px);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Responsive Toolbar */
+  .governance-toolbar {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin: var(--space-2) 0 var(--space-4);
+  }
+  .governance-search {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+  .governance-filter {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.875rem;
+  }
+  .governance-filter select {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+    min-height: 42px;
+  }
+  .governance-toolbar > .governance-actions {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px;
+    width: 100%;
+    align-items: stretch;
+  }
+  .governance-toolbar > .governance-actions button {
+    min-height: 44px;
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  /* Mobile Record Cards */
+  .departments-governance-page .phone-record-table tbody {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .departments-governance-page .phone-record-table tr {
+    padding: 14px;
+    gap: 10px;
+  }
+  .departments-governance-page .phone-record-table td[data-label] {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    font-size: 0.875rem;
+  }
+  .departments-governance-page .phone-record-table td[data-label]::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    color: var(--muted-foreground);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    margin-bottom: 0;
+  }
+  .departments-governance-page .phone-record-table td[data-label] > * {
+    min-width: 0;
+    text-align: right;
+  }
+  .departments-governance-page .record-title .governance-subtext {
+    font-size: 0.8125rem;
+    font-weight: 400;
+  }
+  .departments-governance-page .governance-scope-details {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    min-width: 0;
+  }
+  .departments-governance-page .governance-scope-details .governance-tags {
+    justify-content: flex-end;
+  }
+  .departments-governance-page .record-actions {
+    display: block;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+    margin-top: 4px;
+  }
+  .departments-governance-page .record-actions::before {
+    display: none;
+  }
+  .departments-governance-page .record-actions .governance-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+  .departments-governance-page .record-actions .governance-actions button {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  /* Form & Modal Mobile Layout */
+  .governance-form-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .governance-field {
+    margin-bottom: 12px;
+  }
+  .governance-field input,
+  .governance-field select {
+    min-height: 44px;
+  }
+  .governance-modal form {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100dvh - 65px);
+  }
+  .governance-modal .governance-form-fields {
+    flex: 1 0 auto;
+  }
+  .governance-modal .governance-form-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    background: var(--surface);
+    margin: auto calc(-1 * var(--modal-gutter, 16px)) 0 calc(-1 * var(--modal-gutter, 16px));
+    padding: 12px var(--modal-gutter, 16px) calc(12px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    align-items: center;
+  }
+  .governance-modal .governance-form-actions > button {
+    width: 100%;
+    min-height: 46px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  /* Bounded Scope Picker on Mobile */
+  .governance-scopes {
+    padding: 12px;
+    border-radius: var(--radius);
+    margin-top: 8px;
+  }
+  .governance-scope-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .governance-scope-header .governance-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+  .governance-scope-header .governance-actions button {
+    width: 100%;
+    min-height: 40px;
+  }
+  .governance-scope-search {
+    max-width: none;
+    width: 100%;
+  }
+  .governance-scope-grid {
+    grid-template-columns: 1fr;
+    max-height: 240px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px;
+    margin-top: 8px;
+    gap: 6px;
+    background: var(--surface-subtle, rgba(0, 0, 0, 0.02));
+  }
+  .governance-scope {
+    padding: 10px 12px;
+    min-height: 44px;
+    border-radius: 8px;
+    align-items: center;
+  }
+  .governance-scope input {
+    margin-top: 0;
+  }
+
+  /* SIAKAD Section Mobile */
+  .governance-integration {
+    padding: var(--space-4);
+  }
+  .governance-integration > .governance-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    width: 100%;
+    align-items: stretch;
+  }
+  .governance-integration > .governance-actions button {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+@media (max-width: 480px) {
+  .governance-toolbar > .governance-actions {
+    grid-template-columns: 1fr;
+  }
+  .departments-governance-page .phone-record-table td[data-label] {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+  .departments-governance-page .phone-record-table td[data-label] > * {
+    text-align: left;
+  }
+  .departments-governance-page .governance-scope-details {
+    align-items: flex-start;
+  }
+  .departments-governance-page .governance-scope-details .governance-tags {
+    justify-content: flex-start;
+  }
+}

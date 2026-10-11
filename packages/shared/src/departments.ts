@@ -17,10 +17,18 @@ export const UAY_DEPARTMENTS: readonly DepartmentDefinition[] = [
   { code: "SI", name: "Sistem Informasi", faculty: "Fakultas Teknik" },
   { code: "HK", name: "Ilmu Hukum", faculty: "Fakultas Hukum" },
   { code: "MIH", name: "Magister Ilmu Hukum", faculty: "Program Pascasarjana" },
-  { code: "MAN", name: "Manajemen", faculty: "Fakultas Ekonomi & Bisnis" },
+  { code: "MN", name: "Manajemen", faculty: "Fakultas Ekonomi & Bisnis" },
   { code: "AK", name: "Akuntansi", faculty: "Fakultas Ekonomi & Bisnis" },
-  { code: "AP", name: "Administrasi Publik", faculty: "Fakultas Ilmu Sosial & Ilmu Politik" },
-  { code: "AB", name: "Administrasi Bisnis", faculty: "Fakultas Ilmu Sosial & Ilmu Politik" },
+  {
+    code: "AP",
+    name: "Administrasi Publik",
+    faculty: "Fakultas Ilmu Sosial & Ilmu Politik",
+  },
+  {
+    code: "AB",
+    name: "Administrasi Bisnis",
+    faculty: "Fakultas Ilmu Sosial & Ilmu Politik",
+  },
   { code: "FAR", name: "Farmasi", faculty: "Fakultas Farmasi & Kesehatan" },
 ] as const;
 
@@ -47,7 +55,26 @@ export const DEPARTMENT_NAME_MAP: Record<string, string> = {
  * Normalisasi kode prodi menjadi uppercase tanpa spasi berlebih.
  */
 export function normalizeDepartmentCode(code: string): string {
-  return code.trim().toUpperCase();
+  const upper = code.trim().toUpperCase();
+  const aliases: Record<string, string> = {
+    INFORMATIKA: "IF",
+    "TEKNIK SIPIL": "TS",
+    "TEKNIK INDUSTRI": "TI",
+    "TEKNIK ELEKTRO": "TE",
+    "SISTEM INFORMASI": "SI",
+    AKUNTANSI: "AK",
+    MANAJEMEN: "MN",
+    MAN: "MN",
+    "ILMU HUKUM": "HK",
+    IH: "HK",
+    "MAGISTER ILMU HUKUM": "MIH",
+    MH: "MIH",
+    "ADMINISTRASI PUBLIK": "AP",
+    "ADMINISTRASI BISNIS": "AB",
+    FARMASI: "FAR",
+    FARM: "FAR",
+  };
+  return aliases[upper] ?? upper;
 }
 
 /**
@@ -64,27 +91,53 @@ export function formatDepartmentDisplay(code: string): string {
 /**
  * Skema penugasan prodi tunggal dari SIAKAD.
  */
-export const siakadScopeSyncItemSchema = z.object({
-  identifierValue: z.string().trim().min(1, "NIDN/NIP/NIM tidak boleh kosong"),
-  departmentScopes: z
-    .array(z.string().trim().min(1))
-    .min(1, "Minimal pilih 1 program studi"),
-  role: z.enum(["DEPARTMENT_ADMIN", "INSTRUCTOR"]).default("DEPARTMENT_ADMIN"),
-  notes: z.string().trim().max(255).optional(),
-});
+export const siakadScopeSyncItemSchema = z
+  .object({
+    identifierValue: z
+      .string()
+      .trim()
+      .min(1, "NIDN/NIP/NIM tidak boleh kosong"),
+    departmentScopes: z.array(z.string().trim().min(1)).max(20),
+    role: z
+      .enum(["DEPARTMENT_ADMIN", "INSTRUCTOR"])
+      .default("DEPARTMENT_ADMIN"),
+    notes: z.string().trim().max(255).optional(),
+    expectedUpdatedAt: z.string().datetime().optional(),
+    expectedAuthorityVersion: z.string().length(64).optional(),
+  })
+  .refine(
+    (item) =>
+      item.role !== "DEPARTMENT_ADMIN" || item.departmentScopes.length > 0,
+    {
+      message: "Admin Prodi membutuhkan minimal satu program studi",
+      path: ["departmentScopes"],
+    },
+  );
 
 /**
  * Skema payload batch sinkronisasi prodi dari SIAKAD.
  */
-export const siakadScopeSyncPayloadSchema = z.object({
-  assignments: z
-    .array(siakadScopeSyncItemSchema)
-    .min(1, "Daftar penugasan tidak boleh kosong")
-    .max(500, "Maksimal 500 penugasan per permintaan"),
-  academicYear: z.string().trim().max(50).optional(),
-  source: z.string().trim().max(100).default("SIAKAD_API"),
-  dryRun: z.boolean().default(false),
-});
+export const siakadScopeSyncPayloadSchema = z
+  .object({
+    assignments: z
+      .array(siakadScopeSyncItemSchema)
+      .min(1, "Daftar penugasan tidak boleh kosong")
+      .max(500, "Maksimal 500 penugasan per permintaan"),
+    academicYear: z.string().trim().max(50).optional(),
+    source: z.string().trim().max(100).default("SIAKAD_API"),
+    dryRun: z.boolean().default(false),
+  })
+  .refine(
+    (payload) =>
+      new Set(payload.assignments.map((a) => a.identifierValue.toLowerCase()))
+        .size === payload.assignments.length,
+    {
+      message: "Identitas penugasan tidak boleh berulang",
+      path: ["assignments"],
+    },
+  );
 
 export type SiakadScopeSyncItem = z.infer<typeof siakadScopeSyncItemSchema>;
-export type SiakadScopeSyncPayload = z.infer<typeof siakadScopeSyncPayloadSchema>;
+export type SiakadScopeSyncPayload = z.infer<
+  typeof siakadScopeSyncPayloadSchema
+>;

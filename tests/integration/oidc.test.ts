@@ -9,7 +9,10 @@ test("OIDC authorization code with PKCE, JWT validation, refresh, logout and rev
   const { privateKey, publicKey } = await generateKeyPair("RS256");
   const jwk = await exportJWK(publicKey);
   Object.assign(jwk, { kid: "test-key", alg: "RS256", use: "sig" });
-  const subject = randomUUID();
+  let subject = randomUUID();
+  let profileRole = "STUDENT",
+    profileScopes: string[] = [];
+  let profileIdentity: Record<string, string> = {};
   let issuer = "",
     nonce = "",
     challenge = "",
@@ -69,9 +72,10 @@ test("OIDC authorization code with PKCE, JWT validation, refresh, logout and rev
         name: "OIDC Test User",
         email: `${subject}@example.test`,
         student_staff_number: subject,
-        role: "STUDENT",
-        department_scopes: [],
+        role: profileRole,
+        department_scopes: profileScopes,
         account_status: tokenMode === "disabled" ? "DISABLED" : "ACTIVE",
+        ...profileIdentity,
       };
       const access = await sign(
         profile,
@@ -108,6 +112,7 @@ test("OIDC authorization code with PKCE, JWT validation, refresh, logout and rev
   await once(app, "listening");
   const base = `http://127.0.0.1:${(app.address() as any).port}/api/v1`;
   let sessionCookie = "";
+  let preprovisionedId: string | undefined;
   let bearerToken = "";
   async function login(mode = "active") {
     tokenMode = mode;
@@ -145,45 +150,71 @@ test("OIDC authorization code with PKCE, JWT validation, refresh, logout and rev
         assert.equal(user.password, undefined);
       },
     );
-    await suite.test("bearer-only requests provide the route identity for notifications", async () => {
-      const stored = JSON.parse((await cache.get(`session:${hash(sessionCookie.split("=")[1])}`))!);
-      bearerToken = stored.accessToken;
-      assert.ok(bearerToken);
-      const headers = { Authorization: `Bearer ${bearerToken}` };
-      const me = await fetch(`${base}/me`, { headers });
-      assert.equal(me.status, 200);
-      assert.equal((await me.json() as any).ssoUserId, subject);
-      const unread = await fetch(`${base}/notifications/unread-count`, { headers });
-      assert.equal(unread.status, 200);
-      assert.equal(typeof (await unread.json() as any).count, "number");
-      const invalid = await fetch(`${base}/notifications/unread-count`, { headers: { Authorization: "Bearer invalid-token" } });
-      assert.equal(invalid.status, 401);
-      await cache.set(`revoked:${subject}`, "1", 60);
-      try {
-        const revoked = await fetch(`${base}/notifications/unread-count`, { headers });
-        assert.equal(revoked.status, 403);
-      } finally {
-        await cache.del(`revoked:${subject}`);
-      }
-    });
+    await suite.test(
+      "bearer-only requests provide the route identity for notifications",
+      async () => {
+        const stored = JSON.parse(
+          (await cache.get(`session:${hash(sessionCookie.split("=")[1])}`))!,
+        );
+        bearerToken = stored.accessToken;
+        assert.ok(bearerToken);
+        const headers = { Authorization: `Bearer ${bearerToken}` };
+        const me = await fetch(`${base}/me`, { headers });
+        assert.equal(me.status, 200);
+        assert.equal(((await me.json()) as any).ssoUserId, subject);
+        const unread = await fetch(`${base}/notifications/unread-count`, {
+          headers,
+        });
+        assert.equal(unread.status, 200);
+        assert.equal(typeof ((await unread.json()) as any).count, "number");
+        const invalid = await fetch(`${base}/notifications/unread-count`, {
+          headers: { Authorization: "Bearer invalid-token" },
+        });
+        assert.equal(invalid.status, 401);
+        await cache.set(`revoked:${subject}`, "1", 60);
+        try {
+          const revoked = await fetch(`${base}/notifications/unread-count`, {
+            headers,
+          });
+          assert.equal(revoked.status, 403);
+        } finally {
+          await cache.del(`revoked:${subject}`);
+        }
+      },
+    );
     await suite.test(
       "bad state, nonce, audience and account status are rejected",
       async () => {
         const state = await fetch(
           `${base}/auth/callback?state=abcdefghijklmnopqrstuv&code=invalid`,
-          { headers: { Cookie: "uay-oidc-state=different" }, redirect: "manual" },
+          {
+            headers: { Cookie: "uay-oidc-state=different" },
+            redirect: "manual",
+          },
         );
         assert.equal(state.status, 302);
-        assert.equal(state.headers.get("location"), "/?auth_error=INVALID_STATE");
+        assert.equal(
+          state.headers.get("location"),
+          "/?auth_error=INVALID_STATE",
+        );
         const badNonce = await login("wrong-nonce");
         assert.equal(badNonce.status, 302);
-        assert.equal(badNonce.headers.get("location"), "/?auth_error=INVALID_NONCE");
+        assert.equal(
+          badNonce.headers.get("location"),
+          "/?auth_error=INVALID_NONCE",
+        );
         const badAudience = await login("wrong-audience");
         assert.equal(badAudience.status, 302);
-        assert.equal(badAudience.headers.get("location"), "/?auth_error=ERR_JWT_CLAIM_VALIDATION_FAILED");
+        assert.equal(
+          badAudience.headers.get("location"),
+          "/?auth_error=ERR_JWT_CLAIM_VALIDATION_FAILED",
+        );
         const disabled = await login("disabled");
         assert.equal(disabled.status, 302);
-        assert.equal(disabled.headers.get("location"), "/?auth_error=ACCOUNT_DISABLED");
+        assert.equal(
+          disabled.headers.get("location"),
+          "/?auth_error=ACCOUNT_DISABLED",
+        );
       },
     );
     await suite.test(
@@ -265,7 +296,117 @@ test("OIDC authorization code with PKCE, JWT validation, refresh, logout and rev
         assert.equal(me.status, 401);
       },
     );
+    await suite.test(
+      "pre-provisioned authority survives SSO login, refresh and subsequent revocation",
+      async () => {
+        subject = randomUUID();
+        profileRole = "INSTRUCTOR";
+        profileScopes = ["Informatika"];
+        const preprovisioned = await db.user.create({
+          data: {
+            ssoUserId: `preprovision:${randomUUID()}`,
+            identifierValue: subject,
+            email: `${subject}@example.test`,
+            name: "Scope OIDC fixture",
+            role: "DEPARTMENT_ADMIN",
+            departmentScopes: ["IF", "TS"],
+            authoritySource: "LOCAL",
+          },
+        });
+        preprovisionedId = preprovisioned.id;
+        const cookieFrom = (response: Response) =>
+          response.headers
+            .get("set-cookie")!
+            .split(/, (?=uay-session)/)
+            .find((c) => c.includes("uay-session="))!
+            .split(";")[0];
+        const loginResponse = await login();
+        assert.equal(loginResponse.status, 302);
+        sessionCookie = cookieFrom(loginResponse);
+        const me = async () => {
+          const response = await fetch(`${base}/me`, {
+            headers: { Cookie: sessionCookie },
+          });
+          assert.equal(response.status, 200);
+          return (await response.json()) as any;
+        };
+        let current = await me();
+        assert.equal(current.id, preprovisioned.id);
+        assert.equal(current.ssoUserId, subject);
+        assert.equal(current.role, "DEPARTMENT_ADMIN");
+        assert.deepEqual(current.departmentScopes, ["IF", "TS"]);
+        sessionCookie = cookieFrom(await login());
+        const key = `session:${hash(sessionCookie.split("=")[1])}`;
+        const stored = JSON.parse((await cache.get(key))!);
+        stored.expires = Date.now() - 1;
+        await cache.set(key, JSON.stringify(stored), 3600);
+        current = await me();
+        assert.equal(current.role, "DEPARTMENT_ADMIN");
+        assert.deepEqual(current.departmentScopes, ["IF", "TS"]);
+        await db.user.update({
+          where: { id: preprovisioned.id },
+          data: {
+            authoritySource: "LOCAL",
+            role: "INSTRUCTOR",
+            departmentScopes: [],
+          },
+        });
+        profileRole = "DEPARTMENT_ADMIN";
+        profileScopes = ["IF"];
+        sessionCookie = cookieFrom(await login());
+        current = await me();
+        assert.equal(current.role, "INSTRUCTOR");
+        assert.deepEqual(current.departmentScopes, []);
+        await db.user.update({
+          where: { id: preprovisioned.id },
+          data: { authoritySource: "SSO" },
+        });
+        profileScopes = ["Informatika", "MAN", "manajemen"];
+        sessionCookie = cookieFrom(await login());
+        assert.deepEqual((await me()).departmentScopes, ["IF", "MN"]);
+        profileScopes = [];
+        sessionCookie = cookieFrom(await login());
+        assert.deepEqual(
+          (await me()).departmentScopes,
+          [],
+          "Explicit SSO scope removal must not retain old grants",
+        );
+        await db.user.update({
+          where: { id: preprovisioned.id },
+          data: { authoritySource: "LOCAL" },
+        });
+        const linkedSubject = subject;
+        subject = randomUUID();
+        profileIdentity = {
+          email: `${linkedSubject}@example.test`,
+          student_staff_number: linkedSubject,
+        };
+        const reusedIdentity = await login();
+        assert.equal(
+          reusedIdentity.headers.get("location"),
+          "/?auth_error=INVALID_IDENTITY",
+        );
+        assert.equal(
+          (
+            await db.user.findUniqueOrThrow({
+              where: { id: preprovisioned.id },
+            })
+          ).ssoUserId,
+          linkedSubject,
+        );
+        const disabled = await login("disabled");
+        assert.equal(
+          disabled.headers.get("location"),
+          "/?auth_error=ACCOUNT_DISABLED",
+        );
+      },
+    );
   } finally {
+    if (preprovisionedId)
+      await db.user.update({
+        where: { id: preprovisionedId },
+        data: { status: "DISABLED", departmentScopes: [] },
+      });
     await new Promise<void>((resolve) => app.close(() => resolve()));
     await new Promise<void>((resolve) => sso.close(() => resolve()));
     await db.$disconnect();

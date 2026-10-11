@@ -232,6 +232,8 @@ export function createApp() {
   registerAuth(app);
   // This read-only integration accepts its dedicated token or a Super Admin session.
   registerRectorBridgeRoutes(app);
+  // The SIAKAD bridge verifies its own machine secret or active Super Admin session.
+  registerDepartmentGovernance(app);
   app.use(rectorReporting(new DynamicReportingDataSource(isDemo), isDemo));
   app.use("/api/v1", authenticate);
   app.use("/api/v1", (req, _res, next) => {
@@ -303,7 +305,6 @@ export function createApp() {
   registerImports(app);
   registerAttendanceRoutes(app);
   registerSystemAnnouncements(app);
-  registerDepartmentGovernance(app);
   app.use("/api", (_req, res) =>
     res.status(404).json({ error: { code: "NOT_FOUND" } }),
   );

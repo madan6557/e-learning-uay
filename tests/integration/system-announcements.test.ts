@@ -16,8 +16,8 @@ test("system announcements enforce scope, atomic persistence, complete notificat
   await once(server, "listening");
   const base =
     "http://127.0.0.1:" + (server.address() as AddressInfo).port + "/api/v1";
-  const scope = "IF-" + randomUUID(),
-    otherScope = "TS-" + randomUUID();
+  const scope = ("IF-" + randomUUID()).toUpperCase(),
+    otherScope = ("TS-" + randomUUID()).toUpperCase();
   const users: string[] = [],
     announcements: string[] = [];
   const makeUser = async (role: any, scopes: string[]) => {

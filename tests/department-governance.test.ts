@@ -14,7 +14,7 @@ test("departments master list contains standard UAY faculties and codes", () => 
   assert.ok(codes.includes("TI")); // Teknik Industri
   assert.ok(codes.includes("TS")); // Teknik Sipil
   assert.ok(codes.includes("HK")); // Hukum
-  assert.ok(codes.includes("MAN")); // Manajemen
+  assert.ok(codes.includes("MN")); // Matches existing course codes; MAN remains an accepted alias.
   assert.ok(codes.includes("AK")); // Akuntansi
   assert.ok(codes.includes("FAR")); // Farmasi
 });
@@ -22,7 +22,9 @@ test("departments master list contains standard UAY faculties and codes", () => 
 test("normalizeDepartmentCode and formatDepartmentDisplay behave consistently", () => {
   assert.equal(normalizeDepartmentCode("  if  "), "IF");
   assert.equal(normalizeDepartmentCode("ti"), "TI");
-  assert.equal(normalizeDepartmentCode("man"), "MAN");
+  assert.equal(normalizeDepartmentCode("man"), "MN");
+  assert.equal(normalizeDepartmentCode("Informatika"), "IF");
+  assert.equal(normalizeDepartmentCode("Manajemen"), "MN");
 
   assert.match(formatDepartmentDisplay("IF"), /^IF \(Program Studi Informatika\)$/);
   assert.match(formatDepartmentDisplay("TS"), /^TS \(Program Studi Teknik Sipil\)$/);

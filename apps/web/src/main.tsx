@@ -35,6 +35,7 @@ import "./styles.css";
 import "./workspace.css";
 import "./experience.css";
 import "./phone.css";
+import "./departments.css";
 import "./theme.css";
 import { ThemeProvider } from "./contexts/ThemeContext";
 

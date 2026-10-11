@@ -26,6 +26,7 @@ import {
   webUrl,
 } from "../../../packages/shared/src/domain.js";
 import { classPath, contentPath } from "../../../packages/shared/src/urls.js";
+import { normalizeDepartmentCode } from "../../../packages/shared/src/departments.js";
 import { resourceFileIds, resourcesUsingFile } from "./files.js";
 import {
   validVideoDuration,
@@ -63,7 +64,7 @@ const courseSchema = z.object({
   title,
   description: z.string().max(10000).default(""),
   credits: z.number().int().min(1).max(12).default(3),
-  departmentCode: title,
+  departmentCode: title.transform(normalizeDepartmentCode),
   status: status.default("DRAFT"),
 });
 const sectionSchema = z.object({
@@ -209,13 +210,15 @@ async function reviewCourseBatch(
     const row = batch.rows[index];
     const code = codes[index];
     const titleVal = String(row.values.title ?? "").trim();
-    const deptCode = String(
-      row.values.departmentCode ??
-        row.values.prodi ??
-        row.values.department ??
-        user.departmentScopes?.[0] ??
-        "",
-    ).trim();
+    const deptCode = normalizeDepartmentCode(
+      String(
+        row.values.departmentCode ??
+          row.values.prodi ??
+          row.values.department ??
+          user.departmentScopes?.[0] ??
+          "",
+      ),
+    );
     const rawCredits = row.values.credits ?? row.values.sks ?? 3;
     const creditsNum = Number(rawCredits);
     const issues: string[] = [];

@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Building2,
   ShieldCheck,
@@ -8,20 +14,20 @@ import {
   Plus,
   Pencil,
   Trash2,
-  X,
-  Users,
-  CheckCircle2,
-  AlertCircle,
-  FileSpreadsheet,
-  ArrowUp,
-  Check,
   UserPlus,
 } from "lucide-react";
-import { api, Loading, Notice, Pagination, usePagination, Modal } from "./lib";
+import {
+  api,
+  Action,
+  Loading,
+  Notice,
+  Pagination,
+  usePagination,
+  Modal,
+} from "./lib";
 import { confirmAction } from "./confirm";
 import { notifyAction } from "./feedback";
 import {
-  UAY_DEPARTMENTS,
   formatDepartmentDisplay,
   normalizeDepartmentCode,
 } from "../../../packages/shared/src/departments";
@@ -32,10 +38,8 @@ interface DepartmentRecord {
   name: string;
   faculty?: string | null;
   isActive: boolean;
-  createdAt?: string;
   updatedAt?: string;
 }
-
 interface UserRecord {
   id: string;
   name: string;
@@ -44,10 +48,202 @@ interface UserRecord {
   identifierValue: string;
   identifierType: string;
   role: string;
-  userType: string;
   departmentScopes: string[];
   status: string;
   lastLoginAt?: string | null;
+  ssoUserId: string;
+  authoritySource: string;
+  authorityVersion: string;
+  updatedAt?: string;
+}
+const roleNames: Record<string, string> = {
+  SUPER_ADMIN: "Super Admin",
+  DEPARTMENT_ADMIN: "Admin Prodi / Kaprodi / Dekan",
+  INSTRUCTOR: "Dosen",
+};
+const initialDept = { code: "", name: "", faculty: "", isActive: true };
+const initialUser = {
+  identifierValue: "",
+  identifierType: "NIDN",
+  name: "",
+  email: "",
+  role: "DEPARTMENT_ADMIN",
+  departmentScopes: [] as string[],
+};
+const isPreprovisioned = (u: UserRecord) =>
+  u.ssoUserId.startsWith("preprovision:") && !u.lastLoginAt;
+
+function RoleField({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="governance-field">
+      Peran
+      <select
+        aria-label="Peran"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        {Object.entries(roleNames).map(([role, name]) => (
+          <option key={role} value={role}>
+            {name}
+          </option>
+        ))}
+      </select>
+      <small>
+        {value === "SUPER_ADMIN"
+          ? "Akses seluruh universitas, termasuk pengaturan otoritas pengguna."
+          : value === "DEPARTMENT_ADMIN"
+            ? "Mengelola kelas dan membantu konten pada prodi terpilih. Penilaian tetap menjadi wewenang dosen pengampu."
+            : "Mengajar kelas yang diampu. Lingkup prodi tidak memberikan wewenang penilaian pada kelas lain."}
+      </small>
+    </label>
+  );
+}
+
+function ScopePicker({
+  departments,
+  value,
+  onChange,
+  existing = [],
+  role,
+}: {
+  departments: DepartmentRecord[];
+  value: string[];
+  onChange: (value: string[]) => void;
+  existing?: string[];
+  role?: string;
+}) {
+  const [filterQuery, setFilterQuery] = useState("");
+
+  if (role === "SUPER_ADMIN") {
+    return (
+      <div className="governance-scope-admin-note" role="note">
+        <ShieldCheck size={20} />
+        <div>
+          <strong>Akses Menyeluruh (Super Admin)</strong>
+          <p>
+            Super Admin otomatis memiliki wewenang penuh di seluruh program studi tanpa perlu memilih cakupan individual.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const visible = departments.filter(
+    (d) => d.isActive || existing.includes(d.code),
+  );
+  const q = filterQuery.trim().toLowerCase();
+  const filtered = q
+    ? visible.filter(
+        (d) =>
+          d.code.toLowerCase().includes(q) || d.name.toLowerCase().includes(q),
+      )
+    : visible;
+
+  return (
+    <fieldset className="governance-scopes">
+      <legend>Program studi yang dikelola ({value.length} terpilih)</legend>
+      <div className="governance-scope-header">
+        <div className="governance-actions">
+          <button
+            type="button"
+            className="secondary"
+            title="Pilih semua prodi aktif"
+            onClick={() =>
+              onChange([
+                ...new Set([
+                  ...value,
+                  ...departments.filter((d) => d.isActive).map((d) => d.code),
+                ]),
+              ])
+            }
+          >
+            Pilih Semua
+          </button>
+          <button
+            type="button"
+            className="secondary"
+            title="Kosongkan pilihan"
+            onClick={() => onChange([])}
+          >
+            Kosongkan
+          </button>
+        </div>
+        {visible.length > 4 && (
+          <div className="governance-scope-search">
+            <Search size={14} aria-hidden="true" />
+            <input
+              type="search"
+              aria-label="Filter program studi"
+              placeholder="Cari prodi (kode atau nama)…"
+              value={filterQuery}
+              onChange={(e) => setFilterQuery(e.target.value)}
+            />
+          </div>
+        )}
+      </div>
+      <div className="governance-scope-grid">
+        {filtered.map((d) => (
+          <label
+            key={d.id}
+            className={`governance-scope ${value.includes(d.code) ? "selected" : ""}`}
+          >
+            <input
+              type="checkbox"
+              checked={value.includes(d.code)}
+              onChange={(e) =>
+                onChange(
+                  e.target.checked
+                    ? [...value, d.code]
+                    : value.filter((code) => code !== d.code),
+                )
+              }
+            />
+            <span className="governance-scope-text">
+              <span className="governance-scope-code">{d.code}</span>
+              <span className="governance-scope-name">{d.name}</span>
+              {!d.isActive && (
+                <small className="governance-scope-status">
+                  Tidak aktif · penugasan sebelumnya
+                </small>
+              )}
+            </span>
+          </label>
+        ))}
+        {Boolean(q) && !filtered.length && (
+          <p className="governance-scope-empty">
+            Tidak ada program studi yang cocok dengan "{filterQuery}".
+          </p>
+        )}
+      </div>
+      {value
+        .filter((code) => !departments.some((d) => d.code === code))
+        .map((code) => (
+          <label key={code} className="governance-scope selected">
+            <input
+              type="checkbox"
+              checked
+              onChange={() => onChange(value.filter((v) => v !== code))}
+            />
+            <span className="governance-scope-text">
+              <span className="governance-scope-code">{code}</span>
+              <small className="governance-scope-status">
+                Prodi belum terdaftar. Hapus pilihan atau daftarkan prodinya
+                sebelum menyimpan.
+              </small>
+            </span>
+          </label>
+        ))}
+      {!visible.length && (
+        <p>Belum ada prodi aktif. Tambahkan program studi terlebih dahulu.</p>
+      )}
+    </fieldset>
+  );
 }
 
 export function DepartmentGovernancePage({
@@ -56,1683 +252,956 @@ export function DepartmentGovernancePage({
   user: any;
   config?: any;
 }) {
-  const [activeTab, setActiveTab] = useState<"PRODI" | "MANUAL" | "SIAKAD">("PRODI");
-
-  // ==========================================
-  // STATE: CRUD DEPARTMENTS (PROGRAM STUDI)
-  // ==========================================
+  const [activeTab, setActiveTab] = useState<"PRODI" | "MANUAL" | "SIAKAD">(
+    "PRODI",
+  );
   const [departments, setDepartments] = useState<DepartmentRecord[]>([]);
-  const [loadingDepts, setLoadingDepts] = useState(false);
-  const [deptError, setDeptError] = useState<Error | null>(null);
-  const [deptSearch, setDeptSearch] = useState("");
-  const [editingDept, setEditingDept] = useState<DepartmentRecord | null>(null);
-  const [isCreatingDept, setIsCreatingDept] = useState(false);
-  const [deptFormCode, setDeptFormCode] = useState("");
-  const [deptFormName, setDeptFormName] = useState("");
-  const [deptFormFaculty, setDeptFormFaculty] = useState("");
-  const [deptFormIsActive, setDeptFormIsActive] = useState(true);
-  const [savingDept, setSavingDept] = useState(false);
-  const [deptNotice, setDeptNotice] = useState<string | null>(null);
-
-  // ==========================================
-  // STATE: USER SCOPE ASSIGNMENT & REGISTRATION
-  // ==========================================
   const [users, setUsers] = useState<UserRecord[]>([]);
+  const [loadingDepts, setLoadingDepts] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [deptError, setDeptError] = useState<Error | null>(null);
   const [userError, setUserError] = useState<Error | null>(null);
+  const [deptSearch, setDeptSearch] = useState("");
   const [userSearch, setUserSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
+  const [deptForm, setDeptForm] = useState(initialDept);
+  const [editingDept, setEditingDept] = useState<DepartmentRecord | null>(null);
+  const [showDeptForm, setShowDeptForm] = useState(false);
+  const [deptSaveError, setDeptSaveError] = useState<Error | null>(null);
+  const [savingDept, setSavingDept] = useState(false);
   const [editingUser, setEditingUser] = useState<UserRecord | null>(null);
   const [selectedScopes, setSelectedScopes] = useState<string[]>([]);
-  const [selectedRole, setSelectedRole] = useState<string>("DEPARTMENT_ADMIN");
-  const [savingUser, setSavingUser] = useState(false);
-  const [userSuccess, setUserSuccess] = useState<string | null>(null);
+  const [selectedRole, setSelectedRole] = useState("DEPARTMENT_ADMIN");
   const [userSaveError, setUserSaveError] = useState<Error | null>(null);
-
-  // Form State: Daftarkan Dosen / Staf Baru Manual (Pra-registrasi)
-  const [isCreatingUser, setIsCreatingUser] = useState(false);
-  const [createUserIdentifier, setCreateUserIdentifier] = useState("");
-  const [createUserIdentifierType, setCreateUserIdentifierType] = useState<"NIDN" | "NIP" | "OTHER">("NIDN");
-  const [createUserName, setCreateUserName] = useState("");
-  const [createUserEmail, setCreateUserEmail] = useState("");
-  const [createUserRole, setCreateUserRole] = useState("DEPARTMENT_ADMIN");
-  const [createUserScopes, setCreateUserScopes] = useState<string[]>([]);
-  const [savingCreateUser, setSavingCreateUser] = useState(false);
-
-  // ==========================================
-  // STATE: SIAKAD SYNC BRIDGE
-  // ==========================================
+  const [savingUser, setSavingUser] = useState(false);
+  const [showCreateUser, setShowCreateUser] = useState(false);
+  const [createUser, setCreateUser] = useState(initialUser);
   const [siakadPayloadText, setSiakadPayloadText] = useState("");
   const [siakadSyncing, setSiakadSyncing] = useState(false);
-  const [siakadResult, setSiakadResult] = useState<any | null>(null);
+  const [siakadResult, setSiakadResult] = useState<any>(null);
   const [siakadError, setSiakadError] = useState<Error | null>(null);
+  const pending = useRef(new Set<string>());
+  const deptRequest = useRef(0),
+    userRequest = useRef(0);
 
-  // ------------------------------------------
-  // FETCH DEPARTMENTS
-  // ------------------------------------------
-  const fetchDepartments = async () => {
+  const fetchDepartments = useCallback(async () => {
+    const request = ++deptRequest.current;
     setLoadingDepts(true);
     setDeptError(null);
     try {
-      const res = await api<DepartmentRecord[]>(
-        `/system/departments?includeInactive=true`,
+      const data = await api<DepartmentRecord[]>(
+        "/system/departments?includeInactive=true",
       );
-      setDepartments(res || []);
-    } catch (err: any) {
-      setDeptError(err);
-      if (departments.length === 0) {
-        setDepartments(
-          UAY_DEPARTMENTS.map((d) => ({
-            id: d.code,
-            code: d.code,
-            name: d.name,
-            faculty: d.faculty,
-            isActive: true,
-          })),
-        );
-      }
+      if (request === deptRequest.current) setDepartments(data);
+    } catch (error) {
+      if (request === deptRequest.current) setDeptError(error as Error);
     } finally {
-      setLoadingDepts(false);
+      if (request === deptRequest.current) setLoadingDepts(false);
     }
-  };
-
-  // ------------------------------------------
-  // FETCH USERS
-  // ------------------------------------------
-  const fetchUsers = async () => {
+  }, []);
+  const fetchUsers = useCallback(async () => {
+    const request = ++userRequest.current;
     setLoadingUsers(true);
     setUserError(null);
+    const params = new URLSearchParams();
+    if (userSearch.trim()) params.set("q", userSearch.trim());
+    if (roleFilter !== "ALL") params.set("role", roleFilter);
     try {
-      const params = new URLSearchParams();
-      if (userSearch.trim()) params.set("q", userSearch.trim());
-      if (roleFilter !== "ALL") params.set("role", roleFilter);
-      const res = await api<UserRecord[]>(
-        `/system/department-scopes/users?${params.toString()}`,
+      const data = await api<UserRecord[]>(
+        `/system/department-scopes/users?${params}`,
       );
-      setUsers(res || []);
-    } catch (err: any) {
-      setUserError(err);
+      if (request === userRequest.current) setUsers(data);
+    } catch (error) {
+      if (request === userRequest.current) setUserError(error as Error);
     } finally {
-      setLoadingUsers(false);
+      if (request === userRequest.current) setLoadingUsers(false);
     }
-  };
-
+  }, [userSearch, roleFilter]);
   useEffect(() => {
-    fetchDepartments();
-    fetchUsers();
-  }, []);
+    if (user.role === "SUPER_ADMIN") void fetchDepartments();
+    return () => {
+      deptRequest.current++;
+    };
+  }, [user.role, fetchDepartments]);
+  useEffect(() => {
+    if (user.role !== "SUPER_ADMIN") return;
+    setLoadingUsers(true);
+    const timer = setTimeout(() => void fetchUsers(), 250);
+    return () => {
+      clearTimeout(timer);
+      userRequest.current++;
+    };
+  }, [user.role, fetchUsers]);
 
-  // Filtered Departments for client search & pagination
   const filteredDepartments = useMemo(() => {
     const q = deptSearch.trim().toLowerCase();
-    if (!q) return departments;
-    return departments.filter(
-      (d) =>
-        d.code.toLowerCase().includes(q) ||
-        d.name.toLowerCase().includes(q) ||
-        (d.faculty && d.faculty.toLowerCase().includes(q)),
+    return departments.filter((d) =>
+      `${d.code} ${d.name} ${d.faculty ?? ""}`.toLowerCase().includes(q),
     );
   }, [departments, deptSearch]);
-
   const deptPagination = usePagination(filteredDepartments, 10);
-
-  // Filtered Users for pagination
   const userPagination = usePagination(users, 10);
 
-  // ------------------------------------------
-  // CRUD HANDLERS: DEPARTMENTS
-  // ------------------------------------------
-  const openCreateDeptForm = () => {
-    setEditingDept(null);
-    setIsCreatingDept(true);
-    setDeptFormCode("");
-    setDeptFormName("");
-    setDeptFormFaculty("");
-    setDeptFormIsActive(true);
-    setDeptNotice(null);
+  const openDept = (dept?: DepartmentRecord) => {
+    setEditingDept(dept ?? null);
+    setDeptForm(
+      dept
+        ? {
+            code: dept.code,
+            name: dept.name,
+            faculty: dept.faculty ?? "",
+            isActive: dept.isActive,
+          }
+        : initialDept,
+    );
+    setDeptSaveError(null);
+    setShowDeptForm(true);
   };
-
-  const openEditDeptForm = (dept: DepartmentRecord) => {
-    setIsCreatingDept(false);
-    setEditingDept(dept);
-    setDeptFormCode(dept.code);
-    setDeptFormName(dept.name);
-    setDeptFormFaculty(dept.faculty || "");
-    setDeptFormIsActive(dept.isActive);
-    setDeptNotice(null);
-  };
-
-  const cancelDeptForm = () => {
-    setIsCreatingDept(false);
-    setEditingDept(null);
-  };
-
-  const saveDepartment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!deptFormCode.trim() || !deptFormName.trim()) return;
-
+  const saveDepartment = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (pending.current.has("department")) return;
+    pending.current.add("department");
     setSavingDept(true);
-    setDeptNotice(null);
+    setDeptSaveError(null);
     try {
-      if (isCreatingDept) {
-        await api("/system/departments", "POST", {
-          code: normalizeDepartmentCode(deptFormCode),
-          name: deptFormName.trim(),
-          faculty: deptFormFaculty.trim() || undefined,
-          isActive: deptFormIsActive,
-        });
-        const msg = `Program Studi ${deptFormCode.toUpperCase()} berhasil ditambahkan.`;
-        setDeptNotice(msg);
-        notifyAction(msg);
-      } else if (editingDept) {
-        await api(`/system/departments/${editingDept.id}`, "PUT", {
-          code: normalizeDepartmentCode(deptFormCode),
-          name: deptFormName.trim(),
-          faculty: deptFormFaculty.trim() || null,
-          isActive: deptFormIsActive,
-        });
-        const msg = `Program Studi ${deptFormCode.toUpperCase()} berhasil diperbarui.`;
-        setDeptNotice(msg);
-        notifyAction(msg);
-      }
-      setIsCreatingDept(false);
-      setEditingDept(null);
+      const code = normalizeDepartmentCode(deptForm.code);
+      await api(
+        editingDept
+          ? `/system/departments/${editingDept.id}`
+          : "/system/departments",
+        editingDept ? "PUT" : "POST",
+        {
+          ...deptForm,
+          code,
+          faculty: deptForm.faculty.trim() || (editingDept ? null : undefined),
+          expectedUpdatedAt: editingDept?.updatedAt,
+        },
+      );
+      notifyAction(
+        `Program studi ${code} berhasil ${editingDept ? "diperbarui" : "ditambahkan"}.`,
+      );
+      setShowDeptForm(false);
       await fetchDepartments();
-    } catch (err: any) {
-      setDeptError(err);
+    } catch (error) {
+      setDeptSaveError(error as Error);
     } finally {
+      pending.current.delete("department");
       setSavingDept(false);
     }
   };
-
   const deleteDepartment = async (dept: DepartmentRecord) => {
-    const ok = await confirmAction(
-      `Hapus atau nonaktifkan Program Studi ${dept.code} (${dept.name})? Tindakan ini akan menjaga integritas riwayat kelas yang sudah ada.`,
-    );
-    if (!ok) return;
-
-    try {
-      const res = await api<any>(`/system/departments/${dept.id}`, "DELETE");
-      const msg = res?.message || `Program studi ${dept.code} berhasil diperbarui.`;
-      setDeptNotice(msg);
-      notifyAction(msg);
-      await fetchDepartments();
-    } catch (err: any) {
-      setDeptError(err);
-    }
+    if (
+      !(await confirmAction(
+        `Hapus program studi ${dept.code} (${dept.name})? Jika masih dirujuk kelas, pengguna, atau pengumuman, prodi akan dinonaktifkan dan riwayatnya dipertahankan.`,
+      ))
+    )
+      return false;
+    const result = await api<any>(`/system/departments/${dept.id}`, "DELETE");
+    notifyAction(result.message);
+    await fetchDepartments();
   };
-
-  // ------------------------------------------
-  // HANDLERS: USER SCOPES
-  // ------------------------------------------
-  const startEditUser = (u: UserRecord) => {
-    setEditingUser(u);
-    setSelectedScopes([...(u.departmentScopes || [])]);
-    setSelectedRole(u.role);
+  const openUser = (u?: UserRecord) => {
     setUserSaveError(null);
-    setUserSuccess(null);
-  };
-
-  const cancelEditUser = () => {
-    setEditingUser(null);
-    setUserSaveError(null);
-  };
-
-  const toggleScope = (code: string) => {
-    const norm = normalizeDepartmentCode(code);
-    if (selectedScopes.includes(norm)) {
-      setSelectedScopes(selectedScopes.filter((s) => s !== norm));
+    if (u) {
+      setEditingUser(u);
+      setSelectedRole(u.role);
+      setSelectedScopes([...u.departmentScopes]);
     } else {
-      setSelectedScopes([...selectedScopes, norm]);
+      setCreateUser(initialUser);
+      setShowCreateUser(true);
     }
   };
-
-  const selectAllScopes = () => {
-    const allActive = departments
-      .filter((d) => d.isActive)
-      .map((d) => normalizeDepartmentCode(d.code));
-    setSelectedScopes(allActive);
-  };
-
-  const clearAllScopes = () => {
-    setSelectedScopes([]);
-  };
-
-  const saveUserScopes = async () => {
-    if (!editingUser) return;
+  const saveUser = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (pending.current.has("user")) return;
+    pending.current.add("user");
     setSavingUser(true);
     setUserSaveError(null);
-    setUserSuccess(null);
     try {
-      await api(`/system/department-scopes/users/${editingUser.id}`, "PUT", {
-        departmentScopes: selectedScopes,
-        role: selectedRole,
-      });
-      const msg = `Otoritas prodi untuk ${editingUser.name} berhasil disimpan.`;
-      setUserSuccess(msg);
-      notifyAction(msg);
-      setEditingUser(null);
+      if (editingUser) {
+        await api(`/system/department-scopes/users/${editingUser.id}`, "PUT", {
+          role: selectedRole,
+          departmentScopes: selectedScopes,
+          expectedAuthorityVersion: editingUser.authorityVersion,
+        });
+        notifyAction(`Otoritas untuk ${editingUser.name} berhasil disimpan.`);
+        setEditingUser(null);
+      } else {
+        const result = await api<any>(
+          "/system/department-scopes/users",
+          "POST",
+          createUser,
+        );
+        notifyAction(result.message);
+        setShowCreateUser(false);
+      }
       await fetchUsers();
-    } catch (err: any) {
-      setUserSaveError(err);
+    } catch (error) {
+      setUserSaveError(error as Error);
     } finally {
+      pending.current.delete("user");
       setSavingUser(false);
     }
   };
-
-  // ------------------------------------------
-  // HANDLERS: MANUAL USER REGISTRATION (PRE-PROVISION)
-  // ------------------------------------------
-  const openCreateUserForm = () => {
-    setEditingUser(null);
-    setIsCreatingUser(true);
-    setCreateUserIdentifier("");
-    setCreateUserIdentifierType("NIDN");
-    setCreateUserName("");
-    setCreateUserEmail("");
-    setCreateUserRole("DEPARTMENT_ADMIN");
-    setCreateUserScopes([]);
-    setUserSuccess(null);
-    setUserSaveError(null);
-  };
-
-  const cancelCreateUser = () => {
-    setIsCreatingUser(false);
-    setUserSaveError(null);
-  };
-
-  const toggleCreateScope = (code: string) => {
-    const norm = normalizeDepartmentCode(code);
-    if (createUserScopes.includes(norm)) {
-      setCreateUserScopes(createUserScopes.filter((s) => s !== norm));
-    } else {
-      setCreateUserScopes([...createUserScopes, norm]);
-    }
-  };
-
-  const selectAllCreateScopes = () => {
-    const allActive = departments
-      .filter((d) => d.isActive)
-      .map((d) => normalizeDepartmentCode(d.code));
-    setCreateUserScopes(allActive);
-  };
-
-  const clearAllCreateScopes = () => {
-    setCreateUserScopes([]);
-  };
-
-  const handleCreateUser = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!createUserIdentifier.trim() || !createUserName.trim() || !createUserEmail.trim()) return;
-
-    setSavingCreateUser(true);
-    setUserSaveError(null);
-    setUserSuccess(null);
-    try {
-      const res = await api<any>("/system/department-scopes/users", "POST", {
-        identifierValue: createUserIdentifier.trim(),
-        identifierType: createUserIdentifierType,
-        name: createUserName.trim(),
-        email: createUserEmail.trim().toLowerCase(),
-        role: createUserRole,
-        departmentScopes: createUserScopes,
-      });
-
-      const msg = res?.message || `Pengguna ${createUserName.trim()} berhasil didaftarkan.`;
-      setUserSuccess(msg);
-      notifyAction(msg);
-      setIsCreatingUser(false);
-      await fetchUsers();
-    } catch (err: any) {
-      setUserSaveError(err);
-    } finally {
-      setSavingCreateUser(false);
-    }
-  };
-
-  const deletePreprovisionedUser = async (u: UserRecord) => {
-    const ok = await confirmAction(
-      `Hapus pendaftaran pengguna ${u.name} (${u.identifierValue})? Tindakan ini hanya dapat dilakukan jika akun belum memiliki riwayat aktivitas.`,
+  const deleteUser = async (u: UserRecord) => {
+    if (
+      !(await confirmAction(
+        `Hapus pra-registrasi ${u.name} (${u.identifierValue})? Akun yang sudah tersambung ke SSO tidak dapat dihapus melalui tindakan ini. Riwayat akademik tetap dipertahankan.`,
+      ))
+    )
+      return false;
+    const result = await api<any>(
+      `/system/department-scopes/users/${u.id}`,
+      "DELETE",
     );
-    if (!ok) return;
-
-    try {
-      const res = await api<any>(`/system/department-scopes/users/${u.id}`, "DELETE");
-      const msg = res?.message || `Pengguna ${u.name} berhasil dihapus.`;
-      setUserSuccess(msg);
-      notifyAction(msg);
-      if (editingUser?.id === u.id) {
-        setEditingUser(null);
-      }
-      await fetchUsers();
-    } catch (err: any) {
-      setUserError(err);
-    }
+    notifyAction(result.message);
+    await fetchUsers();
   };
-
-  // ------------------------------------------
-  // HANDLERS: SIAKAD SYNC BRIDGE
-  // ------------------------------------------
-  const handleFillSiakadSample = () => {
-    const sample = {
-      academicYear: "2026/2027 Ganjil",
-      source: "SIAKAD_API_UAY",
-      assignments: [
-        {
-          identifierValue: "0912058501",
-          departmentScopes: ["IF"],
-          role: "DEPARTMENT_ADMIN",
-          notes: "SK Rektor No. 104/SK/UAY/2026 - Kaprodi Informatika",
-        },
-        {
-          identifierValue: "0915088202",
-          departmentScopes: ["TS"],
-          role: "DEPARTMENT_ADMIN",
-          notes: "SK Rektor No. 105/SK/UAY/2026 - Kaprodi Teknik Sipil",
-        },
-      ],
-    };
-    setSiakadPayloadText(JSON.stringify(sample, null, 2));
-    setSiakadError(null);
+  const updatePayload = (text: string) => {
+    setSiakadPayloadText(text);
     setSiakadResult(null);
+    setSiakadError(null);
   };
-
+  const canApply =
+    siakadResult?.dryRun &&
+    siakadResult.ready > 0 &&
+    siakadResult.notFound === 0;
   const runSiakadSync = async (dryRun: boolean) => {
+    if (pending.current.has("siakad") || (!dryRun && !canApply)) return;
+    pending.current.add("siakad");
     setSiakadSyncing(true);
     setSiakadError(null);
-    setSiakadResult(null);
     try {
-      const parsed = JSON.parse(siakadPayloadText);
-      const res = await api<any>("/system/siakad/sync-scopes", "POST", {
+      if (
+        !dryRun &&
+        !(await confirmAction(
+          `Terapkan penugasan untuk ${siakadResult.ready} pengguna sesuai hasil simulasi? Peran dan lingkup prodi mereka akan diperbarui.`,
+        ))
+      )
+        return;
+      let parsed: any;
+      try {
+        parsed = JSON.parse(siakadPayloadText);
+      } catch {
+        throw new Error(
+          "JSON belum valid. Periksa tanda kutip, koma, dan kurung, lalu jalankan simulasi lagi.",
+        );
+      }
+      if (!dryRun)
+        parsed.assignments = parsed.assignments.map(
+          (assignment: any, index: number) => ({
+            ...assignment,
+            expectedAuthorityVersion:
+              siakadResult.results[index].authorityVersion,
+          }),
+        );
+      const result = await api<any>("/system/siakad/sync-scopes", "POST", {
         ...parsed,
         dryRun,
       });
-      setSiakadResult(res);
+      setSiakadResult(result);
       if (!dryRun) {
+        notifyAction(
+          `${result.updated} penugasan berhasil disimpan; ${result.notFound} identitas tidak ditemukan.`,
+        );
         await fetchUsers();
-        await fetchDepartments();
-        notifyAction("Sinkronisasi SIAKAD berhasil diterapkan ke database.");
       }
-    } catch (err: any) {
-      setSiakadError(err);
+    } catch (error) {
+      setSiakadError(error as Error);
     } finally {
+      pending.current.delete("siakad");
       setSiakadSyncing(false);
     }
   };
 
+  if (user.role !== "SUPER_ADMIN")
+    return (
+      <Notice error="Pengelolaan program studi dan otoritas hanya tersedia untuk Super Admin." />
+    );
   return (
-    <div
-      className="departments-governance-page"
-      style={{ maxWidth: 1040, margin: "0 auto", padding: "20px 12px" }}
-    >
-      {/* Page Heading */}
-      <div className="page-heading" style={{ marginBottom: 20 }}>
+    <div className="departments-governance-page">
+      <div className="page-heading">
         <div>
-          <div
-            className="eyebrow"
-            style={{ display: "flex", alignItems: "center", gap: 6 }}
-          >
-            <Building2 size={15} />
-            Tata Kelola Akademik Universitas
+          <div className="eyebrow">
+            <Building2 size={16} /> Tata Kelola Akademik
           </div>
-          <h1 style={{ margin: "4px 0 0" }}>Program Studi &amp; Otoritas</h1>
-          <p
-            style={{
-              margin: "6px 0 0",
-              color: "var(--muted-foreground, #64748b)",
-              fontSize: "0.95rem",
-            }}
-          >
-            Pusat pengelolaan master program studi, penugasan lingkup prodi bagi
-            Kaprodi dan Dekan, serta jembatan integrasi sistem akademik (SIAKAD).
+          <h1>Program Studi &amp; Otoritas</h1>
+          <p>
+            Kelola program studi, penugasan Kaprodi dan Dekan, serta
+            sinkronisasi dari SIAKAD.
           </p>
         </div>
       </div>
-
-      {/* Navigation Tabs */}
-      <div
-        style={{
-          display: "flex",
-          gap: 8,
-          borderBottom: "1px solid var(--border, #e2e8f0)",
-          paddingBottom: 12,
-          marginBottom: 24,
-          flexWrap: "wrap",
-        }}
-      >
-        <button
-          type="button"
-          className={`button ${activeTab === "PRODI" ? "primary" : "secondary"}`}
-          onClick={() => setActiveTab("PRODI")}
-        >
-          <Building2 size={16} />
-          <span>Master Program Studi (CRUD)</span>
-        </button>
-        <button
-          type="button"
-          className={`button ${activeTab === "MANUAL" ? "primary" : "secondary"}`}
-          onClick={() => setActiveTab("MANUAL")}
-        >
-          <ShieldCheck size={16} />
-          <span>Otoritas Kaprodi &amp; Dekan</span>
-        </button>
-        <button
-          type="button"
-          className={`button ${activeTab === "SIAKAD" ? "primary" : "secondary"}`}
-          onClick={() => setActiveTab("SIAKAD")}
-        >
-          <Code size={16} />
-          <span>Bridge Integrasi SIAKAD</span>
-        </button>
+      <div className="governance-tabs" aria-label="Bagian tata kelola">
+        {(
+          [
+            ["PRODI", Building2, "Master Program Studi"],
+            ["MANUAL", ShieldCheck, "Otoritas Kaprodi & Dekan"],
+            ["SIAKAD", Code, "Integrasi SIAKAD"],
+          ] as const
+        ).map(([tab, Icon, title]) => (
+          <button
+            key={tab}
+            type="button"
+            aria-pressed={activeTab === tab}
+            className={activeTab === tab ? "primary" : "secondary"}
+            onClick={() => setActiveTab(tab)}
+          >
+            <Icon size={18} />
+            {title}
+          </button>
+        ))}
       </div>
 
-      {/* ========================================================= */}
-      {/* TAB 1: MASTER PROGRAM STUDI CRUD                          */}
-      {/* ========================================================= */}
       {activeTab === "PRODI" && (
-        <div>
-          {/* MODAL TAMBAH / EDIT PROGRAM STUDI */}
-          {(isCreatingDept || editingDept) && (
-            <Modal
-              title={
-                isCreatingDept
-                  ? "Tambah Program Studi Baru"
-                  : `Edit Program Studi: ${editingDept?.code}`
-              }
-              onClose={cancelDeptForm}
-              busy={savingDept}
-            >
-              <form onSubmit={saveDepartment}>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                    gap: 16,
-                    marginBottom: 16,
-                  }}
-                >
-                  <div>
-                    <label
-                      style={{
-                        display: "block",
-                        fontWeight: 600,
-                        fontSize: "0.88rem",
-                        marginBottom: 6,
-                      }}
-                    >
-                      Kode Program Studi *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Contoh: IF, TS, TI, MAN..."
-                      value={deptFormCode}
-                      onChange={(e) => setDeptFormCode(e.target.value.toUpperCase())}
-                      disabled={savingDept}
-                      style={{ width: "100%", textTransform: "uppercase" }}
-                    />
-                    <small
-                      style={{
-                        color: "var(--muted-foreground, #64748b)",
-                        display: "block",
-                        marginTop: 4,
-                      }}
-                    >
-                      Harus unik dan menjadi rujukan sistem kelas/SIAKAD.
-                    </small>
-                  </div>
-
-                  <div>
-                    <label
-                      style={{
-                        display: "block",
-                        fontWeight: 600,
-                        fontSize: "0.88rem",
-                        marginBottom: 6,
-                      }}
-                    >
-                      Nama Lengkap Program Studi *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Contoh: Informatika, Teknik Sipil..."
-                      value={deptFormName}
-                      onChange={(e) => setDeptFormName(e.target.value)}
-                      disabled={savingDept}
-                      style={{ width: "100%" }}
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      style={{
-                        display: "block",
-                        fontWeight: 600,
-                        fontSize: "0.88rem",
-                        marginBottom: 6,
-                      }}
-                    >
-                      Fakultas / Unit Pengampu (Opsional)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Contoh: Fakultas Teknik"
-                      value={deptFormFaculty}
-                      onChange={(e) => setDeptFormFaculty(e.target.value)}
-                      disabled={savingDept}
-                      style={{ width: "100%" }}
-                    />
-                  </div>
-                </div>
-
-                <div style={{ marginBottom: 20 }}>
-                  <label
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 10,
-                      cursor: "pointer",
-                      userSelect: "none",
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={deptFormIsActive}
-                      onChange={(e) => setDeptFormIsActive(e.target.checked)}
-                      disabled={savingDept}
-                    />
-                    <span style={{ fontWeight: 600, fontSize: "0.9rem" }}>
-                      Status Aktif (Tersedia untuk pembukaan kelas dan penugasan Kaprodi)
-                    </span>
-                  </label>
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
-                  <button
-                    type="button"
-                    className="button secondary"
-                    onClick={cancelDeptForm}
-                    disabled={savingDept}
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    className="button primary"
-                    disabled={savingDept}
-                  >
-                    {savingDept ? (
-                      <>
-                        <Loading />
-                        <span style={{ marginLeft: 8 }}>Menyimpan...</span>
-                      </>
-                    ) : isCreatingDept ? (
-                      "Tambahkan Program Studi"
-                    ) : (
-                      "Simpan Perubahan"
-                    )}
-                  </button>
-                </div>
-              </form>
-            </Modal>
-          )}
-
-          {/* TOOLBAR FILTER & AKSI MASTER PRODI */}
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 12,
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 16,
-            }}
-          >
-            <div style={{ position: "relative", flex: "1 1 300px" }}>
+        <section aria-label="Master program studi">
+          <div className="governance-toolbar">
+            <label className="governance-search">
+              <Search size={18} aria-hidden="true" />
               <input
-                type="text"
-                placeholder="Cari kode, nama prodi, atau fakultas..."
+                aria-label="Cari program studi"
+                placeholder="Cari kode, nama prodi, atau fakultas"
                 value={deptSearch}
                 onChange={(e) => {
                   setDeptSearch(e.target.value);
                   deptPagination.setPage(1);
                 }}
-                style={{ width: "100%", paddingLeft: 36 }}
               />
-              <Search
-                size={16}
-                style={{
-                  position: "absolute",
-                  left: 11,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  color: "var(--muted-foreground, #64748b)",
-                }}
-              />
-            </div>
-
-            <div style={{ display: "flex", gap: 8 }}>
+            </label>
+            <div className="governance-actions">
+              <Action
+                run={fetchDepartments}
+                disabled={loadingDepts}
+                className="secondary"
+                busyLabel="Memuat…"
+              >
+                <RefreshCw size={16} />
+                Segarkan
+              </Action>
               <button
                 type="button"
-                className="button secondary"
-                onClick={fetchDepartments}
-                title="Muat ulang data program studi"
+                className="primary"
+                onClick={() => openDept()}
               >
-                <RefreshCw size={15} />
-                <span>Segarkan</span>
+                <Plus size={18} />
+                Tambah Program Studi
               </button>
-              {!isCreatingDept && !editingDept && (
-                <button
-                  type="button"
-                  className="button primary"
-                  onClick={openCreateDeptForm}
-                >
-                  <Plus size={16} />
-                  <span>Tambah Program Studi</span>
-                </button>
-              )}
             </div>
           </div>
-
-          {deptNotice && (
-            <div
-              className="notice success"
-              style={{
-                padding: "10px 14px",
-                marginBottom: 16,
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <CheckCircle2 size={18} />
-              <span>{deptNotice}</span>
-            </div>
-          )}
-
           {deptError && <Notice error={deptError} />}
-
-          {/* TABEL MASTER PROGRAM STUDI */}
           {loadingDepts ? (
-            <div style={{ padding: 40, textAlign: "center" }}>
+            <div className="governance-loading" role="status">
               <Loading />
-              <p style={{ marginTop: 10, color: "var(--muted-foreground, #64748b)" }}>
-                Memuat daftar program studi...
-              </p>
-            </div>
-          ) : filteredDepartments.length === 0 ? (
-            <div
-              style={{
-                padding: "40px 20px",
-                textAlign: "center",
-                border: "1px dashed var(--border, #cbd5e1)",
-                borderRadius: 12,
-              }}
-            >
-              <Building2
-                size={36}
-                style={{ color: "var(--muted-foreground, #94a3b8)", marginBottom: 8 }}
-              />
-              <p style={{ fontWeight: 600 }}>Tidak ada program studi yang cocok</p>
-              <p style={{ fontSize: "0.86rem", color: "var(--muted-foreground, #64748b)" }}>
-                {deptSearch
-                  ? "Coba gunakan kata kunci pencarian yang lain."
-                  : "Belum ada program studi yang tersimpan di sistem."}
-              </p>
+              Memuat program studi…
             </div>
           ) : (
             <>
               <div className="card table-wrap phone-record-table">
-                <table style={{ width: "100%" }}>
+                <table>
                   <thead>
                     <tr>
-                      <th scope="col" style={{ width: 110 }}>Kode</th>
+                      <th scope="col">Kode</th>
                       <th scope="col">Nama Program Studi</th>
                       <th scope="col">Fakultas / Unit</th>
-                      <th scope="col" style={{ width: 110 }}>Status</th>
-                      <th scope="col" style={{ textAlign: "right", width: 140 }}>Aksi</th>
+                      <th scope="col">Status</th>
+                      <th scope="col">Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {deptPagination.paginatedItems.map((dept) => {
-                      const isEditing = editingDept?.id === dept.id;
-                      return (
-                        <tr
-                          key={dept.id}
-                          style={{
-                            backgroundColor: isEditing
-                              ? "rgba(2, 132, 199, 0.05)"
-                              : undefined,
-                          }}
-                        >
-                          <td data-label="Kode">
-                            <span
-                              style={{
-                                display: "inline-block",
-                                padding: "3px 8px",
-                                borderRadius: 6,
-                                background: "var(--surface-muted, #f1f5f9)",
-                                fontWeight: 700,
-                                fontFamily: "monospace",
-                                fontSize: "0.88rem",
-                              }}
+                    {deptPagination.paginatedItems.map((dept) => (
+                      <tr key={dept.id}>
+                        <td data-label="Kode">
+                          <strong>{dept.code}</strong>
+                        </td>
+                        <td data-label="Nama Program Studi">{dept.name}</td>
+                        <td data-label="Fakultas / Unit">
+                          {dept.faculty || "Universitas Achmad Yani"}
+                        </td>
+                        <td data-label="Status">
+                          <span
+                            className={`pill ${dept.isActive ? "success" : "neutral"}`}
+                          >
+                            {dept.isActive ? "Aktif" : "Tidak aktif"}
+                          </span>
+                        </td>
+                        <td data-label="Aksi" className="record-actions">
+                          <div className="governance-actions">
+                            <button
+                              type="button"
+                              className="secondary"
+                              onClick={() => openDept(dept)}
+                              aria-label={`Edit program studi ${dept.code}`}
                             >
-                              {dept.code}
-                            </span>
-                          </td>
-                          <td data-label="Nama Program Studi">
-                            <div style={{ fontWeight: 600 }}>{dept.name}</div>
-                          </td>
-                          <td data-label="Fakultas / Unit">
-                            <span style={{ color: "var(--muted-foreground, #64748b)", fontSize: "0.88rem" }}>
-                              {dept.faculty || "Universitas Achmad Yani"}
-                            </span>
-                          </td>
-                          <td data-label="Status">
-                            <span
-                              style={{
-                                display: "inline-block",
-                                padding: "2px 8px",
-                                borderRadius: 12,
-                                fontSize: "0.75rem",
-                                fontWeight: 600,
-                                background: dept.isActive
-                                  ? "rgba(34, 197, 94, 0.12)"
-                                  : "rgba(239, 68, 68, 0.12)",
-                                color: dept.isActive ? "#16a34a" : "#dc2626",
-                              }}
+                              <Pencil size={16} />
+                              Edit
+                            </button>
+                            <Action
+                              className="danger"
+                              run={() => deleteDepartment(dept)}
+                              label={`Hapus atau nonaktifkan ${dept.code}`}
+                              busyLabel="Memproses…"
                             >
-                              {dept.isActive ? "Aktif" : "Non-aktif"}
-                            </span>
-                          </td>
-                          <td data-label="Aksi" className="record-actions" style={{ textAlign: "right" }}>
-                            <div style={{ display: "inline-flex", gap: 6 }}>
-                              <button
-                                type="button"
-                                className="button secondary compact"
-                                onClick={() => openEditDeptForm(dept)}
-                                title="Edit data program studi"
-                                style={{ padding: "4px 8px", minHeight: 32, height: 32 }}
-                              >
-                                <Pencil size={14} />
-                              </button>
-                              <button
-                                type="button"
-                                className="button danger compact"
-                                onClick={() => deleteDepartment(dept)}
-                                title="Hapus atau nonaktifkan program studi"
-                                style={{ padding: "4px 8px", minHeight: 32, height: 32 }}
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                              <Trash2 size={16} />
+                              Hapus / Nonaktifkan
+                            </Action>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
-
-              {/* PAGINATION MASTER PRODI */}
+              {!filteredDepartments.length && !deptError && (
+                <p className="governance-empty">
+                  {deptSearch
+                    ? "Tidak ada prodi yang cocok. Coba kata kunci lain."
+                    : "Belum ada program studi."}
+                </p>
+              )}
               <Pagination
-                page={deptPagination.page}
-                totalPages={deptPagination.totalPages}
-                totalItems={deptPagination.totalItems}
-                pageSize={deptPagination.pageSize}
+                {...deptPagination}
                 onPageChange={deptPagination.setPage}
                 onPageSizeChange={deptPagination.setPageSize}
               />
             </>
           )}
-        </div>
+        </section>
       )}
 
-      {/* ========================================================= */}
-      {/* TAB 2: OTORITAS KAPRODI & DEKAN                           */}
-      {/* ========================================================= */}
       {activeTab === "MANUAL" && (
-        <div>
-          {/* NOTICE FEEDBACK */}
-          {userSuccess && (
-            <div
-              className="notice success"
-              style={{
-                padding: "10px 14px",
-                marginBottom: 16,
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <CheckCircle2 size={18} />
-              <span>{userSuccess}</span>
-            </div>
-          )}
-
-          {userError && <Notice error={userError} />}
-
-          {/* MODAL DAFTARKAN DOSEN / STAF BARU (MANUAL PRE-PROVISION) */}
-          {isCreatingUser && (
-            <Modal
-              wide
-              title="Daftarkan Dosen / Kaprodi Baru"
-              onClose={cancelCreateUser}
-              busy={savingCreateUser}
-            >
-              <form onSubmit={handleCreateUser}>
-                <p
-                  style={{
-                    fontSize: "0.85rem",
-                    color: "var(--muted-foreground, #64748b)",
-                    margin: "0 0 16px",
-                  }}
-                >
-                  Mendaftarkan identitas dosen ke pangkalan data E-Learning agar dapat langsung ditetapkan sebagai Kaprodi/Dekan sebelum mereka login pertama kali via SSO.
-                </p>
-
-                {userSaveError && (
-                  <div style={{ marginBottom: 16 }}>
-                    <Notice error={userSaveError} />
-                  </div>
-                )}
-
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                    gap: 16,
-                    marginBottom: 16,
-                  }}
-                >
-                  <div>
-                    <label
-                      style={{
-                        display: "block",
-                        fontWeight: 600,
-                        fontSize: "0.88rem",
-                        marginBottom: 6,
-                      }}
-                    >
-                      Nomor Identitas (NIDN / NIP) *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Contoh: 1112089001"
-                      value={createUserIdentifier}
-                      onChange={(e) => setCreateUserIdentifier(e.target.value)}
-                      disabled={savingCreateUser}
-                      style={{ width: "100%" }}
-                    />
-                    <small style={{ color: "var(--muted-foreground, #64748b)", display: "block", marginTop: 4 }}>
-                      Sesuai dengan NIDN/NIP di SSO atau SIAKAD kampus.
-                    </small>
-                  </div>
-
-                  <div>
-                    <label
-                      style={{
-                        display: "block",
-                        fontWeight: 600,
-                        fontSize: "0.88rem",
-                        marginBottom: 6,
-                      }}
-                    >
-                      Jenis Identitas *
-                    </label>
-                    <select
-                      value={createUserIdentifierType}
-                      onChange={(e) => setCreateUserIdentifierType(e.target.value as any)}
-                      disabled={savingCreateUser}
-                      style={{ width: "100%" }}
-                    >
-                      <option value="NIDN">NIDN (Nomor Induk Dosen Nasional)</option>
-                      <option value="NIP">NIP (Nomor Induk Pegawai)</option>
-                      <option value="OTHER">Lainnya / NIK</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label
-                      style={{
-                        display: "block",
-                        fontWeight: 600,
-                        fontSize: "0.88rem",
-                        marginBottom: 6,
-                      }}
-                    >
-                      Nama Lengkap &amp; Gelar *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Contoh: Dr. Budi Santoso, M.Kom."
-                      value={createUserName}
-                      onChange={(e) => setCreateUserName(e.target.value)}
-                      disabled={savingCreateUser}
-                      style={{ width: "100%" }}
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      style={{
-                        display: "block",
-                        fontWeight: 600,
-                        fontSize: "0.88rem",
-                        marginBottom: 6,
-                      }}
-                    >
-                      Email Resmi Kampus *
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      placeholder="Contoh: budi.santoso@uay.ac.id"
-                      value={createUserEmail}
-                      onChange={(e) => setCreateUserEmail(e.target.value)}
-                      disabled={savingCreateUser}
-                      style={{ width: "100%" }}
-                    />
-                  </div>
-                </div>
-
-                <div style={{ marginBottom: 16 }}>
-                  <label
-                    style={{
-                      display: "block",
-                      fontWeight: 600,
-                      fontSize: "0.88rem",
-                      marginBottom: 6,
-                    }}
-                  >
-                    Peran Aplikasi Awal
-                  </label>
-                  <select
-                    value={createUserRole}
-                    onChange={(e) => setCreateUserRole(e.target.value)}
-                    style={{ minWidth: 260, maxWidth: "100%" }}
-                    disabled={savingCreateUser}
-                  >
-                    <option value="DEPARTMENT_ADMIN">
-                      DEPARTMENT_ADMIN (Admin Prodi / Kaprodi / Dekan)
-                    </option>
-                    <option value="INSTRUCTOR">
-                      INSTRUCTOR (Dosen Pengampu Murni)
-                    </option>
-                    <option value="SUPER_ADMIN">
-                      SUPER_ADMIN (Pengelola Sistem Seluruh Universitas)
-                    </option>
-                  </select>
-                </div>
-
-                <div style={{ marginBottom: 20 }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      flexWrap: "wrap",
-                      gap: 8,
-                      marginBottom: 10,
-                    }}
-                  >
-                    <label style={{ fontWeight: 600, fontSize: "0.88rem" }}>
-                      Tugaskan Lingkup Program Studi ({createUserScopes.length} terpilih):
-                    </label>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button
-                        type="button"
-                        className="button secondary compact"
-                        onClick={selectAllCreateScopes}
-                        disabled={savingCreateUser}
-                        style={{ fontSize: "0.78rem", padding: "3px 8px" }}
-                      >
-                        Pilih Semua
-                      </button>
-                      <button
-                        type="button"
-                        className="button secondary compact"
-                        onClick={clearAllCreateScopes}
-                        disabled={savingCreateUser}
-                        style={{ fontSize: "0.78rem", padding: "3px 8px" }}
-                      >
-                        Kosongkan
-                      </button>
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-                      gap: 10,
-                      maxHeight: 240,
-                      overflowY: "auto",
-                      padding: 12,
-                      border: "1px solid var(--border, #cbd5e1)",
-                      borderRadius: 8,
-                      backgroundColor: "var(--surface-muted, #f8fafc)",
-                    }}
-                  >
-                    {departments
-                      .filter((d) => d.isActive)
-                      .map((d) => {
-                        const isChecked = createUserScopes.includes(d.code);
-                        return (
-                          <label
-                            key={d.id}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 8,
-                              padding: "8px 10px",
-                              borderRadius: 6,
-                              backgroundColor: isChecked
-                                ? "rgba(2, 132, 199, 0.08)"
-                                : "var(--surface, #ffffff)",
-                              border: `1px solid ${isChecked ? "var(--primary, #0284c7)" : "var(--border, #e2e8f0)"}`,
-                              cursor: "pointer",
-                              fontSize: "0.85rem",
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={() => toggleCreateScope(d.code)}
-                              disabled={savingCreateUser}
-                            />
-                            <div>
-                              <strong>{d.code}</strong> - {d.name}
-                            </div>
-                          </label>
-                        );
-                      })}
-                  </div>
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 20 }}>
-                  <button
-                    type="button"
-                    className="button secondary"
-                    onClick={cancelCreateUser}
-                    disabled={savingCreateUser}
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    className="button primary"
-                    disabled={savingCreateUser}
-                  >
-                    {savingCreateUser ? (
-                      <>
-                        <Loading />
-                        <span style={{ marginLeft: 8 }}>Mendaftarkan...</span>
-                      </>
-                    ) : (
-                      "Daftarkan Dosen / Kaprodi"
-                    )}
-                  </button>
-                </div>
-              </form>
-            </Modal>
-          )}
-
-          {/* MODAL PENETAPAN OTORITAS PRODI */}
-          {editingUser && (
-            <Modal
-              wide
-              title={`Penetapan Otoritas: ${editingUser.name}`}
-              onClose={cancelEditUser}
-              busy={savingUser}
-            >
-              <div
-                style={{
-                  fontSize: "0.85rem",
-                  color: "var(--muted-foreground, #64748b)",
-                  marginBottom: 16,
-                }}
-              >
-                {editingUser.identifierType}: <strong>{editingUser.identifierValue}</strong> ·{" "}
-                Email: <strong>{editingUser.email}</strong>
-              </div>
-
-              {userSaveError && (
-                <div style={{ marginBottom: 16 }}>
-                  <Notice error={userSaveError} />
-                </div>
-              )}
-
-              <div style={{ marginBottom: 16 }}>
-                <label
-                  style={{
-                    display: "block",
-                    fontWeight: 600,
-                    fontSize: "0.88rem",
-                    marginBottom: 6,
-                  }}
-                >
-                  Peran Aplikasi
-                </label>
-                <select
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value)}
-                  style={{ minWidth: 260, maxWidth: "100%" }}
-                  disabled={savingUser}
-                >
-                  <option value="DEPARTMENT_ADMIN">
-                    DEPARTMENT_ADMIN (Admin Prodi / Kaprodi / Dekan)
-                  </option>
-                  <option value="INSTRUCTOR">
-                    INSTRUCTOR (Dosen Pengampu Murni)
-                  </option>
-                  <option value="SUPER_ADMIN">
-                    SUPER_ADMIN (Pengelola Sistem Seluruh Universitas)
-                  </option>
-                </select>
-                <small
-                  style={{
-                    color: "var(--muted-foreground, #64748b)",
-                    display: "block",
-                    marginTop: 6,
-                  }}
-                >
-                  {selectedRole === "DEPARTMENT_ADMIN"
-                    ? "DEPARTMENT_ADMIN dibatasi hanya dapat mengelola kelas dan kurikulum pada program studi yang dicentang di bawah."
-                    : selectedRole === "SUPER_ADMIN"
-                      ? "SUPER_ADMIN memiliki akses menyeluruh ke seluruh program studi tanpa pembatasan."
-                      : "INSTRUCTOR hanya dapat mengajar di kelas yang ditugaskan kepada mereka."}
-                </small>
-              </div>
-
-              <div style={{ marginBottom: 20 }}>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    flexWrap: "wrap",
-                    gap: 8,
-                    marginBottom: 10,
-                  }}
-                >
-                  <label style={{ fontWeight: 600, fontSize: "0.88rem" }}>
-                    Pilih Program Studi yang Dikelola ({selectedScopes.length} terpilih):
-                  </label>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button
-                      type="button"
-                      className="button secondary compact"
-                      onClick={selectAllScopes}
-                      disabled={savingUser}
-                      style={{ fontSize: "0.78rem", padding: "3px 8px" }}
-                    >
-                      Pilih Semua
-                    </button>
-                    <button
-                      type="button"
-                      className="button secondary compact"
-                      onClick={clearAllScopes}
-                      disabled={savingUser}
-                      style={{ fontSize: "0.78rem", padding: "3px 8px" }}
-                    >
-                      Kosongkan
-                    </button>
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-                    gap: 10,
-                    maxHeight: 280,
-                    overflowY: "auto",
-                    padding: 12,
-                    border: "1px solid var(--border, #cbd5e1)",
-                    borderRadius: 8,
-                    backgroundColor: "var(--surface-muted, #f8fafc)",
-                  }}
-                >
-                  {departments
-                    .filter((d) => d.isActive)
-                    .map((d) => {
-                      const isChecked = selectedScopes.includes(d.code);
-                      return (
-                        <label
-                          key={d.id}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                            padding: "8px 10px",
-                            borderRadius: 6,
-                            backgroundColor: isChecked
-                              ? "rgba(2, 132, 199, 0.08)"
-                              : "var(--surface, #ffffff)",
-                            border: `1px solid ${isChecked ? "var(--primary, #0284c7)" : "var(--border, #e2e8f0)"}`,
-                            cursor: "pointer",
-                            fontSize: "0.85rem",
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() => toggleScope(d.code)}
-                            disabled={savingUser}
-                          />
-                          <div>
-                            <strong>{d.code}</strong> - {d.name}
-                          </div>
-                        </label>
-                      );
-                    })}
-                </div>
-              </div>
-
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 20 }}>
-                <button
-                  type="button"
-                  className="button secondary"
-                  onClick={cancelEditUser}
-                  disabled={savingUser}
-                >
-                  Batal
-                </button>
-                <button
-                  type="button"
-                  className="button primary"
-                  onClick={saveUserScopes}
-                  disabled={savingUser}
-                >
-                  {savingUser ? (
-                    <>
-                      <Loading />
-                      <span style={{ marginLeft: 8 }}>Menyimpan Otoritas...</span>
-                    </>
-                  ) : (
-                    "Simpan Perubahan Otoritas"
-                  )}
-                </button>
-              </div>
-            </Modal>
-          )}
-
-          {/* TOOLBAR SEARCH & ROLE FILTER */}
-          <div
-            style={{
-              marginBottom: 16,
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 12,
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <div style={{ position: "relative", flex: "1 1 320px" }}>
+        <section aria-label="Otoritas pengguna">
+          <p>
+            Penugasan di halaman ini tetap berlaku setelah login SSO. Hanya
+            dosen, pengelola prodi, dan Super Admin yang ditampilkan.
+          </p>
+          <div className="governance-toolbar">
+            <label className="governance-search">
+              <Search size={18} aria-hidden="true" />
               <input
-                type="text"
-                placeholder="Cari nama, NIDN/NIP, atau username..."
+                aria-label="Cari pengguna"
+                placeholder="Cari nama, NIDN/NIP, atau email"
                 value={userSearch}
                 onChange={(e) => {
                   setUserSearch(e.target.value);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    fetchUsers();
-                  }
-                }}
-                style={{ width: "100%", paddingLeft: 36 }}
-              />
-              <Search
-                size={16}
-                style={{
-                  position: "absolute",
-                  left: 11,
-                  top: "50%",
-                  transform: "translateY(-50)",
-                  color: "var(--muted-foreground, #64748b)",
+                  userPagination.setPage(1);
                 }}
               />
-            </div>
-
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            </label>
+            <label className="governance-filter">
+              Peran
               <select
                 value={roleFilter}
                 onChange={(e) => {
                   setRoleFilter(e.target.value);
+                  userPagination.setPage(1);
                 }}
-                style={{ minWidth: 170 }}
               >
-                <option value="ALL">Semua Peran</option>
-                <option value="DEPARTMENT_ADMIN">Admin Prodi / Kaprodi</option>
-                <option value="INSTRUCTOR">Dosen Pengampu</option>
-                <option value="SUPER_ADMIN">Super Admin</option>
+                <option value="ALL">Semua peran</option>
+                {Object.entries(roleNames).map(([role, name]) => (
+                  <option key={role} value={role}>
+                    {name}
+                  </option>
+                ))}
               </select>
+            </label>
+            <div className="governance-actions">
+              <Action
+                className="secondary"
+                run={fetchUsers}
+                disabled={loadingUsers}
+                busyLabel="Memuat…"
+              >
+                <RefreshCw size={16} />
+                Segarkan
+              </Action>
               <button
                 type="button"
-                className="button secondary"
-                onClick={fetchUsers}
-                title="Muat ulang daftar pengguna"
+                className="primary"
+                onClick={() => openUser()}
               >
-                <RefreshCw size={15} />
-                <span>Segarkan</span>
+                <UserPlus size={18} />
+                Daftarkan Dosen / Kaprodi
               </button>
-              {!isCreatingUser && (
-                <button
-                  type="button"
-                  className="button primary"
-                  onClick={openCreateUserForm}
-                >
-                  <UserPlus size={16} />
-                  <span>Daftarkan Dosen / Kaprodi</span>
-                </button>
-              )}
             </div>
           </div>
-
-          {/* TABEL PENGGUNA & OTORITAS */}
+          {userError && <Notice error={userError} />}
           {loadingUsers ? (
-            <div style={{ padding: 40, textAlign: "center" }}>
+            <div className="governance-loading" role="status">
               <Loading />
-              <p style={{ marginTop: 10, color: "var(--muted-foreground, #64748b)" }}>
-                Memuat data pengguna...
-              </p>
-            </div>
-          ) : users.length === 0 ? (
-            <div
-              style={{
-                padding: "40px 20px",
-                textAlign: "center",
-                border: "1px dashed var(--border, #cbd5e1)",
-                borderRadius: 12,
-              }}
-            >
-              <Users
-                size={36}
-                style={{ color: "var(--muted-foreground, #94a3b8)", marginBottom: 8 }}
-              />
-              <p style={{ fontWeight: 600 }}>Tidak ada pengguna yang cocok</p>
-              <p style={{ fontSize: "0.86rem", color: "var(--muted-foreground, #64748b)" }}>
-                Gunakan kata kunci pencarian atau sesuaikan filter peran di atas.
-              </p>
+              Memuat pengguna…
             </div>
           ) : (
             <>
               <div className="card table-wrap phone-record-table">
-                <table style={{ width: "100%" }}>
+                <table>
                   <thead>
                     <tr>
-                      <th scope="col">Nama &amp; Identitas</th>
-                      <th scope="col" style={{ width: 150 }}>Peran Aktif</th>
-                      <th scope="col">Cakupan Prodi (departmentScopes)</th>
-                      <th scope="col" style={{ textAlign: "right", width: 140 }}>Aksi</th>
+                      <th scope="col">Pengguna</th>
+                      <th scope="col">Identitas</th>
+                      <th scope="col">Peran</th>
+                      <th scope="col">Cakupan Prodi</th>
+                      <th scope="col">Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {userPagination.paginatedItems.map((u) => {
-                      const isEditing = editingUser?.id === u.id;
-                      return (
-                        <tr
-                          key={u.id}
-                          style={{
-                            backgroundColor: isEditing
-                              ? "rgba(2, 132, 199, 0.08)"
-                              : undefined,
-                          }}
-                        >
-                          <td data-label="Nama & Identitas">
-                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                              <span style={{ fontWeight: 600 }}>{u.name}</span>
-                              {!u.lastLoginAt && u.role !== "SUPER_ADMIN" && (
-                                <span
-                                  style={{
-                                    fontSize: "0.7rem",
-                                    padding: "1px 6px",
-                                    borderRadius: 4,
-                                    background: "rgba(245, 158, 11, 0.12)",
-                                    color: "#b45309",
-                                    fontWeight: 600,
-                                  }}
-                                  title="Didaftarkan manual oleh Admin, belum pernah login via SSO"
-                                >
-                                  Pra-registrasi
-                                </span>
-                              )}
-                            </div>
-                            <div
-                              style={{
-                                fontSize: "0.8rem",
-                                color: "var(--muted-foreground, #64748b)",
-                                marginTop: 2,
-                              }}
-                            >
-                              {u.identifierType}: {u.identifierValue} · {u.email}
-                            </div>
-                          </td>
-                          <td data-label="Peran Aktif">
-                            <span className="user-role-badge" style={{ fontSize: "0.75rem" }}>
-                              {u.role}
-                            </span>
-                          </td>
-                          <td data-label="Cakupan Prodi">
-                            {u.departmentScopes && u.departmentScopes.length > 0 ? (
-                              <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                                {u.departmentScopes.map((scope) => (
-                                  <span
-                                    key={scope}
-                                    style={{
-                                      display: "inline-block",
-                                      padding: "2px 8px",
-                                      borderRadius: 4,
-                                      fontSize: "0.75rem",
-                                      background: "rgba(2, 132, 199, 0.1)",
-                                      color: "#0369a1",
-                                      fontWeight: 600,
-                                    }}
-                                  >
-                                    {formatDepartmentDisplay(scope)}
-                                  </span>
-                                ))}
-                              </div>
-                            ) : (
-                              <span style={{ fontSize: "0.82rem", color: "var(--muted-foreground, #94a3b8)" }}>
-                                {u.role === "SUPER_ADMIN"
-                                  ? "Semua Prodi (Global)"
-                                  : "Belum ditentukan"}
+                    {userPagination.paginatedItems.map((u) => (
+                      <tr key={u.id}>
+                        <td className="record-title">
+                          <div className="governance-user-details">
+                            <strong>{u.name}</strong>
+                            <small className="governance-subtext">
+                              {u.email}
+                            </small>
+                            {isPreprovisioned(u) && (
+                              <span className="pill neutral">
+                                Pra-registrasi
                               </span>
                             )}
-                          </td>
-                          <td data-label="Aksi" className="record-actions" style={{ textAlign: "right" }}>
-                            <div style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
-                              <button
-                                type="button"
-                                className={`button ${isEditing ? "primary" : "secondary"} compact`}
-                                style={{ padding: "4px 10px", fontSize: "0.78rem", minHeight: 32, height: 32 }}
-                                onClick={() => startEditUser(u)}
-                              >
-                                {isEditing ? (
-                                  <>
-                                    <ArrowUp size={12} style={{ marginRight: 4 }} />
-                                    <span>Sedang Diedit</span>
-                                  </>
-                                ) : (
-                                  "Atur Lingkup"
-                                )}
-                              </button>
-                              {!u.lastLoginAt && u.role !== "SUPER_ADMIN" && (
-                                <button
-                                  type="button"
-                                  className="button danger compact"
-                                  onClick={() => deletePreprovisionedUser(u)}
-                                  title="Hapus pendaftaran pra-registrasi"
-                                  style={{ padding: "4px 8px", minHeight: 32, height: 32 }}
-                                >
-                                  <Trash2 size={13} />
-                                </button>
-                              )}
+                          </div>
+                        </td>
+                        <td data-label="Identitas">
+                          <span>
+                            {u.identifierType}: {u.identifierValue}
+                          </span>
+                        </td>
+                        <td data-label="Peran">
+                          <span className="governance-role-badge">
+                            {roleNames[u.role] ?? u.role}
+                          </span>
+                        </td>
+                        <td data-label="Cakupan Prodi">
+                          <div className="governance-scope-details">
+                            <div className="governance-tags">
+                              {u.role === "SUPER_ADMIN"
+                                ? "Semua prodi"
+                                : u.departmentScopes.length
+                                  ? u.departmentScopes.map((code) => (
+                                      <span
+                                        className="pill neutral"
+                                        key={code}
+                                        title={formatDepartmentDisplay(code)}
+                                      >
+                                        {code}
+                                      </span>
+                                    ))
+                                  : "Belum ditentukan"}
                             </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                            <small className="governance-subtext">
+                              Sumber:{" "}
+                              {u.authoritySource === "LOCAL"
+                                ? "Penugasan Super Admin"
+                                : u.authoritySource}
+                            </small>
+                          </div>
+                        </td>
+                        <td data-label="Aksi" className="record-actions">
+                          <div className="governance-actions">
+                            <button
+                              type="button"
+                              className="secondary"
+                              onClick={() => openUser(u)}
+                              aria-label={`Atur lingkup ${u.name}`}
+                            >
+                              <ShieldCheck size={16} />
+                              Atur Lingkup
+                            </button>
+                            {isPreprovisioned(u) &&
+                              u.role !== "SUPER_ADMIN" && (
+                                <Action
+                                  className="danger"
+                                  run={() => deleteUser(u)}
+                                  label={`Hapus pra-registrasi ${u.name}`}
+                                  busyLabel="Menghapus…"
+                                >
+                                  <Trash2 size={16} />
+                                  Hapus
+                                </Action>
+                              )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
-
-              {/* PAGINATION USERS */}
+              {!users.length && !userError && (
+                <p className="governance-empty">
+                  Tidak ada pengguna yang cocok dengan pencarian dan peran
+                  terpilih.
+                </p>
+              )}
               <Pagination
-                page={userPagination.page}
-                totalPages={userPagination.totalPages}
-                totalItems={userPagination.totalItems}
-                pageSize={userPagination.pageSize}
+                {...userPagination}
                 onPageChange={userPagination.setPage}
                 onPageSizeChange={userPagination.setPageSize}
               />
             </>
           )}
-        </div>
+        </section>
       )}
 
-      {/* ========================================================= */}
-      {/* TAB 3: SIAKAD INTEGRATION BRIDGE                          */}
-      {/* ========================================================= */}
       {activeTab === "SIAKAD" && (
-        <div>
-          <div
-            className="card"
-            style={{
-              padding: 22,
-              marginBottom: 20,
-              border: "1px solid var(--border, #cbd5e1)",
-              borderRadius: 12,
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-              <Code size={20} style={{ color: "var(--primary, #0284c7)" }} />
-              <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700 }}>
-                Spesifikasi Sinkronisasi SIAKAD
-              </h3>
-            </div>
-            <p
-              style={{
-                fontSize: "0.9rem",
-                color: "var(--muted-foreground, #475569)",
-                lineHeight: 1.5,
-                margin: "0 0 14px",
-              }}
-            >
-              Endpoint ini menerima sinkronisasi penugasan Kaprodi dan Dekan dari Sistem Informasi
-              Akademik (SIAKAD). Dapat dipanggil secara otomatis oleh SIAKAD melalui webhook atau
-              dijalankan manual oleh Super Admin di sini.
+        <section
+          aria-label="Sinkronisasi SIAKAD"
+          className="governance-integration card"
+        >
+          <h2>
+            <Code size={20} />
+            Sinkronisasi Penugasan SIAKAD
+          </h2>
+          <p>
+            Periksa hasil simulasi sebelum menerapkan peran dan lingkup prodi.
+            Identitas yang belum terdaftar perlu didaftarkan terlebih dahulu.
+          </p>
+          <details>
+            <summary>Petunjuk integrasi sistem</summary>
+            <p>
+              POST /api/v1/system/siakad/sync-scopes. Integrasi mesin memakai
+              X-SIAKAD-Secret dan Idempotency-Key unik untuk setiap perubahan.
+              Secret disimpan pada konfigurasi server, bukan di payload.
             </p>
-
-            <div
-              style={{
-                background: "var(--surface-muted, #0f172a)",
-                color: "#f8fafc",
-                padding: "12px 16px",
-                borderRadius: 8,
-                fontFamily: "monospace",
-                fontSize: "0.85rem",
-                marginBottom: 16,
-              }}
-            >
-              POST /api/v1/system/siakad/sync-scopes
-              <br />
-              Headers: X-SIAKAD-Secret: &lt;SIAKAD_SECRET&gt; (atau login Super Admin)
-            </div>
-
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
-              <button
-                type="button"
-                className="button secondary"
-                onClick={handleFillSiakadSample}
-              >
-                <FileSpreadsheet size={15} />
-                <span>Muat Contoh Data SK Penugasan</span>
-              </button>
-              <button
-                type="button"
-                className="button secondary"
-                disabled={!siakadPayloadText.trim() || siakadSyncing}
-                onClick={() => runSiakadSync(true)}
-              >
-                {siakadSyncing ? <Loading /> : null}
-                <span>Uji Simulasi (Dry-Run Preview)</span>
-              </button>
-              <button
-                type="button"
-                className="button primary"
-                disabled={!siakadPayloadText.trim() || siakadSyncing}
-                onClick={() => runSiakadSync(false)}
-              >
-                {siakadSyncing ? <Loading /> : null}
-                <span>Terapkan Perubahan (Simpan ke DB)</span>
-              </button>
-            </div>
-
-            <label
-              style={{
-                display: "block",
-                fontWeight: 600,
-                fontSize: "0.88rem",
-                marginBottom: 6,
-              }}
-            >
-              Payload JSON SIAKAD:
-            </label>
+          </details>
+          <label className="governance-field">
+            Data penugasan (JSON)
             <textarea
-              rows={10}
+              aria-label="Data penugasan (JSON)"
+              rows={12}
+              disabled={siakadSyncing}
               value={siakadPayloadText}
-              onChange={(e) => setSiakadPayloadText(e.target.value)}
-              placeholder={`{\n  "academicYear": "2026/2027 Ganjil",\n  "source": "SIAKAD_API_UAY",\n  "assignments": [\n    {\n      "identifierValue": "0912058501",\n      "departmentScopes": ["IF"],\n      "role": "DEPARTMENT_ADMIN"\n    }\n  ]\n}`}
-              style={{
-                width: "100%",
-                fontFamily: "monospace",
-                fontSize: "0.85rem",
-                borderRadius: 8,
-                padding: 12,
-              }}
+              onChange={(e) => updatePayload(e.target.value)}
+              placeholder={
+                '{"assignments": [{"identifierValue": "NIDN/NIP", "departmentScopes": ["IF"], "role": "DEPARTMENT_ADMIN"}]}'
+              }
             />
-          </div>
-
-          {siakadError && <Notice error={siakadError} />}
-
-          {siakadResult && (
-            <div
-              className="card"
-              style={{
-                padding: 20,
-                border: "1px solid var(--border, #cbd5e1)",
-                borderRadius: 12,
-                backgroundColor: "var(--surface, #ffffff)",
-              }}
+          </label>
+          <div className="governance-actions">
+            <button
+              type="button"
+              className="secondary"
+              disabled={siakadSyncing}
+              onClick={() =>
+                updatePayload(
+                  JSON.stringify(
+                    {
+                      source: "SIAKAD_API_UAY",
+                      assignments: [
+                        {
+                          identifierValue: "CONTOH_NIDN",
+                          departmentScopes: ["IF"],
+                          role: "DEPARTMENT_ADMIN",
+                        },
+                      ],
+                    },
+                    null,
+                    2,
+                  ),
+                )
+              }
             >
-              <h4 style={{ margin: "0 0 10px", fontWeight: 700 }}>
-                {siakadResult.dryRun ? "Hasil Simulasi (Dry Run)" : "Hasil Eksekusi Sinkronisasi"}
-              </h4>
-              <p style={{ margin: "0 0 12px", fontSize: "0.88rem", color: "var(--muted-foreground, #64748b)" }}>
-                {siakadResult.message}
+              Muat contoh data
+            </button>
+            <button
+              type="button"
+              className="secondary"
+              disabled={siakadSyncing || !siakadPayloadText.trim()}
+              onClick={() => void runSiakadSync(true)}
+            >
+              {siakadSyncing && <Loading />}Jalankan Simulasi
+            </button>
+            <button
+              type="button"
+              className="primary"
+              disabled={siakadSyncing || !canApply}
+              aria-describedby="siakad-apply-help"
+              onClick={() => void runSiakadSync(false)}
+            >
+              {siakadSyncing ? "Memproses…" : "Terapkan Perubahan"}
+            </button>
+          </div>
+          <small id="siakad-apply-help">
+            {canApply
+              ? "Semua identitas ditemukan. Periksa perubahan di bawah sebelum menerapkan."
+              : "Jalankan simulasi yang valid dan pastikan semua identitas ditemukan untuk mengaktifkan penerapan."}
+          </small>
+          {siakadError && <Notice error={siakadError} />}
+          {siakadResult && (
+            <div className="governance-result" role="status">
+              <h3>
+                {siakadResult.dryRun
+                  ? "Hasil simulasi · belum disimpan"
+                  : "Hasil sinkronisasi · tersimpan"}
+              </h3>
+              <p>
+                {siakadResult.dryRun
+                  ? `${siakadResult.ready} penugasan siap diterapkan`
+                  : `${siakadResult.updated} penugasan berhasil diperbarui`}
+                ; {siakadResult.notFound} identitas tidak ditemukan.
               </p>
-              <pre
-                style={{
-                  background: "var(--surface-muted, #f8fafc)",
-                  padding: 12,
-                  borderRadius: 8,
-                  fontSize: "0.82rem",
-                  maxHeight: 260,
-                  overflowY: "auto",
-                }}
-              >
-                {JSON.stringify(siakadResult, null, 2)}
-              </pre>
+              <ul>
+                {siakadResult.results.map((result: any, index: number) => (
+                  <li key={index}>
+                    <strong>{result.name || result.identifierValue}</strong>
+                    <span>
+                      {result.status === "USER_NOT_FOUND"
+                        ? "Belum terdaftar — daftarkan identitas atau perbaiki data dan jalankan simulasi lagi."
+                        : `${roleNames[result.proposedRole ?? result.role]} · ${(result.proposedScopes ?? result.departmentScopes).join(", ")}`}
+                    </span>
+                    {siakadResult.dryRun && result.name && (
+                      <small>
+                        Sebelumnya: {roleNames[result.currentRole]} ·{" "}
+                        {result.currentScopes.join(", ") ||
+                          "tanpa lingkup prodi"}
+                      </small>
+                    )}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
-        </div>
+        </section>
+      )}
+
+      {showDeptForm && (
+        <Modal
+          title={
+            editingDept
+              ? `Edit Program Studi: ${editingDept.code}`
+              : "Tambah Program Studi Baru"
+          }
+          onClose={() => setShowDeptForm(false)}
+          busy={savingDept}
+          className="governance-modal"
+        >
+          <form onSubmit={saveDepartment} aria-busy={savingDept}>
+            {deptSaveError && <Notice error={deptSaveError} />}
+            <fieldset disabled={savingDept} className="governance-form-fields">
+              <div className="governance-form-grid">
+                <label className="governance-field">
+                  Kode Program Studi
+                  <input
+                    required
+                    maxLength={20}
+                    value={deptForm.code}
+                    onChange={(e) =>
+                      setDeptForm({
+                        ...deptForm,
+                        code: e.target.value.toUpperCase(),
+                      })
+                    }
+                    placeholder="Contoh: IF, TS, MN"
+                  />
+                  <small>
+                    Kode harus unik. Kode yang sudah dirujuk tidak dapat diubah.
+                  </small>
+                </label>
+                <label className="governance-field">
+                  Nama Program Studi
+                  <input
+                    required
+                    minLength={3}
+                    maxLength={150}
+                    value={deptForm.name}
+                    onChange={(e) =>
+                      setDeptForm({ ...deptForm, name: e.target.value })
+                    }
+                  />
+                </label>
+                <label className="governance-field">
+                  Fakultas / Unit (opsional)
+                  <input
+                    maxLength={150}
+                    value={deptForm.faculty}
+                    onChange={(e) =>
+                      setDeptForm({ ...deptForm, faculty: e.target.value })
+                    }
+                  />
+                </label>
+              </div>
+              <label className="governance-check">
+                <input
+                  type="checkbox"
+                  checked={deptForm.isActive}
+                  onChange={(e) =>
+                    setDeptForm({ ...deptForm, isActive: e.target.checked })
+                  }
+                />
+                Prodi aktif untuk penugasan baru
+              </label>
+            </fieldset>
+            <div className="governance-form-actions">
+              <button
+                type="button"
+                className="secondary"
+                disabled={savingDept}
+                onClick={() => setShowDeptForm(false)}
+              >
+                Batal
+              </button>
+              <button type="submit" className="primary" disabled={savingDept}>
+                {savingDept
+                  ? "Menyimpan…"
+                  : editingDept
+                    ? "Simpan Perubahan"
+                    : "Tambahkan Program Studi"}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {(editingUser || showCreateUser) && (
+        <Modal
+          title={
+            editingUser
+              ? `Atur Otoritas: ${editingUser.name}`
+              : "Daftarkan Dosen / Kaprodi Baru"
+          }
+          onClose={() => {
+            setEditingUser(null);
+            setShowCreateUser(false);
+          }}
+          busy={savingUser}
+          className="governance-modal"
+          wide
+        >
+          <form onSubmit={saveUser} aria-busy={savingUser}>
+            <p>
+              {editingUser
+                ? "Pilih peran dan prodi yang menjadi tanggung jawab pengguna."
+                : "Gunakan NIDN/NIP dan email yang sama dengan SSO kampus. Pra-registrasi ini tersambung saat login SSO pertama kali."}
+            </p>
+            {userSaveError && <Notice error={userSaveError} />}
+            <fieldset
+              className="governance-form-fields"
+              disabled={savingUser || loadingDepts}
+            >
+              {!editingUser && (
+                <div className="governance-form-grid">
+                  <label className="governance-field">
+                    NIDN / NIP / Identitas
+                    <input
+                      required
+                      minLength={3}
+                      maxLength={50}
+                      value={createUser.identifierValue}
+                      onChange={(e) =>
+                        setCreateUser({
+                          ...createUser,
+                          identifierValue: e.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                  <label className="governance-field">
+                    Jenis identitas
+                    <select
+                      value={createUser.identifierType}
+                      onChange={(e) =>
+                        setCreateUser({
+                          ...createUser,
+                          identifierType: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="NIDN">NIDN</option>
+                      <option value="NIP">NIP</option>
+                      <option value="OTHER">Lainnya</option>
+                    </select>
+                  </label>
+                  <label className="governance-field">
+                    Nama lengkap
+                    <input
+                      required
+                      minLength={2}
+                      maxLength={150}
+                      value={createUser.name}
+                      onChange={(e) =>
+                        setCreateUser({ ...createUser, name: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label className="governance-field">
+                    Email SSO
+                    <input
+                      type="email"
+                      required
+                      maxLength={150}
+                      value={createUser.email}
+                      onChange={(e) =>
+                        setCreateUser({ ...createUser, email: e.target.value })
+                      }
+                    />
+                  </label>
+                </div>
+              )}
+              <RoleField
+                value={editingUser ? selectedRole : createUser.role}
+                onChange={(role) =>
+                  editingUser
+                    ? setSelectedRole(role)
+                    : setCreateUser({ ...createUser, role })
+                }
+              />
+              <ScopePicker
+                departments={departments}
+                existing={editingUser?.departmentScopes}
+                value={
+                  editingUser ? selectedScopes : createUser.departmentScopes
+                }
+                onChange={(scopes) =>
+                  editingUser
+                    ? setSelectedScopes(scopes)
+                    : setCreateUser({ ...createUser, departmentScopes: scopes })
+                }
+                role={editingUser ? selectedRole : createUser.role}
+              />
+            </fieldset>
+            {deptError && (
+              <Notice error="Daftar prodi gagal dimuat. Segarkan daftar program studi sebelum menyimpan penugasan." />
+            )}
+            {(editingUser ? selectedRole : createUser.role) ===
+              "DEPARTMENT_ADMIN" &&
+              !(editingUser ? selectedScopes : createUser.departmentScopes)
+                .length && (
+                <p className="governance-hint">
+                  Admin Prodi membutuhkan minimal satu program studi.
+                </p>
+              )}
+            <div className="governance-form-actions">
+              <button
+                type="button"
+                className="secondary"
+                disabled={savingUser}
+                onClick={() => {
+                  setEditingUser(null);
+                  setShowCreateUser(false);
+                }}
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="primary"
+                disabled={
+                  savingUser ||
+                  loadingDepts ||
+                  !!deptError ||
+                  ((editingUser ? selectedRole : createUser.role) ===
+                    "DEPARTMENT_ADMIN" &&
+                    !(
+                      editingUser ? selectedScopes : createUser.departmentScopes
+                    ).length)
+                }
+              >
+                {savingUser
+                  ? "Menyimpan…"
+                  : editingUser
+                    ? "Simpan Otoritas"
+                    : "Daftarkan Pengguna"}
+              </button>
+            </div>
+          </form>
+        </Modal>
       )}
     </div>
   );

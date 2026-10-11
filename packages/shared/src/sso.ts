@@ -20,6 +20,7 @@
  * | (E-Learning specific authorization scope)    | department_scopes    | users.department_scopes  |
  */
 import { z } from "zod";
+import { normalizeDepartmentCode } from "./departments.js";
 
 /** SSO `users.user_type`. */
 export const USER_TYPES = ["STUDENT", "LECTURER", "STAFF", "ADMIN"] as const;
@@ -186,7 +187,7 @@ export const identityClaims = z
     const name =
       claims.name && claims.name.trim().length > 0
         ? claims.name.trim()
-        : claims.preferred_username ?? "Pengguna UAY";
+        : (claims.preferred_username ?? "Pengguna UAY");
 
     let email =
       claims.email && claims.email.includes("@")
@@ -203,7 +204,11 @@ export const identityClaims = z
         claims.identifier_type ?? defaultIdentifierType(resolvedUserType),
       identifierValue,
       role,
-      departmentScopes: claims.department_scopes,
+      departmentScopes: [
+        ...new Set(
+          claims.department_scopes.map(normalizeDepartmentCode).filter(Boolean),
+        ),
+      ],
     };
   });
 

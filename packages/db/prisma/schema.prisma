@@ -130,6 +130,8 @@ model User {
   /// E-Learning application role, see GlobalRole.
   role             GlobalRole     @default(STUDENT) @map("role")
   departmentScopes String[]       @default([]) @map("department_scopes")
+  /// LOCAL/SIAKAD grants are managed by E-Learning; SSO still controls account status.
+  authoritySource  String         @default("SSO") @map("authority_source")
   /// SSO `users.status`. DISABLED blocks every request, including live sessions.
   status           UserStatus     @default(ACTIVE) @map("status")
   lastLoginAt      DateTime?      @map("last_login_at")
@@ -716,6 +718,18 @@ model ResourceProgress {
 
   @@id([userId, resourceItemId])
   @@map("resource_progress")
+}
+
+/// Machine integrations do not impersonate a human user for idempotency or audit.
+model IntegrationMutation {
+  integration String
+  key         String
+  requestHash String @map("request_hash")
+  result      Json
+  createdAt   DateTime @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')")) @map("created_at")
+
+  @@id([integration, key])
+  @@map("integration_mutations")
 }
 
 model IdempotencyRecord {

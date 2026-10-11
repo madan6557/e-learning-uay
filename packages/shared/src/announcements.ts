@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeDepartmentCode } from "./departments.js";
 import { canManageDepartmentScope, hasPermission } from "./permissions.js";
 import type { ApplicationRole } from "./sso.js";
 
@@ -17,7 +18,12 @@ export const announcementSchema = z.object({
     .default("SURAT_EDARAN"),
   referenceNumber: z.string().trim().max(100).optional(),
   targetRole: z.enum(["ALL", "STUDENT", "INSTRUCTOR"]).default("ALL"),
-  departmentCode: z.string().trim().max(100).optional(),
+  departmentCode: z
+    .string()
+    .trim()
+    .max(100)
+    .transform(normalizeDepartmentCode)
+    .optional(),
   isImportant: z.boolean().default(false),
   isPublished: z.boolean().default(true),
   attachmentUrl: z

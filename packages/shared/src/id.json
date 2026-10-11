@@ -589,6 +589,17 @@
     "OPEN": "Tersedia"
   },
   "errors": {
+    "DEPARTMENT_NOT_FOUND": "Program studi tidak ditemukan. Segarkan daftar dan coba lagi.",
+    "DUPLICATE_DEPARTMENT_CODE": "Kode program studi sudah digunakan. Gunakan kode lain atau edit prodi yang sudah terdaftar.",
+    "DEPARTMENT_CODE_IN_USE": "Kode prodi sudah dirujuk kelas, pengguna, atau pengumuman sehingga tidak dapat diubah. Nama dan fakultas tetap dapat diperbarui.",
+    "DEPARTMENT_SCOPE_REQUIRED": "Admin Prodi membutuhkan minimal satu program studi.",
+    "DEPARTMENT_SCOPE_INVALID": "Lingkup prodi belum terdaftar atau tidak aktif. Segarkan daftar prodi dan periksa pilihan Anda.",
+    "AUTHORITY_ROLE_UNSUPPORTED": "Otoritas ini hanya dapat diatur untuk dosen, pengelola prodi, atau Super Admin. Akun mahasiswa dan Rektor harus mengikuti sistem identitas kampus.",
+    "LAST_SUPER_ADMIN": "Super Admin aktif terakhir tidak dapat dicabut. Tetapkan Super Admin lain terlebih dahulu.",
+    "GOVERNANCE_CONFLICT": "Data sudah berubah sejak editor atau simulasi dibuka. Isian Anda masih tersedia. Catat perubahan, tutup editor, segarkan daftar, lalu gabungkan dengan versi terbaru.",
+    "PREPROVISION_IDENTITY_CONFLICT": "Identitas dan email tidak cocok dengan satu akun yang sama. Periksa NIDN/NIP, email SSO, dan akun yang sudah terdaftar sebelum mencoba lagi.",
+    "PREPROVISION_ALREADY_LINKED": "Akun sudah tersambung ke SSO. Gunakan Atur Lingkup untuk mengubah peran atau mencabut otoritasnya.",
+    "SIAKAD_DUPLICATE_USER": "Satu pengguna muncul melalui beberapa identitas pada batch yang sama. Sisakan satu penugasan per pengguna dan jalankan simulasi lagi.",
     "LOGIN_REQUIRED": "Silakan masuk untuk melanjutkan.",
     "SESSION_EXPIRED": "Sesi Anda berakhir. Silakan masuk kembali.",
     "SESSION_CLOSED": "Sesi presensi sudah ditutup. Minta dosen membuka sesi atau mencatat kehadiran Anda.",

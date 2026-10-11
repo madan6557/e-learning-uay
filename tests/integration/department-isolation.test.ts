@@ -109,11 +109,10 @@ test("user search enforces department isolation through the production API", asy
     );
   } finally {
     await new Promise<void>((resolve) => server.close(() => resolve()));
-    await db.auditLog.deleteMany({
-      where: { actorId: { in: users.map((user) => user.id) } },
-    });
-    await db.user.deleteMany({
+    // Keep the append-only audit ledger and retire only this run's fixture accounts.
+    await db.user.updateMany({
       where: { id: { in: users.map((user) => user.id) } },
+      data: { status: "DISABLED", departmentScopes: [] },
     });
     await db.$disconnect();
   }

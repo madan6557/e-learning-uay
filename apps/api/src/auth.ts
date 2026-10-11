@@ -474,7 +474,7 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
     .map((r) => normalizeRole(String(r)))
     .filter((r): r is NonNullable<typeof r> => r !== null);
 
-  const existingUser = await db.user.findFirst({
+  const identityMatches = await db.user.findMany({
     where: {
       OR: [
         { ssoUserId },
@@ -505,6 +505,19 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
       ],
     },
   });
+  ensure(identityMatches.length <= 1, 403, "INVALID_IDENTITY");
+  const existingUser = identityMatches[0];
+  if (existingUser?.ssoUserId.startsWith("preprovision:")) {
+    ensure(
+      existingUser.identifierValue === identifierVal &&
+        existingUser.email.toLowerCase() === rawEmail?.toLowerCase(),
+      403,
+      "INVALID_IDENTITY",
+    );
+  } else if (existingUser?.authoritySource !== "SSO" && existingUser) {
+    // Explicit grants belong to the linked SSO subject, not a newly reused email/identifier.
+    ensure(existingUser.ssoUserId === ssoUserId, 403, "INVALID_IDENTITY");
+  }
 
   // 3. Populate missing/fallback claims
   if (validRoles.length > 0) {
@@ -587,12 +600,18 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
   return transaction(async (tx) => {
     let user;
     if (existingUser) {
+      // Read authority inside the transaction so a concurrent governance update is not lost.
+      const currentUser = await tx.user.findUniqueOrThrow({
+        where: { id: existingUser.id },
+      });
       const finalRole =
-        isAdminIdentifier || validRoles.includes("SUPER_ADMIN")
-          ? ("SUPER_ADMIN" as const)
-          : validRoles.length > 0
-            ? data.role
-            : existingUser.role;
+        currentUser.authoritySource !== "SSO"
+          ? currentUser.role
+          : isAdminIdentifier || validRoles.includes("SUPER_ADMIN")
+            ? ("SUPER_ADMIN" as const)
+            : validRoles.length > 0
+              ? data.role
+              : existingUser.role;
       const finalUserType =
         finalRole === "SUPER_ADMIN"
           ? ("ADMIN" as const)
@@ -600,9 +619,9 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
             ? data.userType
             : existingUser.userType;
       const finalDeptScopes =
-        Array.isArray(data.departmentScopes) && data.departmentScopes.length > 0
-          ? data.departmentScopes
-          : existingUser.departmentScopes;
+        currentUser.authoritySource !== "SSO"
+          ? currentUser.departmentScopes
+          : data.departmentScopes;
 
       user = await tx.user.update({
         where: { id: existingUser.id },
