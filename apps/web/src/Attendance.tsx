@@ -372,55 +372,89 @@ export function Attendance({
         </div>
 
         {canManage && (
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <div
+              role="tablist"
+              aria-label="Pilihan tampilan presensi"
               style={{
                 display: "inline-flex",
+                alignItems: "center",
                 background: "var(--chip-bg, #f1f5f9)",
-                padding: 3,
-                borderRadius: 8,
+                border: "1px solid var(--adaptive-border, #e2e8f0)",
+                padding: "3px",
+                borderRadius: "10px",
+                gap: "4px",
               }}
             >
               <button
                 type="button"
+                role="tab"
+                aria-selected={activeTab === "sessions"}
                 onClick={() => setActiveTab("sessions")}
                 style={{
-                  border: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  border:
+                    activeTab === "sessions"
+                      ? "1px solid var(--adaptive-border, #cbd5e1)"
+                      : "1px solid transparent",
                   padding: "6px 14px",
-                  borderRadius: 6,
+                  borderRadius: "7px",
                   fontSize: "0.85rem",
                   fontWeight: activeTab === "sessions" ? 700 : 500,
                   background:
-                    activeTab === "sessions" ? "var(--adaptive-surface, #ffffff)" : "transparent",
-                  color: activeTab === "sessions" ? "var(--adaptive-text, #0f172a)" : "var(--adaptive-text-muted, #64748b)",
+                    activeTab === "sessions"
+                      ? "var(--adaptive-surface, #ffffff)"
+                      : "transparent",
+                  color:
+                    activeTab === "sessions"
+                      ? "var(--primary, #0284c7)"
+                      : "var(--adaptive-text-muted, #64748b)",
                   cursor: "pointer",
                   boxShadow:
                     activeTab === "sessions"
-                      ? "0 1px 3px rgba(0,0,0,0.1)"
+                      ? "0 1px 3px rgba(0,0,0,0.08)"
                       : "none",
                 }}
               >
-                Daftar Sesi
+                <Clock size={15} />
+                <span>Daftar Sesi Pertemuan</span>
               </button>
               <button
                 type="button"
+                role="tab"
+                aria-selected={activeTab === "recap"}
                 onClick={() => setActiveTab("recap")}
                 style={{
-                  border: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  border:
+                    activeTab === "recap"
+                      ? "1px solid var(--adaptive-border, #cbd5e1)"
+                      : "1px solid transparent",
                   padding: "6px 14px",
-                  borderRadius: 6,
+                  borderRadius: "7px",
                   fontSize: "0.85rem",
                   fontWeight: activeTab === "recap" ? 700 : 500,
-                  background: activeTab === "recap" ? "var(--adaptive-surface, #ffffff)" : "transparent",
-                  color: activeTab === "recap" ? "var(--adaptive-text, #0f172a)" : "var(--adaptive-text-muted, #64748b)",
+                  background:
+                    activeTab === "recap"
+                      ? "var(--adaptive-surface, #ffffff)"
+                      : "transparent",
+                  color:
+                    activeTab === "recap"
+                      ? "var(--primary, #0284c7)"
+                      : "var(--adaptive-text-muted, #64748b)",
                   cursor: "pointer",
                   boxShadow:
                     activeTab === "recap"
-                      ? "0 1px 3px rgba(0,0,0,0.1)"
+                      ? "0 1px 3px rgba(0,0,0,0.08)"
                       : "none",
                 }}
               >
-                Rekapitulasi Kehadiran
+                <FileSpreadsheet size={15} />
+                <span>Rekapitulasi Kehadiran</span>
               </button>
             </div>
 

@@ -113,8 +113,12 @@ export async function validateResource(raw: unknown, tx: any, classId: string) {
   const data = resourceSchema.parse(raw);
   const p = data.dynamicPayload;
   validateWindow(data.availableFrom, data.availableUntil);
-  if (data.resourceType === "DOCUMENT")
+  if (data.resourceType === "DOCUMENT") {
+    if (!p.totalPages && p.fileObjectId) {
+      p.totalPages = 1;
+    }
     ensure(p.fileObjectId && p.totalPages, 400, "DOCUMENT_REQUIRED");
+  }
   if (data.resourceType === "VIDEO_MEDIA") {
     ensure(
       (p.fileObjectId || p.url) && p.durationSeconds,

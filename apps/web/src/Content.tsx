@@ -9,6 +9,10 @@ import { VideoMetadata, videoSourceKey } from "./components/VideoMetadata";
 import { VideoProgressViewer as VideoViewer } from "./components/VideoProgressViewer";
 import { validVideoDuration } from "../../../packages/shared/src/video";
 import {
+  detectPdfPages,
+  detectVideoDuration,
+} from "./services/mediaMetadata";
+import {
   GripVertical,
   Plus,
   Copy,
@@ -152,13 +156,7 @@ export function BlockEditor({
   };
   const pasteImage = async (file: File) => {
     try {
-      const uploaded = await uploadFile(
-        file,
-        classId,
-        "RESOURCE",
-        undefined,
-        () => {},
-      );
+      const uploaded = await uploadFile(file, classId, "RESOURCE", undefined, () => {});
       onChange([
         ...blocks,
         {
@@ -166,7 +164,7 @@ export function BlockEditor({
           type: "image",
           data: {
             fileObjectId: uploaded.id,
-            altText: file.name,
+            altText: file.name.replace(/\.[^/.]+$/, ""),
             caption: "",
             alignment: "center",
           },
@@ -444,14 +442,18 @@ export function BlockEditor({
                         ? "image/png,image/jpeg,image/webp"
                         : undefined
                     }
-                    onUploaded={(f) =>
+                    onUploaded={(f) => {
                       update(index, {
                         fileObjectId: f.id,
                         ...(block.type === "image"
-                          ? { altText: f.name }
-                          : { displayName: f.name }),
-                      })
-                    }
+                          ? {
+                              altText: f.name.replace(/\.[^/.]+$/, ""),
+                            }
+                          : {
+                              displayName: f.name,
+                            }),
+                      });
+                    }}
                   />
                   {data.fileObjectId && (
                     <small className="editor-file-saved">
@@ -629,9 +631,20 @@ export function ResourceEditor({
                 ? "application/pdf"
                 : undefined
             }
-            onUploaded={(f) =>
-              payload({ fileObjectId: f.id, fileName: f.name })
-            }
+            onUploaded={async (f) => {
+              let detectedPages: number | undefined;
+              if (f.file) {
+                detectedPages = await detectPdfPages(f.file);
+              }
+              payload({
+                fileObjectId: f.id,
+                fileName: f.name,
+                totalPages:
+                  detectedPages ??
+                  draft.dynamicPayload.totalPages ??
+                  1,
+              });
+            }}
           />
           {draft.dynamicPayload.fileObjectId && (
             <p>{draft.dynamicPayload.fileName ?? t.saved}</p>
@@ -678,30 +691,77 @@ export function ResourceEditor({
                       }
                     : undefined
                 }
-                onUploaded={(f) =>
+                onUploaded={async (f) => {
+                  let detectedDuration: number | undefined;
+                  if (f.file) {
+                    detectedDuration = await detectVideoDuration(f.file);
+                  }
+                  if (detectedDuration) {
+                    setVideoMetadata({
+                      source: f.id,
+                      duration: detectedDuration,
+                    });
+                  }
                   payload({
                     fileObjectId: f.id,
                     fileName: f.name,
                     url: undefined,
-                    durationSeconds: undefined,
-                  })
-                }
+                    ...(detectedDuration
+                      ? { durationSeconds: detectedDuration }
+                      : {}),
+                  });
+                }}
               />
             </>
           )}
         </>
       )}
       {draft.resourceType === "DOCUMENT" && (
-        <Field label={t.totalPages}>
-          <input
-            type="number"
-            required
-            min={1}
-            max={10000}
-            value={draft.dynamicPayload.totalPages ?? ""}
-            onChange={(e) => payload({ totalPages: Number(e.target.value) })}
-          />
-        </Field>
+        <div style={{ margin: "14px 0" }}>
+          {draft.dynamicPayload.fileObjectId ? (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "10px 14px",
+                background: "var(--adaptive-bg-subtle, #f8fafc)",
+                border: "1px solid var(--adaptive-border, #e2e8f0)",
+                borderRadius: "8px",
+                fontSize: "0.88rem",
+              }}
+            >
+              <span style={{ color: "var(--adaptive-text-muted, #64748b)" }}>
+                Metadata dokumen materi:
+              </span>
+              <span
+                style={{
+                  fontWeight: 600,
+                  color: "var(--success, #16a34a)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <CheckCircle2 size={16} />
+                {draft.dynamicPayload.totalPages ?? 1} halaman (Terdeteksi otomatis)
+              </span>
+            </div>
+          ) : (
+            <Field label={t.totalPages}>
+              <input
+                type="number"
+                min={1}
+                max={10000}
+                value={draft.dynamicPayload.totalPages ?? 1}
+                placeholder="Terisi otomatis saat berkas PDF diunggah"
+                onChange={(e) =>
+                  payload({ totalPages: Number(e.target.value) || 1 })
+                }
+              />
+            </Field>
+          )}
+        </div>
       )}
       {draft.resourceType === "VIDEO_MEDIA" && (
         <>

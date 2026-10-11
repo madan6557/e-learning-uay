@@ -54,7 +54,7 @@ export function FileUpload({
         setProgress,
       );
       setUploadedFile({ id: res.id, name: file.name, size: file.size });
-      onUploaded(res);
+      onUploaded({ ...res, file });
     } catch (err) {
       setError(err as Error);
     } finally {
