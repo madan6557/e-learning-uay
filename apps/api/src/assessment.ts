@@ -23,6 +23,7 @@ import {
   notify,
   transaction,
   systemContext,
+  getNextSectionContentOrder,
   type Context,
 } from "./core.js";
 import { validateWindow } from "./learning.js";
@@ -402,10 +403,15 @@ export function registerAssessment(app: Express) {
           400,
           "RELEASE_DATE_REQUIRED",
         );
+        const contentOrder = await getNextSectionContentOrder(
+          tx,
+          String(req.params.id),
+        );
         const after = await tx.quiz.create({
           data: {
             ...data,
             sectionId: String(req.params.id),
+            contentOrder,
             questions: {
               create: questions.map(({ id, ...q }, order) => ({
                 ...q,
@@ -969,11 +975,16 @@ export function registerAssessment(app: Express) {
         validateWindow(data.availableFrom, data.deadline);
         validateWindow(data.deadline, data.cutoffDate);
         await checkCategory(tx, data.gradeCategoryId, cls.id);
+        const contentOrder = await getNextSectionContentOrder(
+          tx,
+          String(req.params.id),
+        );
         const after = await tx.assignment.create({
           data: {
             ...data,
             allowedFormats: json(data.allowedFormats),
             sectionId: String(req.params.id),
+            contentOrder,
           },
         });
         const section = await tx.section.findUniqueOrThrow({

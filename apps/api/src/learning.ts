@@ -18,6 +18,7 @@ import {
   notify,
   config,
   getAcademicSettings,
+  getNextSectionContentOrder,
 } from "./core.js";
 import {
   GRADE_SCALE_PRESETS,
@@ -758,7 +759,13 @@ export function registerLearning(app: Express) {
       where: { classId: cls.id },
       orderBy: { order: "asc" },
       include: {
-        resources: { orderBy: [{ contentOrder: "asc" }, { id: "asc" }] },
+        resources: {
+          orderBy: [
+            { contentOrder: "asc" },
+            { createdAt: "asc" },
+            { id: "asc" },
+          ],
+        },
         quizzes: {
           select: {
             id: true,
@@ -771,10 +778,21 @@ export function registerLearning(app: Express) {
             availableUntil: true,
             isVisible: true,
             contentOrder: true,
+            createdAt: true,
           },
-          orderBy: [{ contentOrder: "asc" }, { id: "asc" }],
+          orderBy: [
+            { contentOrder: "asc" },
+            { createdAt: "asc" },
+            { id: "asc" },
+          ],
         },
-        assignments: { orderBy: [{ contentOrder: "asc" }, { id: "asc" }] },
+        assignments: {
+          orderBy: [
+            { contentOrder: "asc" },
+            { createdAt: "asc" },
+            { id: "asc" },
+          ],
+        },
       },
     });
     const visible = (item: any) => {
@@ -1472,13 +1490,15 @@ export function registerLearning(app: Express) {
           true,
         );
         const data = await validateResource(req.body, tx, cls.id);
+        const contentOrder = await getNextSectionContentOrder(
+          tx,
+          String(req.params.id),
+        );
         const after = await tx.resourceItem.create({
           data: {
             ...data,
             sectionId: String(req.params.id),
-            contentOrder: await tx.resourceItem.count({
-              where: { sectionId: String(req.params.id) },
-            }),
+            contentOrder,
           },
         });
         await audit(

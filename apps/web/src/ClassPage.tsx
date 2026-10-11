@@ -596,7 +596,13 @@ export function ClassPage({
                           quiz: 1,
                           assignment: 2,
                         };
-                        return (rank[a._kind] ?? 0) - (rank[b._kind] ?? 0);
+                        const rankDiff =
+                          (rank[a._kind] ?? 0) - (rank[b._kind] ?? 0);
+                        if (rankDiff !== 0) return rankDiff;
+                        const dateA = new Date(a.createdAt ?? 0).getTime();
+                        const dateB = new Date(b.createdAt ?? 0).getTime();
+                        if (dateA !== dateB) return dateA - dateB;
+                        return String(a.id).localeCompare(String(b.id));
                       });
 
                       const moveItem = async (index: number, delta: number) => {

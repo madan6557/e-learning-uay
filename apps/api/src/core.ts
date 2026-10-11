@@ -864,3 +864,31 @@ export const systemContext = (user: User): Context => ({
   ip: "system",
   userAgent: "expiry-worker",
 });
+
+export async function getNextSectionContentOrder(
+  tx: Prisma.TransactionClient,
+  sectionId: string,
+): Promise<number> {
+  const [resMax, quizMax, assignMax] = await Promise.all([
+    tx.resourceItem.aggregate({
+      where: { sectionId },
+      _max: { contentOrder: true },
+    }),
+    tx.quiz.aggregate({
+      where: { sectionId },
+      _max: { contentOrder: true },
+    }),
+    tx.assignment.aggregate({
+      where: { sectionId },
+      _max: { contentOrder: true },
+    }),
+  ]);
+
+  const maxVal = Math.max(
+    resMax._max.contentOrder ?? -1,
+    quizMax._max.contentOrder ?? -1,
+    assignMax._max.contentOrder ?? -1,
+  );
+
+  return maxVal + 1;
+}
