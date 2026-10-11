@@ -108,9 +108,10 @@ export const config = {
       );
     }
     return (
-      process.env.UAY_FILE_SERVICE_URL?.trim() ||
+      process.env.FILE_SERVICE_BASE_URL?.trim() ||
       process.env.FILE_SERVICE_URL?.trim() ||
       process.env.FILE_SERVICE_API_URL?.trim() ||
+      process.env.UAY_FILE_SERVICE_URL?.trim() ||
       ""
     );
   },
@@ -127,9 +128,11 @@ export const config = {
       );
     }
     return (
-      process.env.UAY_FILE_SERVICE_API_KEY?.trim() ||
-      process.env.FILE_SERVICE_API_KEY?.trim() ||
+      process.env.FILE_SERVICE_CLIENT_SECRET?.trim() ||
+      process.env.FILE_SERVICE_TOKEN?.trim() ||
       process.env.FILE_SERVICE_KEY?.trim() ||
+      process.env.FILE_SERVICE_API_KEY?.trim() ||
+      process.env.UAY_FILE_SERVICE_API_KEY?.trim() ||
       ""
     );
   },
@@ -139,8 +142,8 @@ export const config = {
   get fileRepoId(): string {
     if (_fileRepoIdOverride !== null) return _fileRepoIdOverride;
     return (
-      process.env.UAY_FILE_SERVICE_REPOSITORY_ID?.trim() ||
       process.env.FILE_SERVICE_REPOSITORY_ID?.trim() ||
+      process.env.UAY_FILE_SERVICE_REPOSITORY_ID?.trim() ||
       process.env.FILE_SERVICE_REPO_ID?.trim() ||
       "00000000-0000-0000-0000-000000000001"
     );
@@ -151,8 +154,8 @@ export const config = {
   get fileClientId(): string {
     if (_fileClientIdOverride !== null) return _fileClientIdOverride;
     return (
-      process.env.UAY_FILE_SERVICE_CLIENT_ID?.trim() ||
       process.env.FILE_SERVICE_CLIENT_ID?.trim() ||
+      process.env.UAY_FILE_SERVICE_CLIENT_ID?.trim() ||
       process.env.SSO_CLIENT_ID?.trim() ||
       "elearning-uay"
     );
@@ -242,9 +245,12 @@ export const config = {
       this.s3Bucket && (this.s3AccessKeyId || this.s3Endpoint),
     );
     const hasUay = Boolean(
-      this.fileUrl &&
-        this.fileKey &&
-        (process.env.UAY_FILE_SERVICE_URL ||
+      (this.fileUrl || process.env.FILE_SERVICE_BASE_URL) &&
+        (this.fileKey ||
+          process.env.FILE_SERVICE_CLIENT_SECRET ||
+          process.env.FILE_SERVICE_CLIENT_ID ||
+          process.env.UAY_FILE_SERVICE_URL ||
+          process.env.FILE_SERVICE_BASE_URL ||
           process.env.UAY_FILE_SERVICE_API_KEY ||
           this.fileUrl.includes("/api/v1") ||
           this.fileUrl.includes("file-service.uay.ac.id")),
@@ -252,7 +258,9 @@ export const config = {
 
     const driver = process.env.FILE_STORAGE_DRIVER?.toLowerCase().trim();
     if (driver === "s3" && hasS3) return "s3";
-    if (driver === "uay" && hasUay) return "uay";
+    if (driver === "uay" && (hasUay || this.fileUrl)) return "uay";
+    if (driver === "local" || driver === "filesystem" || driver === "disk")
+      return "local";
 
     if (hasUay) return "uay";
     if (hasS3) return "s3";
@@ -268,6 +276,7 @@ export const config = {
           .filter(Boolean),
         ...(() => {
           const u =
+            process.env.FILE_SERVICE_BASE_URL?.trim() ||
             process.env.UAY_FILE_SERVICE_URL?.trim() ||
             process.env.FILE_SERVICE_URL?.trim() ||
             process.env.FILE_SERVICE_API_URL?.trim();
@@ -366,19 +375,22 @@ function productionConfigurationErrors() {
   // Grace: an unconfigured revocation webhook remains disabled with HTTP 503.
 
   const activeFileUrl =
-    process.env.UAY_FILE_SERVICE_URL?.trim() ||
+    process.env.FILE_SERVICE_BASE_URL?.trim() ||
     process.env.FILE_SERVICE_URL?.trim() ||
-    process.env.FILE_SERVICE_API_URL?.trim();
+    process.env.FILE_SERVICE_API_URL?.trim() ||
+    process.env.UAY_FILE_SERVICE_URL?.trim();
   const activeFileKey =
-    process.env.UAY_FILE_SERVICE_API_KEY?.trim() ||
+    process.env.FILE_SERVICE_CLIENT_SECRET?.trim() ||
+    process.env.FILE_SERVICE_TOKEN?.trim() ||
+    process.env.FILE_SERVICE_KEY?.trim() ||
     process.env.FILE_SERVICE_API_KEY?.trim() ||
-    process.env.FILE_SERVICE_KEY?.trim();
+    process.env.UAY_FILE_SERVICE_API_KEY?.trim();
 
   if (!activeFileUrl) {
-    invalid.push("FILE_SERVICE_URL or UAY_FILE_SERVICE_URL");
+    invalid.push("FILE_SERVICE_BASE_URL or FILE_SERVICE_URL");
   }
   if (!activeFileKey) {
-    invalid.push("FILE_SERVICE_KEY or UAY_FILE_SERVICE_API_KEY");
+    invalid.push("FILE_SERVICE_CLIENT_SECRET or FILE_SERVICE_KEY");
   }
   if (config.fileMode === "local") {
     invalid.push(

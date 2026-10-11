@@ -58,6 +58,7 @@ async function serviceJson(response: Response): Promise<any> {
 export async function checkFileService(options?: {
   timeoutMs?: number;
   requestId?: string;
+  token?: string;
 }) {
   const mode = config.fileMode;
   if (mode === "s3") {
@@ -107,7 +108,10 @@ export async function checkFileService(options?: {
     {
       headers:
         mode === "uay"
-          ? getUayHeaders(options)
+          ? getUayHeaders({
+              ...options,
+              token: options?.token || (await getUayServiceToken()),
+            })
           : { Authorization: `Bearer ${config.fileKey}` },
     },
     { idempotent: true, attempts: 1, timeoutMs: options?.timeoutMs ?? 3000 },
@@ -349,6 +353,77 @@ function isJwt(token?: string): boolean {
   return parts.length === 3 && parts[0].startsWith("ey");
 }
 
+let cachedUayToken: { token: string; expiresAt: number } | null = null;
+
+export async function getUayServiceToken(): Promise<string | undefined> {
+  const explicitToken =
+    process.env.FILE_SERVICE_TOKEN?.trim() ||
+    process.env.UAY_FILE_SERVICE_TOKEN?.trim() ||
+    (isJwt(config.fileKey) ? config.fileKey : undefined);
+  if (explicitToken) return explicitToken;
+
+  const tokenUrl =
+    process.env.KEYCLOAK_TOKEN_URL?.trim() ||
+    (config.issuer
+      ? `${config.issuer.replace(/\/+$/, "")}/protocol/openid-connect/token`
+      : undefined);
+  const clientId =
+    process.env.FILE_SERVICE_CLIENT_ID?.trim() ||
+    process.env.UAY_FILE_SERVICE_CLIENT_ID?.trim() ||
+    config.fileClientId;
+  const clientSecret =
+    process.env.FILE_SERVICE_CLIENT_SECRET?.trim() ||
+    process.env.SSO_CLIENT_SECRET?.trim();
+
+  if (!tokenUrl || !clientId || !clientSecret) {
+    return undefined;
+  }
+
+  if (cachedUayToken && cachedUayToken.expiresAt > Date.now() + 30_000) {
+    return cachedUayToken.token;
+  }
+
+  try {
+    const params = new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: clientId,
+      client_secret: clientSecret,
+    });
+    const audience =
+      process.env.FILE_SERVICE_AUDIENCE?.trim() || "uay-file-service";
+    if (audience) {
+      params.append("audience", audience);
+    }
+    const res = await fetch(tokenUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: params.toString(),
+    });
+    if (res.ok) {
+      const data = (await res.json()) as any;
+      if (data?.access_token) {
+        const expiresIn = Number(data.expires_in) || 300;
+        cachedUayToken = {
+          token: data.access_token,
+          expiresAt: Date.now() + expiresIn * 1000,
+        };
+        return data.access_token;
+      }
+    } else {
+      console.error(
+        "[Keycloak M2M Token Error] Status:",
+        res.status,
+        await res.text().catch(() => ""),
+      );
+    }
+  } catch (err: any) {
+    console.error("[Keycloak M2M Token Request Failed]:", err.message);
+  }
+  return undefined;
+}
+
 export function getUayHeaders(options?: {
   actorId?: string;
   requestId?: string;
@@ -364,6 +439,7 @@ export function getUayHeaders(options?: {
 
   const bearerToken =
     options?.token ||
+    cachedUayToken?.token ||
     (isJwt(config.fileKey) ? config.fileKey : undefined) ||
     (isJwt(process.env.FILE_SERVICE_TOKEN)
       ? process.env.FILE_SERVICE_TOKEN
@@ -392,12 +468,13 @@ export async function uayUpload(params: {
   folderId?: string;
   actorId?: string;
   requestId?: string;
+  token?: string;
 }) {
   const repoId =
     params.repositoryId ||
     config.fileRepoId ||
-    process.env.UAY_FILE_SERVICE_REPOSITORY_ID ||
     process.env.FILE_SERVICE_REPOSITORY_ID ||
+    process.env.UAY_FILE_SERVICE_REPOSITORY_ID ||
     "00000000-0000-0000-0000-000000000001";
 
   const formData = new FormData();
@@ -424,12 +501,14 @@ export async function uayUpload(params: {
   if (params.resourceId) formData.append("resource_id", params.resourceId);
   if (params.folderId) formData.append("folder_id", params.folderId);
 
+  const token = params.token || (await getUayServiceToken());
   const endpoint = getUayEndpoint(`/v1/repositories/${repoId}/files`);
   const res = await serviceFetch("file_service", endpoint, {
     method: "POST",
     headers: getUayHeaders({
       actorId: params.actorId,
       requestId: params.requestId,
+      token,
     }),
     body: formData,
   });
@@ -473,15 +552,21 @@ export async function uayUpload(params: {
 
 export async function uayGetMetadata(
   fileId: string,
-  options?: { actorId?: string; requestId?: string; repositoryId?: string },
+  options?: {
+    actorId?: string;
+    requestId?: string;
+    repositoryId?: string;
+    token?: string;
+  },
 ) {
   const repoId =
     options?.repositoryId ||
     config.fileRepoId ||
-    process.env.UAY_FILE_SERVICE_REPOSITORY_ID ||
     process.env.FILE_SERVICE_REPOSITORY_ID ||
+    process.env.UAY_FILE_SERVICE_REPOSITORY_ID ||
     "00000000-0000-0000-0000-000000000001";
 
+  const token = options?.token || (await getUayServiceToken());
   const endpoint = getUayEndpoint(
     `/v1/repositories/${repoId}/files/${encodeURIComponent(fileId)}`,
   );
@@ -490,7 +575,7 @@ export async function uayGetMetadata(
     endpoint,
     {
       method: "GET",
-      headers: getUayHeaders(options),
+      headers: getUayHeaders({ ...options, token }),
     },
     { idempotent: true },
   );
@@ -548,15 +633,21 @@ export async function uayGetMetadata(
 export async function uayStreamFile(
   fileId: string,
   rangeHeader?: string,
-  options?: { actorId?: string; requestId?: string; repositoryId?: string },
+  options?: {
+    actorId?: string;
+    requestId?: string;
+    repositoryId?: string;
+    token?: string;
+  },
 ) {
   const repoId =
     options?.repositoryId ||
     config.fileRepoId ||
-    process.env.UAY_FILE_SERVICE_REPOSITORY_ID ||
     process.env.FILE_SERVICE_REPOSITORY_ID ||
+    process.env.UAY_FILE_SERVICE_REPOSITORY_ID ||
     "00000000-0000-0000-0000-000000000001";
 
+  const token = options?.token || (await getUayServiceToken());
   const endpoint = getUayEndpoint(
     `/v1/repositories/${repoId}/files/${encodeURIComponent(fileId)}/download`,
   );
@@ -569,6 +660,7 @@ export async function uayStreamFile(
         actorId: options?.actorId,
         requestId: options?.requestId,
         range: rangeHeader,
+        token,
       }),
     },
     { idempotent: true },
@@ -578,15 +670,21 @@ export async function uayStreamFile(
 
 export async function uayTrash(
   fileId: string,
-  options?: { actorId?: string; requestId?: string; repositoryId?: string },
+  options?: {
+    actorId?: string;
+    requestId?: string;
+    repositoryId?: string;
+    token?: string;
+  },
 ) {
   const repoId =
     options?.repositoryId ||
     config.fileRepoId ||
-    process.env.UAY_FILE_SERVICE_REPOSITORY_ID ||
     process.env.FILE_SERVICE_REPOSITORY_ID ||
+    process.env.UAY_FILE_SERVICE_REPOSITORY_ID ||
     "00000000-0000-0000-0000-000000000001";
 
+  const token = options?.token || (await getUayServiceToken());
   const endpoint = getUayEndpoint(
     `/v1/repositories/${repoId}/files/${encodeURIComponent(fileId)}`,
   );
@@ -595,7 +693,7 @@ export async function uayTrash(
     endpoint,
     {
       method: "DELETE",
-      headers: getUayHeaders(options),
+      headers: getUayHeaders({ ...options, token }),
     },
   );
   ensure(res.ok, 502, "FILE_SERVICE_REJECTED");
@@ -605,15 +703,21 @@ export async function uayTrash(
 
 export async function uayRestore(
   fileId: string,
-  options?: { actorId?: string; requestId?: string; repositoryId?: string },
+  options?: {
+    actorId?: string;
+    requestId?: string;
+    repositoryId?: string;
+    token?: string;
+  },
 ) {
   const repoId =
     options?.repositoryId ||
     config.fileRepoId ||
-    process.env.UAY_FILE_SERVICE_REPOSITORY_ID ||
     process.env.FILE_SERVICE_REPOSITORY_ID ||
+    process.env.UAY_FILE_SERVICE_REPOSITORY_ID ||
     "00000000-0000-0000-0000-000000000001";
 
+  const token = options?.token || (await getUayServiceToken());
   const endpoint = getUayEndpoint(
     `/v1/repositories/${repoId}/files/${encodeURIComponent(fileId)}/restore`,
   );
@@ -622,7 +726,7 @@ export async function uayRestore(
     endpoint,
     {
       method: "POST",
-      headers: getUayHeaders(options),
+      headers: getUayHeaders({ ...options, token }),
       body: JSON.stringify({}),
     },
   );
@@ -635,21 +739,23 @@ export async function uayGetRepositories(options?: {
   actorId?: string;
   requestId?: string;
   repositoryId?: string;
+  token?: string;
 }) {
   const repoId =
     options?.repositoryId ||
     config.fileRepoId ||
-    process.env.UAY_FILE_SERVICE_REPOSITORY_ID ||
     process.env.FILE_SERVICE_REPOSITORY_ID ||
+    process.env.UAY_FILE_SERVICE_REPOSITORY_ID ||
     "00000000-0000-0000-0000-000000000001";
 
+  const token = options?.token || (await getUayServiceToken());
   const endpoint = getUayEndpoint(`/v1/repositories/${repoId}`);
   const res = await serviceFetch(
     "file_service",
     endpoint,
     {
       method: "GET",
-      headers: getUayHeaders(options),
+      headers: getUayHeaders({ ...options, token }),
     },
     { idempotent: true },
   );
