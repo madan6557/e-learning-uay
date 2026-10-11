@@ -557,6 +557,27 @@ test("department governance protects authority, identity and reference integrity
         );
       },
     );
+    await suite.test(
+      "SSO sync users requires Super Admin authority and validates parameters",
+      async () => {
+        for (const user of [instructor, departmentAdmin, student, rector]) {
+          await request(
+            user,
+            "/system/sso/sync-users",
+            "POST",
+            { dryRun: true },
+            403,
+          );
+        }
+        await request(
+          admin,
+          "/system/sso/sync-users",
+          "POST",
+          { userType: "INVALID_ROLE" },
+          400,
+        );
+      },
+    );
   } finally {
     server.closeAllConnections();
     await new Promise<void>((resolve) => server.close(() => resolve()));

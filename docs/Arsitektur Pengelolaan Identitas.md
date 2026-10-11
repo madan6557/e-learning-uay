@@ -132,36 +132,108 @@ Setelah akun dibuat, perubahan data akademik dapat terjadi, misalnya perubahan n
 
 Sinkronisasi perlu memiliki aturan untuk menangani data yang tidak ditemukan, perubahan yang bertentangan, kegagalan proses, dan pengulangan permintaan. Proses yang gagal tidak boleh diam-diam dianggap berhasil. Sistem harus menyediakan log atau laporan yang memungkinkan administrator menindaklanjuti ketidaksesuaian data.
 
+### 5.4. Integrasi Penarikan Pengguna dari SSO dan Pola Pra-Registrasi (Pre-Provisioning)
+
+Untuk mendukung operasional pembelajaran digital yang fleksibel, E-Learning menyediakan fitur penarikan akun terpusat dari SSO Kampus melalui endpoint:
+- **SSO Backend API:** `GET /api/v1/applications/client/:clientId/users` (mengambil daftar pengguna yang memiliki hak akses ke client `elearning-uay` dengan pagination dan filter pencarian).
+- **E-Learning API:** `POST /api/v1/system/sso/sync-users` (dipicu oleh Super Admin, mendukung mode `dryRun: true` untuk pratinjau dan `dryRun: false` untuk eksekusi komit nyata).
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Admin as Super Admin
+    participant EL as E-Learning Web & API
+    participant SSO as UAY SSO API
+    participant DB as E-Learning Database
+    actor User as Dosen / Staf Baru
+    participant KC as Keycloak OIDC
+
+    Admin->>EL: Tarik Pengguna SSO (Dry-Run Preview)
+    EL->>SSO: GET /applications/client/elearning-uay/users?search=...
+    SSO-->>EL: Daftar Pengguna & Role SSO
+    EL-->>Admin: Pratinjau: Jumlah Baru vs Sudah Ada
+
+    Admin->>EL: Konfirmasi Sinkronkan (Commit Nyata)
+    EL->>SSO: GET /applications/client/elearning-uay/users
+    SSO-->>EL: Data Pengguna Lengkap
+    EL->>DB: Buat Pra-Registrasi (ssoUserId: "preprovision:<uuid>") atau Sync Profil
+    DB-->>EL: Berhasil Disimpan & Catat Audit Log
+    EL-->>Admin: Ringkasan Hasil Eksekusi
+
+    Note over User,KC: Pengguna Baru Melakukan Login Pertama Kali
+    User->>EL: Masuk dengan SSO UAY
+    EL->>KC: Redirect OIDC Login
+    KC-->>EL: OIDC Authorization Code & ID Token (sub asli Keycloak)
+    EL->>DB: Cocokkan Akun via NIDN/NIP atau Email
+    EL->>DB: Tautkan sub asli Keycloak ke Akun Pra-Registrasi (Auto-Binding)
+    DB-->>EL: Profil Aktif dengan Otoritas Tersimpan
+    EL-->>User: Beranda E-Learning Sesuai Peran
+```
+
+**Karakteristik Kunci Pre-Provisioning:**
+1. **Pra-Penugasan:** Dosen baru dapat langsung dijadwalkan mengajar rombel kelas oleh Kaprodi bahkan sebelum dosen tersebut melakukan login perdana.
+2. **Preservasi Otoritas Lokal:** Penarikan akun tidak pernah menghapus peran Dekan/Kaprodi maupun `departmentScopes` yang sudah diatur oleh admin di E-Learning.
+3. **Seamless Identity Auto-Binding:** Saat dosen/staf pertama kali login melalui OIDC Keycloak, sistem mendeteksi kecocokan identifier (NIDN/NIP/Email) dan menautkan `ssoUserId` asli tanpa membuat duplikasi entitas.
+
 ## 6. Penetapan Application Access dan Role
 
 Identitas pengguna, akses aplikasi, dan role merupakan tiga hal yang berbeda. SSO mengetahui siapa pengguna tersebut, aplikasi mana yang boleh diakses, dan role apa yang diberikan untuk aplikasi tersebut. SSO tidak secara otomatis menentukan seluruh hak akses fitur yang ada di dalam aplikasi.
 
 ```mermaid
 flowchart TD
-    A["Identitas Pengguna"] --> B["user_type dan Status Akun"]
+    A["Identitas Pengguna (SSO/Keycloak)"] --> B["user_type dan Status Akun"]
     B --> C["Aturan Bisnis dan Penugasan"]
-    C --> D["Application Access"]
-    D --> E["Role pada Aplikasi"]
-    E --> F["Authorization di Backend Aplikasi"]
-    F --> G["Akses Fitur dan Resource"]
+    C --> D["Application Access & Scope"]
+    D --> E["Role pada E-Learning"]
+    E --> F["Authorization & Permission Registry"]
+    F --> G["Kedaulatan Penilaian & Akses Fitur"]
 ```
 
-Sebagai contoh, mahasiswa dapat memperoleh role `student` di E-Learning. Role tersebut tidak otomatis memberikan akses ke semua kelas karena keanggotaan kelas ditentukan berdasarkan data akademik dan aturan E-Learning.
+Sebagai contoh, mahasiswa memperoleh role `STUDENT` di E-Learning. Role tersebut tidak otomatis memberikan akses ke semua kelas karena keanggotaan kelas ditentukan berdasarkan data akademik dan aturan E-Learning.
 
-Seorang staff juga tidak otomatis memperoleh role `admin` hanya karena `user_type`-nya adalah `STAFF`. Role administrator harus diberikan berdasarkan penugasan dan kewenangan yang sah. Demikian pula, role `super-admin` merupakan kewenangan khusus dan tidak diturunkan otomatis dari kategori pengguna.
-
-Pemberian application access dan role harus mengikuti authority matrix. Super Admin dan administrator yang didelegasikan hanya boleh memberikan akses dalam batas kewenangan yang ditetapkan. Setiap perubahan akses penting perlu tercatat dalam audit.
+Demikian pula, role `SUPER_ADMIN` merupakan kewenangan institusional tingkat universitas, sedangkan `DEPARTMENT_ADMIN` diberikan secara terfokus pada cakupan program studi tertentu.
 
 ### 6.1. Contoh Matriks Pengguna
 
-| Pengguna | `user_type` | Aplikasi | Role contoh | Dasar penetapan |
+| Pengguna | `user_type` | Aplikasi | Role E-Learning | Dasar Penetapan & Lingkup |
 |---|---|---|---|---|
-| Mahasiswa aktif | `STUDENT` | E-Learning | `student` | Status akademik dan kebutuhan akses pembelajaran. |
-| Dosen | `LECTURER` | E-Learning | `lecturer` | Identitas dosen dan kebutuhan pengajaran. |
-| Staff administrasi | `STAFF` | Aplikasi administrasi terkait | Role sesuai penugasan | Kewenangan dan tanggung jawab administratif. |
-| Pengelola SSO | `STAFF` | SSO Admin | `super-admin` atau `admin` sesuai penetapan | Penugasan dan authority matrix. |
+| Mahasiswa aktif | `STUDENT` | E-Learning | `STUDENT` | Status akademik dan KRS kelas berjalan. |
+| Dosen Pengampu | `LECTURER` | E-Learning | `INSTRUCTOR` | Penugasan mengajar rombel kelas resmi. |
+| Kaprodi | `LECTURER` / `STAFF` | E-Learning | `DEPARTMENT_ADMIN` | SK Dekan, cakupan single-prodi (misal `["IF"]`). |
+| Dekan / Wakil Dekan | `LECTURER` | E-Learning | `DEPARTMENT_ADMIN` | SK Rektor, cakupan multi-prodi fakultas (misal `["IF", "TI", "TS"]`). |
+| Super Admin | `STAFF` / `ADMIN` | E-Learning | `SUPER_ADMIN` | SK Rektor, pengelolaan LMS pusat universitas. |
+| Rektor / Pimpinan | `LECTURER` / `STAFF` | E-Learning | `RECTOR` | SK Rektor, peninjauan analitik eksekutif universitas (*read-only*). |
 
-Role pada tabel merupakan contoh untuk menjelaskan model, bukan pemetaan otomatis yang sudah ditetapkan untuk seluruh pengguna UAY.
+### 6.2. Matriks Otoritas Resmi 6 Peran & Kedaulatan Penilaian (Grading Sovereignty)
+
+Dalam arsitektur tata kelola akademik E-Learning UAY Versi 2.0, wewenang dibagi ke dalam 6 peran dengan batasan yang tegas:
+
+| Domain Wewenang | Super Admin | Dekan (Multi-Prodi) | Kaprodi (Single-Prodi) | Dosen Pengampu | Mahasiswa | Rektor |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| Master Data Program Studi & Proteksi Kode | **Kelola** | Tidak | Tidak | Tidak | Tidak | Tidak |
+| Deaktivasi Prodi Berelasi (*DEACTIVATED*) | **Kelola** | Tidak | Tidak | Tidak | Tidak | Tidak |
+| Penetapan Otoritas Kaprodi & Dekan | **Kelola** | Tidak | Tidak | Tidak | Tidak | Tidak |
+| Tarik Pengguna SSO & Pra-Registrasi | **Kelola** | Tidak | Tidak | Tidak | Tidak | Tidak |
+| Sinkronisasi Penugasan via SIAKAD Bridge | **Kelola/Mesin** | Tidak | Tidak | Tidak | Tidak | Tidak |
+| Kelola Rombel & Kurikulum Prodi | Semua | Fakultas | Prodi | Tidak | Tidak | Tidak |
+| Pembuatan Pertemuan, Materi PDF & Video | Semua (Bantu) | Fakultas (Bantu) | Prodi (Bantu) | **Kelas** | Tidak | Tidak |
+| Pembukaan Sesi Presensi & PIN 6-Digit | Semua (Darurat) | Fakultas (Darurat) | Prodi (Darurat) | **Kelas** | Tidak | Tidak |
+| **Pemberian Nilai Siswa (`GRADE_STUDENT_WORK`)** | **DILARANG** | **DILARANG** | **DILARANG** | **MUTLAK** | Tidak | Tidak |
+| **Publikasi & Penguncian Nilai Kelas** | Tidak | Tidak | Tidak | **MUTLAK** | Tidak | Tidak |
+| Buka Kunci Nilai (*Unlock Gradebook*) | **Kelola (SK Dekan)** | Tidak | Tidak | Pengajuan | Tidak | Tidak |
+| Ekspor Rekap Nilai Prodi/Fakultas | Semua | **Fakultas** | **Prodi** | Kelas | Tidak | Tidak |
+| Dasbor Analitik Keaktifan Real-Time | Baca | Baca | Baca | Tidak | Tidak | **Eksklusif** |
+
+> **Prinsip Kedaulatan Penilaian (Grading Sovereignty):**
+> Evaluasi dan penetapan nilai angka/huruf mutu mahasiswa merupakan hak prerogatif yang dilindungi hukum bagi Dosen Pengampu yang ditugaskan secara sah. Super Admin, Dekan, maupun Kaprodi secara teknis diblokir dari memanipulasi buku nilai kelas.
+
+### 6.3. Integrasi SIAKAD Bridge untuk Penugasan Struktural
+
+Untuk sinkronisasi otomatis dari sistem informasi akademik induk (SIMAK/SIAKAD), E-Learning menyediakan endpoint mesin-ke-mesin terproteksi:
+- `POST /api/v1/system/siakad/sync-scopes`
+- Proteksi: Header `X-SIAKAD-Secret` dan header `Idempotency-Key`.
+- Fitur: Mode `dryRun: true` untuk simulasi dan audit log otomatis dengan `action: "SYNC_SIAKAD_SCOPES"`.
+- Revokasi: Pengiriman `departmentScopes: []` secara otomatis mendemutasi peran akun dari `DEPARTMENT_ADMIN` kembali ke `INSTRUCTOR`.
 
 ## 7. Status Akademik dan Status Akun
 

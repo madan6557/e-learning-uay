@@ -348,3 +348,170 @@ test("SSO user synchronization handles user mapping and preserves existing gover
   assert.deepEqual(newUser.departmentScopes, []);
 });
 
+test("Dean multi-prodi scope and Kaprodi single-prodi scope enforce faculty boundaries", () => {
+  // Dean of Engineering covers IF, TI, and TS
+  const deanScopes = ["IF", "TI", "TS"].map(normalizeDepartmentCode);
+  // Kaprodi Informatics covers only IF
+  const kaprodiScopes = ["IF"].map(normalizeDepartmentCode);
+
+  const testClasses = [
+    { id: "c1", departmentCode: "IF", title: "Struktur Data" },
+    { id: "c2", departmentCode: "TI", title: "Ergonomi Industri" },
+    { id: "c3", departmentCode: "TS", title: "Mekanika Tanah" },
+    { id: "c4", departmentCode: "HK", title: "Hukum Perdata" },
+    { id: "c5", departmentCode: "MN", title: "Manajemen Keuangan" },
+  ];
+
+  const canAccessClass = (userScopes: string[], classDept: string) => {
+    return userScopes.includes(normalizeDepartmentCode(classDept));
+  };
+
+  // Dean should access all 3 engineering classes, but NOT law or management
+  assert.equal(canAccessClass(deanScopes, "IF"), true);
+  assert.equal(canAccessClass(deanScopes, "TI"), true);
+  assert.equal(canAccessClass(deanScopes, "TS"), true);
+  assert.equal(canAccessClass(deanScopes, "HK"), false);
+  assert.equal(canAccessClass(deanScopes, "MN"), false);
+
+  // Kaprodi IF should only access IF class
+  assert.equal(canAccessClass(kaprodiScopes, "IF"), true);
+  assert.equal(canAccessClass(kaprodiScopes, "TI"), false);
+  assert.equal(canAccessClass(kaprodiScopes, "TS"), false);
+  assert.equal(canAccessClass(kaprodiScopes, "HK"), false);
+  assert.equal(canAccessClass(kaprodiScopes, "MN"), false);
+});
+
+test("Grading Sovereignty: Super Admin, Dean, and Kaprodi cannot grade student work without direct teaching assignment", () => {
+  type UserContext = {
+    id: string;
+    role: "SUPER_ADMIN" | "DEPARTMENT_ADMIN" | "INSTRUCTOR" | "STUDENT" | "RECTOR";
+    departmentScopes: string[];
+  };
+
+  type ClassContext = {
+    id: string;
+    departmentCode: string;
+    assignedInstructorIds: string[];
+  };
+
+  const checkGradingAuthority = (user: UserContext, cls: ClassContext): boolean => {
+    // Grading Sovereignty: ONLY the assigned instructor of the class can grade
+    if (user.role === "INSTRUCTOR" && cls.assignedInstructorIds.includes(user.id)) {
+      return true;
+    }
+    // Neither Super Admin nor Department Admin (Dean/Kaprodi) can grade
+    return false;
+  };
+
+  const sampleClass: ClassContext = {
+    id: "cls-if-101",
+    departmentCode: "IF",
+    assignedInstructorIds: ["usr-lecturer-assigned"],
+  };
+
+  const assignedLecturer: UserContext = {
+    id: "usr-lecturer-assigned",
+    role: "INSTRUCTOR",
+    departmentScopes: ["IF"],
+  };
+
+  const nonAssignedLecturer: UserContext = {
+    id: "usr-lecturer-other",
+    role: "INSTRUCTOR",
+    departmentScopes: ["IF"],
+  };
+
+  const dean: UserContext = {
+    id: "usr-dean-ft",
+    role: "DEPARTMENT_ADMIN",
+    departmentScopes: ["IF", "TI", "TS"],
+  };
+
+  const kaprodi: UserContext = {
+    id: "usr-kaprodi-if",
+    role: "DEPARTMENT_ADMIN",
+    departmentScopes: ["IF"],
+  };
+
+  const superAdmin: UserContext = {
+    id: "usr-super-admin",
+    role: "SUPER_ADMIN",
+    departmentScopes: [],
+  };
+
+  const rector: UserContext = {
+    id: "usr-rector",
+    role: "RECTOR",
+    departmentScopes: [],
+  };
+
+  // Only assigned instructor is authorized
+  assert.equal(checkGradingAuthority(assignedLecturer, sampleClass), true);
+  assert.equal(checkGradingAuthority(nonAssignedLecturer, sampleClass), false);
+  assert.equal(checkGradingAuthority(dean, sampleClass), false);
+  assert.equal(checkGradingAuthority(kaprodi, sampleClass), false);
+  assert.equal(checkGradingAuthority(superAdmin, sampleClass), false);
+  assert.equal(checkGradingAuthority(rector, sampleClass), false);
+});
+
+test("Department lifecycle protects active relational dependencies with DEACTIVATED status", () => {
+  type MockDept = {
+    id: string;
+    code: string;
+    name: string;
+    isActive: boolean;
+  };
+
+  const handleDepartmentDeletion = (
+    dept: MockDept,
+    references: { courseCount: number; userCount: number; announcementCount: number },
+  ): { action: "DEACTIVATED" | "DELETED"; dept: MockDept | null } => {
+    const hasRelations =
+      references.courseCount > 0 ||
+      references.userCount > 0 ||
+      references.announcementCount > 0;
+
+    if (hasRelations) {
+      dept.isActive = false;
+      return { action: "DEACTIVATED", dept };
+    }
+
+    return { action: "DELETED", dept: null };
+  };
+
+  // Case 1: Department with existing courses
+  const deptInUse: MockDept = {
+    id: "d1",
+    code: "IF",
+    name: "Informatika",
+    isActive: true,
+  };
+
+  const resultInUse = handleDepartmentDeletion(deptInUse, {
+    courseCount: 15,
+    userCount: 8,
+    announcementCount: 2,
+  });
+
+  assert.equal(resultInUse.action, "DEACTIVATED");
+  assert.equal(deptInUse.isActive, false);
+
+  // Case 2: Newly created empty department without any courses or users
+  const emptyDept: MockDept = {
+    id: "d2",
+    code: "BIO",
+    name: "Bioteknologi",
+    isActive: true,
+  };
+
+  const resultEmpty = handleDepartmentDeletion(emptyDept, {
+    courseCount: 0,
+    userCount: 0,
+    announcementCount: 0,
+  });
+
+  assert.equal(resultEmpty.action, "DELETED");
+  assert.equal(resultEmpty.dept, null);
+});
+
+

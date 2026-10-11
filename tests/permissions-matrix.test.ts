@@ -58,11 +58,23 @@ test("permissions registry accurately defines role hierarchy and restrictions", 
   assert.equal(hasPermission("INSTRUCTOR", "LOCK_GRADEBOOK"), true);
   assert.equal(hasPermission("INSTRUCTOR", "MANAGE_CLASS_CONTENT"), true);
 
-  // SUPER_ADMIN has catalog and institutional governance, but cannot grade or modify class content
+  // SUPER_ADMIN has catalog, system governance, and sync authority, but cannot grade or modify class content
   assert.equal(hasPermission("SUPER_ADMIN", "MANAGE_SYSTEM_SETTINGS"), true);
+  assert.equal(hasPermission("SUPER_ADMIN", "MANAGE_DEPARTMENTS"), true);
+  assert.equal(hasPermission("SUPER_ADMIN", "MANAGE_DEPARTMENT_AUTHORITIES"), true);
+  assert.equal(hasPermission("SUPER_ADMIN", "SYNC_SSO_USERS"), true);
+  assert.equal(hasPermission("SUPER_ADMIN", "SYNC_SIAKAD_SCOPES"), true);
   assert.equal(hasPermission("SUPER_ADMIN", "MANAGE_ALL_CATALOG"), true);
   assert.equal(hasPermission("SUPER_ADMIN", "GRADE_STUDENT_WORK"), false);
   assert.equal(hasPermission("SUPER_ADMIN", "MANAGE_CLASS_CONTENT"), false);
+
+  // DEPARTMENT_ADMIN, INSTRUCTOR, and RECTOR do NOT have system-level department governance or SSO sync authority
+  assert.equal(hasPermission("DEPARTMENT_ADMIN", "MANAGE_DEPARTMENTS"), false);
+  assert.equal(hasPermission("DEPARTMENT_ADMIN", "SYNC_SSO_USERS"), false);
+  assert.equal(hasPermission("INSTRUCTOR", "MANAGE_DEPARTMENTS"), false);
+  assert.equal(hasPermission("INSTRUCTOR", "SYNC_SSO_USERS"), false);
+  assert.equal(hasPermission("RECTOR", "MANAGE_DEPARTMENTS"), false);
+  assert.equal(hasPermission("RECTOR", "SYNC_SSO_USERS"), false);
 
   // RECTOR is read-only observer
   assert.equal(hasPermission("RECTOR", "VIEW_RECTOR_ANALYTICS"), true);

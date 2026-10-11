@@ -8,6 +8,10 @@ import type { ApplicationRole } from "./sso.js";
 export type Permission =
   // System & Global Governance
   | "MANAGE_SYSTEM_SETTINGS"
+  | "MANAGE_DEPARTMENTS"
+  | "MANAGE_DEPARTMENT_AUTHORITIES"
+  | "SYNC_SSO_USERS"
+  | "SYNC_SIAKAD_SCOPES"
   | "VIEW_RECTOR_ANALYTICS"
   | "AUDIT_LOG_VIEW"
 
@@ -52,6 +56,10 @@ export type Permission =
 export const ROLE_PERMISSIONS: Record<ApplicationRole, readonly Permission[]> = {
   SUPER_ADMIN: [
     "MANAGE_SYSTEM_SETTINGS",
+    "MANAGE_DEPARTMENTS",
+    "MANAGE_DEPARTMENT_AUTHORITIES",
+    "SYNC_SSO_USERS",
+    "SYNC_SIAKAD_SCOPES",
     "VIEW_RECTOR_ANALYTICS",
     "AUDIT_LOG_VIEW",
     "MANAGE_ALL_CATALOG",
