@@ -15,6 +15,8 @@ import {
   transaction,
   hash,
   json,
+  serviceFetch,
+  isDemo,
 } from "./core.js";
 import { authenticate } from "./auth.js";
 import {
@@ -1115,6 +1117,372 @@ export function registerDepartmentGovernance(app: Express) {
         updated: executionResults.filter((r) => r.status === "UPDATED").length,
         notFound: executionResults.filter((r) => r.status === "USER_NOT_FOUND")
           .length,
+        results: executionResults,
+      });
+    },
+  );
+
+  // =========================================================================
+  // INTEGRASI PENARIKAN PENGGUNA SSO (UAY SSO APPLICATION USERS)
+  // =========================================================================
+
+  const ssoSyncPayloadSchema = z.object({
+    dryRun: z.boolean().default(false),
+    userType: z.enum(["ALL", "LECTURER", "STAFF", "ADMIN"]).default("ALL"),
+    search: z.string().trim().max(100).optional(),
+  });
+
+  async function fetchUsersFromSso(options: {
+    accessToken?: string;
+    clientId: string;
+    search?: string;
+  }): Promise<any[]> {
+    const baseUrl = (config.ssoApiBaseUrl || "").trim().replace(/\/+$/, "");
+    if (!baseUrl) {
+      if (isDemo) {
+        return [
+          {
+            user_id: "sso-usr-demo-01",
+            name: "Dr. Budi Santoso, M.Kom",
+            email: "budi.santoso@uay.ac.id",
+            user_type: "LECTURER",
+            status: "ACTIVE",
+            account: {
+              keycloak_user_id: "kc-demo-01",
+              username: "198501012010121001",
+              status: "ACTIVE",
+            },
+            application_access: [
+              {
+                role: {
+                  role_id: "role-demo-01",
+                  name: "dosen",
+                  status: "ACTIVE",
+                },
+              },
+            ],
+          },
+          {
+            user_id: "sso-usr-demo-02",
+            name: "Siti Rahmawati, M.T",
+            email: "siti.rahmawati@uay.ac.id",
+            user_type: "LECTURER",
+            status: "ACTIVE",
+            account: {
+              keycloak_user_id: "kc-demo-02",
+              username: "199002022015042002",
+              status: "ACTIVE",
+            },
+            application_access: [
+              {
+                role: {
+                  role_id: "role-demo-02",
+                  name: "kaprodi",
+                  status: "ACTIVE",
+                },
+              },
+            ],
+          },
+        ];
+      }
+      ensure(false, 503, "SSO_API_BASE_URL_NOT_CONFIGURED");
+    }
+
+    const allUsers: any[] = [];
+    let page = 1;
+    const limit = 50;
+    let totalPages = 1;
+
+    while (page <= totalPages && page <= 20) {
+      const query = new URLSearchParams({
+        page: String(page),
+        limit: String(limit),
+      });
+      if (options.search) query.set("search", options.search);
+
+      const targetUrl = baseUrl.endsWith("/api/v1")
+        ? `${baseUrl}/applications/client/${encodeURIComponent(options.clientId)}/users?${query}`
+        : `${baseUrl}/applications/client/${encodeURIComponent(options.clientId)}/users?${query}`;
+
+      const headers: Record<string, string> = {};
+      if (options.accessToken) {
+        headers["Authorization"] = `Bearer ${options.accessToken}`;
+      }
+
+      let res = await serviceFetch(
+        "sso-api",
+        targetUrl,
+        { headers },
+        { idempotent: true, attempts: 2, timeoutMs: 5000 },
+      );
+
+      if (!res.ok && res.status === 404 && !baseUrl.endsWith("/api/v1")) {
+        const fallbackUrl = `${baseUrl}/api/v1/applications/client/${encodeURIComponent(options.clientId)}/users?${query}`;
+        res = await serviceFetch(
+          "sso-api",
+          fallbackUrl,
+          { headers },
+          { idempotent: true, attempts: 2, timeoutMs: 5000 },
+        );
+      }
+
+      ensure(res.ok, 502, "SSO_USERS_FETCH_FAILED");
+      const body: any = await res.json();
+      const data = body?.data ?? body;
+      if (Array.isArray(data)) {
+        allUsers.push(...data);
+      }
+      totalPages = body?.meta?.total_pages || 1;
+      page++;
+    }
+
+    return allUsers;
+  }
+
+  /**
+   * Menarik daftar pengguna dari SSO untuk aplikasi E-Learning.
+   * Super Admin dapat melihat pratinjau (dryRun) atau melakukan sinkronisasi profil/pendaftaran akun.
+   */
+  app.post(
+    "/api/v1/system/sso/sync-users",
+    authenticate,
+    async (req, res) => {
+      ensure(req.context.user.role === "SUPER_ADMIN", 403, "FORBIDDEN");
+      const payload = ssoSyncPayloadSchema.parse(req.body ?? {});
+
+      const rawUsers = await fetchUsersFromSso({
+        accessToken: req.context.accessToken,
+        clientId: config.clientId || "elearning-uay",
+        search: payload.search,
+      });
+
+      const filteredUsers = rawUsers.filter((u) => {
+        if (!u || typeof u !== "object") return false;
+        if (payload.userType === "ALL") return true;
+        return u.user_type === payload.userType;
+      });
+
+      const processedResults = [];
+
+      if (payload.dryRun) {
+        for (const ssoUser of filteredUsers) {
+          const username = ssoUser.account?.username?.trim() || null;
+          const email = (
+            ssoUser.email?.trim() ||
+            `${(username || ssoUser.user_id).toLowerCase()}@uay.ac.id`
+          ).toLowerCase();
+          const identifierVal =
+            username || email.split("@")[0] || ssoUser.user_id;
+          const ssoSub = ssoUser.account?.keycloak_user_id?.trim() || null;
+
+          const matches = await db.user.findMany({
+            where: {
+              OR: [
+                { identifierValue: identifierVal },
+                { email: { equals: email, mode: "insensitive" as const } },
+                ...(ssoSub ? [{ ssoUserId: ssoSub }] : []),
+                ...(username
+                  ? [
+                      {
+                        username: {
+                          equals: username,
+                          mode: "insensitive" as const,
+                        },
+                      },
+                    ]
+                  : []),
+              ],
+            },
+          });
+
+          const existing = matches[0];
+          const proposedRole =
+            ssoUser.user_type === "ADMIN"
+              ? "SUPER_ADMIN"
+              : ssoUser.user_type === "LECTURER" || ssoUser.user_type === "STAFF"
+                ? "INSTRUCTOR"
+                : "STUDENT";
+
+          processedResults.push({
+            ssoUserId: ssoSub || ssoUser.user_id,
+            name: ssoUser.name,
+            email,
+            username: username || identifierVal,
+            identifierValue: identifierVal,
+            identifierType:
+              ssoUser.user_type === "LECTURER"
+                ? "NIDN"
+                : ssoUser.user_type === "STAFF"
+                  ? "NIP"
+                  : ssoUser.user_type === "STUDENT"
+                    ? "NIM"
+                    : "OTHER",
+            userType: ssoUser.user_type,
+            status: existing ? "ALREADY_EXISTS" : "NEW",
+            action: existing ? "SYNC_PROFILE" : "CREATE",
+            currentRole: existing?.role ?? null,
+            proposedRole: existing ? existing.role : proposedRole,
+            departmentScopes: existing?.departmentScopes ?? [],
+          });
+        }
+
+        res.json({
+          ok: true,
+          dryRun: true,
+          total: filteredUsers.length,
+          newCount: processedResults.filter((r) => r.status === "NEW").length,
+          existingCount: processedResults.filter(
+            (r) => r.status === "ALREADY_EXISTS",
+          ).length,
+          results: processedResults,
+        });
+        return;
+      }
+
+      // Mode Eksekusi Nyata
+      const executionResults = await mutate(req, async (tx) => {
+        const results = [];
+        for (const ssoUser of filteredUsers) {
+          const username = ssoUser.account?.username?.trim() || null;
+          const email = (
+            ssoUser.email?.trim() ||
+            `${(username || ssoUser.user_id).toLowerCase()}@uay.ac.id`
+          ).toLowerCase();
+          const identifierVal =
+            username || email.split("@")[0] || ssoUser.user_id;
+          const ssoSub = ssoUser.account?.keycloak_user_id?.trim() || null;
+          const identifierType =
+            ssoUser.user_type === "LECTURER"
+              ? "NIDN"
+              : ssoUser.user_type === "STAFF"
+                ? "NIP"
+                : ssoUser.user_type === "STUDENT"
+                  ? "NIM"
+                  : "OTHER";
+
+          const matches = await tx.user.findMany({
+            where: {
+              OR: [
+                { identifierValue: identifierVal },
+                { email: { equals: email, mode: "insensitive" as const } },
+                ...(ssoSub ? [{ ssoUserId: ssoSub }] : []),
+                ...(username
+                  ? [
+                      {
+                        username: {
+                          equals: username,
+                          mode: "insensitive" as const,
+                        },
+                      },
+                    ]
+                  : []),
+              ],
+            },
+          });
+
+          const existing = matches[0];
+
+          if (existing) {
+            // Perbarui data profil dari SSO tanpa menimpa peran atau cakupan prodi lokal
+            const updated = await tx.user.update({
+              where: { id: existing.id },
+              data: {
+                name: ssoUser.name || existing.name,
+                email,
+                username: username || existing.username,
+                userType: ssoUser.user_type,
+                status: ssoUser.status === "ACTIVE" ? "ACTIVE" : existing.status,
+              },
+            });
+
+            results.push({
+              id: updated.id,
+              ssoUserId: updated.ssoUserId,
+              name: updated.name,
+              email: updated.email,
+              username: updated.username,
+              identifierValue: updated.identifierValue,
+              identifierType: updated.identifierType,
+              userType: updated.userType,
+              status: "ALREADY_EXISTS",
+              action: "SYNC_PROFILE",
+              role: updated.role,
+              departmentScopes: updated.departmentScopes,
+            });
+          } else {
+            // Buat pengguna baru dengan penanda pra-registrasi atau sub Keycloak asli
+            const targetSsoUserId = ssoSub || `preprovision:${randomUUID()}`;
+            const targetRole =
+              ssoUser.user_type === "ADMIN"
+                ? "SUPER_ADMIN"
+                : ssoUser.user_type === "LECTURER" || ssoUser.user_type === "STAFF"
+                  ? "INSTRUCTOR"
+                  : "STUDENT";
+
+            const finalUsername = username || identifierVal;
+            const existingUsername = await tx.user.findUnique({
+              where: { username: finalUsername },
+            });
+            const resolvedUsername = existingUsername
+              ? `${finalUsername}-${randomBytes(2).toString("hex")}`
+              : finalUsername;
+
+            const created = await tx.user.create({
+              data: {
+                ssoUserId: targetSsoUserId,
+                identifierValue: identifierVal,
+                identifierType,
+                name: ssoUser.name,
+                email,
+                username: resolvedUsername,
+                role: targetRole,
+                userType: ssoUser.user_type,
+                departmentScopes: [],
+                authoritySource: "LOCAL",
+                status: "ACTIVE",
+              },
+            });
+
+            results.push({
+              id: created.id,
+              ssoUserId: created.ssoUserId,
+              name: created.name,
+              email: created.email,
+              username: created.username,
+              identifierValue: created.identifierValue,
+              identifierType: created.identifierType,
+              userType: created.userType,
+              status: "NEW",
+              action: "CREATE",
+              role: created.role,
+              departmentScopes: created.departmentScopes,
+            });
+          }
+        }
+
+        await audit(
+          tx,
+          req.context,
+          "SYNC_SSO_USERS",
+          "USER",
+          "BATCH_SYNC",
+          null,
+          null,
+          { total: filteredUsers.length, count: results.length },
+          `Sinkronisasi akun pengguna dari SSO: ${results.filter((r) => r.status === "NEW").length} pengguna baru ditambahkan, ${results.filter((r) => r.status === "ALREADY_EXISTS").length} pengguna diselaraskan.`,
+        );
+
+        return results;
+      });
+
+      res.json({
+        ok: true,
+        dryRun: false,
+        total: filteredUsers.length,
+        newCount: executionResults.filter((r) => r.status === "NEW").length,
+        existingCount: executionResults.filter(
+          (r) => r.status === "ALREADY_EXISTS",
+        ).length,
         results: executionResults,
       });
     },

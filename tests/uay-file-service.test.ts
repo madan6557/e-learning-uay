@@ -30,7 +30,7 @@ test("UAY File Service: endpoint formatting and header resolution", () => {
       "http://file-service.uay.ac.id/api/v1/files",
     );
 
-    // Test headers builder
+    // Test headers builder with plain API key (must NOT set Authorization to avoid breaking File Service JWKS guard)
     (config as any).fileKey = "uay_sec_live_test_key";
     (config as any).fileClientId = "elearning-uay";
     const headers = getUayHeaders({
@@ -40,12 +40,25 @@ test("UAY File Service: endpoint formatting and header resolution", () => {
       range: "bytes=0-100",
     });
     assert.equal(headers["x-api-key"], "uay_sec_live_test_key");
-    assert.equal(headers["Authorization"], "Bearer uay_sec_live_test_key");
+    assert.equal(headers["Authorization"], undefined);
     assert.equal(headers["x-actor-id"], "actor-123");
     assert.equal(headers["x-client-id"], "elearning-uay");
     assert.equal(headers["x-request-id"], "req-456");
     assert.equal(headers["Content-Type"], "application/json");
     assert.equal(headers["Range"], "bytes=0-100");
+
+    // Test headers builder with JWT token (sets Authorization: Bearer ...)
+    (config as any).fileKey =
+      "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjMifQ.signature";
+    const jwtHeaders = getUayHeaders();
+    assert.equal(
+      jwtHeaders["Authorization"],
+      `Bearer ${(config as any).fileKey}`,
+    );
+
+    // Test headers builder with explicit token option
+    const tokenHeaders = getUayHeaders({ token: "custom-token-xyz" });
+    assert.equal(tokenHeaders["Authorization"], "Bearer custom-token-xyz");
   } finally {
     (config as any).fileUrl = originalUrl;
   }

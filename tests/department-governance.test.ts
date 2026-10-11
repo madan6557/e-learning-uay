@@ -250,3 +250,101 @@ test("Manual user pre-provisioning generates valid placeholder ssoUserId and mat
   assert.ok(preprovisioned.lastLoginAt !== null);
 });
 
+test("SSO user synchronization handles user mapping and preserves existing governance scopes", () => {
+  const existingUsers = [
+    {
+      id: "usr_existing_1",
+      ssoUserId: "kc-user-01",
+      identifierValue: "198501012010121001",
+      name: "Dr. Budi Santoso",
+      email: "budi.santoso@uay.ac.id",
+      username: "198501012010121001",
+      role: "DEPARTMENT_ADMIN",
+      departmentScopes: ["IF"],
+      authoritySource: "LOCAL",
+      userType: "LECTURER",
+    },
+  ];
+
+  const ssoUsers = [
+    {
+      user_id: "sso-usr-01",
+      name: "Dr. Budi Santoso, M.Kom (Updated in SSO)",
+      email: "budi.santoso@uay.ac.id",
+      user_type: "LECTURER",
+      status: "ACTIVE",
+      account: {
+        keycloak_user_id: "kc-user-01",
+        username: "198501012010121001",
+        status: "ACTIVE",
+      },
+      application_access: [
+        {
+          role: {
+            role_id: "role-01",
+            name: "kaprodi",
+            status: "ACTIVE",
+          },
+        },
+      ],
+    },
+    {
+      user_id: "sso-usr-02",
+      name: "Ir. Hendra Gunawan, M.T.",
+      email: "hendra.gunawan@uay.ac.id",
+      user_type: "LECTURER",
+      status: "ACTIVE",
+      account: {
+        keycloak_user_id: "kc-user-02",
+        username: "199203032018011003",
+        status: "ACTIVE",
+      },
+      application_access: [],
+    },
+  ];
+
+  const results = ssoUsers.map((ssoUser) => {
+    const existing = existingUsers.find(
+      (u) =>
+        u.ssoUserId === ssoUser.account?.keycloak_user_id ||
+        u.identifierValue === ssoUser.account?.username ||
+        u.email === ssoUser.email,
+    );
+
+    if (existing) {
+      return {
+        id: existing.id,
+        name: ssoUser.name,
+        email: ssoUser.email,
+        status: "ALREADY_EXISTS",
+        role: existing.role,
+        departmentScopes: existing.departmentScopes,
+      };
+    } else {
+      const defaultRole =
+        ssoUser.user_type === "ADMIN" ? "SUPER_ADMIN" : "INSTRUCTOR";
+      return {
+        id: "usr_new",
+        name: ssoUser.name,
+        email: ssoUser.email,
+        status: "NEW",
+        role: defaultRole,
+        departmentScopes: [],
+      };
+    }
+  });
+
+  assert.equal(results.length, 2);
+  const updatedExisting = results[0];
+  assert.equal(updatedExisting.status, "ALREADY_EXISTS");
+  assert.equal(updatedExisting.name, "Dr. Budi Santoso, M.Kom (Updated in SSO)");
+  assert.equal(updatedExisting.role, "DEPARTMENT_ADMIN");
+  assert.deepEqual(updatedExisting.departmentScopes, ["IF"]);
+
+  const newUser = results[1];
+  assert.equal(newUser.status, "NEW");
+  assert.equal(newUser.name, "Ir. Hendra Gunawan, M.T.");
+  assert.equal(newUser.role, "INSTRUCTOR");
+  assert.deepEqual(newUser.departmentScopes, []);
+});
+

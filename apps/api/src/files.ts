@@ -330,18 +330,31 @@ export function getUayEndpoint(path: string): string {
   return `${base}/api/v1${cleanPath}`;
 }
 
+function isJwt(token?: string): boolean {
+  if (!token || typeof token !== "string") return false;
+  const parts = token.trim().split(".");
+  return parts.length === 3 && parts[0].startsWith("ey");
+}
+
 export function getUayHeaders(options?: {
   actorId?: string;
   requestId?: string;
   contentType?: string;
   range?: string;
+  token?: string;
 }): Record<string, string> {
   const headers: Record<string, string> = {
     "x-api-key": config.fileKey,
-    Authorization: `Bearer ${config.fileKey}`,
     "x-client-id": config.fileClientId || "elearning-uay",
     "x-request-id": options?.requestId || randomUUID(),
   };
+
+  const bearerToken =
+    options?.token || (isJwt(config.fileKey) ? config.fileKey : undefined);
+  if (bearerToken) {
+    headers["Authorization"] = `Bearer ${bearerToken}`;
+  }
+
   if (options?.actorId) headers["x-actor-id"] = options.actorId;
   if (options?.contentType) headers["Content-Type"] = options.contentType;
   if (options?.range) headers["Range"] = options.range;

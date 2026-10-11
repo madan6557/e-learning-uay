@@ -1329,6 +1329,7 @@ export async function authenticate(
       req.get("X-Request-ID")?.slice(0, 100) ?? randomBytes(16).toString("hex"),
     ip: req.ip ?? "",
     userAgent: req.get("User-Agent")?.slice(0, 500) ?? "",
+    accessToken: session.accessToken,
   };
   const activeKey = `active:${user.id}`;
   cache

@@ -615,6 +615,7 @@ export type Context = {
   requestId: string;
   ip: string;
   userAgent: string;
+  accessToken?: string;
 };
 declare global {
   namespace Express {

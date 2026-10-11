@@ -15,6 +15,8 @@ import {
   Pencil,
   Trash2,
   UserPlus,
+  ArrowDownToLine,
+  CheckCircle2,
 } from "lucide-react";
 import {
   api,
@@ -280,6 +282,12 @@ export function DepartmentGovernancePage({
   const [siakadSyncing, setSiakadSyncing] = useState(false);
   const [siakadResult, setSiakadResult] = useState<any>(null);
   const [siakadError, setSiakadError] = useState<Error | null>(null);
+  const [showSsoSync, setShowSsoSync] = useState(false);
+  const [ssoSyncUserType, setSsoSyncUserType] = useState<string>("ALL");
+  const [ssoSyncSearch, setSsoSyncSearch] = useState<string>("");
+  const [ssoSyncing, setSsoSyncing] = useState<boolean>(false);
+  const [ssoSyncResult, setSsoSyncResult] = useState<any>(null);
+  const [ssoSyncError, setSsoSyncError] = useState<Error | null>(null);
   const pending = useRef(new Set<string>());
   const deptRequest = useRef(0),
     userRequest = useRef(0);
@@ -514,6 +522,42 @@ export function DepartmentGovernancePage({
     }
   };
 
+  const runSsoSync = async (dryRun: boolean) => {
+    if (pending.current.has("ssoSync")) return;
+    pending.current.add("ssoSync");
+    setSsoSyncing(true);
+    setSsoSyncError(null);
+    try {
+      if (!dryRun) {
+        if (
+          !(await confirmAction(
+            `Sinkronkan ${ssoSyncResult?.total ?? ""} pengguna dari SSO ke E-Learning? Akun baru akan didaftarkan sebagai pra-registrasi dan profil akun yang sudah ada akan diselaraskan. Otoritas Kaprodi/Dekan tetap aman.`,
+          ))
+        ) {
+          return;
+        }
+      }
+      const result = await api<any>("/system/sso/sync-users", "POST", {
+        dryRun,
+        userType: ssoSyncUserType,
+        search: ssoSyncSearch.trim() || undefined,
+      });
+      setSsoSyncResult(result);
+      if (!dryRun) {
+        notifyAction(
+          `Sinkronisasi SSO berhasil: ${result.newCount} akun baru ditambahkan, ${result.existingCount} akun diselaraskan.`,
+        );
+        await fetchUsers();
+        setShowSsoSync(false);
+      }
+    } catch (error) {
+      setSsoSyncError(error as Error);
+    } finally {
+      pending.current.delete("ssoSync");
+      setSsoSyncing(false);
+    }
+  };
+
   if (user.role !== "SUPER_ADMIN")
     return (
       <Notice error="Pengelolaan program studi dan otoritas hanya tersedia untuk Super Admin." />
@@ -714,6 +758,18 @@ export function DepartmentGovernancePage({
                 <RefreshCw size={16} />
                 Segarkan
               </Action>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => {
+                  setShowSsoSync(true);
+                  setSsoSyncResult(null);
+                  setSsoSyncError(null);
+                }}
+              >
+                <ArrowDownToLine size={18} />
+                Tarik Pengguna dari SSO
+              </button>
               <button
                 type="button"
                 className="primary"
@@ -1201,6 +1257,165 @@ export function DepartmentGovernancePage({
               </button>
             </div>
           </form>
+        </Modal>
+      )}
+
+      {showSsoSync && (
+        <Modal
+          title="Tarik & Sinkronisasi Pengguna dari SSO"
+          onClose={() => {
+            if (!ssoSyncing) setShowSsoSync(false);
+          }}
+          busy={ssoSyncing}
+          className="governance-modal sso-sync-modal"
+          wide
+        >
+          <div className="sso-sync-container">
+            <p>
+              Tarik daftar akun pengguna (Dosen, Staf, Administrator) yang terdaftar pada aplikasi E-Learning di UAY SSO. Akun baru akan didaftarkan sebagai pra-registrasi dan tersambung otomatis saat login SSO. Otoritas Kaprodi / Dekan yang sudah diatur di E-Learning tidak akan terhapus.
+            </p>
+
+            <div className="governance-form-grid sso-sync-filters">
+              <label className="governance-field">
+                Tipe Pengguna SSO
+                <select
+                  value={ssoSyncUserType}
+                  onChange={(e) => {
+                    setSsoSyncUserType(e.target.value);
+                    setSsoSyncResult(null);
+                  }}
+                  disabled={ssoSyncing}
+                >
+                  <option value="ALL">Semua Tipe (Dosen, Staf, Admin)</option>
+                  <option value="LECTURER">Dosen Saja (LECTURER)</option>
+                  <option value="STAFF">Staf Saja (STAFF)</option>
+                  <option value="ADMIN">Administrator (ADMIN)</option>
+                </select>
+              </label>
+
+              <label className="governance-field">
+                Pencarian (Opsional)
+                <input
+                  type="text"
+                  placeholder="Nama, email, atau NIDN/NIP..."
+                  value={ssoSyncSearch}
+                  onChange={(e) => {
+                    setSsoSyncSearch(e.target.value);
+                    setSsoSyncResult(null);
+                  }}
+                  disabled={ssoSyncing}
+                />
+              </label>
+            </div>
+
+            <div className="governance-actions sso-sync-preview-action">
+              <button
+                type="button"
+                className="secondary"
+                disabled={ssoSyncing}
+                onClick={() => runSsoSync(true)}
+              >
+                <Search size={16} />
+                {ssoSyncing && !ssoSyncResult ? "Memeriksa SSO…" : "Pratinjau Akun dari SSO"}
+              </button>
+            </div>
+
+            {ssoSyncError && <Notice error={ssoSyncError} />}
+
+            {ssoSyncResult && (
+              <div className="sso-sync-results">
+                <div className="sso-sync-stats-grid">
+                  <div className="sso-stat-card">
+                    <span className="stat-num">{ssoSyncResult.total}</span>
+                    <span className="stat-label">Total Akun di SSO</span>
+                  </div>
+                  <div className="sso-stat-card new">
+                    <span className="stat-num">{ssoSyncResult.newCount}</span>
+                    <span className="stat-label">Akun Baru (Pra-registrasi)</span>
+                  </div>
+                  <div className="sso-stat-card existing">
+                    <span className="stat-num">{ssoSyncResult.existingCount}</span>
+                    <span className="stat-label">Akun Sudah Terdaftar</span>
+                  </div>
+                </div>
+
+                <div className="sso-sync-preview-list">
+                  <div className="sso-sync-list-header">
+                    <strong>Rincian Pengguna ({ssoSyncResult.results?.length ?? 0})</strong>
+                    <small>Pratinjau status integrasi akun</small>
+                  </div>
+                  <div className="sso-sync-scroll-area">
+                    {ssoSyncResult.results?.length === 0 ? (
+                      <p className="sso-empty-note">Tidak ada pengguna yang cocok dengan kriteria filter.</p>
+                    ) : (
+                      <table className="sso-preview-table">
+                        <thead>
+                          <tr>
+                            <th>Nama &amp; Identitas</th>
+                            <th>Tipe SSO</th>
+                            <th>Status di E-Learning</th>
+                            <th>Peran E-Learning</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {ssoSyncResult.results?.map((u: any, idx: number) => (
+                            <tr key={idx}>
+                              <td>
+                                <div>
+                                  <strong>{u.name}</strong>
+                                  <div className="governance-subtext">
+                                    {u.identifierValue} &bull; {u.email}
+                                  </div>
+                                </div>
+                              </td>
+                              <td>
+                                <span className="pill neutral">{u.userType}</span>
+                              </td>
+                              <td>
+                                {u.status === "NEW" ? (
+                                  <span className="pill warning">Akun Baru</span>
+                                ) : (
+                                  <span className="pill success">Sudah Terdaftar</span>
+                                )}
+                              </td>
+                              <td>
+                                <span>{roleNames[u.proposedRole] ?? u.proposedRole}</span>
+                                {u.departmentScopes?.length > 0 && (
+                                  <div className="governance-subtext">
+                                    Lingkup: {u.departmentScopes.join(", ")}
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                </div>
+
+                <div className="governance-modal-actions">
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() => setShowSsoSync(false)}
+                    disabled={ssoSyncing}
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    className="primary"
+                    disabled={ssoSyncing || ssoSyncResult.total === 0}
+                    onClick={() => runSsoSync(false)}
+                  >
+                    <CheckCircle2 size={16} />
+                    {ssoSyncing ? "Menyimpan…" : "Konfirmasi & Simpan Pengguna"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </Modal>
       )}
     </div>
