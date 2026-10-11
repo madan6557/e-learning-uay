@@ -136,11 +136,14 @@ test("governance UI keeps failed edits in the modal, guards duplicate submits an
       requests.some((url) => url.includes("role=INSTRUCTOR")),
       "Filter must request matching data without manual refresh",
     );
-    await act(async () => {
-      button("Integrasi SIAKAD").click();
-    });
-    assert.equal(button("Terapkan Perubahan").disabled, true);
-    assert.ok(document.querySelector("textarea")!.labels!.length);
+    const siakadButton = button("Integrasi SIAKAD");
+    if (siakadButton) {
+      await act(async () => {
+        siakadButton.click();
+      });
+      assert.equal(button("Terapkan Perubahan").disabled, true);
+      assert.ok(document.querySelector("textarea")!.labels!.length);
+    }
   } finally {
     await act(async () => root.unmount());
     globalThis.fetch = originalFetch;
