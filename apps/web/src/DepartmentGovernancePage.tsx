@@ -15,6 +15,7 @@ import {
   Pencil,
   Trash2,
   UserPlus,
+  Users,
   ArrowDownToLine,
   CheckCircle2,
 } from "lucide-react";
@@ -569,9 +570,9 @@ export function DepartmentGovernancePage({
           <div className="eyebrow">
             <Building2 size={16} /> Tata Kelola Akademik
           </div>
-          <h1>Program Studi &amp; Otoritas</h1>
+          <h1>Program Studi &amp; Pengguna</h1>
           <p>
-            Kelola program studi serta penugasan Kaprodi dan Dekan.
+            Kelola program studi serta penugasan pengguna.
           </p>
         </div>
       </div>
@@ -579,7 +580,7 @@ export function DepartmentGovernancePage({
         {(
           [
             ["PRODI", Building2, "Master Program Studi"],
-            ["MANUAL", ShieldCheck, "Otoritas Kaprodi & Dekan"],
+            ["MANUAL", Users, "Pengguna"],
           ] as const
         ).map(([tab, Icon, title]) => (
           <button
@@ -774,7 +775,7 @@ export function DepartmentGovernancePage({
                 onClick={() => openUser()}
               >
                 <UserPlus size={18} />
-                Daftarkan Dosen / Kaprodi
+                Daftarkan Pengguna
               </button>
             </div>
           </div>
@@ -1108,7 +1109,7 @@ export function DepartmentGovernancePage({
           title={
             editingUser
               ? `Atur Otoritas: ${editingUser.name}`
-              : "Daftarkan Dosen / Kaprodi Baru"
+              : "Daftarkan Pengguna Baru"
           }
           onClose={() => {
             setEditingUser(null);

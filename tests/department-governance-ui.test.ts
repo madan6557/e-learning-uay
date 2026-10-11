@@ -114,7 +114,7 @@ test("governance UI keeps failed edits in the modal, guards duplicate submits an
     );
     await act(async () => {
       button("Batal").click();
-      button("Otoritas Kaprodi").click();
+      (button("Pengguna") ?? button("Otoritas Kaprodi")).click();
       await new Promise((r) => setTimeout(r, 300));
     });
     assert.equal(
@@ -254,7 +254,7 @@ test("authority modal supports prodi search, batch selection, and super admin ac
       );
     });
     await act(async () => {
-      button("Otoritas Kaprodi").click();
+      (button("Pengguna") ?? button("Otoritas Kaprodi")).click();
       await new Promise((r) => setTimeout(r, 300));
     });
     // Open authority modal
