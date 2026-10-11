@@ -765,9 +765,7 @@ export async function classAccess(
     "CLASS_ACCESS_DENIED",
   );
   if (write) {
-    const isDeptAdmin =
-      user.role === "DEPARTMENT_ADMIN" &&
-      user.departmentScopes.includes(item.course.departmentCode);
+    const isDeptAdmin = canManageDepartment(user, item.course.departmentCode);
     ensure(
       user.role === "INSTRUCTOR" ||
         isDeptAdmin ||

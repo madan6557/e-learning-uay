@@ -1197,12 +1197,15 @@ export function registerLearning(app: Express) {
           false,
           true,
         );
-        const { userIds } = z
-          .object({ userIds: z.array(z.string().uuid()).min(1) })
+        const { userIds, primaryUserId: requestedPrimaryUserId } = z
+          .object({
+            userIds: z.array(z.string().uuid()).min(1),
+            primaryUserId: z.string().uuid().optional(),
+          })
           .parse(req.body);
-        const primaryInstructor =
+        const currentPrimaryInstructor =
           cls.instructors.find((i: any) => i.isPrimary) || cls.instructors[0];
-        const primaryUserId = primaryInstructor?.userId;
+        const currentPrimaryUserId = currentPrimaryInstructor?.userId;
 
         const isManager = canManageDepartment(
           req.context.user,
@@ -1210,15 +1213,28 @@ export function registerLearning(app: Express) {
         );
         const isOwner =
           req.context.user.role === "INSTRUCTOR" &&
-          req.context.user.id === primaryUserId;
+          req.context.user.id === currentPrimaryUserId;
 
         ensure(isManager || isOwner, 403, "WRITE_ACCESS_DENIED");
 
-        // Pengampu utama (owner) tidak dapat dikeluarkan dari kelas
-        const effectiveUserIds =
-          primaryUserId && !userIds.includes(primaryUserId)
-            ? [primaryUserId, ...userIds]
-            : userIds;
+        let effectiveUserIds = userIds;
+        let finalPrimaryUserId: string;
+
+        if (isManager) {
+          if (requestedPrimaryUserId && userIds.includes(requestedPrimaryUserId)) {
+            finalPrimaryUserId = requestedPrimaryUserId;
+          } else if (currentPrimaryUserId && userIds.includes(currentPrimaryUserId)) {
+            finalPrimaryUserId = currentPrimaryUserId;
+          } else {
+            finalPrimaryUserId = userIds[0];
+          }
+        } else {
+          // Pengampu utama (owner) tidak dapat dikeluarkan oleh dirinya sendiri
+          if (currentPrimaryUserId && !userIds.includes(currentPrimaryUserId)) {
+            effectiveUserIds = [currentPrimaryUserId, ...userIds];
+          }
+          finalPrimaryUserId = currentPrimaryUserId || effectiveUserIds[0];
+        }
 
         const users = await tx.user.findMany({
           where: {
@@ -1237,7 +1253,7 @@ export function registerLearning(app: Express) {
           data: users.map((u) => ({
             classId: cls.id,
             userId: u.id,
-            isPrimary: primaryUserId ? u.id === primaryUserId : u.id === effectiveUserIds[0],
+            isPrimary: u.id === finalPrimaryUserId,
           })),
         });
         await audit(

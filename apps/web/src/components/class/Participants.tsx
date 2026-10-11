@@ -265,40 +265,109 @@ export function Participants({
                   </td>
                   {canManageInstructors && (
                     <td style={{ textAlign: "right" }}>
-                      {!isPrimary ? (
-                        <button
-                          type="button"
-                          className="text-button"
-                          style={{ color: "var(--destructive, #ef4444)" }}
-                          onClick={async () => {
-                            const confirmed = await confirmAction(
-                              `Keluarkan dosen kolaborator "${instUser.name}" dari kelas ini?`,
-                            );
-                            if (!confirmed) return;
-                            const remainingIds = (instructors ?? [])
-                              .filter(
-                                (i: any) =>
-                                  (i.userId || i.user?.id) !==
-                                  (inst.userId || instUser.id),
-                              )
-                              .map((i: any) => i.userId || i.user?.id);
-                            await api(
-                              `/course-classes/${classId}/instructors`,
-                              "POST",
-                              { userIds: remainingIds },
-                            );
-                            onInstructorsUpdated?.();
-                          }}
-                        >
-                          Keluarkan
-                        </button>
-                      ) : (
-                        <span
-                          style={{ fontSize: "0.82rem", color: "var(--muted)" }}
-                        >
-                          Pemilik Kelas
-                        </span>
-                      )}
+                      <div
+                        style={{
+                          display: "inline-flex",
+                          gap: 12,
+                          alignItems: "center",
+                          justifyContent: "flex-end",
+                        }}
+                      >
+                        {isAdmin && !isPrimary && (
+                          <button
+                            type="button"
+                            className="text-button"
+                            style={{ color: "var(--primary)", fontWeight: 600 }}
+                            onClick={async () => {
+                              const confirmed = await confirmAction(
+                                `Jadikan "${instUser.name}" sebagai Pengampu Utama kelas ini?`,
+                              );
+                              if (!confirmed) return;
+                              const allIds = (instructors ?? []).map(
+                                (i: any) => i.userId || i.user?.id,
+                              );
+                              await api(
+                                `/course-classes/${classId}/instructors`,
+                                "POST",
+                                {
+                                  userIds: allIds,
+                                  primaryUserId: inst.userId || instUser.id,
+                                },
+                              );
+                              onInstructorsUpdated?.();
+                            }}
+                          >
+                            Jadikan Utama
+                          </button>
+                        )}
+                        {!isPrimary ? (
+                          <button
+                            type="button"
+                            className="text-button"
+                            style={{ color: "var(--destructive, #ef4444)" }}
+                            onClick={async () => {
+                              const confirmed = await confirmAction(
+                                `Keluarkan dosen kolaborator "${instUser.name}" dari kelas ini?`,
+                              );
+                              if (!confirmed) return;
+                              const remainingIds = (instructors ?? [])
+                                .filter(
+                                  (i: any) =>
+                                    (i.userId || i.user?.id) !==
+                                    (inst.userId || instUser.id),
+                                )
+                                .map((i: any) => i.userId || i.user?.id);
+                              await api(
+                                `/course-classes/${classId}/instructors`,
+                                "POST",
+                                { userIds: remainingIds },
+                              );
+                              onInstructorsUpdated?.();
+                            }}
+                          >
+                            Keluarkan
+                          </button>
+                        ) : isAdmin && (instructors ?? []).length > 1 ? (
+                          <button
+                            type="button"
+                            className="text-button"
+                            style={{ color: "var(--destructive, #ef4444)" }}
+                            onClick={async () => {
+                              const confirmed = await confirmAction(
+                                `Keluarkan pengampu utama "${instUser.name}"? Peran pengampu utama akan dialihkan ke dosen berikutnya.`,
+                              );
+                              if (!confirmed) return;
+                              const remainingIds = (instructors ?? [])
+                                .filter(
+                                  (i: any) =>
+                                    (i.userId || i.user?.id) !==
+                                    (inst.userId || instUser.id),
+                                )
+                                .map((i: any) => i.userId || i.user?.id);
+                              await api(
+                                `/course-classes/${classId}/instructors`,
+                                "POST",
+                                {
+                                  userIds: remainingIds,
+                                  primaryUserId: remainingIds[0],
+                                },
+                              );
+                              onInstructorsUpdated?.();
+                            }}
+                          >
+                            Keluarkan
+                          </button>
+                        ) : (
+                          <span
+                            style={{
+                              fontSize: "0.82rem",
+                              color: "var(--muted)",
+                            }}
+                          >
+                            Pemilik Kelas
+                          </span>
+                        )}
+                      </div>
                     </td>
                   )}
                 </tr>

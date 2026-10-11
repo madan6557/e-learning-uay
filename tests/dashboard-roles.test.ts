@@ -7,6 +7,7 @@ import {
   Catalog,
   AcademicGovernanceModal,
 } from "../apps/web/src/pages.js";
+import { Participants } from "../apps/web/src/components/class/Participants.js";
 import { readCache } from "../apps/web/src/readCache.js";
 
 Object.assign(globalThis, { React });
@@ -161,5 +162,80 @@ test("unauthorized actions are hidden or disabled across catalog and academic go
   assert.doesNotMatch(govModalHtml, /Tambah Semester/);
   assert.doesNotMatch(govModalHtml, /Simpan Perubahan Kebijakan/);
   assert.match(govModalHtml, /Tutup/);
+  readCache.clear();
+});
+
+test("department admin and owner instructor can manage collaborators in class participants", async () => {
+  readCache.clear();
+  await readCache.load("/course-classes/c-1/participants", 30000, async () => []);
+
+  const instructors = [
+    {
+      id: "ci-1",
+      userId: "u-owner",
+      isPrimary: true,
+      user: { id: "u-owner", name: "Dosen Utama", email: "utama@uay.ac.id" },
+    },
+    {
+      id: "ci-2",
+      userId: "u-collab",
+      isPrimary: false,
+      user: { id: "u-collab", name: "Dosen Mitra", email: "mitra@uay.ac.id" },
+    },
+  ];
+
+  // 1. Department Admin
+  const deptAdmin = {
+    id: "admin-1",
+    role: "DEPARTMENT_ADMIN",
+    departmentScopes: ["IF"],
+  };
+  const deptHtml = renderToStaticMarkup(
+    createElement(Participants, {
+      classId: "c-1",
+      writable: true,
+      instructors,
+      user: deptAdmin,
+    }),
+  );
+  assert.match(deptHtml, /Tambah Dosen Kolaborator/);
+  assert.match(deptHtml, /Jadikan Utama/);
+  assert.match(deptHtml, /Keluarkan/);
+
+  // 2. Owner Instructor
+  const ownerInst = {
+    id: "u-owner",
+    role: "INSTRUCTOR",
+  };
+  const ownerHtml = renderToStaticMarkup(
+    createElement(Participants, {
+      classId: "c-1",
+      writable: true,
+      instructors,
+      user: ownerInst,
+    }),
+  );
+  assert.match(ownerHtml, /Tambah Dosen Kolaborator/);
+  assert.match(ownerHtml, /Pemilik Kelas/);
+  assert.match(ownerHtml, /Keluarkan/);
+  assert.doesNotMatch(ownerHtml, /Jadikan Utama/);
+
+  // 3. Student
+  const student = {
+    id: "s-1",
+    role: "STUDENT",
+  };
+  const studentHtml = renderToStaticMarkup(
+    createElement(Participants, {
+      classId: "c-1",
+      writable: false,
+      instructors,
+      user: student,
+    }),
+  );
+  assert.doesNotMatch(studentHtml, /Tambah Dosen Kolaborator/);
+  assert.doesNotMatch(studentHtml, /Jadikan Utama/);
+  assert.doesNotMatch(studentHtml, /Keluarkan/);
+
   readCache.clear();
 });

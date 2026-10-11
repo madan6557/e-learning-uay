@@ -1,4 +1,5 @@
 import type { ApplicationRole } from "./sso.js";
+import { normalizeDepartmentCode } from "./departments.js";
 
 /**
  * Formal capability/permission identifiers for E-Learning UAY.
@@ -137,7 +138,9 @@ export function canManageDepartmentScope(
   if (userRole === "SUPER_ADMIN") return true;
   if (!targetDepartmentCode) return false;
   if (userRole === "DEPARTMENT_ADMIN") {
-    return userScopes.includes(targetDepartmentCode);
+    const normalizedTarget = normalizeDepartmentCode(targetDepartmentCode);
+    const normalizedScopes = userScopes.map(normalizeDepartmentCode);
+    return normalizedScopes.includes(normalizedTarget);
   }
   return false;
 }
@@ -161,9 +164,10 @@ export function canManageClassContent(
     );
   }
   if (user.role === "DEPARTMENT_ADMIN") {
-    return Boolean(
-      user.departmentScopes &&
-        user.departmentScopes.includes(classDetails.courseDepartmentCode),
+    return canManageDepartmentScope(
+      "DEPARTMENT_ADMIN",
+      user.departmentScopes ?? [],
+      classDetails.courseDepartmentCode,
     );
   }
   return false;
