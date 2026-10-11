@@ -62,7 +62,11 @@ test("administrators see academic management with their actual scope and no inst
       createElement(Dashboard, { page: "classes", user }),
     );
     assert.match(list, /Kelola kelas/);
-    assert.match(list, /Tambah kelas/);
+    if (role === "SUPER_ADMIN") {
+      assert.doesNotMatch(list, /Tambah kelas/);
+    } else {
+      assert.match(list, /Tambah kelas/);
+    }
     assert.doesNotMatch(list, /Gabung kelas/);
   }
   readCache.clear();
@@ -102,7 +106,7 @@ test("instructors and students retain their own learning dashboards", async () =
       assert.doesNotMatch(list, /Tambah kelas/);
     } else {
       assert.doesNotMatch(list, /Gabung kelas/);
-      assert.doesNotMatch(list, /Tambah kelas/);
+      assert.match(list, /Tambah kelas/);
     }
   }
   readCache.clear();

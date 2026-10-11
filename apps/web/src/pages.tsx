@@ -188,11 +188,14 @@ export function Dashboard({
     [modal, setModal] = useState(false);
   const teacher = user.role === "INSTRUCTOR";
   if (classes.loading && !classes.data) return <Loading />;
-  if (classes.error) return <Notice error={classes.error} />;
+  const canCreateClass = ["DEPARTMENT_ADMIN", "INSTRUCTOR"].includes(
+    user.role,
+  );
   const departments = [
-    ...new Set(
-      (classes.data ?? []).map((c) => c.course.departmentCode as string),
-    ),
+    ...new Set([
+      ...Object.keys(DEPARTMENT_NAMES),
+      ...(classes.data ?? []).map((c) => c.course.departmentCode as string),
+    ].filter(Boolean)),
   ].sort();
   const scopedClasses = (classes.data ?? []).filter(
     (c) =>
@@ -457,10 +460,10 @@ export function Dashboard({
                   : t.myClasses}
           </h1>
         </div>
-        {page === "classes" && (admin || user.role === "STUDENT") && (
+        {page === "classes" && (canCreateClass || user.role === "STUDENT") && (
           <button className="secondary" onClick={() => setModal(true)}>
             <Plus size={16} />
-            {admin ? t.newClass : t.joinClass}
+            {canCreateClass ? t.newClass : t.joinClass}
           </button>
         )}
       </div>
@@ -1006,8 +1009,9 @@ export function Dashboard({
         </>
       )}
       {modal &&
-        (admin ? (
+        (canCreateClass ? (
           <ClassForm
+            user={user}
             defaultAcademicYear={config?.academicYear}
             onClose={() => setModal(false)}
             onSaved={() => {
@@ -1245,36 +1249,6 @@ function AdminOverview({
           </span>
         </button>
       </div>
-      <div className="section-heading">
-        <h2>
-          {t.draftClasses} <span className="count">{drafts.length}</span>
-        </h2>
-        <a className="text-link" href="/classes">
-          {t.manageClasses}
-          <ArrowUpRight size={15} />
-        </a>
-      </div>
-      <div className="card activity-list">
-        {drafts.length ? (
-          drafts.slice(0, 5).map((cls) => (
-            <a className="activity-row" key={cls.id} href={classPath(cls)}>
-              <span className="activity-icon">
-                <FileText size={18} />
-              </span>
-              <div>
-                <h3>{cls.course.title}</h3>
-                <p>
-                  {cls.name} · {cls.academicYear}
-                </p>
-              </div>
-              <Badge value={cls.status} />
-              <ChevronRight size={18} />
-            </a>
-          ))
-        ) : (
-          <Empty>{t.noDraftClasses}</Empty>
-        )}
-      </div>
       {governanceModal && (
         <AcademicGovernanceModal
           config={config}
@@ -1428,19 +1402,35 @@ function JoinClassModal({
 }
 
 export function ClassForm({
+  user,
   onClose,
   onSaved,
   defaultAcademicYear,
 }: {
+  user?: any;
   onClose: () => void;
   onSaved: () => void;
   defaultAcademicYear?: string;
 }) {
   const courses = useApi<CourseOption[]>("/courses");
+  const isInstructor = user?.role === "INSTRUCTOR";
   const [search, setSearch] = useState(""),
     [users, setUsers] = useState<UserSearchResult[]>([]),
-    [selected, setSelected] = useState<string[]>([]),
-    [selectedUsers, setSelectedUsers] = useState<UserSearchResult[]>([]),
+    [selected, setSelected] = useState<string[]>(
+      isInstructor && user?.id ? [user.id] : [],
+    ),
+    [selectedUsers, setSelectedUsers] = useState<UserSearchResult[]>(
+      isInstructor && user?.id
+        ? [
+            {
+              id: user.id,
+              name: user.name,
+              identifierValue: user.identifierValue ?? "Dosen Pengampu",
+              role: "INSTRUCTOR",
+            },
+          ]
+        : [],
+    ),
     [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
@@ -1643,34 +1633,45 @@ export function ClassForm({
                   gap: 6,
                   padding: "4px 10px",
                   borderRadius: 16,
-                  background: "var(--adaptive-info-soft, #e0f2fe)",
-                  color: "var(--adaptive-info-text, #0369a1)",
+                  background: isInstructor && u.id === user?.id
+                    ? "var(--adaptive-success-soft, #dcfce7)"
+                    : "var(--adaptive-info-soft, #e0f2fe)",
+                  color: isInstructor && u.id === user?.id
+                    ? "var(--adaptive-success-text, #166534)"
+                    : "var(--adaptive-info-text, #0369a1)",
                   fontSize: "0.85rem",
                   fontWeight: 500,
                 }}
               >
-                <span>{u.name}</span>
-                <button
-                  type="button"
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                    fontSize: "1rem",
-                    lineHeight: 1,
-                    color: "var(--adaptive-info-text, #0284c7)",
-                  }}
-                  onClick={() => {
-                    setSelected((prev) => prev.filter((id) => id !== u.id));
-                    setSelectedUsers((prev) =>
-                      prev.filter((x) => x.id !== u.id),
-                    );
-                  }}
-                  aria-label={`Hapus ${u.name}`}
-                >
-                  ×
-                </button>
+                <span>
+                  {u.name}{" "}
+                  <small style={{ opacity: 0.85 }}>
+                    ({isInstructor && u.id === user?.id ? "Pengampu Utama" : "Kolaborator"})
+                  </small>
+                </span>
+                {!(isInstructor && u.id === user?.id) && (
+                  <button
+                    type="button"
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: 0,
+                      fontSize: "1rem",
+                      lineHeight: 1,
+                      color: "inherit",
+                    }}
+                    onClick={() => {
+                      setSelected((prev) => prev.filter((id) => id !== u.id));
+                      setSelectedUsers((prev) =>
+                        prev.filter((x) => x.id !== u.id),
+                      );
+                    }}
+                    aria-label={`Hapus ${u.name}`}
+                  >
+                    ×
+                  </button>
+                )}
               </span>
             ))}
           </div>

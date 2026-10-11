@@ -294,6 +294,7 @@ export function registerLearning(app: Express) {
           : user.role === "INSTRUCTOR"
             ? {
                 OR: [
+                  { status: { not: "ARCHIVED" as const } },
                   { departmentCode: { in: user.departmentScopes } },
                   {
                     classes: {
@@ -539,20 +540,36 @@ export function registerLearning(app: Express) {
               }
             : {}),
         }
-      : u.role === "SUPER_ADMIN"
-        ? {}
-        : u.role === "DEPARTMENT_ADMIN"
-          ? { course: { departmentCode: { in: u.departmentScopes } } }
-          : {
-              OR: [
-                { instructors: { some: { userId: u.id } } },
-                {
-                  enrollments: { some: { userId: u.id } },
-                  status: { not: "DRAFT" as const },
-                  course: { status: { not: "DRAFT" as const } },
+      : (() => {
+          const deptQuery = req.query.departmentCode || req.query.department;
+          const dept = deptQuery ? String(deptQuery).trim() : null;
+          if (u.role === "SUPER_ADMIN") {
+            return dept ? { course: { departmentCode: dept } } : {};
+          }
+          if (u.role === "DEPARTMENT_ADMIN") {
+            if (u.departmentScopes && u.departmentScopes.length > 0) {
+              return {
+                course: {
+                  departmentCode:
+                    dept && u.departmentScopes.includes(dept)
+                      ? dept
+                      : { in: u.departmentScopes },
                 },
-              ],
-            };
+              };
+            }
+            return dept ? { course: { departmentCode: dept } } : {};
+          }
+          return {
+            OR: [
+              { instructors: { some: { userId: u.id } } },
+              {
+                enrollments: { some: { userId: u.id } },
+                status: { not: "DRAFT" as const },
+                course: { status: { not: "DRAFT" as const } },
+              },
+            ],
+          };
+        })();
     const classes = await db.courseClass.findMany({
       where,
       select: {
@@ -606,25 +623,32 @@ export function registerLearning(app: Express) {
             status: status.default("DRAFT"),
           })
           .parse(req.body);
+        const user = req.context.user;
         const course = await tx.course.findUnique({
           where: { id: data.courseId },
         });
         ensure(course, 404, "NOT_FOUND");
-        const isManager = canManageDepartment(
-          req.context.user,
-          course.departmentCode,
-        );
-        ensure(isManager, 403, "WRITE_ACCESS_DENIED");
         ensure(course.status !== "ARCHIVED", 423, "CLASS_ARCHIVED");
+
+        const isManager =
+          user.role === "INSTRUCTOR" ||
+          canManageDepartment(user, course.departmentCode);
+        ensure(isManager, 403, "WRITE_ACCESS_DENIED");
+
+        const effectiveInstructorIds =
+          user.role === "INSTRUCTOR" && !data.instructorIds.includes(user.id)
+            ? [user.id, ...data.instructorIds]
+            : data.instructorIds;
+
         const users = await tx.user.findMany({
           where: {
-            id: { in: data.instructorIds },
+            id: { in: effectiveInstructorIds },
             status: "ACTIVE",
             role: "INSTRUCTOR",
           },
         });
         ensure(
-          users.length === new Set(data.instructorIds).size,
+          users.length === new Set(effectiveInstructorIds).size,
           400,
           "INVALID_INSTRUCTORS",
         );
@@ -642,7 +666,9 @@ export function registerLearning(app: Express) {
             instructors: {
               create: users.map((u, i) => ({
                 userId: u.id,
-                isPrimary: i === 0,
+                isPrimary:
+                  u.id === user.id ||
+                  (user.role !== "INSTRUCTOR" && i === 0),
               })),
             },
             gradeCategories: {
@@ -742,8 +768,9 @@ export function registerLearning(app: Express) {
             isVisible: true,
             contentOrder: true,
           },
+          orderBy: [{ contentOrder: "asc" }, { id: "asc" }],
         },
-        assignments: { orderBy: { contentOrder: "asc" } },
+        assignments: { orderBy: [{ contentOrder: "asc" }, { id: "asc" }] },
       },
     });
     const visible = (item: any) => {
@@ -1173,31 +1200,44 @@ export function registerLearning(app: Express) {
         const { userIds } = z
           .object({ userIds: z.array(z.string().uuid()).min(1) })
           .parse(req.body);
-        ensure(
-          canManageDepartment(req.context.user, cls.course.departmentCode) ||
-            (req.context.user.role === "INSTRUCTOR" &&
-              userIds.includes(req.context.user.id)),
-          403,
-          "WRITE_ACCESS_DENIED",
+        const primaryInstructor =
+          cls.instructors.find((i: any) => i.isPrimary) || cls.instructors[0];
+        const primaryUserId = primaryInstructor?.userId;
+
+        const isManager = canManageDepartment(
+          req.context.user,
+          cls.course.departmentCode,
         );
+        const isOwner =
+          req.context.user.role === "INSTRUCTOR" &&
+          req.context.user.id === primaryUserId;
+
+        ensure(isManager || isOwner, 403, "WRITE_ACCESS_DENIED");
+
+        // Pengampu utama (owner) tidak dapat dikeluarkan dari kelas
+        const effectiveUserIds =
+          primaryUserId && !userIds.includes(primaryUserId)
+            ? [primaryUserId, ...userIds]
+            : userIds;
+
         const users = await tx.user.findMany({
           where: {
-            id: { in: userIds },
+            id: { in: effectiveUserIds },
             status: "ACTIVE",
             role: "INSTRUCTOR",
           },
         });
         ensure(
-          users.length === new Set(userIds).size,
+          users.length === new Set(effectiveUserIds).size,
           400,
           "INVALID_INSTRUCTORS",
         );
         await tx.classInstructor.deleteMany({ where: { classId: cls.id } });
         await tx.classInstructor.createMany({
-          data: users.map((u, i) => ({
+          data: users.map((u) => ({
             classId: cls.id,
             userId: u.id,
-            isPrimary: i === 0,
+            isPrimary: primaryUserId ? u.id === primaryUserId : u.id === effectiveUserIds[0],
           })),
         });
         await audit(
@@ -1320,6 +1360,83 @@ export function registerLearning(app: Express) {
           cls.id,
           before.map((s) => s.id),
           ids,
+        );
+        return { ok: true };
+      }),
+    ),
+  );
+  app.put("/api/v1/sections/:id/item-order", async (req, res) =>
+    res.json(
+      await mutate(req, async (tx) => {
+        const cls = await itemAccess(
+          tx,
+          req.context.user,
+          String(req.params.id),
+          true,
+        );
+        const schema = z.union([
+          z.object({
+            items: z.array(
+              z.object({
+                id: z.string().uuid(),
+                kind: z.enum(["resource", "quiz", "assignment"]).optional(),
+              }),
+            ),
+          }),
+          z.object({
+            ids: z.array(z.string().uuid()),
+          }),
+        ]);
+        const body = schema.parse(req.body);
+        const list: Array<{ id: string; kind?: string }> =
+          "items" in body ? body.items : body.ids.map((id) => ({ id }));
+
+        for (let i = 0; i < list.length; i++) {
+          const item = list[i];
+          if (item.kind === "resource") {
+            await tx.resourceItem.updateMany({
+              where: { id: item.id, sectionId: String(req.params.id) },
+              data: { contentOrder: i },
+            });
+          } else if (item.kind === "quiz") {
+            await tx.quiz.updateMany({
+              where: { id: item.id, sectionId: String(req.params.id) },
+              data: { contentOrder: i },
+            });
+          } else if (item.kind === "assignment") {
+            await tx.assignment.updateMany({
+              where: { id: item.id, sectionId: String(req.params.id) },
+              data: { contentOrder: i },
+            });
+          } else {
+            const updatedResource = await tx.resourceItem.updateMany({
+              where: { id: item.id, sectionId: String(req.params.id) },
+              data: { contentOrder: i },
+            });
+            if (updatedResource.count === 0) {
+              const updatedQuiz = await tx.quiz.updateMany({
+                where: { id: item.id, sectionId: String(req.params.id) },
+                data: { contentOrder: i },
+              });
+              if (updatedQuiz.count === 0) {
+                await tx.assignment.updateMany({
+                  where: { id: item.id, sectionId: String(req.params.id) },
+                  data: { contentOrder: i },
+                });
+              }
+            }
+          }
+        }
+
+        await audit(
+          tx,
+          req.context,
+          "REORDER_ITEMS",
+          "SECTION",
+          String(req.params.id),
+          cls.id,
+          null,
+          list,
         );
         return { ok: true };
       }),

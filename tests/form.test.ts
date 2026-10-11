@@ -166,7 +166,7 @@ test("publication form submits the selected intent and keeps native validation",
     for (const button of [buttons[2], buttons[1]]) {
       await act(async () => {
         button.click();
-        await new Promise((r) => setTimeout(r, 20));
+        await new Promise((r) => setTimeout(r, 50));
       });
     }
     assert.deepEqual(calls, [

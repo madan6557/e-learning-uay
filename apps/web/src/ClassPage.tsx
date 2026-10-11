@@ -573,161 +573,314 @@ export function ClassPage({
                         <Html text={formatContentHtml(section.description)} />
                       </div>
                     )}
-                    <div className="learning-items">
-                      {section.resources.map((r: any) => {
-                        const done = !cls.canManage && isResourceDone(r);
-                        return (
-                          <div
-                            className={`learning-item ${done ? "item-completed" : ""}`}
-                            key={r.id}
-                          >
-                            <a
-                              href={contentPath(
-                                cls,
-                                "resources",
-                                r,
-                                section.resources,
-                              )}
-                            >
-                              <span className="activity-icon material">
-                                <BookOpen size={19} />
-                              </span>
-                              <div>
-                                <h3>{r.title}</h3>
-                                <small>
-                                  {(t.resourceTypes as any)[r.resourceType]}
-                                </small>
-                              </div>
-                              {done && (
-                                <span className="status-pill completed">
-                                  <CheckCircle2 size={13} />
-                                  {t.completed}
-                                </span>
-                              )}
-                              <ChevronRight size={16} />
-                            </a>
-                            {!r.isVisible && <Badge value="DRAFT" />}
-                            {writable && (
-                              <PublishButton
-                                path={`/resources/${r.id}`}
-                                title={r.title}
-                                published={r.isVisible}
-                                onPublished={() =>
-                                  published("resources", r.id, !r.isVisible)
-                                }
-                              />
-                            )}
-                            {writable && (
-                              <button
-                                className="text-button"
-                                onClick={() =>
-                                  setModal({
-                                    kind: "resource",
-                                    sectionId: section.id,
-                                    resource: r,
-                                  })
-                                }
-                              >
-                                {t.edit}
-                              </button>
-                            )}
-                          </div>
-                        );
-                      })}
-                      {section.quizzes.map((q: any) => (
-                        <div className="learning-item" key={q.id}>
-                          <a
-                            href={contentPath(
-                              cls,
-                              "quizzes",
-                              q,
-                              section.quizzes,
-                            )}
-                          >
-                            <span className="activity-icon quiz">
-                              <ClipboardCheck size={19} />
-                            </span>
-                            <div>
-                              <h3>{q.title}</h3>
-                              <small>
-                                {t.quiz} · {q.timeLimitMinutes} min{" "}
-                                {q.availableUntil &&
-                                  ` · ${date(q.availableUntil)}`}
-                              </small>
-                            </div>
-                            <ChevronRight size={16} />
-                          </a>
-                          {cls.canManage ? (
-                            <Badge value={q.isVisible ? q.status : "DRAFT"} />
-                          ) : (
-                            <Badge
-                              value={
-                                q.userStatus ??
-                                (q.isVisible ? q.status : "DRAFT")
-                              }
-                            />
-                          )}
-                          {writable && (
-                            <PublishButton
-                              path={`/quizzes/${q.id}`}
-                              title={q.title}
-                              published={
-                                q.status === "PUBLISHED" && q.isVisible
-                              }
-                              onPublished={() =>
-                                published(
-                                  "quizzes",
-                                  q.id,
-                                  !(q.status === "PUBLISHED" && q.isVisible),
-                                )
-                              }
-                            />
+                    {(() => {
+                      const allItems = [
+                        ...section.resources.map((r: any) => ({
+                          ...r,
+                          _kind: "resource" as const,
+                        })),
+                        ...section.quizzes.map((q: any) => ({
+                          ...q,
+                          _kind: "quiz" as const,
+                        })),
+                        ...section.assignments.map((a: any) => ({
+                          ...a,
+                          _kind: "assignment" as const,
+                        })),
+                      ].sort((a, b) => {
+                        const orderA = a.contentOrder ?? 0;
+                        const orderB = b.contentOrder ?? 0;
+                        if (orderA !== orderB) return orderA - orderB;
+                        const rank: Record<string, number> = {
+                          resource: 0,
+                          quiz: 1,
+                          assignment: 2,
+                        };
+                        return (rank[a._kind] ?? 0) - (rank[b._kind] ?? 0);
+                      });
+
+                      const moveItem = async (index: number, delta: number) => {
+                        const target = index + delta;
+                        if (target < 0 || target >= allItems.length) return;
+                        const copy = [...allItems];
+                        [copy[index], copy[target]] = [
+                          copy[target],
+                          copy[index],
+                        ];
+                        await api(`/sections/${section.id}/item-order`, "PUT", {
+                          items: copy.map((it) => ({
+                            id: it.id,
+                            kind: it._kind,
+                          })),
+                        });
+                        info.reload();
+                      };
+
+                      return (
+                        <div className="learning-items">
+                          {allItems.map((item: any, itemIndex: number) => {
+                            if (item._kind === "resource") {
+                              const r = item;
+                              const done = !cls.canManage && isResourceDone(r);
+                              return (
+                                <div
+                                  className={`learning-item ${done ? "item-completed" : ""}`}
+                                  key={r.id}
+                                >
+                                  <a
+                                    href={contentPath(
+                                      cls,
+                                      "resources",
+                                      r,
+                                      section.resources,
+                                    )}
+                                  >
+                                    <span className="activity-icon material">
+                                      <BookOpen size={19} />
+                                    </span>
+                                    <div>
+                                      <h3>{r.title}</h3>
+                                      <small>
+                                        {(t.resourceTypes as any)[
+                                          r.resourceType
+                                        ]}
+                                      </small>
+                                    </div>
+                                    {done && (
+                                      <span className="status-pill completed">
+                                        <CheckCircle2 size={13} />
+                                        {t.completed}
+                                      </span>
+                                    )}
+                                    <ChevronRight size={16} />
+                                  </a>
+                                  {!r.isVisible && <Badge value="DRAFT" />}
+                                  {writable && (
+                                    <PublishButton
+                                      path={`/resources/${r.id}`}
+                                      title={r.title}
+                                      published={r.isVisible}
+                                      onPublished={() =>
+                                        published(
+                                          "resources",
+                                          r.id,
+                                          !r.isVisible,
+                                        )
+                                      }
+                                    />
+                                  )}
+                                  {writable && (
+                                    <>
+                                      <Action
+                                        className="icon-button"
+                                        disabled={itemIndex === 0}
+                                        run={() => moveItem(itemIndex, -1)}
+                                      >
+                                        <ArrowUp size={16} />
+                                        <span className="sr-only">
+                                          {t.moveUp}
+                                        </span>
+                                      </Action>
+                                      <Action
+                                        className="icon-button"
+                                        disabled={
+                                          itemIndex === allItems.length - 1
+                                        }
+                                        run={() => moveItem(itemIndex, 1)}
+                                      >
+                                        <ArrowDown size={16} />
+                                        <span className="sr-only">
+                                          {t.moveDown}
+                                        </span>
+                                      </Action>
+                                    </>
+                                  )}
+                                  {writable && (
+                                    <button
+                                      className="text-button"
+                                      onClick={() =>
+                                        setModal({
+                                          kind: "resource",
+                                          sectionId: section.id,
+                                          resource: r,
+                                        })
+                                      }
+                                    >
+                                      {t.edit}
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            }
+                            if (item._kind === "quiz") {
+                              const q = item;
+                              return (
+                                <div className="learning-item" key={q.id}>
+                                  <a
+                                    href={contentPath(
+                                      cls,
+                                      "quizzes",
+                                      q,
+                                      section.quizzes,
+                                    )}
+                                  >
+                                    <span className="activity-icon quiz">
+                                      <ClipboardCheck size={19} />
+                                    </span>
+                                    <div>
+                                      <h3>{q.title}</h3>
+                                      <small>
+                                        {t.quiz} · {q.timeLimitMinutes} min{" "}
+                                        {q.availableUntil &&
+                                          ` · ${date(q.availableUntil)}`}
+                                      </small>
+                                    </div>
+                                    <ChevronRight size={16} />
+                                  </a>
+                                  {cls.canManage ? (
+                                    <Badge
+                                      value={
+                                        q.isVisible ? q.status : "DRAFT"
+                                      }
+                                    />
+                                  ) : (
+                                    <Badge
+                                      value={
+                                        q.userStatus ??
+                                        (q.isVisible ? q.status : "DRAFT")
+                                      }
+                                    />
+                                  )}
+                                  {writable && (
+                                    <PublishButton
+                                      path={`/quizzes/${q.id}`}
+                                      title={q.title}
+                                      published={
+                                        q.status === "PUBLISHED" && q.isVisible
+                                      }
+                                      onPublished={() =>
+                                        published(
+                                          "quizzes",
+                                          q.id,
+                                          !(
+                                            q.status === "PUBLISHED" &&
+                                            q.isVisible
+                                          ),
+                                        )
+                                      }
+                                    />
+                                  )}
+                                  {writable && (
+                                    <>
+                                      <Action
+                                        className="icon-button"
+                                        disabled={itemIndex === 0}
+                                        run={() => moveItem(itemIndex, -1)}
+                                      >
+                                        <ArrowUp size={16} />
+                                        <span className="sr-only">
+                                          {t.moveUp}
+                                        </span>
+                                      </Action>
+                                      <Action
+                                        className="icon-button"
+                                        disabled={
+                                          itemIndex === allItems.length - 1
+                                        }
+                                        run={() => moveItem(itemIndex, 1)}
+                                      >
+                                        <ArrowDown size={16} />
+                                        <span className="sr-only">
+                                          {t.moveDown}
+                                        </span>
+                                      </Action>
+                                    </>
+                                  )}
+                                </div>
+                              );
+                            }
+                            if (item._kind === "assignment") {
+                              const a = item;
+                              return (
+                                <div className="learning-item" key={a.id}>
+                                  <a
+                                    href={contentPath(
+                                      cls,
+                                      "assignments",
+                                      a,
+                                      section.assignments,
+                                    )}
+                                  >
+                                    <span className="activity-icon assignment">
+                                      <FileText size={19} />
+                                    </span>
+                                    <div>
+                                      <h3>{a.title}</h3>
+                                      <small>
+                                        {t.assignment} ·{" "}
+                                        {a.deadline
+                                          ? date(a.deadline)
+                                          : t.noDeadline}
+                                      </small>
+                                    </div>
+                                    <ChevronRight size={16} />
+                                  </a>
+                                  {cls.canManage
+                                    ? !a.isVisible && <Badge value="DRAFT" />
+                                    : a.userStatus && (
+                                        <Badge value={a.userStatus} />
+                                      )}
+                                  {writable && (
+                                    <PublishButton
+                                      path={`/assignments/${a.id}`}
+                                      title={a.title}
+                                      published={a.isVisible}
+                                      onPublished={() =>
+                                        published(
+                                          "assignments",
+                                          a.id,
+                                          !a.isVisible,
+                                        )
+                                      }
+                                    />
+                                  )}
+                                  {writable && (
+                                    <>
+                                      <Action
+                                        className="icon-button"
+                                        disabled={itemIndex === 0}
+                                        run={() => moveItem(itemIndex, -1)}
+                                      >
+                                        <ArrowUp size={16} />
+                                        <span className="sr-only">
+                                          {t.moveUp}
+                                        </span>
+                                      </Action>
+                                      <Action
+                                        className="icon-button"
+                                        disabled={
+                                          itemIndex === allItems.length - 1
+                                        }
+                                        run={() => moveItem(itemIndex, 1)}
+                                      >
+                                        <ArrowDown size={16} />
+                                        <span className="sr-only">
+                                          {t.moveDown}
+                                        </span>
+                                      </Action>
+                                    </>
+                                  )}
+                                </div>
+                              );
+                            }
+                            return null;
+                          })}
+                          {!allItems.length && (
+                            <p className="empty-inline">{t.emptyContent}</p>
                           )}
                         </div>
-                      ))}
-                      {section.assignments.map((a: any) => (
-                        <div className="learning-item" key={a.id}>
-                          <a
-                            href={contentPath(
-                              cls,
-                              "assignments",
-                              a,
-                              section.assignments,
-                            )}
-                          >
-                            <span className="activity-icon assignment">
-                              <FileText size={19} />
-                            </span>
-                            <div>
-                              <h3>{a.title}</h3>
-                              <small>
-                                {t.assignment} ·{" "}
-                                {a.deadline ? date(a.deadline) : t.noDeadline}
-                              </small>
-                            </div>
-                            <ChevronRight size={16} />
-                          </a>
-                          {cls.canManage
-                            ? !a.isVisible && <Badge value="DRAFT" />
-                            : a.userStatus && <Badge value={a.userStatus} />}
-                          {writable && (
-                            <PublishButton
-                              path={`/assignments/${a.id}`}
-                              title={a.title}
-                              published={a.isVisible}
-                              onPublished={() =>
-                                published("assignments", a.id, !a.isVisible)
-                              }
-                            />
-                          )}
-                        </div>
-                      ))}
-                      {!section.resources.length &&
-                        !section.quizzes.length &&
-                        !section.assignments.length && (
-                          <p className="empty-inline">{t.emptyContent}</p>
-                        )}
-                    </div>
+                      );
+                    })()}
                     {writable && (
                       <div className="meeting-actions">
                         <button
@@ -786,7 +939,13 @@ export function ClassPage({
             />
           )}
           {tab === "participants" && cls.canManage && (
-            <Participants classId={cls.id} writable={administrativeWritable} />
+            <Participants
+              classId={cls.id}
+              writable={administrativeWritable}
+              instructors={cls.instructors}
+              user={user}
+              onInstructorsUpdated={() => info.reload()}
+            />
           )}
           {tab === "banks" && cls.canManage && (
             <QuestionBanks classId={cls.id} writable={writable} />

@@ -1493,10 +1493,10 @@ export function DepartmentGovernancePage({
                   }}
                   disabled={ssoSyncing}
                 >
-                  <option value="ALL">Semua Tipe (Dosen, Staf, Admin)</option>
+                  <option value="ALL">Semua Tipe (Dosen, Staf, Mahasiswa)</option>
                   <option value="LECTURER">Dosen Saja (LECTURER)</option>
                   <option value="STAFF">Staf Saja (STAFF)</option>
-                  <option value="ADMIN">Administrator (ADMIN)</option>
+                  <option value="STUDENT">Mahasiswa Saja (STUDENT)</option>
                 </select>
               </label>
 

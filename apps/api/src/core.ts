@@ -729,7 +729,16 @@ export async function classAccess(
       // The class header renders instructor identities, so the relation is
       // resolved here instead of leaving callers with bare join rows.
       instructors: {
-        include: { user: { select: { id: true, name: true } } },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              identifierValue: true,
+            },
+          },
+        },
       },
       enrollments: { where: { userId: user.id } },
     },

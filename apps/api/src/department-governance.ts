@@ -1374,7 +1374,9 @@ export function registerDepartmentGovernance(app: Express) {
 
   const ssoSyncPayloadSchema = z.object({
     dryRun: z.boolean().default(false),
-    userType: z.enum(["ALL", "LECTURER", "STAFF", "ADMIN"]).default("ALL"),
+    userType: z
+      .enum(["ALL", "LECTURER", "STAFF", "STUDENT", "ADMIN"])
+      .default("ALL"),
     search: z.string().trim().max(100).optional(),
   });
 
@@ -1573,19 +1575,20 @@ export function registerDepartmentGovernance(app: Express) {
       if (normalized && normalized !== "RECTOR") return normalized;
     }
 
-    // 2. Berdasarkan tipe pengguna SSO (user_type)
+    // 2. Berdasarkan tipe pengguna SSO (user_type) sebagai fallback jika tidak ada hak akses aplikasi
     const rawType = String(
       ssoUser.user_type || ssoUser.userType || "",
     ).toUpperCase();
-    if (rawType === "ADMIN" || rawType === "SUPER_ADMIN") return "SUPER_ADMIN";
-    if (rawType === "STAFF" || rawType === "TENDIK" || rawType === "KARYAWAN")
-      return "DEPARTMENT_ADMIN";
     if (
       rawType === "LECTURER" ||
       rawType === "DOSEN" ||
-      rawType === "PENGAJAR"
-    )
+      rawType === "PENGAJAR" ||
+      rawType === "STAFF" ||
+      rawType === "TENDIK" ||
+      rawType === "KARYAWAN"
+    ) {
       return "INSTRUCTOR";
+    }
     return "STUDENT";
   }
 
