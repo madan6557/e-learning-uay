@@ -1,6 +1,6 @@
 import guide from "./helpGuide.json";
 
-export type HelpRole = "SUPER_ADMIN" | "DEPARTMENT_ADMIN" | "INSTRUCTOR" | "STUDENT" | "RECTOR";
+export type HelpRole = "SUPER_ADMIN" | "DEPARTMENT_ADMIN" | "INSTRUCTOR" | "ASSISTANT" | "STUDENT" | "RECTOR";
 export type HelpArticle = {
   id: string;
   title: string;
@@ -20,7 +20,7 @@ export type HelpArticle = {
   gradeScales?: boolean;
 };
 
-export const helpRoles: HelpRole[] = ["SUPER_ADMIN", "DEPARTMENT_ADMIN", "INSTRUCTOR", "STUDENT", "RECTOR"];
+export const helpRoles: HelpRole[] = ["SUPER_ADMIN", "DEPARTMENT_ADMIN", "INSTRUCTOR", "ASSISTANT", "STUDENT", "RECTOR"];
 export const helpArticles: HelpArticle[] = [
   ...guide.tutorials.map(article => ({ ...article, roles: article.roles as HelpRole[] })),
   {
@@ -35,9 +35,16 @@ export const helpArticles: HelpArticle[] = [
 
 /** Unknown or absent roles never inherit a student's guide. */
 export function helpArticlesForRole(role: unknown): HelpArticle[] {
-  return typeof role === "string" && helpRoles.includes(role as HelpRole)
-    ? helpArticles.filter(article => article.roles.includes(role as HelpRole))
-    : [];
+  if (typeof role !== "string" || !helpRoles.includes(role as HelpRole)) return [];
+  if (role === "ASSISTANT") {
+    return helpArticles.filter(
+      article =>
+        article.roles.includes("ASSISTANT") ||
+        article.roles.includes("INSTRUCTOR") ||
+        article.roles.includes("STUDENT"),
+    );
+  }
+  return helpArticles.filter(article => article.roles.includes(role as HelpRole));
 }
 
 export default helpArticles;

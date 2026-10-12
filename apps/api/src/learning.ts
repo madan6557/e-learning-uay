@@ -1220,10 +1220,11 @@ export function registerLearning(app: Express) {
           false,
           true,
         );
-        const { userIds, primaryUserId: requestedPrimaryUserId } = z
+        const { userIds, primaryUserId: requestedPrimaryUserId, assistantUserIds } = z
           .object({
             userIds: z.array(z.string().uuid()).min(1),
             primaryUserId: z.string().uuid().optional(),
+            assistantUserIds: z.array(z.string().uuid()).optional(),
           })
           .parse(req.body);
         const currentPrimaryInstructor =
@@ -1263,7 +1264,7 @@ export function registerLearning(app: Express) {
           where: {
             id: { in: effectiveUserIds },
             status: "ACTIVE",
-            role: "INSTRUCTOR",
+            role: { in: ["INSTRUCTOR", "ASSISTANT", "STUDENT"] },
           },
         });
         ensure(
@@ -1273,11 +1274,20 @@ export function registerLearning(app: Express) {
         );
         await tx.classInstructor.deleteMany({ where: { classId: cls.id } });
         await tx.classInstructor.createMany({
-          data: users.map((u) => ({
-            classId: cls.id,
-            userId: u.id,
-            isPrimary: u.id === finalPrimaryUserId,
-          })),
+          data: users.map((u) => {
+            const isPrimary = u.id === finalPrimaryUserId;
+            const isAssistant =
+              !isPrimary &&
+              (Boolean(assistantUserIds?.includes(u.id)) ||
+                u.role === "ASSISTANT" ||
+                u.role === "STUDENT");
+            return {
+              classId: cls.id,
+              userId: u.id,
+              isPrimary,
+              role: isAssistant ? "ASSISTANT" : "INSTRUCTOR",
+            };
+          }),
         });
         await audit(
           tx,
@@ -2099,9 +2109,10 @@ export function registerLearning(app: Express) {
             courseId: cls.courseId,
             status: "DRAFT",
             instructors: {
-              create: cls.instructors.map((i) => ({
+              create: cls.instructors.map((i: any) => ({
                 userId: i.userId,
                 isPrimary: i.isPrimary,
+                role: i.role || (i.isPrimary ? "INSTRUCTOR" : "COLLABORATOR"),
               })),
             },
           },

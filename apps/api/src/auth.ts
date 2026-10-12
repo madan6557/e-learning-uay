@@ -762,6 +762,7 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
         | "SUPER_ADMIN"
         | "DEPARTMENT_ADMIN"
         | "INSTRUCTOR"
+        | "ASSISTANT"
         | "STUDENT"
         | "RECTOR";
       if (isAdminIdentifier || validRoles.includes("SUPER_ADMIN")) {
@@ -792,7 +793,9 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
             ? ("STAFF" as const)
             : finalRole === "INSTRUCTOR"
               ? ("LECTURER" as const)
-              : detectedUserType || existingUser.userType;
+              : finalRole === "ASSISTANT"
+                ? ("STUDENT" as const)
+                : detectedUserType || existingUser.userType;
       const finalDeptScopes =
         currentUser.authoritySource !== "SSO"
           ? currentUser.departmentScopes

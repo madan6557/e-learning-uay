@@ -82,14 +82,19 @@ Tujuan utama pengembangan platform ini adalah:
 6. Menjamin integritas akademik melalui pencatatan audit log komprehensif (*before-after state snapshot*) pada seluruh mutasi data kritis.
 
 ## 1.2 Aktor dan Batasan Tanggung Jawab
-Sistem E-Learning UAY mendefinisikan 4 aktor utama dengan pemisahan wewenang yang tegas:
+Sistem E-Learning UAY mendefinisikan peran aktor dengan pemisahan wewenang yang tegas:
 
 | Aktor | Peran Utama | Lingkup Wewenang (*Scope*) | Tanggung Jawab Kunci |
 | :--- | :--- | :--- | :--- |
 | **Super Admin** | Administrator Sistem Institusi | Global (Seluruh Sistem) | Mengelola konfigurasi platform, pemantauan audit log institusi, manajemen akun darurat, dan manajemen mata kuliah induk (*Course*). |
-| **Admin Prodi / Lab** | Administrator Program Studi / Laboratorium | Tingkat Program Studi / Lab | Membuat mata kuliah (*Course*), membuka kelas rombel (*Course Class*), menetapkan dosen pengampu/asisten lab, dan mengelola pendaftaran peserta (*Enrollment*). |
-| **Pengajar / Dosen / Asisten Lab** | Instruktur Pembelajaran | Kelas yang Ditugaskan (*Assigned Classes*) | Menyusun pertemuan (*Section*), mengunggah materi & aset praktikum, membuat kuis & bank soal, mengelola tugas & tenggat, mengatur skema pembobotan nilai, menilai essay, dan mempublikasikan Gradebook. |
-| **Mahasiswa / Peserta** | Peserta Pembelajaran | Kelas yang Diikuti (*Enrolled Classes*) | Mempelajari materi teks/slide/video, mengunduh modul & dataset praktikum, mengerjakan kuis, mengumpulkan tugas (dengan riwayat versi), memantau progres belajar mandiri, dan melihat nilai resmi. |
+| **Rektor / Pimpinan** | Pemantau Eksekutif (*Read-Only*) | Agregat Institusi | Memantau KPI universitas, waterfall aktivitas perkuliahan dosen, rekapitulasi penyelesaian nilai, dan ekspor laporan senat. |
+| **Admin Prodi / Lab** | Administrator Program Studi / Laboratorium | Tingkat Program Studi / Lab | Membuat mata kuliah (*Course*), membuka kelas rombel (*Course Class*), membantu penyiapan materi & kuis, menetapkan dosen pengampu, dan mengelola pendaftaran peserta (*Enrollment*). Dilarang mengoreksi/mengubah nilai. |
+| **Dosen Pengampu** | Instruktur Utama Pembelajaran | Kelas yang Ditugaskan (*Assigned Classes*) | Menyusun pertemuan (*Section*), filter tab badge kegiatan, mengunggah materi & modul, membuat kuis & bank soal, mengelola tugas & tenggat, menugaskan asisten dosen, mengatur skema pembobotan nilai (default 30-35-35), mengoreksi tugas, dan mempublikasikan Gradebook. |
+| **Asisten Dosen (ASSISTANT)** | Asisten Praktikum / Lab | Kelas Praktikum yang Diampu (*Assigned Classes*) | Membantu mengelola pertemuan (*Section*) praktikum, mengunggah modul praktikum, membuka sesi presensi lab, serta memeriksa dan menilai (*grading*) tugas/laporan mahasiswa pada kelas praktikum yang ditugaskan. |
+| **Mahasiswa / Peserta** | Peserta Pembelajaran | Kelas yang Diikuti (*Enrolled Classes*) | Mempelajari materi teks/slide/video, filter pertemuan via tab badge, mengunduh modul & dataset praktikum, mengerjakan kuis, mengumpulkan tugas (dengan riwayat versi), presensi mandiri (1-klik/kode), memantau progres belajar mandiri, dan melihat nilai resmi. |
+
+> **Arsitektur Dual-Role Asisten Dosen:**
+> Pengguna yang memiliki akun mahasiswa (`STUDENT`) dapat diangkat sebagai Asisten Dosen (`ASSISTANT`) pada penugasan pengajar kelas (`ClassInstructor.role = "ASSISTANT"`). Mekanisme Row-Level Authorization memberikan hak `manage: true`, grading, dan attendance secara eksklusif hanya pada kelas praktikum yang diampunya, tanpa mengubah profil global mahasiswa maupun hak aksesnya di kelas lain yang diikutinya sebagai mahasiswa.
 
 ## 1.3 Ekosistem Tiga Aplikasi dan Kepemilikan Data (Service Boundary)
 Platform digital UAY terdiri dari 3 aplikasi independen yang berkomunikasi melalui API contract:

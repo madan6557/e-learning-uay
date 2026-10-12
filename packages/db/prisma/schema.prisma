@@ -84,6 +84,7 @@ enum GlobalRole {
   DEPARTMENT_ADMIN
   RECTOR
   INSTRUCTOR
+  ASSISTANT
   STUDENT
 }
 
@@ -220,6 +221,7 @@ model ClassInstructor {
   userId    String      @map("user_id")
   user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   isPrimary Boolean     @default(true) @map("is_primary")
+  role      String      @default("INSTRUCTOR") @map("role")
 
   @@unique([classId, userId])
   @@index([userId])

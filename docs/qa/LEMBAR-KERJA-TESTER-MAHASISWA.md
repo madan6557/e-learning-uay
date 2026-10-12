@@ -34,7 +34,8 @@ Ikuti 7 langkah dasar pengujian berikut pada aplikasi:
 | **4** | **Mengerjakan Kuis** | Buka menu/tab **Kuis** → pilih *Kuis 01* → pilih salah satu jawaban → klik tombol **Kumpulkan / Submit**. | Jawaban tersimpan, dan muncul tanda atau skor bahwa kuis telah selesai dikerjakan. | [ ] PASS<br>[ ] FAIL |
 | **5** | **Kumpul Tugas Praktikum** | Buka menu tugas *Praktikum 01* → ketik teks singkat di kolom jawaban tugas → klik **Kumpulkan Tugas**. | Tugas berhasil terkirim dan status berubah menjadi *"Sudah Dikumpulkan"*. | [ ] PASS<br>[ ] FAIL |
 | **6** | **Cek Rekap Nilai** | Buka tab/menu **Nilai (Gradebook)** di dalam kelas yang sedang dibuka. | Tampil daftar tugas dan kuis beserta skor atau status penilaiannya. | [ ] PASS<br>[ ] FAIL |
-| **7** | **Cek Profil & Keluar** | Buka menu profil di kanan atas, periksa data diri → lalu klik tombol **Keluar (Logout)**. | Informasi profil sesuai dan tombol keluar membawa Anda kembali ke halaman depan. | [ ] PASS<br>[ ] FAIL |
+| **7** | **Filter Tab Badge Pertemuan** | Buka kelas → perhatikan tab filter di atas pertemuan (*Semua*, *Perkuliahan*, *Praktikum*) → klik tab **Praktikum**. | Hanya pertemuan praktikum yang tampil; counter jumlah cocok dan nomor urut silabus tetap rapi. | [ ] PASS<br>[ ] FAIL |
+| **8** | **Cek Profil & Keluar** | Buka menu profil di kanan atas, periksa data diri → lalu klik tombol **Keluar (Logout)**. | Informasi profil sesuai dan tombol keluar membawa Anda kembali ke halaman depan. | [ ] PASS<br>[ ] FAIL |
 
 ---
 
@@ -45,7 +46,8 @@ Sekarang giliran Anda mencoba hal baru di luar langkah dasar!
 - *Coba klik tombol berulang kali dengan cepat (apakah aplikasi macet?)*
 - *Coba kumpulkan tugas tanpa mengisi teks sama sekali (apakah sistem menolak input kosong?)*
 - *Coba perkecil jendela browser / buka di HP (apakah tampilannya tetap rapi?)*
-- *Coba login menggunakan akun **Dosen, M.Kom.** dan lihat apakah antrean nilai mahasiswa langsung muncul.*
+- *Coba login menggunakan akun **Dosen, M.Kom.** atau **Asisten Dosen** dan lihat apakah antrean nilai mahasiswa langsung muncul.*
+- *Periksa tab Peserta di kelas praktikum untuk melihat pembeda badge: Pengampu Utama, Dosen Kolaborator, dan Asisten Dosen / Lab (warna indigo).*
 
 | No | Ide Eksplorasi Anda | Langkah Percobaan yang Dilakukan | Hasil yang Terjadi | Status |
 |:--:|---|---|---|:--:|

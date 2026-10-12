@@ -1,6 +1,6 @@
 # Panduan penggunaan E-Learning UAY
 
-Edisi 7 Oktober 2026. Mencakup Mahasiswa, Dosen, Admin Prodi, Super Admin, dan Rektor. Buka Bantuan → Buka buku panduan (tab baru) untuk petunjuk yang sesuai dengan peran akun.
+Edisi Oktober 2026. Mencakup Mahasiswa, Asisten Dosen, Dosen, Admin Prodi, Super Admin, dan Rektor. Buka Bantuan → Buka buku panduan (tab baru) untuk petunjuk yang sesuai dengan peran akun.
 
 Panduan ini memakai konten yang sama dengan halaman Bantuan. Di aplikasi, panduan yang tampil mengikuti role akun. Nama, angka, dan tanggal pada gambar merupakan contoh.
 
@@ -434,7 +434,7 @@ Jangan menyimpulkan kelayakan hanya dari warna lencana. Periksa data sesi dan ke
 
 ## D1 — Menyiapkan kelas dan Section
 
-**Peran:** Dosen.
+**Peran:** Dosen, Asisten Dosen.
 
 **Tujuan:** Menyusun pertemuan agar mahasiswa dapat mengikuti urutan belajar.
 
@@ -448,7 +448,7 @@ Jangan menyimpulkan kelayakan hanya dari warna lencana. Periksa data sesi dan ke
 2. Isi Judul Section, misalnya Pertemuan 4 Pengolahan Formulir. Tulis tujuan belajar pada Deskripsi dan pilih Jenis Section.
 3. Isi Dibuka pada dan Ditutup pada bila akses pertemuan harus dijadwalkan. Biarkan kosong bila tidak perlu batas waktu.
 4. Klik Simpan Sebagai Draf untuk menyiapkan dahulu, atau Simpan dan Publikasikan bila pertemuan sudah siap.
-5. Periksa Section muncul. Gunakan Pindah ke atas/bawah untuk mengatur urutannya. Terbitkan kelas dan isi di dalamnya agar mahasiswa memperoleh akses.
+5. Periksa Section muncul. Gunakan Tab Badge Filter ('Semua', 'Perkuliahan', 'Praktikum', dll) untuk menyaring tampilan pertemuan sesuai jenis kegiatan. Gunakan tombol Pindah ke atas/bawah untuk menata urutan silabus.
 
 **Periksa hasil:** Section tersusun dengan jenis, jadwal, dan status yang sesuai.
 
@@ -468,6 +468,7 @@ Penanda gambar: 1 Judul; 2 Jenis; 3 Jadwal; 4 Publikasi
 | Edit | Tombol pada Section | Mengubah metadata, jenis, atau jadwal Section. |
 | Pindah ke atas / bawah | Tombol pada Section | Mengubah urutan Section. |
 | Simpan Sebagai Draf / Simpan dan Publikasikan | Tombol editor | Draf untuk persiapan, publikasi untuk akses mahasiswa sesuai kelas dan jadwal. |
+| Tab Badge Filter | Tab: Semua, Perkuliahan, Praktikum, Seminar, Lokakarya, Ujian, Lainnya | Menyaring daftar section pertemuan berdasarkan jenis kegiatan dengan badge counter jumlah pertemuan secara dinamis. |
 
 ### Catatan penggunaan
 
@@ -477,7 +478,7 @@ Konten terbit di dalam Section draf tetap belum dapat diakses mahasiswa. Periksa
 
 ## D2 — Mengunggah Modul PDF dan bahan praktikum
 
-**Peran:** Dosen.
+**Peran:** Dosen, Asisten Dosen.
 
 **Tujuan:** Membagikan dokumen yang bisa dipelajari mahasiswa melalui kelas.
 
@@ -520,7 +521,7 @@ Bahan PPTX/DOCX yang ingin dibaca sebagai Modul PDF perlu dikonversi ke PDF terl
 
 ## D3 — Mengatur video dan tautan pembelajaran
 
-**Peran:** Dosen.
+**Peran:** Dosen, Asisten Dosen.
 
 **Tujuan:** Menyediakan video serta menetapkan syarat penyelesaian tontonan.
 
@@ -563,7 +564,7 @@ Materi lama dengan durasi manual yang berbeda dari video perlu dibuka dan disimp
 
 ## D4 — Menyusun artikel teks dan impor artikel
 
-**Peran:** Dosen.
+**Peran:** Dosen, Asisten Dosen.
 
 **Tujuan:** Membuat materi teks dengan blok, lampiran, atau isi artikel dari JSON.
 
@@ -610,7 +611,7 @@ Periksa hasil impor sebelum menerbitkan. Artikel dari AI tetap membutuhkan pemer
 
 ## D5 — Membuat tugas dengan tenggat dan toleransi
 
-**Peran:** Dosen.
+**Peran:** Dosen, Asisten Dosen.
 
 **Tujuan:** Menentukan instruksi serta batas pengumpulan yang dapat diikuti mahasiswa.
 
@@ -655,7 +656,7 @@ Contoh nilai pada tutorial adalah bahan latihan. Sesuaikan dengan ketentuan kela
 
 ## D6 — Memeriksa menilai dan menerbitkan tugas
 
-**Peran:** Dosen.
+**Peran:** Dosen, Asisten Dosen.
 
 **Tujuan:** Memberi skor dan umpan balik yang dapat dilihat mahasiswa.
 
@@ -697,7 +698,7 @@ Selesaikan penilaian pengumpulan yang masuk sebelum menerbitkan nilai akhir kela
 
 ## D7 — Membuat kuis dan mengatur waktu hasil
 
-**Peran:** Dosen.
+**Peran:** Dosen, Asisten Dosen.
 
 **Tujuan:** Menentukan kuis yang dapat dikerjakan dan dinilai sesuai jadwal.
 
@@ -747,7 +748,7 @@ Contoh: mahasiswa mulai 09.50, durasi 30 menit, waktu tutup 10.00. Pengerjaan ha
 
 ## D8 — Menyusun kunci soal objektif
 
-**Peran:** Dosen.
+**Peran:** Dosen, Asisten Dosen.
 
 **Tujuan:** Membuat soal pilihan dan isian yang memiliki kunci jelas.
 
@@ -793,7 +794,7 @@ Coba baca soal sebagai mahasiswa. Pertanyaan, pilihan, dan kunci harus saling ko
 
 ## D9 — Menyusun pasangan urutan uraian dan unggahan
 
-**Peran:** Dosen.
+**Peran:** Dosen, Asisten Dosen.
 
 **Tujuan:** Membuat soal yang memerlukan pasangan, susunan, atau koreksi manual.
 
@@ -835,7 +836,7 @@ Nilai uraian dan unggahan menunggu penilaian pengajar. Publikasi hasil otomatis 
 
 ## D10 — Menilai kuis dan mengelola bank soal
 
-**Peran:** Dosen.
+**Peran:** Dosen, Asisten Dosen.
 
 **Tujuan:** Menyelesaikan koreksi kuis dan menyimpan soal yang dapat dipakai kembali.
 
@@ -878,7 +879,7 @@ Bank soal tersimpan per kelas. Saat menggunakan soal bank, tinjau kembali poin d
 
 ## D11 — Membuka sesi presensi dengan jadwal atau kode
 
-**Peran:** Dosen.
+**Peran:** Dosen, Asisten Dosen.
 
 **Tujuan:** Menyiapkan presensi sesuai pelaksanaan pertemuan.
 
@@ -921,7 +922,7 @@ Default sesi baru adalah tanpa kode dan tanpa jadwal. Periksa kedua checkbox seb
 
 ## D12 — Mengubah jadwal menutup dan memperpanjang presensi
 
-**Peran:** Dosen.
+**Peran:** Dosen, Asisten Dosen.
 
 **Tujuan:** Mengendalikan sesi yang sudah dibuat tanpa membuat sesi ganda.
 
@@ -966,7 +967,7 @@ Mengganti kode membuat kode lama tidak berlaku bagi pengisian berikutnya. Beri t
 
 ## D13 — Mengoreksi kehadiran manual dan ekspor rekap
 
-**Peran:** Dosen.
+**Peran:** Dosen, Asisten Dosen.
 
 **Tujuan:** Mencatat izin/sakit/koreksi kehadiran dan meninjau rekap kelas.
 
@@ -1098,7 +1099,7 @@ Contoh nilai kategori 80, 90, 70, 75, 85 dengan bobot 10, 20, 10, 25, 35 menghas
 
 ## D16 — Mengelola peserta pengumuman berkas dan duplikasi
 
-**Peran:** Dosen.
+**Peran:** Dosen, Asisten Dosen.
 
 **Tujuan:** Menyiapkan operasional kelas dan memindahkan bahan ke semester baru.
 
@@ -1108,7 +1109,7 @@ Contoh nilai kategori 80, 90, 70, 75, 85 dengan bobot 10, 20, 10, 25, 35 menghas
 
 ### Langkah
 
-1. Pada Peserta, klik Daftarkan peserta. Cari nama/NIM, pilih mahasiswa, lalu Simpan semua perubahan. Gunakan Nonaktifkan peserta/Aktifkan peserta untuk mengubah hak partisipasi.
+1. Pada Peserta, klik Tambah Dosen Kolaborator untuk rekan pengajar atau Tambah Asisten Dosen (Asdos) untuk mahasiswa/asisten praktikum. Gunakan Daftarkan peserta untuk mahasiswa kelas. Gunakan Nonaktifkan peserta/Aktifkan peserta untuk mengubah hak partisipasi.
 2. Pada Pengumuman, klik Buat pengumuman. Isi Judul dan Isi pengumuman, atur Diterbitkan serta checkbox Penting, lalu simpan draf atau publikasikan.
 3. Pada Berkas, periksa status dan file yang digunakan. Gunakan Pindahkan ke sampah hanya untuk file yang memang tidak diperlukan. Gunakan Pulihkan jika masih dalam masa pemulihan.
 4. Pada Jejak audit, baca pelaku, waktu, peristiwa, serta perubahan sebelum/sesudah untuk memeriksa koreksi.
@@ -1135,10 +1136,14 @@ Penanda gambar: 1 Nama; 2 Semester
 | Nama kelas duplikasi | Teks, contoh Kelas A | Nama kelas baru, bukan pengganti nama kelas lama. |
 | Tahun akademik & Semester Baru | Pilihan semester tujuan | Menentukan periode kelas baru. |
 | Simpan duplikasi | Tombol | Menyalin struktur materi/soal ke kelas draf. Peserta, progres, jawaban, nilai, dan jadwal lama tidak dibawa sebagai hasil belajar baru. |
+| Tambah Asisten Dosen (Asdos) | Tombol pada tab Peserta | Menugaskan mahasiswa atau akun asisten untuk membantu mengelola materi praktikum, sesi presensi, dan penilaian tugas kelas. |
+| Tambah Dosen Kolaborator | Tombol pada tab Peserta | Menugaskan dosen pengajar tambahan ke dalam kelas. |
 
 ### Catatan penggunaan
 
 Untuk pendaftaran dan impor peserta secara lengkap, ikuti A3 dan A4. Duplikasi tidak otomatis membuka perkuliahan semester baru.
+
+Asisten dosen yang ditugaskan memperoleh akses operasional pengajar (mengelola materi/modul praktikum, mengaktifkan sesi presensi, serta memeriksa dan menilai tugas mahasiswa) khusus pada kelas yang ditugaskan.
 
 <a id="tutorial-a1"></a>
 

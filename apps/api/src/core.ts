@@ -748,6 +748,7 @@ export async function classAccess(
               name: true,
               email: true,
               identifierValue: true,
+              role: true,
             },
           },
         },
@@ -756,10 +757,11 @@ export async function classAccess(
     },
   });
   ensure(item, 404, "NOT_FOUND");
+  const isClassInstructor = item.instructors.some((i) => i.userId === user.id);
   const manage =
     canManageDepartment(user, item.course.departmentCode) ||
-    (user.role === "INSTRUCTOR" &&
-      item.instructors.some((i) => i.userId === user.id));
+    ((user.role === "INSTRUCTOR" || user.role === "ASSISTANT" || isClassInstructor) &&
+      isClassInstructor);
   const activeEnrollment = item.enrollments.find((e) => e.isActive);
   const inactiveEnrollment = item.enrollments.find((e) => !e.isActive);
   const enrolled = Boolean(activeEnrollment);
@@ -780,6 +782,8 @@ export async function classAccess(
     const isDeptAdmin = canManageDepartment(user, item.course.departmentCode);
     ensure(
       user.role === "INSTRUCTOR" ||
+        user.role === "ASSISTANT" ||
+        isClassInstructor ||
         isDeptAdmin ||
         (administrativeWrite &&
           hasPermission(user.role, "MANAGE_ALL_CLASSES")) ||

@@ -106,7 +106,7 @@ export function Participants({
   const [searchError, setSearchError] = useState<Error | null>(null);
   const [searching, setSearching] = useState(false);
 
-  const [collabModal, setCollabModal] = useState(false);
+  const [collabModal, setCollabModal] = useState<"INSTRUCTOR" | "ASSISTANT" | false>(false);
   const [collabQuery, setCollabQuery] = useState("");
   const [collabResults, setCollabResults] = useState<any[]>([]);
   const [collabSearching, setCollabSearching] = useState(false);
@@ -154,17 +154,17 @@ export function Participants({
     <>
       <div className="section-heading">
         <div>
-          <h2>Dosen Pengampu &amp; Kolaborator</h2>
+          <h2>Dosen Pengampu &amp; Tim Pengajar</h2>
           <p style={{ margin: "2px 0 0", fontSize: "0.86rem", color: "var(--muted)" }}>
-            Dosen pengampu utama dan tim dosen kolaborator pada kelas ini.
+            Dosen pengampu utama, dosen kolaborator, dan asisten dosen (asdos) pada kelas ini.
           </p>
         </div>
         {canManageInstructors && (
-          <div className="toolbar">
+          <div className="toolbar" style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
             <button
-              className="primary"
+              className="secondary"
               onClick={() => {
-                setCollabModal(true);
+                setCollabModal("INSTRUCTOR");
                 setCollabQuery("");
                 setCollabResults([]);
                 setCollabError(null);
@@ -172,6 +172,18 @@ export function Participants({
             >
               <Plus size={16} />
               Tambah Dosen Kolaborator
+            </button>
+            <button
+              className="primary"
+              onClick={() => {
+                setCollabModal("ASSISTANT");
+                setCollabQuery("");
+                setCollabResults([]);
+                setCollabError(null);
+              }}
+            >
+              <Plus size={16} />
+              Tambah Asisten Dosen (Asdos)
             </button>
           </div>
         )}
@@ -193,6 +205,10 @@ export function Participants({
             {(instructors ?? []).map((inst: any) => {
               const instUser = inst.user || {};
               const isPrimary = Boolean(inst.isPrimary);
+              const isAssistant =
+                inst.role === "ASSISTANT" ||
+                instUser.role === "ASSISTANT" ||
+                (!isPrimary && instUser.role === "STUDENT");
               return (
                 <tr key={inst.id || inst.userId || instUser.id}>
                   <td>
@@ -210,8 +226,10 @@ export function Participants({
                           borderRadius: "50%",
                           background: isPrimary
                             ? "var(--primary)"
+                            : isAssistant
+                            ? "var(--adaptive-primary-fill, #6366f1)"
                             : "var(--muted-soft, #f1f5f9)",
-                          color: isPrimary ? "#fff" : "var(--foreground)",
+                          color: isPrimary || isAssistant ? "#fff" : "var(--foreground)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -220,7 +238,7 @@ export function Participants({
                           flexShrink: 0,
                         }}
                       >
-                        {(instUser.name?.[0] ?? "D").toUpperCase()}
+                        {(instUser.name?.[0] ?? (isAssistant ? "A" : "D")).toUpperCase()}
                       </span>
                       <div>
                         <strong>{instUser.name}</strong>
@@ -247,19 +265,27 @@ export function Participants({
                         fontWeight: 600,
                         background: isPrimary
                           ? "var(--adaptive-success-soft, #ecfdf5)"
+                          : isAssistant
+                          ? "var(--adaptive-primary-soft, #eef2ff)"
                           : "var(--adaptive-info-soft, #f0f9ff)",
                         color: isPrimary
                           ? "var(--adaptive-success-text, #15803d)"
+                          : isAssistant
+                          ? "var(--adaptive-primary-text, #4f46e5)"
                           : "var(--adaptive-info-text, #0369a1)",
                         border: `1px solid ${
                           isPrimary
                             ? "var(--adaptive-success-border, #bbf7d0)"
+                            : isAssistant
+                            ? "var(--adaptive-primary-border, #c7d2fe)"
                             : "var(--adaptive-info-border, #bae6fd)"
                         }`,
                       }}
                     >
                       {isPrimary
                         ? "Pengampu Utama (Owner)"
+                        : isAssistant
+                        ? "Asisten Dosen / Lab"
                         : "Dosen Kolaborator"}
                     </span>
                   </td>
@@ -273,7 +299,7 @@ export function Participants({
                           justifyContent: "flex-end",
                         }}
                       >
-                        {isAdmin && !isPrimary && (
+                        {isAdmin && !isPrimary && !isAssistant && (
                           <button
                             type="button"
                             className="text-button"
@@ -286,11 +312,20 @@ export function Participants({
                               const allIds = (instructors ?? []).map(
                                 (i: any) => i.userId || i.user?.id,
                               );
+                              const currentAssistantIds = (instructors ?? [])
+                                .filter(
+                                  (i: any) =>
+                                    i.role === "ASSISTANT" ||
+                                    i.user?.role === "ASSISTANT" ||
+                                    i.user?.role === "STUDENT",
+                                )
+                                .map((i: any) => i.userId || i.user?.id);
                               await api(
                                 `/course-classes/${classId}/instructors`,
                                 "POST",
                                 {
                                   userIds: allIds,
+                                  assistantUserIds: currentAssistantIds,
                                   primaryUserId: inst.userId || instUser.id,
                                 },
                               );
@@ -306,8 +341,9 @@ export function Participants({
                             className="text-button"
                             style={{ color: "var(--destructive, #ef4444)" }}
                             onClick={async () => {
+                              const labelRole = isAssistant ? "asisten dosen" : "dosen kolaborator";
                               const confirmed = await confirmAction(
-                                `Keluarkan dosen kolaborator "${instUser.name}" dari kelas ini?`,
+                                `Keluarkan ${labelRole} "${instUser.name}" dari kelas ini?`,
                               );
                               if (!confirmed) return;
                               const remainingIds = (instructors ?? [])
@@ -317,10 +353,23 @@ export function Participants({
                                     (inst.userId || instUser.id),
                                 )
                                 .map((i: any) => i.userId || i.user?.id);
+                              const remainingAssistantIds = (instructors ?? [])
+                                .filter(
+                                  (i: any) =>
+                                    (i.userId || i.user?.id) !==
+                                      (inst.userId || instUser.id) &&
+                                    (i.role === "ASSISTANT" ||
+                                      i.user?.role === "ASSISTANT" ||
+                                      i.user?.role === "STUDENT"),
+                                )
+                                .map((i: any) => i.userId || i.user?.id);
                               await api(
                                 `/course-classes/${classId}/instructors`,
                                 "POST",
-                                { userIds: remainingIds },
+                                {
+                                  userIds: remainingIds,
+                                  assistantUserIds: remainingAssistantIds,
+                                },
                               );
                               onInstructorsUpdated?.();
                             }}
@@ -344,11 +393,22 @@ export function Participants({
                                     (inst.userId || instUser.id),
                                 )
                                 .map((i: any) => i.userId || i.user?.id);
+                              const remainingAssistantIds = (instructors ?? [])
+                                .filter(
+                                  (i: any) =>
+                                    (i.userId || i.user?.id) !==
+                                      (inst.userId || instUser.id) &&
+                                    (i.role === "ASSISTANT" ||
+                                      i.user?.role === "ASSISTANT" ||
+                                      i.user?.role === "STUDENT"),
+                                )
+                                .map((i: any) => i.userId || i.user?.id);
                               await api(
                                 `/course-classes/${classId}/instructors`,
                                 "POST",
                                 {
                                   userIds: remainingIds,
+                                  assistantUserIds: remainingAssistantIds,
                                   primaryUserId: remainingIds[0],
                                 },
                               );
@@ -567,7 +627,11 @@ export function Participants({
 
       {collabModal && (
         <Modal
-          title="Tambah Dosen Kolaborator"
+          title={
+            collabModal === "ASSISTANT"
+              ? "Tambah Asisten Dosen (Asdos)"
+              : "Tambah Dosen Kolaborator"
+          }
           onClose={() => {
             setCollabModal(false);
             setCollabQuery("");
@@ -577,13 +641,19 @@ export function Participants({
         >
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <p style={{ margin: 0, fontSize: "0.88rem", color: "var(--muted)" }}>
-              Cari dosen untuk ditambahkan sebagai mitra tim teaching (kolaborator) di kelas ini.
+              {collabModal === "ASSISTANT"
+                ? "Cari mahasiswa atau asisten untuk ditugaskan sebagai asisten dosen / praktikum di kelas ini."
+                : "Cari dosen untuk ditambahkan sebagai mitra tim teaching (kolaborator) di kelas ini."}
             </p>
             {collabError && <Notice error={collabError} onClose={() => setCollabError(null)} />}
             <div style={{ display: "flex", gap: 8 }}>
               <input
                 type="text"
-                placeholder="Ketik nama atau NIDN dosen..."
+                placeholder={
+                  collabModal === "ASSISTANT"
+                    ? "Ketik nama atau NIM mahasiswa / asisten..."
+                    : "Ketik nama atau NIDN dosen..."
+                }
                 value={collabQuery}
                 onChange={(e) => setCollabQuery(e.target.value)}
                 style={{ flex: 1 }}
@@ -603,13 +673,23 @@ export function Participants({
                     const currentIds = (instructors ?? []).map(
                       (i: any) => i.userId || i.user?.id,
                     );
-                    setCollabResults(
-                      res.filter(
-                        (u) =>
-                          u.role === "INSTRUCTOR" &&
-                          !currentIds.includes(u.id),
-                      ),
-                    );
+                    if (collabModal === "ASSISTANT") {
+                      setCollabResults(
+                        res.filter(
+                          (u) =>
+                            (u.role === "STUDENT" || u.role === "ASSISTANT") &&
+                            !currentIds.includes(u.id),
+                        ),
+                      );
+                    } else {
+                      setCollabResults(
+                        res.filter(
+                          (u) =>
+                            u.role === "INSTRUCTOR" &&
+                            !currentIds.includes(u.id),
+                        ),
+                      );
+                    }
                   } catch (e) {
                     setCollabError(e as Error);
                   } finally {
@@ -617,7 +697,11 @@ export function Participants({
                   }
                 }}
               >
-                {collabSearching ? "Mencari..." : "Cari Dosen"}
+                {collabSearching
+                  ? "Mencari..."
+                  : collabModal === "ASSISTANT"
+                  ? "Cari Asisten"
+                  : "Cari Dosen"}
               </button>
             </div>
             {collabResults.length > 0 ? (
@@ -647,7 +731,10 @@ export function Participants({
                     <div>
                       <strong>{collabUser.name}</strong>
                       <small style={{ display: "block", color: "var(--muted)" }}>
-                        {collabUser.identifierValue || "Dosen"}
+                        {collabUser.identifierValue ||
+                          (collabUser.role === "STUDENT"
+                            ? "Mahasiswa"
+                            : "Pengajar")}
                         {collabUser.email ? ` · ${collabUser.email}` : ""}
                       </small>
                     </div>
@@ -659,11 +746,25 @@ export function Participants({
                           const currentIds = (instructors ?? []).map(
                             (i: any) => i.userId || i.user?.id,
                           );
+                          const currentAssistantIds = (instructors ?? [])
+                            .filter(
+                              (i: any) =>
+                                i.role === "ASSISTANT" ||
+                                i.user?.role === "ASSISTANT" ||
+                                i.user?.role === "STUDENT",
+                            )
+                            .map((i: any) => i.userId || i.user?.id);
+                          const newAssistantIds =
+                            collabModal === "ASSISTANT"
+                              ? [...currentAssistantIds, collabUser.id]
+                              : currentAssistantIds;
                           await api(
                             `/course-classes/${classId}/instructors`,
                             "POST",
                             {
                               userIds: [...currentIds, collabUser.id],
+                              assistantUserIds: newAssistantIds,
+                              primaryUserId,
                             },
                           );
                           setCollabModal(false);
@@ -675,7 +776,9 @@ export function Participants({
                         }
                       }}
                     >
-                      + Jadikan Kolaborator
+                      {collabModal === "ASSISTANT"
+                        ? "+ Tambah Sebagai Asdos"
+                        : "+ Jadikan Kolaborator"}
                     </button>
                   </div>
                 ))}
@@ -689,7 +792,9 @@ export function Participants({
                   margin: "12px 0",
                 }}
               >
-                Tidak ada dosen yang cocok atau dosen sudah terdaftar di kelas ini.
+                {collabModal === "ASSISTANT"
+                  ? "Tidak ada mahasiswa atau asisten yang cocok dengan pencarian ini."
+                  : "Tidak ada dosen yang cocok atau dosen sudah terdaftar di kelas ini."}
               </p>
             ) : null}
           </div>

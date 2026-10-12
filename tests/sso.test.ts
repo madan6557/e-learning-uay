@@ -212,3 +212,65 @@ test("normalizeRole recognizes various Keycloak super admin aliases and group fo
     );
   }
 });
+
+test("normalizeRole and permissions recognize ASSISTANT role and aliases", async () => {
+  const { hasPermission, canManageClassContent, canGradeClassWork } = await import(
+    "../packages/shared/src/permissions.js"
+  );
+
+  const assistantAliases = [
+    "assistant",
+    "Assistant",
+    "ASISTEN",
+    "asisten",
+    "asdos",
+    "Asdos",
+    "ASDOS",
+    "asisten_dosen",
+    "asisten-dosen",
+    "Asisten Dosen",
+    "lab_assistant",
+    "asisten_lab",
+  ];
+
+  for (const alias of assistantAliases) {
+    assert.equal(
+      normalizeRole(alias),
+      "ASSISTANT",
+      `Failed for alias: ${alias}`,
+    );
+  }
+
+  const asst = identityClaims.parse({ ...base, roles: ["ASSISTANT"] });
+  assert.equal(asst.role, "ASSISTANT");
+  assert.equal(asst.userType, "STUDENT");
+
+  // Capabilities
+  assert.equal(hasPermission("ASSISTANT", "MANAGE_CLASS_CONTENT"), true);
+  assert.equal(hasPermission("ASSISTANT", "GRADE_STUDENT_WORK"), true);
+  assert.equal(hasPermission("ASSISTANT", "MANAGE_ALL_CLASSES"), false);
+  assert.equal(hasPermission("ASSISTANT", "JOIN_CLASS_WITH_KEY"), true);
+
+  // canManageClassContent and canGradeClassWork helpers
+  const assigned = canManageClassContent(
+    { role: "ASSISTANT", id: "user-123" },
+    { courseDepartmentCode: "IF", instructorUserIds: ["user-123", "prof-456"] },
+  );
+  assert.equal(assigned, true);
+
+  const unassigned = canManageClassContent(
+    { role: "ASSISTANT", id: "user-999" },
+    { courseDepartmentCode: "IF", instructorUserIds: ["user-123", "prof-456"] },
+  );
+  assert.equal(unassigned, false);
+
+  assert.equal(
+    canGradeClassWork({ role: "ASSISTANT", id: "user-123" }, true),
+    true,
+  );
+  assert.equal(
+    canGradeClassWork({ role: "ASSISTANT", id: "user-123" }, false),
+    false,
+  );
+});
+

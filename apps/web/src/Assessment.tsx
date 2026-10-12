@@ -712,11 +712,11 @@ export function QuizPage({
   if (info.error) return <Notice error={info.error} />;
   const isDeptAdminForClass = user.role === "DEPARTMENT_ADMIN" && quiz.canManage;
   const canEdit =
-    (user.role === "INSTRUCTOR" || isDeptAdminForClass) &&
+    (user.role === "INSTRUCTOR" || user.role === "ASSISTANT" || isDeptAdminForClass) &&
     quiz.canManage &&
     !quiz.isClassArchived;
   const canGrade =
-    user.role === "INSTRUCTOR" && quiz.canManage && !quiz.isClassArchived;
+    (user.role === "INSTRUCTOR" || user.role === "ASSISTANT" || quiz.canManage) && quiz.canManage && !quiz.isClassArchived;
   const current =
     active ??
     quiz.attempts.find(
@@ -2031,11 +2031,11 @@ export function AssignmentPage({
   if (!a) return null;
   const isDeptAdminForClass = user.role === "DEPARTMENT_ADMIN" && a.canManage;
   const canEdit =
-    (user.role === "INSTRUCTOR" || isDeptAdminForClass) &&
+    (user.role === "INSTRUCTOR" || user.role === "ASSISTANT" || isDeptAdminForClass) &&
     a.canManage &&
     !a.isClassArchived;
   const canGrade =
-    user.role === "INSTRUCTOR" && a.canManage && !a.isClassArchived;
+    (user.role === "INSTRUCTOR" || user.role === "ASSISTANT" || a.canManage) && a.canManage && !a.isClassArchived;
   return (
     <DraftRouteContext.Provider value={`#/assignments/${id}`}>
       <a className="back-link" href={a.classPath ?? backHref}>
@@ -2359,7 +2359,7 @@ export function AssignmentPage({
             </section>
           );
         })()}
-      {a.canManage && user.role === "INSTRUCTOR" && !a.isClassArchived && (
+      {a.canManage && (user.role === "INSTRUCTOR" || user.role === "ASSISTANT" || a.canManage) && !a.isClassArchived && (
         <section
           className="card submission-form instructor-test-submission"
           style={{

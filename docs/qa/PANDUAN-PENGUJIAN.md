@@ -99,6 +99,8 @@ Kelas contoh: **IF2101 – Pemrograman Web / Kelas A**.
 | 4.5 | Masuk sebagai Mahasiswa, buka kelas yang sama | Pertemuan tersembunyi **tidak** terlihat | [ ] |
 | 4.6 | Sebagai Dosen, isi **Dibuka pada** dengan tanggal besok | Mahasiswa melihat pertemuan terkunci sampai tanggal itu | [ ] |
 | 4.7 | Ubah tab lewat alamat, mis. `?tab=ngawur` | Kembali otomatis ke tab Materi, bukan halaman kosong | [ ] |
+| 4.8 | Klik Tab Badge Filter di atas daftar pertemuan (Semua, Perkuliahan, Praktikum) | Daftar pertemuan tersaring instan sesuai jenis; counter badge akurat dan nomor urut silabus terjaga | [ ] |
+| 4.9 | Pada tab Peserta, klik **Tambah Asisten Dosen (Asdos)** lalu pilih mahasiswa | Mahasiswa ditugaskan dengan badge **Asisten Dosen / Lab** (indigo) dan mendapat akses pengajar di kelas ini | [ ] |
 
 ---
 
@@ -277,6 +279,8 @@ Kelas contoh: **IF2101 – Pemrograman Web / Kelas A**.
 | 15.3 | Tempel alamat rekap nilai kelas itu | Ditolak | [ ] |
 | 15.4 | Sebagai Mahasiswa, tempel alamat tab **Peserta** atau **Jejak audit** | Kembali ke tab Materi, tidak bocor | [ ] |
 | 15.5 | Sebagai Mahasiswa A, coba buka tugas milik Mahasiswa B | Ditolak | [ ] |
+| 15.6 | Masuk sebagai Mahasiswa yang ditugaskan sebagai Asisten Dosen di kelas praktikum | Memperoleh akses pengajar (kelola pertemuan praktikum, buka presensi, dan menilai tugas/laporan mahasiswa) di kelas praktikum tersebut | [ ] |
+| 15.7 | Akun asisten dosen yang sama membuka kelas lain di mana ia bukan asisten | Tetap berstatus sebagai mahasiswa biasa tanpa wewenang pengajar (tidak ada kebocoran hak akses antar kelas) | [ ] |
 
 ---
 

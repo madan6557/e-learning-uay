@@ -14,7 +14,8 @@
 |:---:|---|---|---|---|---|
 | 1 | **Super Admin** | **Admin UAY** | `ADM001` | `adm001` | Hak akses penuh seluruh sistem, audit log, & master data |
 | 2 | **Admin Prodi** | **Admin Prodi Informatika** | `ADMIF01` | `admif01` | Pengelola kurikulum & kelas Prodi IF |
-| 3 | **Dosen Pengampu** | **Dosen, M.Kom.** | `1112089001` | `1112089001` | Dosen Kelas A. Langsung memiliki 2 antrean tugas & kuis yang perlu dinilai |
+| 3 | **Dosen Pengampu** | **Dosen, M.Kom.** | `1112089001` | `1112089001` | Dosen Kelas A. Langsung memiliki antrean tugas & kuis yang perlu dinilai |
+| 4 | **Asisten Dosen** | **Asisten Praktikum (Asdos)** | `ASDOS01` / `202601001` | `asdos01` | Asisten Dosen Kelas Praktikum. Mengelola section praktikum, membuka presensi lab, serta memeriksa & menilai tugas mahasiswa. |
 
 ---
 

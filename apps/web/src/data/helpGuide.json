@@ -625,7 +625,8 @@
       "summary": "Menyusun pertemuan agar mahasiswa dapat mengikuti urutan belajar.",
       "category": "Panduan Dosen",
       "roles": [
-        "INSTRUCTOR"
+        "INSTRUCTOR",
+        "ASSISTANT"
       ],
       "keywords": [
         "D1"
@@ -637,7 +638,7 @@
         "Isi Judul Section, misalnya Pertemuan 4 Pengolahan Formulir. Tulis tujuan belajar pada Deskripsi dan pilih Jenis Section.",
         "Isi Dibuka pada dan Ditutup pada bila akses pertemuan harus dijadwalkan. Biarkan kosong bila tidak perlu batas waktu.",
         "Klik Simpan Sebagai Draf untuk menyiapkan dahulu, atau Simpan dan Publikasikan bila pertemuan sudah siap.",
-        "Periksa Section muncul. Gunakan Pindah ke atas/bawah untuk mengatur urutannya. Terbitkan kelas dan isi di dalamnya agar mahasiswa memperoleh akses."
+        "Periksa Section muncul. Gunakan Tab Badge Filter ('Semua', 'Perkuliahan', 'Praktikum', dll) untuk menyaring tampilan pertemuan sesuai jenis kegiatan. Gunakan tombol Pindah ke atas/bawah untuk menata urutan silabus."
       ],
       "result": "Section tersusun dengan jenis, jadwal, dan status yang sesuai.",
       "controls": [
@@ -680,6 +681,11 @@
           "label": "Simpan Sebagai Draf / Simpan dan Publikasikan",
           "value": "Tombol editor",
           "effect": "Draf untuk persiapan, publikasi untuk akses mahasiswa sesuai kelas dan jadwal."
+        },
+        {
+          "label": "Tab Badge Filter",
+          "value": "Tab: Semua, Perkuliahan, Praktikum, Seminar, Lokakarya, Ujian, Lainnya",
+          "effect": "Menyaring daftar section pertemuan berdasarkan jenis kegiatan dengan badge counter jumlah pertemuan secara dinamis."
         }
       ],
       "notes": [
@@ -698,7 +704,8 @@
       "summary": "Membagikan dokumen yang bisa dipelajari mahasiswa melalui kelas.",
       "category": "Panduan Dosen",
       "roles": [
-        "INSTRUCTOR"
+        "INSTRUCTOR",
+        "ASSISTANT"
       ],
       "keywords": [
         "D2"
@@ -762,7 +769,8 @@
       "summary": "Menyediakan video serta menetapkan syarat penyelesaian tontonan.",
       "category": "Panduan Dosen",
       "roles": [
-        "INSTRUCTOR"
+        "INSTRUCTOR",
+        "ASSISTANT"
       ],
       "keywords": [
         "D3"
@@ -826,7 +834,8 @@
       "summary": "Membuat materi teks dengan blok, lampiran, atau isi artikel dari JSON.",
       "category": "Panduan Dosen",
       "roles": [
-        "INSTRUCTOR"
+        "INSTRUCTOR",
+        "ASSISTANT"
       ],
       "keywords": [
         "D4"
@@ -915,7 +924,8 @@
       "summary": "Menentukan instruksi serta batas pengumpulan yang dapat diikuti mahasiswa.",
       "category": "Panduan Dosen",
       "roles": [
-        "INSTRUCTOR"
+        "INSTRUCTOR",
+        "ASSISTANT"
       ],
       "keywords": [
         "D5"
@@ -998,7 +1008,8 @@
       "summary": "Memberi skor dan umpan balik yang dapat dilihat mahasiswa.",
       "category": "Panduan Dosen",
       "roles": [
-        "INSTRUCTOR"
+        "INSTRUCTOR",
+        "ASSISTANT"
       ],
       "keywords": [
         "D6"
@@ -1062,7 +1073,8 @@
       "summary": "Menentukan kuis yang dapat dikerjakan dan dinilai sesuai jadwal.",
       "category": "Panduan Dosen",
       "roles": [
-        "INSTRUCTOR"
+        "INSTRUCTOR",
+        "ASSISTANT"
       ],
       "keywords": [
         "D7"
@@ -1166,7 +1178,8 @@
       "summary": "Membuat soal pilihan dan isian yang memiliki kunci jelas.",
       "category": "Panduan Dosen",
       "roles": [
-        "INSTRUCTOR"
+        "INSTRUCTOR",
+        "ASSISTANT"
       ],
       "keywords": [
         "D8"
@@ -1254,7 +1267,8 @@
       "summary": "Membuat soal yang memerlukan pasangan, susunan, atau koreksi manual.",
       "category": "Panduan Dosen",
       "roles": [
-        "INSTRUCTOR"
+        "INSTRUCTOR",
+        "ASSISTANT"
       ],
       "keywords": [
         "D9"
@@ -1322,7 +1336,8 @@
       "summary": "Menyelesaikan koreksi kuis dan menyimpan soal yang dapat dipakai kembali.",
       "category": "Panduan Dosen",
       "roles": [
-        "INSTRUCTOR"
+        "INSTRUCTOR",
+        "ASSISTANT"
       ],
       "keywords": [
         "D10"
@@ -1395,7 +1410,8 @@
       "summary": "Menyiapkan presensi sesuai pelaksanaan pertemuan.",
       "category": "Panduan Dosen",
       "roles": [
-        "INSTRUCTOR"
+        "INSTRUCTOR",
+        "ASSISTANT"
       ],
       "keywords": [
         "D11"
@@ -1468,7 +1484,8 @@
       "summary": "Mengendalikan sesi yang sudah dibuat tanpa membuat sesi ganda.",
       "category": "Panduan Dosen",
       "roles": [
-        "INSTRUCTOR"
+        "INSTRUCTOR",
+        "ASSISTANT"
       ],
       "keywords": [
         "D12"
@@ -1547,7 +1564,8 @@
       "summary": "Mencatat izin/sakit/koreksi kehadiran dan meninjau rekap kelas.",
       "category": "Panduan Dosen",
       "roles": [
-        "INSTRUCTOR"
+        "INSTRUCTOR",
+        "ASSISTANT"
       ],
       "keywords": [
         "D13"
@@ -1773,7 +1791,8 @@
       "summary": "Menyiapkan operasional kelas dan memindahkan bahan ke semester baru.",
       "category": "Panduan Dosen",
       "roles": [
-        "INSTRUCTOR"
+        "INSTRUCTOR",
+        "ASSISTANT"
       ],
       "keywords": [
         "D16"
@@ -1781,7 +1800,7 @@
       "location": "Tab Peserta, Pengumuman, Berkas, Jejak audit, dan Duplikasi ke semester baru",
       "preparation": "Berhak mengelola kelas. Periksa tujuan sebelum mengubah kepesertaan atau status.",
       "steps": [
-        "Pada Peserta, klik Daftarkan peserta. Cari nama/NIM, pilih mahasiswa, lalu Simpan semua perubahan. Gunakan Nonaktifkan peserta/Aktifkan peserta untuk mengubah hak partisipasi.",
+        "Pada Peserta, klik Tambah Dosen Kolaborator untuk rekan pengajar atau Tambah Asisten Dosen (Asdos) untuk mahasiswa/asisten praktikum. Gunakan Daftarkan peserta untuk mahasiswa kelas. Gunakan Nonaktifkan peserta/Aktifkan peserta untuk mengubah hak partisipasi.",
         "Pada Pengumuman, klik Buat pengumuman. Isi Judul dan Isi pengumuman, atur Diterbitkan serta checkbox Penting, lalu simpan draf atau publikasikan.",
         "Pada Berkas, periksa status dan file yang digunakan. Gunakan Pindahkan ke sampah hanya untuk file yang memang tidak diperlukan. Gunakan Pulihkan jika masih dalam masa pemulihan.",
         "Pada Jejak audit, baca pelaku, waktu, peristiwa, serta perubahan sebelum/sesudah untuk memeriksa koreksi.",
@@ -1839,10 +1858,21 @@
           "label": "Simpan duplikasi",
           "value": "Tombol",
           "effect": "Menyalin struktur materi/soal ke kelas draf. Peserta, progres, jawaban, nilai, dan jadwal lama tidak dibawa sebagai hasil belajar baru."
+        },
+        {
+          "label": "Tambah Asisten Dosen (Asdos)",
+          "value": "Tombol pada tab Peserta",
+          "effect": "Menugaskan mahasiswa atau akun asisten untuk membantu mengelola materi praktikum, sesi presensi, dan penilaian tugas kelas."
+        },
+        {
+          "label": "Tambah Dosen Kolaborator",
+          "value": "Tombol pada tab Peserta",
+          "effect": "Menugaskan dosen pengajar tambahan ke dalam kelas."
         }
       ],
       "notes": [
-        "Untuk pendaftaran dan impor peserta secara lengkap, ikuti A3 dan A4. Duplikasi tidak otomatis membuka perkuliahan semester baru."
+        "Untuk pendaftaran dan impor peserta secara lengkap, ikuti A3 dan A4. Duplikasi tidak otomatis membuka perkuliahan semester baru.",
+        "Asisten dosen yang ditugaskan memperoleh akses operasional pengajar (mengelola materi/modul praktikum, mengaktifkan sesi presensi, serta memeriksa dan menilai tugas mahasiswa) khusus pada kelas yang ditugaskan."
       ],
       "content": "",
       "figure": {

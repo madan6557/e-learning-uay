@@ -90,17 +90,23 @@ Sistem menerapkan model **Role-Based Access Control (RBAC)** dengan isolasi otor
 
 ### Matriks Wewenang Teknis (RBAC Permission Matrix):
 
-| Modul Fungsional | Super Admin | Admin Prodi / Lab | Dosen / Asisten Lab | Mahasiswa Terdaftar |
-| :--- | :---: | :---: | :---: | :---: |
-| **Konfigurasi Global & Integrasi SSO** | Penuh (CRUD) | Baca | Tidak Ada | Tidak Ada |
-| **Master Mata Kuliah (*Course*)** | Penuh (CRUD) | Buat / Edit Prodi | Baca | Tidak Ada |
-| **Buka Kelas Rombel (*Class Rombel*)** | Baca / Hapus | Penuh (CRUD) | Baca | Tidak Ada |
-| **Pendaftaran Mahasiswa (*Enrollment*)** | Kelola | Penuh (CRUD) | Tambah Manual | Akses Sendiri |
-| **Penyusunan 16 Pertemuan & Materi** | Audit | Pantau | Penuh (Kelas Sendiri) | Baca |
-| **Bank Soal & Penjadwalan Kuis** | Audit | Pantau | Penuh (Kelas Sendiri) | Kerjakan (Sesuai Timer) |
-| **Koreksi Essay & Penilaian Tugas** | Audit | Pantau | Penuh (Kelas Sendiri) | Lihat Nilai (Jika Terbit) |
-| **Pengaturan Bobot & Publish Nilai** | Audit | Rekapitulasi | Atur & Terbitkan | Lihat Nilai Resmi Sendiri |
-| **Pencatatan Audit Trail Log** | Baca Seluruh Log | Baca Log Prodi | Baca Riwayat Kelas | Tidak Ada |
+| Modul Fungsional | Super Admin | Admin Prodi / Lab | Dosen Pengampu | Asisten Dosen (ASSISTANT) | Mahasiswa Terdaftar |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Konfigurasi Global & Integrasi SSO** | Penuh (CRUD) | Baca | Tidak Ada | Tidak Ada | Tidak Ada |
+| **Master Mata Kuliah (*Course*)** | Penuh (CRUD) | Buat / Edit Prodi | Baca | Baca | Tidak Ada |
+| **Buka Kelas Rombel (*Class Rombel*)** | Baca / Hapus | Penuh (CRUD) | Baca | Baca | Tidak Ada |
+| **Pendaftaran Mahasiswa (*Enrollment*)** | Kelola | Penuh (CRUD) | Tambah Manual | Pantau | Akses Sendiri |
+| **Penugasan Asisten Dosen (Asdos)** | Kelola | Kelola (Prodi) | Tugaskan Asdos | Tidak Ada | Tidak Ada |
+| **Penyusunan Pertemuan & Filter Tab Badge** | Audit | Pantau | Penuh (Kelas Sendiri) | Penuh (Praktikum) | Baca & Filter |
+| **Penyusunan Materi, Dokumen & Video** | Audit | Pantau | Penuh (Kelas Sendiri) | Penuh (Praktikum) | Pelajari Materi |
+| **Bank Soal & Penjadwalan Kuis** | Audit | Pantau | Penuh (Kelas Sendiri) | Penuh (Praktikum) | Kerjakan (Timer) |
+| **Sesi Presensi & Check-in Mandiri** | Audit | Pantau | Buka / Ubah / Rekap | Buka / Sesi Lab | Hadir Mandiri |
+| **Koreksi Essay & Penilaian Tugas** | Audit | Pantau | Penuh (Kelas Sendiri) | Koreksi & Nilai Lab | Lihat Nilai Terbit |
+| **Pengaturan Bobot (30-35-35) & Kunci Nilai** | Audit | Rekapitulasi | Atur & Kunci Nilai | Baca Rekap | Lihat Nilai Resmi |
+| **Pencatatan Audit Trail Log** | Baca Semua | Baca Log Prodi | Riwayat Kelas | Riwayat Praktikum | Tidak Ada |
+
+> **Prinsip Arsitektur Dual-Role Asisten Praktikum:**
+> Mahasiswa yang ditugaskan sebagai asisten dosen (`ASSISTANT`) pada entitas `ClassInstructor` secara otomatis memperoleh wewenang pengajar (`manage: true`, grading, attendance, material authoring) khusus pada kelas praktikum yang diampunya. Pada kelas-kelas lain di mana mahasiswa tersebut terdaftar sebagai peserta reguler, hak aksesnya tetap terisolasi secara ketat sebagai `STUDENT` tanpa kebocoran privilege.
 
 ---
 

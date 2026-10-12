@@ -7,6 +7,7 @@ import { ThemeToggle } from "./components/layout/ThemeToggle";
 const labels: Record<HelpRole, string> = {
   STUDENT: "Mahasiswa",
   INSTRUCTOR: "Dosen",
+  ASSISTANT: "Asisten Dosen",
   DEPARTMENT_ADMIN: "Admin Prodi",
   SUPER_ADMIN: "Super Admin",
   RECTOR: "Rektor",

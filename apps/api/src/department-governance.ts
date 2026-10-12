@@ -1552,7 +1552,7 @@ export function registerDepartmentGovernance(app: Express) {
 
   function resolveSsoRole(
     ssoUser: any,
-  ): "SUPER_ADMIN" | "DEPARTMENT_ADMIN" | "INSTRUCTOR" | "STUDENT" {
+  ): "SUPER_ADMIN" | "DEPARTMENT_ADMIN" | "INSTRUCTOR" | "ASSISTANT" | "STUDENT" {
     // 1. Cek hak akses aplikasi spesifik dari SSO (application_access)
     if (
       Array.isArray(ssoUser.application_access) &&

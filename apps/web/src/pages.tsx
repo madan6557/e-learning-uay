@@ -84,7 +84,7 @@ type UserSearchResult = {
   name: string;
   identifierValue: string | null;
   role:
-    "SUPER_ADMIN" | "DEPARTMENT_ADMIN" | "RECTOR" | "INSTRUCTOR" | "STUDENT";
+    "SUPER_ADMIN" | "DEPARTMENT_ADMIN" | "RECTOR" | "INSTRUCTOR" | "ASSISTANT" | "STUDENT";
 };
 type CourseOption = {
   id: string;
@@ -194,7 +194,7 @@ export function Dashboard({
     [filter, setFilter] = useState("ALL"),
     [departmentFilter, setDepartmentFilter] = useState(""),
     [modal, setModal] = useState(false);
-  const teacher = user.role === "INSTRUCTOR";
+  const teacher = user.role === "INSTRUCTOR" || user.role === "ASSISTANT";
   if (classes.loading && !classes.data) return <Loading />;
   const canCreateClass = ["DEPARTMENT_ADMIN", "INSTRUCTOR"].includes(
     user.role,

@@ -107,6 +107,19 @@ export const ROLE_PERMISSIONS: Record<ApplicationRole, readonly Permission[]> = 
     "ACCESS_HELP",
   ],
 
+  ASSISTANT: [
+    "MANAGE_CLASS_CONTENT",
+    "GRADE_STUDENT_WORK",
+    "JOIN_CLASS_WITH_KEY",
+    "TAKE_ASSESSMENT",
+    "SUBMIT_ASSIGNMENT",
+    "CHECK_IN_ATTENDANCE",
+    "VIEW_OWN_GRADES",
+    "READ_ANNOUNCEMENTS",
+    "VIEW_PROFILE",
+    "ACCESS_HELP",
+  ],
+
   STUDENT: [
     "JOIN_CLASS_WITH_KEY",
     "TAKE_ASSESSMENT",
@@ -148,7 +161,7 @@ export function canManageDepartmentScope(
 /**
  * Verifies whether a user is authorized to manage class content (topics, materials, quizzes, assignments).
  * True for:
- * 1. Assigned Instructor of the class.
+ * 1. Assigned Instructor or Assistant of the class.
  * 2. Department Admin whose scope matches the class department.
  * (Super Admin manages catalog & policy, not classroom content).
  */
@@ -156,7 +169,7 @@ export function canManageClassContent(
   user: { role: string; id?: string; departmentScopes?: readonly string[] },
   classDetails: { courseDepartmentCode: string; instructorUserIds?: readonly string[] },
 ): boolean {
-  if (user.role === "INSTRUCTOR") {
+  if (user.role === "INSTRUCTOR" || user.role === "ASSISTANT") {
     return Boolean(
       classDetails.instructorUserIds &&
         user.id &&
@@ -175,13 +188,13 @@ export function canManageClassContent(
 
 /**
  * Verifies whether a user has grading authority over student attempts/submissions.
- * Strictly exclusive to assigned Instructors (Department Admins and Super Admins are forbidden).
+ * Permitted for assigned Instructors and Assistants.
  */
 export function canGradeClassWork(
   user: { role: string; id?: string },
   isClassInstructor = false,
 ): boolean {
-  return user.role === "INSTRUCTOR" && isClassInstructor;
+  return (user.role === "INSTRUCTOR" || user.role === "ASSISTANT") && isClassInstructor;
 }
 
 /**

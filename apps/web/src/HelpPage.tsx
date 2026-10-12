@@ -64,6 +64,7 @@ function normalize(value: string): string {
 
 const roleLabels: Record<HelpRole, string> = {
   STUDENT: "Mahasiswa",
+  ASSISTANT: "Asisten Dosen",
   INSTRUCTOR: "Dosen Pengampu",
   DEPARTMENT_ADMIN: "Admin Program Studi",
   SUPER_ADMIN: "Super Admin",

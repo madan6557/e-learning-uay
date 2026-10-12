@@ -11,6 +11,7 @@ const labels = {
   SUPER_ADMIN: "Super Admin",
   DEPARTMENT_ADMIN: "Admin Prodi",
   INSTRUCTOR: "Dosen",
+  ASSISTANT: "Asisten Dosen",
   STUDENT: "Mahasiswa",
   RECTOR: "Rektor",
 };
@@ -18,7 +19,7 @@ const cell = (value) => value.replaceAll("|", "\\|");
 const lines = [
   "# Panduan penggunaan E-Learning UAY",
   "",
-  "Edisi 7 Oktober 2026. Mencakup Mahasiswa, Dosen, Admin Prodi, Super Admin, dan Rektor. Buka Bantuan → Buka buku panduan (tab baru) untuk petunjuk yang sesuai dengan peran akun.",
+  "Edisi Oktober 2026. Mencakup Mahasiswa, Asisten Dosen, Dosen, Admin Prodi, Super Admin, dan Rektor. Buka Bantuan → Buka buku panduan (tab baru) untuk petunjuk yang sesuai dengan peran akun.",
   "",
   "Panduan ini memakai konten yang sama dengan halaman Bantuan. Di aplikasi, panduan yang tampil mengikuti role akun. Nama, angka, dan tanggal pada gambar merupakan contoh.",
   "",

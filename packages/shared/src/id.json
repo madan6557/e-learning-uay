@@ -542,6 +542,7 @@
     "SUPER_ADMIN": "Super admin",
     "DEPARTMENT_ADMIN": "Admin prodi",
     "INSTRUCTOR": "Dosen",
+    "ASSISTANT": "Asisten Dosen",
     "STUDENT": "Mahasiswa"
   },
   "collapseNav": "Perkecil navigasi",

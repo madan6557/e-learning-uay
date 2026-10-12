@@ -40,6 +40,7 @@ export const APPLICATION_ROLES = [
   "RECTOR",
   "DEPARTMENT_ADMIN",
   "INSTRUCTOR",
+  "ASSISTANT",
   "STUDENT",
 ] as const;
 export type ApplicationRole = (typeof APPLICATION_ROLES)[number];
@@ -99,6 +100,17 @@ export function normalizeRole(raw: string): ApplicationRole | null {
     return "INSTRUCTOR";
   }
 
+  if (
+    clean === "ASSISTANT" ||
+    clean === "ASISTEN" ||
+    clean === "ASDOS" ||
+    clean === "ASISTEN_DOSEN" ||
+    clean === "ASISTEN_LAB" ||
+    clean === "LAB_ASSISTANT"
+  ) {
+    return "ASSISTANT";
+  }
+
   if (clean === "MAHASISWA" || clean === "STUDENT") {
     return "STUDENT";
   }
@@ -127,6 +139,7 @@ export function defaultIdentifierType(userType: UserType): IdentifierType {
 export function defaultUserType(role: ApplicationRole): UserType {
   if (role === "RECTOR") return "STAFF";
   if (role === "STUDENT") return "STUDENT";
+  if (role === "ASSISTANT") return "STUDENT";
   if (role === "INSTRUCTOR") return "LECTURER";
   if (role === "DEPARTMENT_ADMIN") return "STAFF";
   return "ADMIN";

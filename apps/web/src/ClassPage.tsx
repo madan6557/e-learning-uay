@@ -26,7 +26,7 @@ import { formatClock, formatDateTime } from "../../../packages/shared/src/time";
 import { DraftRouteContext } from "./useLocalDraft";
 import { confirmAction } from "./confirm";
 import { PublishButton } from "./PublishButton";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { usePhoneLayout } from "./usePhoneLayout";
 import { hasPermission } from "../../../packages/shared/src/permissions";
 import { notifyAction } from "./feedback";
@@ -138,7 +138,7 @@ export function ClassPage({
   if (!cls) return null;
   const isDeptAdminForClass = user.role === "DEPARTMENT_ADMIN" && cls.canManage;
   const canEditClass =
-    (user.role === "INSTRUCTOR" || isDeptAdminForClass) && cls.canManage;
+    (user.role === "INSTRUCTOR" || user.role === "ASSISTANT" || isDeptAdminForClass) && cls.canManage;
   const canAdministerClass =
     cls.canManage &&
     (canEditClass || hasPermission(user.role, "MANAGE_ALL_CLASSES"));
@@ -150,6 +150,37 @@ export function ClassPage({
     canEditClass &&
     cls.status !== "ARCHIVED" &&
     cls.course.status !== "ARCHIVED";
+
+  const [sectionTypeFilter, setSectionTypeFilter] = useState<string>("ALL");
+
+  const sectionCounts = useMemo(() => {
+    const counts: Record<string, number> = { ALL: cls.sections?.length || 0 };
+    for (const sec of cls.sections || []) {
+      const type = sec.type || "LECTURE";
+      counts[type] = (counts[type] || 0) + 1;
+    }
+    return counts;
+  }, [cls.sections]);
+
+  const sectionFilterOptions = useMemo(() => {
+    const allTypes = [
+      { key: "ALL", label: "Semua", count: sectionCounts.ALL || 0 },
+      { key: "LECTURE", label: (t.sectionTypes as any)?.LECTURE || "Perkuliahan", count: sectionCounts.LECTURE || 0 },
+      { key: "LAB_PRACTICUM", label: (t.sectionTypes as any)?.LAB_PRACTICUM || "Praktikum", count: sectionCounts.LAB_PRACTICUM || 0 },
+      { key: "SEMINAR", label: (t.sectionTypes as any)?.SEMINAR || "Seminar", count: sectionCounts.SEMINAR || 0 },
+      { key: "WORKSHOP", label: (t.sectionTypes as any)?.WORKSHOP || "Lokakarya", count: sectionCounts.WORKSHOP || 0 },
+      { key: "EXAM", label: (t.sectionTypes as any)?.EXAM || "Ujian", count: sectionCounts.EXAM || 0 },
+      { key: "OTHER", label: (t.sectionTypes as any)?.OTHER || "Lainnya", count: sectionCounts.OTHER || 0 },
+    ];
+    return allTypes.filter(
+      (opt) => opt.key === "ALL" || opt.key === "LECTURE" || opt.key === "LAB_PRACTICUM" || opt.count > 0,
+    );
+  }, [sectionCounts]);
+
+  const filteredSections = useMemo(() => {
+    if (sectionTypeFilter === "ALL") return cls.sections || [];
+    return (cls.sections || []).filter((s: any) => s.type === sectionTypeFilter);
+  }, [cls.sections, sectionTypeFilter]);
   const published = (kind: string, itemId: string, visible = true) => {
     info.setData((current: any) => ({
       ...current,
@@ -314,7 +345,14 @@ export function ClassPage({
                   {cls.instructors[0]?.user?.name?.[0] ?? "U"}
                 </span>
                 {cls.instructors
-                  .map((i: any) => i.user?.name?.split(",")[0] ?? "—")
+                  .map((i: any) => {
+                    const shortName = i.user?.name?.split(",")[0] ?? "—";
+                    const isAsst =
+                      i.role === "ASSISTANT" ||
+                      i.user?.role === "ASSISTANT" ||
+                      (!i.isPrimary && i.user?.role === "STUDENT");
+                    return isAsst ? `${shortName} (Asdos)` : shortName;
+                  })
                   .join(", ")}
               </span>
             )}
@@ -480,14 +518,104 @@ export function ClassPage({
                   </button>
                 )}
               </div>
-              {!cls.sections.length && <Empty>{t.emptySections}</Empty>}
-              <div className="section-list">
-                {cls.sections.map((section: any, index: number) => (
-                  <section className="meeting-card" key={section.id}>
-                    <div className="meeting-heading">
-                      <span className="meeting-number">
-                        {String(index + 1).padStart(2, "0")}
-                      </span>
+              {cls.sections.length > 0 && (
+                <div
+                  className="section-filter-bar"
+                  role="tablist"
+                  aria-label="Filter tipe pertemuan"
+                  style={{
+                    display: "flex",
+                    gap: "8px",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    margin: "12px 0 20px",
+                  }}
+                >
+                  {sectionFilterOptions.map((opt) => {
+                    const isActive = sectionTypeFilter === opt.key;
+                    return (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        role="tab"
+                        aria-selected={isActive}
+                        onClick={() => setSectionTypeFilter(opt.key)}
+                        className={`badge-tab-pill ${isActive ? "active" : ""}`}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          padding: "6px 14px",
+                          borderRadius: "20px",
+                          fontSize: "0.85rem",
+                          fontWeight: isActive ? 600 : 500,
+                          border: isActive
+                            ? "1px solid var(--primary, #0284c7)"
+                            : "1px solid var(--border, #e2e8f0)",
+                          background: isActive
+                            ? "var(--primary-soft, #f0f9ff)"
+                            : "var(--card-bg, #ffffff)",
+                          color: isActive
+                            ? "var(--primary, #0284c7)"
+                            : "var(--foreground, #334155)",
+                          cursor: "pointer",
+                          boxShadow: isActive ? "0 1px 3px rgba(2, 132, 199, 0.15)" : "none",
+                          transition: "all 0.15s ease-in-out",
+                        }}
+                      >
+                        <span>{opt.label}</span>
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            minWidth: "18px",
+                            height: "18px",
+                            padding: "0 6px",
+                            borderRadius: "10px",
+                            fontSize: "0.74rem",
+                            fontWeight: 700,
+                            background: isActive
+                              ? "var(--primary, #0284c7)"
+                              : "var(--muted-soft, #f1f5f9)",
+                            color: isActive ? "#ffffff" : "var(--muted, #64748b)",
+                          }}
+                        >
+                          {opt.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              {!cls.sections.length ? (
+                <Empty>{t.emptySections}</Empty>
+              ) : !filteredSections.length ? (
+                <Empty>
+                  <div style={{ textAlign: "center", padding: "16px 0" }}>
+                    <p style={{ margin: "0 0 10px", color: "var(--muted)" }}>
+                      Belum ada pertemuan bertipe "{(t.sectionTypes as any)?.[sectionTypeFilter] || sectionTypeFilter}".
+                    </p>
+                    <button
+                      type="button"
+                      className="secondary sm"
+                      onClick={() => setSectionTypeFilter("ALL")}
+                    >
+                      Tampilkan Semua Pertemuan
+                    </button>
+                  </div>
+                </Empty>
+              ) : (
+                <div className="section-list">
+                  {filteredSections.map((section: any) => {
+                    const originalIndex = cls.sections.findIndex((s: any) => s.id === section.id);
+                    const index = originalIndex >= 0 ? originalIndex : 0;
+                    return (
+                      <section className="meeting-card" key={section.id}>
+                        <div className="meeting-heading">
+                          <span className="meeting-number">
+                            {String(index + 1).padStart(2, "0")}
+                          </span>
                       <div className="meeting-info">
                         <div className="meeting-tags">
                           <span
@@ -927,8 +1055,10 @@ export function ClassPage({
                       </div>
                     )}
                   </section>
-                ))}
-              </div>
+                );
+              })}
+            </div>
+          )}
               {writable && cls.sections.length > 0 && (
                 <div
                   style={{
@@ -967,7 +1097,7 @@ export function ClassPage({
           {tab === "gradebook" && (
             <Gradebook
               classId={cls.id}
-              writable={user.role === "INSTRUCTOR" && writable}
+              writable={(user.role === "INSTRUCTOR" || user.role === "ASSISTANT") && writable}
               user={user}
             />
           )}

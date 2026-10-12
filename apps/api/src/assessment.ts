@@ -721,7 +721,13 @@ export function registerAssessment(app: Express) {
             attempt.quiz.sectionId,
             true,
           );
-          ensure(req.context.user.role === "INSTRUCTOR", 403, "ONLY_INSTRUCTOR_CAN_GRADE");
+          ensure(
+            req.context.user.role === "INSTRUCTOR" ||
+              req.context.user.role === "ASSISTANT" ||
+              cls.instructors.some((i: any) => i.userId === req.context.user.id),
+            403,
+            "ONLY_INSTRUCTOR_CAN_GRADE",
+          );
           ensure(
             attempt.status !== "IN_PROGRESS",
             409,
@@ -878,7 +884,13 @@ export function registerAssessment(app: Express) {
           quiz.sectionId,
           true,
         );
-        ensure(req.context.user.role === "INSTRUCTOR", 403, "ONLY_INSTRUCTOR_CAN_GRADE");
+        ensure(
+          req.context.user.role === "INSTRUCTOR" ||
+            req.context.user.role === "ASSISTANT" ||
+            cls.instructors.some((i: any) => i.userId === req.context.user.id),
+          403,
+          "ONLY_INSTRUCTOR_CAN_GRADE",
+        );
         const data = z
           .object({
             attemptId: z.string().uuid().optional(),
@@ -1239,7 +1251,13 @@ export function registerAssessment(app: Express) {
           before.assignment.sectionId,
           true,
         );
-        ensure(req.context.user.role === "INSTRUCTOR", 403, "ONLY_INSTRUCTOR_CAN_GRADE");
+        ensure(
+          req.context.user.role === "INSTRUCTOR" ||
+            req.context.user.role === "ASSISTANT" ||
+            cls.instructors.some((i: any) => i.userId === req.context.user.id),
+          403,
+          "ONLY_INSTRUCTOR_CAN_GRADE",
+        );
         ensure(before.status !== "SUPERSEDED", 409, "SUBMISSION_SUPERSEDED");
         const data = z
           .object({
@@ -1310,7 +1328,13 @@ export function registerAssessment(app: Express) {
           assignment.sectionId,
           true,
         );
-        ensure(req.context.user.role === "INSTRUCTOR", 403, "ONLY_INSTRUCTOR_CAN_GRADE");
+        ensure(
+          req.context.user.role === "INSTRUCTOR" ||
+            req.context.user.role === "ASSISTANT" ||
+            cls.instructors.some((i: any) => i.userId === req.context.user.id),
+          403,
+          "ONLY_INSTRUCTOR_CAN_GRADE",
+        );
         const data = z
           .object({
             submissionId: z.string().uuid().optional(),

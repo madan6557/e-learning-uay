@@ -1,0 +1,5 @@
+-- AlterEnum
+ALTER TYPE "GlobalRole" ADD VALUE IF NOT EXISTS 'ASSISTANT';
+
+-- AlterTable
+ALTER TABLE "class_instructors" ADD COLUMN IF NOT EXISTS "role" TEXT NOT NULL DEFAULT 'INSTRUCTOR';

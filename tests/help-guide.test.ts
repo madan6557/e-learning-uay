@@ -11,6 +11,7 @@ const sequence = (prefix: string, count: number) => Array.from({ length: count }
 test("guide exposes only common and assigned tutorials for each account role", () => {
   const common = sequence("U", 3);
   assert.deepEqual(tutorialIds("STUDENT"), [...common, ...sequence("M", 6)]);
+  assert.deepEqual(tutorialIds("ASSISTANT"), [...common, ...sequence("M", 6), ...sequence("D", 16), "A3", "A4"]);
   assert.deepEqual(tutorialIds("INSTRUCTOR"), [...common, ...sequence("D", 16), "A3", "A4"]);
   assert.deepEqual(tutorialIds("DEPARTMENT_ADMIN"), [...common, ...sequence("A", 5)]);
   assert.deepEqual(tutorialIds("SUPER_ADMIN"), [...common, "A2", "A3", "A4", "A5", ...sequence("S", 3), ...sequence("R", 5)]);
