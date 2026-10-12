@@ -226,23 +226,7 @@ export function Attendance({
 
       {/* Banner Notifikasi Presensi Aktif untuk Mahasiswa */}
       {activeOpenSession && (
-        <div
-          className="active-attendance-banner"
-          style={{
-            background:
-              "linear-gradient(135deg, var(--adaptive-info-fill, #0284c7) 0%, var(--adaptive-emphasis-background, #0369a1) 100%)",
-            color: "#ffffff",
-            padding: "20px 24px",
-            borderRadius: 12,
-            marginBottom: 24,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            boxShadow: "0 4px 16px -4px rgba(2, 132, 199, 0.3)",
-            gap: 16,
-            flexWrap: "wrap",
-          }}
-        >
+        <div className="active-attendance-banner">
           <div style={{ flex: 1, minWidth: 280 }}>
             <div
               style={{
@@ -252,53 +236,15 @@ export function Attendance({
                 marginBottom: 8,
               }}
             >
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  background: "rgba(255, 255, 255, 0.2)",
-                  color: "#ffffff",
-                  padding: "3px 10px",
-                  borderRadius: 20,
-                  fontSize: "0.75rem",
-                  fontWeight: 700,
-                  letterSpacing: "0.04em",
-                  textTransform: "uppercase",
-                }}
-              >
-                <span
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    background: "var(--adaptive-success-fill, #4ade80)",
-                    boxShadow: "0 0 8px #4ade80",
-                    display: "inline-block",
-                  }}
-                />
+              <span className="banner-badge">
+                <span className="banner-pulse" />
                 Sedang Berlangsung
               </span>
             </div>
-            <h3
-              style={{
-                margin: "0 0 6px 0",
-                fontSize: "1.25rem",
-                fontWeight: 700,
-                color: "#ffffff",
-                letterSpacing: "-0.01em",
-              }}
-            >
+            <h3>
               {activeOpenSession.title}
             </h3>
-            <p
-              style={{
-                margin: 0,
-                color: "rgba(255, 255, 255, 0.92)",
-                fontSize: "0.88rem",
-                lineHeight: 1.5,
-              }}
-            >
+            <p>
               {activeOpenSession.requiresCode
                 ? "Dosen telah membuka sesi presensi dengan verifikasi kode. Masukkan kode 6 karakter dari layar proyektor kelas."
                 : "Dosen telah membuka sesi presensi mandiri (bebas kode). Anda dapat langsung mengonfirmasi kehadiran dengan 1 klik."}
@@ -306,22 +252,7 @@ export function Attendance({
           </div>
           <button
             type="button"
-            style={{
-              background: "var(--adaptive-surface, #ffffff)",
-              color: "var(--adaptive-info-text, #0369a1)",
-              fontWeight: 700,
-              fontSize: "0.88rem",
-              padding: "10px 22px",
-              borderRadius: 8,
-              border: "none",
-              cursor: "pointer",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              whiteSpace: "nowrap",
-              transition: "all 0.15s ease",
-            }}
+            className="banner-action-button"
             onClick={() =>
               setModal({ kind: "checkin", session: activeOpenSession })
             }
@@ -360,49 +291,16 @@ export function Attendance({
         {canViewAll && (
           <div className="toolbar" style={{ flexWrap: "wrap", gap: 8 }}>
             <div
+              className="segmented-tab-bar"
               role="tablist"
               aria-label="Pilihan tampilan presensi"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                background: "var(--chip-bg, #f1f5f9)",
-                border: "1px solid var(--adaptive-border, #e2e8f0)",
-                padding: "3px",
-                borderRadius: "10px",
-                gap: "4px",
-              }}
             >
               <button
                 type="button"
                 role="tab"
                 aria-selected={activeTab === "sessions"}
+                className={`segmented-tab-btn ${activeTab === "sessions" ? "active" : ""}`}
                 onClick={() => setActiveTab("sessions")}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  border:
-                    activeTab === "sessions"
-                      ? "1px solid var(--adaptive-border, #cbd5e1)"
-                      : "1px solid transparent",
-                  padding: "6px 14px",
-                  borderRadius: "7px",
-                  fontSize: "0.85rem",
-                  fontWeight: activeTab === "sessions" ? 700 : 500,
-                  background:
-                    activeTab === "sessions"
-                      ? "var(--adaptive-surface, #ffffff)"
-                      : "transparent",
-                  color:
-                    activeTab === "sessions"
-                      ? "var(--primary, #0284c7)"
-                      : "var(--adaptive-text-muted, #64748b)",
-                  cursor: "pointer",
-                  boxShadow:
-                    activeTab === "sessions"
-                      ? "0 1px 3px rgba(0,0,0,0.08)"
-                      : "none",
-                }}
               >
                 <Clock size={15} />
                 <span>Daftar Sesi Pertemuan</span>
@@ -411,33 +309,8 @@ export function Attendance({
                 type="button"
                 role="tab"
                 aria-selected={activeTab === "recap"}
+                className={`segmented-tab-btn ${activeTab === "recap" ? "active" : ""}`}
                 onClick={() => setActiveTab("recap")}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  border:
-                    activeTab === "recap"
-                      ? "1px solid var(--adaptive-border, #cbd5e1)"
-                      : "1px solid transparent",
-                  padding: "6px 14px",
-                  borderRadius: "7px",
-                  fontSize: "0.85rem",
-                  fontWeight: activeTab === "recap" ? 700 : 500,
-                  background:
-                    activeTab === "recap"
-                      ? "var(--adaptive-surface, #ffffff)"
-                      : "transparent",
-                  color:
-                    activeTab === "recap"
-                      ? "var(--primary, #0284c7)"
-                      : "var(--adaptive-text-muted, #64748b)",
-                  cursor: "pointer",
-                  boxShadow:
-                    activeTab === "recap"
-                      ? "0 1px 3px rgba(0,0,0,0.08)"
-                      : "none",
-                }}
               >
                 <FileSpreadsheet size={15} />
                 <span>Rekapitulasi Kehadiran</span>
@@ -1270,7 +1143,7 @@ export function Attendance({
               </Field>
             </Form>
           ) : (
-            <div style={{ textAlign: "center", padding: "12px 8px 8px 8px" }}>
+            <div className="modal-body submission-success">
               <div
                 style={{
                   width: 56,
@@ -1313,6 +1186,7 @@ export function Attendance({
                   justifyContent: "flex-end",
                   gap: 10,
                   marginTop: 20,
+                  flexWrap: "wrap",
                 }}
               >
                 <button
@@ -2177,14 +2051,17 @@ function ManualAttendanceModal({
       wide
     >
       {error && <Notice error={error} onClose={() => setError(null)} />}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 16,
-        }}
-      >
+      <div className="modal-body">
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 16,
+            flexWrap: "wrap",
+            gap: 12,
+          }}
+        >
         <div>
           <span style={{ fontSize: "0.85rem", color: "var(--muted, #64748b)" }}>
             Total Mahasiswa Terdaftar: <strong>{list.length}</strong>
@@ -2330,25 +2207,26 @@ function ManualAttendanceModal({
         </div>
       )}
 
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-        <button
-          type="button"
-          className="button secondary"
-          onClick={onClose}
-          disabled={saving}
-        >
-          {readOnly ? "Tutup" : "Batal"}
-        </button>
-        {!readOnly && (
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, flexWrap: "wrap" }}>
           <button
             type="button"
-            className="button primary"
-            onClick={handleSave}
+            className="button secondary"
+            onClick={onClose}
             disabled={saving}
           >
-            {saving ? "Menyimpan..." : "Simpan Semua Perubahan"}
+            {readOnly ? "Tutup" : "Batal"}
           </button>
-        )}
+          {!readOnly && (
+            <button
+              type="button"
+              className="button primary"
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving ? "Menyimpan..." : "Simpan Semua Perubahan"}
+            </button>
+          )}
+        </div>
       </div>
     </Modal>
   );
@@ -2395,6 +2273,8 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
           justifyContent: "space-between",
           alignItems: "center",
           marginBottom: 14,
+          flexWrap: "wrap",
+          gap: 12,
         }}
       >
         <div>
@@ -2426,11 +2306,11 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
           <thead>
             <tr>
               <th>Mahasiswa (NIM &amp; Nama)</th>
-              <th style={{ textAlign: "center" }}>H</th>
-              <th style={{ textAlign: "center" }}>I</th>
-              <th style={{ textAlign: "center" }}>S</th>
-              <th style={{ textAlign: "center" }}>A</th>
-              <th style={{ textAlign: "center" }}>T</th>
+              <th style={{ textAlign: "center" }} title="Hadir (H)">H</th>
+              <th style={{ textAlign: "center" }} title="Izin (I)">I</th>
+              <th style={{ textAlign: "center" }} title="Sakit (S)">S</th>
+              <th style={{ textAlign: "center" }} title="Alpa / Tidak Hadir (A)">A</th>
+              <th style={{ textAlign: "center" }} title="Terlambat (T)">T</th>
               <th style={{ textAlign: "center" }}>Kehadiran (%)</th>
               <th style={{ textAlign: "center" }}>Kelayakan Ujian</th>
             </tr>

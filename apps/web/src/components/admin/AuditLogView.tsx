@@ -290,9 +290,11 @@ export function AuditLogView({
 
   const handleExportCsv = () => {
     if (!logs.length) return;
+    const timeZone =
+      Intl.DateTimeFormat().resolvedOptions().timeZone || "zona waktu perangkat";
     const headers = [
       "ID",
-      "Waktu (WITA)",
+      `Waktu (${timeZone})`,
       "Aktor",
       "Peran Aktor",
       "Identitas / NIM / NIDN",

@@ -38,6 +38,7 @@ import "./phone.css";
 import "./departments.css";
 import "./theme.css";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { TableSortingEnhancer } from "./components/ui/TableSortingEnhancer";
 
 import { PublicShell, AuthShell } from "./components/layout";
 import { Landing } from "./pages/Landing";
@@ -547,6 +548,7 @@ root.render(
   <ThemeProvider>
     <ConfirmationHost />
     <FeedbackHost />
+    <TableSortingEnhancer />
     <App />
     {isVercel && <Analytics />}
   </ThemeProvider>,

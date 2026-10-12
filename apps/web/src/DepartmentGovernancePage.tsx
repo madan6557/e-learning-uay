@@ -66,6 +66,7 @@ interface UserRecord {
   authorityVersion: string;
   updatedAt?: string;
 }
+type SsoSyncMetricFilter = "ALL" | "NEW" | "EXISTING";
 const roleNames: Record<string, string> = {
   SUPER_ADMIN: "Super Admin",
   DEPARTMENT_ADMIN: "Admin Prodi",
@@ -473,6 +474,8 @@ export function DepartmentGovernancePage({
   const [ssoSyncing, setSsoSyncing] = useState<boolean>(false);
   const [ssoSyncResult, setSsoSyncResult] = useState<any>(null);
   const [ssoSyncError, setSsoSyncError] = useState<Error | null>(null);
+  const [ssoSyncMetricFilter, setSsoSyncMetricFilter] =
+    useState<SsoSyncMetricFilter>("ALL");
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importRows, setImportRows] = useState<any[]>([]);
@@ -482,6 +485,19 @@ export function DepartmentGovernancePage({
   const pending = useRef(new Set<string>());
   const deptRequest = useRef(0),
     userRequest = useRef(0);
+
+  const visibleSsoSyncResults = useMemo(() => {
+    const results = Array.isArray(ssoSyncResult?.results)
+      ? ssoSyncResult.results
+      : [];
+    return results.filter((row: any) =>
+      ssoSyncMetricFilter === "ALL"
+        ? true
+        : ssoSyncMetricFilter === "NEW"
+          ? row.status === "NEW"
+          : row.status !== "NEW",
+    );
+  }, [ssoSyncMetricFilter, ssoSyncResult?.results]);
 
   const fetchDepartments = useCallback(async () => {
     const request = ++deptRequest.current;
@@ -717,6 +733,7 @@ export function DepartmentGovernancePage({
 
   const runSsoSync = async (dryRun: boolean) => {
     if (pending.current.has("ssoSync")) return;
+    if (dryRun) setSsoSyncMetricFilter("ALL");
     pending.current.add("ssoSync");
     setSsoSyncing(true);
     setSsoSyncError(null);
@@ -1029,10 +1046,11 @@ export function DepartmentGovernancePage({
                   setShowSsoSync(true);
                   setSsoSyncResult(null);
                   setSsoSyncError(null);
+                  setSsoSyncMetricFilter("ALL");
                 }}
               >
                 <ArrowDownToLine size={18} />
-                Tarik Pengguna dari SSO
+                Sinkron Pengguna
               </button>
             </div>
           </div>
@@ -1523,7 +1541,7 @@ export function DepartmentGovernancePage({
 
       {showSsoSync && (
         <Modal
-          title="Tarik & Sinkronisasi Pengguna dari SSO"
+          title="Sinkron Pengguna dari SSO"
           onClose={() => {
             if (!ssoSyncing) setShowSsoSync(false);
           }}
@@ -1533,7 +1551,7 @@ export function DepartmentGovernancePage({
         >
           <div className="sso-sync-container">
             <p>
-              Tarik daftar akun pengguna (Dosen, Staf, Administrator) yang terdaftar pada aplikasi E-Learning di UAY SSO. Akun baru akan didaftarkan sebagai pra-registrasi dengan role awal dari SSO. Profil akun yang sudah ada dapat diperbarui, tetapi role dan lingkup aksesnya tetap mengikuti pengaturan E-Learning.
+              Sinkronkan daftar akun pengguna (Dosen, Staf, Administrator) yang terdaftar pada aplikasi E-Learning di UAY SSO. Akun baru akan didaftarkan sebagai pra-registrasi dengan role awal dari SSO. Profil akun yang sudah ada dapat diperbarui, tetapi role dan lingkup aksesnya tetap mengikuti pengaturan E-Learning.
             </p>
 
             <div className="governance-form-grid sso-sync-filters">
@@ -1544,6 +1562,7 @@ export function DepartmentGovernancePage({
                   onChange={(e) => {
                     setSsoSyncUserType(e.target.value);
                     setSsoSyncResult(null);
+                    setSsoSyncMetricFilter("ALL");
                   }}
                   disabled={ssoSyncing}
                 >
@@ -1563,6 +1582,7 @@ export function DepartmentGovernancePage({
                   onChange={(e) => {
                     setSsoSyncSearch(e.target.value);
                     setSsoSyncResult(null);
+                    setSsoSyncMetricFilter("ALL");
                   }}
                   disabled={ssoSyncing}
                 />
@@ -1586,30 +1606,45 @@ export function DepartmentGovernancePage({
             {ssoSyncResult && (
               <div className="sso-sync-results">
                 <div className="sso-sync-stats-grid">
-                  <div className="sso-stat-card">
+                  <button
+                    type="button"
+                    className={`sso-stat-card ${ssoSyncMetricFilter === "ALL" ? "selected" : ""}`}
+                    aria-pressed={ssoSyncMetricFilter === "ALL"}
+                    onClick={() => setSsoSyncMetricFilter("ALL")}
+                  >
                     <span className="stat-num">{ssoSyncResult.total}</span>
                     <span className="stat-label">Total Akun di SSO</span>
-                  </div>
-                  <div className="sso-stat-card new">
+                  </button>
+                  <button
+                    type="button"
+                    className={`sso-stat-card new ${ssoSyncMetricFilter === "NEW" ? "selected" : ""}`}
+                    aria-pressed={ssoSyncMetricFilter === "NEW"}
+                    onClick={() => setSsoSyncMetricFilter("NEW")}
+                  >
                     <span className="stat-num">{ssoSyncResult.newCount}</span>
                     <span className="stat-label">Akun Baru (Pra-registrasi)</span>
-                  </div>
-                  <div className="sso-stat-card existing">
+                  </button>
+                  <button
+                    type="button"
+                    className={`sso-stat-card existing ${ssoSyncMetricFilter === "EXISTING" ? "selected" : ""}`}
+                    aria-pressed={ssoSyncMetricFilter === "EXISTING"}
+                    onClick={() => setSsoSyncMetricFilter("EXISTING")}
+                  >
                     <span className="stat-num">{ssoSyncResult.existingCount}</span>
                     <span className="stat-label">Akun Sudah Terdaftar</span>
-                  </div>
+                  </button>
                 </div>
 
                 <div className="sso-sync-preview-list">
                   <div className="sso-sync-list-header">
-                    <strong>Rincian Pengguna ({ssoSyncResult.results?.length ?? 0})</strong>
+                    <strong>Rincian Pengguna ({visibleSsoSyncResults.length})</strong>
                     <small>Pratinjau status integrasi akun</small>
                   </div>
                   <div className="sso-sync-scroll-area">
-                    {ssoSyncResult.results?.length === 0 ? (
+                    {visibleSsoSyncResults.length === 0 ? (
                       <p className="sso-empty-note">Tidak ada pengguna yang cocok dengan kriteria filter.</p>
                     ) : (
-                      <table className="sso-preview-table">
+                      <table className="sso-preview-table sso-user-sync-table">
                         <thead>
                           <tr>
                             <th>Nama &amp; Identitas</th>
@@ -1619,7 +1654,7 @@ export function DepartmentGovernancePage({
                           </tr>
                         </thead>
                         <tbody>
-                          {ssoSyncResult.results?.map((u: any, idx: number) => (
+                          {visibleSsoSyncResults.map((u: any, idx: number) => (
                             <tr key={idx}>
                               <td>
                                 <div>

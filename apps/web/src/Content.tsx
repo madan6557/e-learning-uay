@@ -1433,33 +1433,12 @@ export function ResourceViewer({
         <div className="resource-caption">
           <span>{(t.resourceTypes as any)[resource.resourceType]}</span>
           {done ? (
-            <span
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 5,
-                color: "var(--success, #16a34a)",
-                fontWeight: 700,
-              }}
-            >
-              <CheckCircle2 size={16} />
+            <span className="status-pill completed">
+              <CheckCircle2 size={14} />
               {t.completed}
             </span>
           ) : percent > 0 ? (
-            <span
-              style={{
-                fontWeight: 700,
-                color: "var(--primary, #0284c7)",
-                background: "var(--adaptive-info-soft, #f0f9ff)",
-                padding: "2px 8px",
-                borderRadius: "12px",
-                fontSize: "0.82rem",
-                border: "1px solid var(--primary-light, #bae6fd)",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 4,
-              }}
-            >
+            <span className="status-pill in-progress">
               {Math.round(percent)}%
             </span>
           ) : null}
@@ -1768,80 +1747,32 @@ function PdfViewer({
           {t.next}
         </button>
         <span
-          className="pdf-progress-pill"
-          style={{
-            marginLeft: "auto",
-            fontWeight: 700,
-            fontSize: "0.85rem",
-            padding: "4px 10px",
-            borderRadius: "16px",
-            background:
-              progress >= minPercent
-                ? "var(--adaptive-success-soft, #ecfdf5)"
-                : "var(--adaptive-info-soft, #f0f9ff)",
-            color:
-              progress >= minPercent
-                ? "var(--adaptive-success-text, #059669)"
-                : "var(--primary, #0284c7)",
-            border:
-              progress >= minPercent
-                ? "1px solid var(--success-border, #a7f3d0)"
-                : "1px solid var(--primary-light, #bae6fd)",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "4px",
-          }}
+          className={`pdf-progress-pill ${progress >= minPercent ? "done" : ""}`}
         >
           {progress >= minPercent && <CheckCircle2 size={14} />}
           {Math.round(progress)}%
         </span>
       </div>
       <progress
+        className={`pdf-progress-bar ${progress >= minPercent ? "done" : ""}`}
         value={progress}
         max={100}
         aria-label="Progres membaca berkas materi"
-        style={{
-          width: "100%",
-          height: "6px",
-          borderRadius: "3px",
-          margin: "6px 0 12px",
-          accentColor:
-            progress >= minPercent
-              ? "var(--success, #16a34a)"
-              : "var(--primary, #0284c7)",
-        }}
       />
       {!isPpt && <canvas ref={canvas} aria-label={`${t.page} ${page}`} />}
       {isPpt && (
-        <div
-          className="presentation-preview-card"
-          style={{
-            padding: "24px 20px",
-            background: "var(--surface-muted, #f8fafc)",
-            borderRadius: "8px",
-            border: "1px solid var(--border, #e2e8f0)",
-            textAlign: "center",
-            margin: "12px 0",
-          }}
-        >
-          <p style={{ margin: "0 0 12px", fontWeight: 600 }}>
+        <div className="presentation-preview-card">
+          <p className="presentation-preview-title">
             Presentasi Slide PowerPoint: {fileName || "Slide Materi"} (Slide {page} / {count})
           </p>
-          <p style={{ margin: "0 0 16px", color: "var(--muted, #64748b)", fontSize: "0.88rem" }}>
+          <p className="presentation-preview-hint">
             Navigasikan halaman di atas untuk membaca slide demi slide atau tandai selesai membaca di bawah.
           </p>
           {writable && progress < minPercent && (
             <button
               type="button"
-              className="primary sm"
+              className="primary mark-complete-button"
               onClick={handleMarkComplete}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "6px 16px",
-                borderRadius: 20,
-              }}
             >
               <CheckCircle2 size={15} />
               Tandai Selesai Membaca
@@ -1850,23 +1781,16 @@ function PdfViewer({
         </div>
       )}
       {error && !isPpt && (
-        <div className="callout note" style={{ margin: "16px 0", textAlign: "left" }}>
+        <div className="callout note pdf-sync-note">
           <strong>Pratinjau Berkas Sedang Disinkronkan</strong>
-          <p style={{ margin: "4px 0 12px" }}>
+          <p>
             Layanan berkas sedang dalam proses sinkronisasi dengan server penyimpanan. Anda dapat mengunduh berkas langsung atau menandai selesai membaca di bawah.
           </p>
           {writable && progress < minPercent && (
             <button
               type="button"
-              className="primary sm"
+              className="primary mark-complete-button"
               onClick={handleMarkComplete}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "6px 14px",
-                borderRadius: 20,
-              }}
             >
               <CheckCircle2 size={15} />
               Tandai Selesai Membaca

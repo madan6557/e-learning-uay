@@ -14,6 +14,7 @@ const ROLE_LABELS: Record<string, string> = {
   SUPER_ADMIN: "Admin Utama",
   DEPARTMENT_ADMIN: "Admin Program Studi",
   INSTRUCTOR: "Dosen Pengampu",
+  ASSISTANT: "Asisten Dosen",
   STUDENT: "Mahasiswa",
 };
 

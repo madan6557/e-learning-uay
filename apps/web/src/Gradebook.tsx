@@ -222,7 +222,6 @@ function StudentGradeReviewModal({
       <div
         className="modal-body"
         style={{
-          padding: "var(--space-4) var(--modal-gutter) var(--space-6)",
           display: "flex",
           flexDirection: "column",
           gap: 16,
@@ -620,22 +619,7 @@ function StudentGradeReviewModal({
           </div>
         )}
 
-        <div
-          style={{
-            position: "sticky",
-            bottom: -28,
-            background:
-              "var(--adaptive-surface-glass, rgba(255, 255, 255, 0.95))",
-            backdropFilter: "blur(8px)",
-            padding: "16px 0 8px 0",
-            borderTop: "1px solid var(--border, #e2e8f0)",
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: 10,
-            marginTop: 8,
-            zIndex: 10,
-          }}
-        >
+        <div className="sticky-actions" style={{ marginTop: 8 }}>
           <button
             type="button"
             className="button secondary"
@@ -1501,7 +1485,7 @@ export function Gradebook({
                           ? "var(--adaptive-info-soft, rgba(2, 132, 199, 0.12))"
                           : "transparent",
                         color: active
-                          ? "var(--adaptive-info-fill, #0369a1)"
+                          ? "var(--adaptive-info-text, #0369a1)"
                           : "inherit",
                         cursor: "pointer",
                         fontWeight: active ? 600 : 500,
@@ -1515,8 +1499,8 @@ export function Gradebook({
                         <span
                           style={{
                             fontSize: "0.68rem",
-                            background: "#0284c7",
-                            color: "#fff",
+                            background: "var(--primary, #0284c7)",
+                            color: "var(--primary-foreground, #fff)",
                             padding: "1px 5px",
                             borderRadius: 4,
                             fontWeight: 600,

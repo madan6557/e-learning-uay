@@ -229,7 +229,11 @@ export function Participants({
                             : isAssistant
                             ? "var(--adaptive-primary-fill, #6366f1)"
                             : "var(--muted-soft, #f1f5f9)",
-                          color: isPrimary || isAssistant ? "#fff" : "var(--foreground)",
+                          color: isPrimary
+                            ? "var(--primary-foreground, #fff)"
+                            : isAssistant
+                            ? "#fff"
+                            : "var(--foreground)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",

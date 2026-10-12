@@ -891,7 +891,7 @@ td small {
   max-height: var(--modal-max-height);
   margin: auto;
   overflow: hidden;
-  box-shadow: 0 30px 100px #1e2e3f38;
+  box-shadow: var(--shadow-raised, 0 30px 100px #1e2e3f38);
   color: var(--adaptive-text, #17202b);
   background: var(--adaptive-surface, #fff);
 }
@@ -1134,6 +1134,10 @@ progress::-webkit-progress-bar {
   border-radius: 20px;
 }
 progress::-webkit-progress-value {
+  background: var(--adaptive-emphasis-background, #7793b1);
+  border-radius: 20px;
+}
+progress::-moz-progress-bar {
   background: var(--adaptive-emphasis-background, #7793b1);
   border-radius: 20px;
 }
@@ -1851,7 +1855,7 @@ progress::-webkit-progress-value {
   border-radius: 9px;
   z-index: 2;
   font-size: 0.84rem;
-  box-shadow: 0 3px 18px #1a558a22;
+  box-shadow: var(--shadow-raised, 0 3px 18px #1a558a22);
 }
 .quiz-sticky > span {
   display: flex;

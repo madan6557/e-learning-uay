@@ -640,13 +640,6 @@ export function ClassPage({
                   className="section-filter-bar"
                   role="tablist"
                   aria-label="Filter tipe pertemuan"
-                  style={{
-                    display: "flex",
-                    gap: "8px",
-                    alignItems: "center",
-                    flexWrap: "wrap",
-                    margin: "12px 0 20px",
-                  }}
                 >
                   {sectionFilterOptions.map((opt) => {
                     const isActive = sectionTypeFilter === opt.key;
@@ -658,52 +651,9 @@ export function ClassPage({
                         aria-selected={isActive}
                         onClick={() => setSectionTypeFilter(opt.key)}
                         className={`badge-tab-pill ${isActive ? "active" : ""}`}
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          padding: "6px 14px",
-                          borderRadius: "20px",
-                          fontSize: "0.85rem",
-                          fontWeight: isActive ? 600 : 500,
-                          border: isActive
-                            ? "1px solid var(--primary, #0284c7)"
-                            : "1px solid var(--border, #e2e8f0)",
-                          background: isActive
-                            ? "var(--primary-soft, #f0f9ff)"
-                            : "var(--card-bg, #ffffff)",
-                          color: isActive
-                            ? "var(--primary, #0284c7)"
-                            : "var(--foreground, #334155)",
-                          cursor: "pointer",
-                          boxShadow: isActive
-                            ? "0 1px 3px rgba(2, 132, 199, 0.15)"
-                            : "none",
-                          transition: "all 0.15s ease-in-out",
-                        }}
                       >
                         <span>{opt.label}</span>
-                        <span
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            minWidth: "18px",
-                            height: "18px",
-                            padding: "0 6px",
-                            borderRadius: "10px",
-                            fontSize: "0.74rem",
-                            fontWeight: 700,
-                            background: isActive
-                              ? "var(--primary, #0284c7)"
-                              : "var(--muted-soft, #f1f5f9)",
-                            color: isActive
-                              ? "var(--primary-foreground, #ffffff)"
-                              : "var(--muted, #64748b)",
-                          }}
-                        >
-                          {opt.count}
-                        </span>
+                        <span className="badge-tab-count">{opt.count}</span>
                       </button>
                     );
                   })}
@@ -933,24 +883,7 @@ export function ClassPage({
                                               {t.completed}
                                             </span>
                                           ) : progressPct > 0 ? (
-                                            <span
-                                              className="status-pill in-progress"
-                                              style={{
-                                                fontWeight: 700,
-                                                fontSize: "0.78rem",
-                                                padding: "2px 8px",
-                                                borderRadius: "12px",
-                                                background:
-                                                  "var(--adaptive-info-soft, #f0f9ff)",
-                                                color:
-                                                  "var(--primary, #0284c7)",
-                                                border:
-                                                  "1px solid var(--primary-light, #bae6fd)",
-                                                display: "inline-flex",
-                                                alignItems: "center",
-                                                gap: "4px",
-                                              }}
-                                            >
+                                            <span className="status-pill in-progress">
                                               {progressPct}%
                                             </span>
                                           ) : null)}
@@ -1231,25 +1164,11 @@ export function ClassPage({
                   })}
                 </div>
               )}
-              {writable && cls.sections.length > 0 && (
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    margin: "24px 0 16px",
-                  }}
-                >
+              {writable && filteredSections.length >= 3 && (
+                <div className="section-list-footer">
                   <button
                     className="primary"
                     onClick={() => setModal({ kind: "section" })}
-                    style={{
-                      padding: "10px 24px",
-                      borderRadius: 24,
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 8,
-                    }}
                   >
                     <Plus size={16} />
                     {t.newSection}
