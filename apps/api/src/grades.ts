@@ -28,6 +28,7 @@ import {
   audit,
   json,
   notify,
+  getAcademicSettings,
   type Context,
 } from "./core.js";
 import {
@@ -38,6 +39,8 @@ import {
   gradeLetterWithPolicy,
   GRADE_SCALE_PRESETS,
   DEFAULT_GRADE_SCALE,
+  resolveGradeScalePolicy,
+  getAllGradeScalePolicies,
 } from "../../../packages/shared/src/domain.js";
 import { classPath } from "../../../packages/shared/src/urls.js";
 
@@ -143,10 +146,12 @@ export async function calculateGradebook(
     }),
   ]);
 
-  const policy =
-    (cls?.gradeScalePolicy as any) ??
-    GRADE_SCALE_PRESETS[cls?.gradeScaleVersion ?? "2026.1"] ??
-    DEFAULT_GRADE_SCALE;
+  const systemSettings = await getAcademicSettings(tx);
+  const policy = resolveGradeScalePolicy(
+    cls?.gradeScaleVersion ?? systemSettings.defaultGradeScaleVersion ?? "2026.1",
+    (systemSettings.customGradeScales as any),
+    (cls?.gradeScalePolicy as any),
+  );
 
   const now = new Date();
   const availableResources = resources.filter(
@@ -450,8 +455,9 @@ export function registerGrades(app: Express) {
     }
     res.json({ canManage: true, ...(await calculateGradebook(db, cls.id)) });
   });
-  app.get("/api/v1/grade-scales", (_req, res) => {
-    res.json(GRADE_SCALE_PRESETS);
+  app.get("/api/v1/grade-scales", async (_req, res) => {
+    const settings = await getAcademicSettings();
+    res.json(getAllGradeScalePolicies(settings.customGradeScales as any));
   });
   app.get("/api/v1/course-classes/:id/grade-categories", async (req, res) => {
     const cls = await classAccess(db, req.context.user, String(req.params.id));
@@ -769,11 +775,18 @@ export function registerGrades(app: Express) {
               },
             });
         }
-        if (gradeScaleVersion && GRADE_SCALE_PRESETS[gradeScaleVersion]) {
-          await tx.courseClass.update({
-            where: { id: cls.id },
-            data: { gradeScaleVersion },
-          });
+        if (gradeScaleVersion) {
+          const settings = await getAcademicSettings(tx);
+          const allPolicies = getAllGradeScalePolicies(settings.customGradeScales as any);
+          if (allPolicies[gradeScaleVersion]) {
+            await tx.courseClass.update({
+              where: { id: cls.id },
+              data: {
+                gradeScaleVersion,
+                gradeScalePolicy: allPolicies[gradeScaleVersion] as any,
+              },
+            });
+          }
         }
         const after = await tx.gradeCategory.findMany({
           where: { classId: cls.id },

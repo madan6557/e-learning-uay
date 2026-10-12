@@ -1601,7 +1601,15 @@ export function DepartmentGovernancePage({
                   </div>
                 </div>
 
-                <div className="governance-modal-actions">
+                <div
+                  className="governance-modal-actions"
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    alignItems: "center",
+                    gap: 10,
+                  }}
+                >
                   <button
                     type="button"
                     className="secondary"
@@ -1816,7 +1824,15 @@ export function DepartmentGovernancePage({
                       </div>
                     </div>
 
-                    <div className="governance-modal-actions">
+                    <div
+                      className="governance-modal-actions"
+                      style={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        alignItems: "center",
+                        gap: 10,
+                      }}
+                    >
                       <button
                         type="button"
                         className="secondary"
@@ -1914,7 +1930,15 @@ export function DepartmentGovernancePage({
                   </div>
                 </div>
 
-                <div className="governance-modal-actions">
+                <div
+                  className="governance-modal-actions"
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    alignItems: "center",
+                    gap: 10,
+                  }}
+                >
                   <button
                     type="button"
                     className="primary"

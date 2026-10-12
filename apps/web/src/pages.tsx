@@ -1,6 +1,9 @@
 import {
   GRADE_SCALE_PRESETS,
   gradeScaleLabel,
+  getAllGradeScalePolicies,
+  type GradeScalePolicy,
+  type GradeBand,
 } from "../../../packages/shared/src/domain";
 import { confirmAction } from "./confirm";
 import { ThemePreferenceControl } from "./components/layout/ThemeToggle";
@@ -31,6 +34,9 @@ import {
   ExternalLink,
   Megaphone,
   ArrowRight,
+  Trash2,
+  RotateCcw,
+  ArrowUpDown,
 } from "lucide-react";
 
 function getTimeGreeting(): string {
@@ -92,6 +98,7 @@ export interface AcademicPolicySettings {
   semesterLabel: string;
   defaultGradeScaleVersion: string;
   minAttendancePercentage: number;
+  customGradeScales?: Record<string, GradeScalePolicy>;
 }
 export function ClassCard({
   item,
@@ -1745,12 +1752,133 @@ export function AcademicGovernanceModal({
   const [scaleVersion, setScaleVersion] = useState(
     config?.defaultGradeScaleVersion || "2026.1",
   );
+  const [scales, setScales] = useState<Record<string, GradeScalePolicy>>(() => {
+    return getAllGradeScalePolicies(config?.customGradeScales);
+  });
+  const [isAddingVersion, setIsAddingVersion] = useState(false);
+  const [newVersionCode, setNewVersionCode] = useState("");
+  const [newVersionName, setNewVersionName] = useState("");
+  const [validationError, setValidationError] = useState<string | null>(null);
+
   const [minAttendance, setMinAttendance] = useState(
     config?.minAttendancePercentage ?? 75,
   );
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<Error | null>(null);
+
+  const currentScale: GradeScalePolicy =
+    scales[scaleVersion] ||
+    GRADE_SCALE_PRESETS[scaleVersion as keyof typeof GRADE_SCALE_PRESETS] ||
+    GRADE_SCALE_PRESETS["2026.1"];
+
+  const handleUpdateBand = (index: number, patch: Partial<GradeBand>) => {
+    setValidationError(null);
+    const updatedBands = [...currentScale.bands];
+    updatedBands[index] = { ...updatedBands[index], ...patch };
+    setScales({
+      ...scales,
+      [scaleVersion]: {
+        ...currentScale,
+        bands: updatedBands,
+      },
+    });
+  };
+
+  const handleAddBand = () => {
+    setValidationError(null);
+    const existingLetters = new Set(
+      currentScale.bands.map((b) => b.letter.trim().toUpperCase()),
+    );
+    let suggestedLetter = "A+";
+    if (existingLetters.has(suggestedLetter)) suggestedLetter = "AB";
+    if (existingLetters.has(suggestedLetter)) suggestedLetter = "BC";
+    if (existingLetters.has(suggestedLetter)) suggestedLetter = "CD";
+    if (existingLetters.has(suggestedLetter)) suggestedLetter = "X";
+
+    const newBand: GradeBand = {
+      letter: suggestedLetter,
+      minScore: 88,
+      point: 4.0,
+    };
+    const updatedBands = [...currentScale.bands, newBand].sort(
+      (a, b) => b.minScore - a.minScore,
+    );
+    setScales({
+      ...scales,
+      [scaleVersion]: {
+        ...currentScale,
+        bands: updatedBands,
+      },
+    });
+  };
+
+  const handleRemoveBand = (index: number) => {
+    if (currentScale.bands.length <= 1) return;
+    setValidationError(null);
+    const updatedBands = currentScale.bands.filter((_, i) => i !== index);
+    setScales({
+      ...scales,
+      [scaleVersion]: {
+        ...currentScale,
+        bands: updatedBands,
+      },
+    });
+  };
+
+  const handleSortBands = () => {
+    const sorted = [...currentScale.bands].sort(
+      (a, b) => b.minScore - a.minScore,
+    );
+    setScales({
+      ...scales,
+      [scaleVersion]: {
+        ...currentScale,
+        bands: sorted,
+      },
+    });
+  };
+
+  const handleResetPreset = () => {
+    if (GRADE_SCALE_PRESETS[scaleVersion]) {
+      setScales({
+        ...scales,
+        [scaleVersion]: JSON.parse(
+          JSON.stringify(GRADE_SCALE_PRESETS[scaleVersion]),
+        ),
+      });
+      setValidationError(null);
+    }
+  };
+
+  const handleCreateNewPolicy = (e: React.FormEvent) => {
+    e.preventDefault();
+    const ver = newVersionCode.trim();
+    const name = newVersionName.trim() || `Standar Nilai ${ver}`;
+    if (!ver) {
+      setValidationError("Kode versi kebijakan tidak boleh kosong.");
+      return;
+    }
+    if (scales[ver]) {
+      setValidationError(`Versi kebijakan "${ver}" sudah ada.`);
+      return;
+    }
+    const newPolicy: GradeScalePolicy = {
+      version: ver,
+      name,
+      description: `Kebijakan kustom ${name}`,
+      bands: JSON.parse(JSON.stringify(currentScale.bands)),
+    };
+    setScales({
+      ...scales,
+      [ver]: newPolicy,
+    });
+    setScaleVersion(ver);
+    setIsAddingVersion(false);
+    setNewVersionCode("");
+    setNewVersionName("");
+    setValidationError(null);
+  };
 
   const handleAddYear = () => {
     const val = newYearInput.trim();
@@ -1776,6 +1904,55 @@ export function AcademicGovernanceModal({
     if (readOnly) return;
     setSaveError(null);
     setMessage(null);
+    setValidationError(null);
+
+    // Validate bands across all policies
+    for (const [key, pol] of Object.entries(scales)) {
+      if (!pol.bands || pol.bands.length === 0) {
+        setValidationError(
+          `Kebijakan "${pol.name}" harus memiliki minimal 1 bobot huruf.`,
+        );
+        return;
+      }
+      const seenLetters = new Set<string>();
+      for (const b of pol.bands) {
+        const letter = (b.letter || "").trim();
+        if (!letter) {
+          setValidationError(
+            `Terdapat huruf mutu yang kosong pada kebijakan "${pol.name}".`,
+          );
+          return;
+        }
+        if (seenLetters.has(letter.toUpperCase())) {
+          setValidationError(
+            `Huruf mutu ganda "${letter}" ditemukan pada kebijakan "${pol.name}". Setiap huruf mutu harus unik.`,
+          );
+          return;
+        }
+        seenLetters.add(letter.toUpperCase());
+        if (isNaN(b.minScore) || b.minScore < 0 || b.minScore > 100) {
+          setValidationError(
+            `Batas nilai riil untuk "${letter}" harus berada di antara 0 dan 100.`,
+          );
+          return;
+        }
+        if (isNaN(b.point) || b.point < 0 || b.point > 10) {
+          setValidationError(
+            `Bobot IP untuk "${letter}" harus berupa angka valid (≥ 0).`,
+          );
+          return;
+        }
+      }
+    }
+
+    const preparedScales: Record<string, GradeScalePolicy> = {};
+    for (const [key, pol] of Object.entries(scales)) {
+      preparedScales[key] = {
+        ...pol,
+        bands: [...pol.bands].sort((a, b) => b.minScore - a.minScore),
+      };
+    }
+
     setSaving(true);
     try {
       await api("/system/settings", "PUT", {
@@ -1784,8 +1961,11 @@ export function AcademicGovernanceModal({
         academicYears: years,
         defaultGradeScaleVersion: scaleVersion,
         minAttendancePercentage: Number(minAttendance),
+        customGradeScales: preparedScales,
       });
-      setMessage("Pengaturan tata kelola akademik berhasil disimpan.");
+      setMessage(
+        "Pengaturan tata kelola akademik dan bobot huruf mutu berhasil disimpan.",
+      );
       onSaved();
       setTimeout(() => {
         onClose();
@@ -1796,10 +1976,6 @@ export function AcademicGovernanceModal({
       setSaving(false);
     }
   };
-
-  const currentScale =
-    GRADE_SCALE_PRESETS[scaleVersion as keyof typeof GRADE_SCALE_PRESETS] ||
-    GRADE_SCALE_PRESETS["2026.1"];
 
   return (
     <Modal title="Pengaturan & Tata Kelola Akademik" wide onClose={onClose}>
@@ -2028,23 +2204,182 @@ export function AcademicGovernanceModal({
             </div>
           ) : (
             <div>
+              {validationError && (
+                <div
+                  style={{
+                    background: "var(--adaptive-danger-soft, #fef2f2)",
+                    color: "var(--adaptive-danger-text, #b91c1c)",
+                    border: "1px solid var(--adaptive-danger-border, #fecaca)",
+                    padding: "10px 14px",
+                    borderRadius: 8,
+                    marginBottom: 16,
+                    fontSize: "0.85rem",
+                  }}
+                >
+                  {validationError}
+                </div>
+              )}
+
               <div style={{ marginBottom: 18 }}>
                 <Field
                   label="Kebijakan Konversi Huruf Mutu Aktif (Grade Scale Policy)"
                   hint="Menentukan pemetaan skor nilai akhir (0-100) ke huruf mutu dan bobot huruf mutu."
                 >
-                  <select
-                    value={scaleVersion}
-                    onChange={(e) => setScaleVersion(e.target.value)}
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 10,
+                      alignItems: "center",
+                    }}
                   >
-                    {Object.values(GRADE_SCALE_PRESETS).map((policy) => (
-                      <option key={policy.version} value={policy.version}>
-                        {gradeScaleLabel(policy)}
-                      </option>
-                    ))}
-                  </select>
+                    <select
+                      value={scaleVersion}
+                      onChange={(e) => setScaleVersion(e.target.value)}
+                      style={{ flex: 1 }}
+                    >
+                      {Object.values(scales).map((policy) => (
+                        <option key={policy.version} value={policy.version}>
+                          {gradeScaleLabel(policy)}
+                        </option>
+                      ))}
+                    </select>
+                    {!readOnly && (
+                      <button
+                        type="button"
+                        className="button secondary"
+                        onClick={() => setIsAddingVersion(true)}
+                        style={{
+                          whiteSpace: "nowrap",
+                          fontSize: "0.85rem",
+                        }}
+                      >
+                        + Buat Versi Baru
+                      </button>
+                    )}
+                  </div>
                 </Field>
               </div>
+
+              {!readOnly && isAddingVersion && (
+                <div
+                  style={{
+                    background: "var(--adaptive-surface, #f8fafc)",
+                    border: "1px solid var(--adaptive-border, #e2e8f0)",
+                    borderRadius: 8,
+                    padding: "14px 16px",
+                    marginBottom: 18,
+                  }}
+                >
+                  <strong
+                    style={{
+                      fontSize: "0.88rem",
+                      display: "block",
+                      marginBottom: 8,
+                    }}
+                  >
+                    Buat Versi Kebijakan Huruf Mutu Baru
+                  </strong>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 2fr",
+                      gap: 10,
+                      marginBottom: 12,
+                    }}
+                  >
+                    <div>
+                      <label
+                        style={{
+                          fontSize: "0.8rem",
+                          fontWeight: 600,
+                          display: "block",
+                          marginBottom: 4,
+                        }}
+                      >
+                        Kode Versi
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="cth: 2027.1"
+                        value={newVersionCode}
+                        onChange={(e) => setNewVersionCode(e.target.value)}
+                        style={{ fontSize: "0.85rem" }}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        style={{
+                          fontSize: "0.8rem",
+                          fontWeight: 600,
+                          display: "block",
+                          marginBottom: 4,
+                        }}
+                      >
+                        Nama Standar Kebijakan
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="cth: Standar Akademik UAY 2027/2028"
+                        value={newVersionName}
+                        onChange={(e) => setNewVersionName(e.target.value)}
+                        style={{ fontSize: "0.85rem" }}
+                      />
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "flex-end",
+                      gap: 8,
+                    }}
+                  >
+                    <button
+                      type="button"
+                      className="button secondary"
+                      onClick={() => {
+                        setIsAddingVersion(false);
+                        setNewVersionCode("");
+                        setNewVersionName("");
+                      }}
+                      style={{ fontSize: "0.82rem" }}
+                    >
+                      Batal
+                    </button>
+                    <button
+                      type="button"
+                      className="button primary"
+                      onClick={handleCreateNewPolicy}
+                      style={{ fontSize: "0.82rem" }}
+                    >
+                      Simpan &amp; Pilih Versi
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {!readOnly && (
+                <div style={{ marginBottom: 18 }}>
+                  <Field
+                    label="Nama Standar Kebijakan"
+                    hint="Nama deskriptif untuk kebijakan huruf mutu yang sedang dipilih."
+                  >
+                    <input
+                      type="text"
+                      value={currentScale.name}
+                      onChange={(e) =>
+                        setScales({
+                          ...scales,
+                          [scaleVersion]: {
+                            ...currentScale,
+                            name: e.target.value,
+                          },
+                        })
+                      }
+                      required
+                    />
+                  </Field>
+                </div>
+              )}
 
               <div style={{ marginBottom: 20 }}>
                 <Field
@@ -2058,7 +2393,9 @@ export function AcademicGovernanceModal({
                     step={1}
                     required
                     value={minAttendance}
-                    onChange={(e) => setMinAttendance(Number(e.target.value))}
+                    onChange={(e) =>
+                      setMinAttendance(Number(e.target.value))
+                    }
                     style={{ maxWidth: 160 }}
                   />
                 </Field>
@@ -2076,7 +2413,8 @@ export function AcademicGovernanceModal({
                   style={{
                     background: "var(--adaptive-surface, #f8fafc)",
                     padding: "10px 16px",
-                    borderBottom: "1px solid var(--adaptive-border, #e2e8f0)",
+                    borderBottom:
+                      "1px solid var(--adaptive-border, #e2e8f0)",
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
@@ -2099,42 +2437,255 @@ export function AcademicGovernanceModal({
                   </span>
                 </div>
 
-                <table style={{ margin: 0, fontSize: "0.84rem" }}>
+                <table
+                  style={{
+                    margin: 0,
+                    fontSize: "0.84rem",
+                    width: "100%",
+                  }}
+                >
                   <thead>
-                    <tr style={{ background: "var(--adaptive-surface, #f1f5f9)" }}>
+                    <tr
+                      style={{
+                        background: "var(--adaptive-surface, #f1f5f9)",
+                      }}
+                    >
                       <th style={{ padding: "8px 12px" }}>Huruf Mutu</th>
-                      <th style={{ padding: "8px 12px" }}>Batas Nilai Riil</th>
-                      <th style={{ padding: "8px 12px" }}>Bobot IP</th>
+                      <th style={{ padding: "8px 12px" }}>
+                        Batas Nilai Riil (≥ Nilai Min)
+                      </th>
+                      <th style={{ padding: "8px 12px" }}>
+                        Bobot IP (0.00–4.00)
+                      </th>
+                      {!readOnly && (
+                        <th
+                          style={{
+                            padding: "8px 12px",
+                            width: 50,
+                            textAlign: "center",
+                          }}
+                        >
+                          Aksi
+                        </th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
-                    {currentScale.bands.map((b: any) => (
-                      <tr key={b.letter}>
-                        <td style={{ padding: "8px 12px" }}>
-                          <span className="letter-badge">{b.letter}</span>
-                        </td>
-                        <td style={{ padding: "8px 12px", fontWeight: 600 }}>
-                          &ge; {b.minScore}.00
-                        </td>
-                        <td
-                          style={{
-                            padding: "8px 12px",
-                            fontWeight: 700,
-                            color: "var(--adaptive-info-text, #0284c7)",
-                          }}
-                        >
-                          {b.point.toFixed(2)}
-                        </td>
-                      </tr>
-                    ))}
+                    {currentScale.bands.map(
+                      (b: any, index: number) => (
+                        <tr key={index}>
+                          <td style={{ padding: "8px 12px" }}>
+                            {readOnly ? (
+                              <span className="letter-badge">
+                                {b.letter}
+                              </span>
+                            ) : (
+                              <input
+                                type="text"
+                                maxLength={6}
+                                value={b.letter}
+                                onChange={(e) =>
+                                  handleUpdateBand(index, {
+                                    letter:
+                                      e.target.value.toUpperCase(),
+                                  })
+                                }
+                                style={{
+                                  width: 68,
+                                  fontWeight: 700,
+                                  textAlign: "center",
+                                  textTransform: "uppercase",
+                                  padding: "4px 8px",
+                                }}
+                                required
+                              />
+                            )}
+                          </td>
+                          <td
+                            style={{
+                              padding: "8px 12px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {readOnly ? (
+                              <span>&ge; {b.minScore}.00</span>
+                            ) : (
+                              <div
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 6,
+                                }}
+                              >
+                                <span style={{ fontWeight: 700 }}>
+                                  &ge;
+                                </span>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={100}
+                                  step={0.5}
+                                  value={b.minScore}
+                                  onChange={(e) =>
+                                    handleUpdateBand(index, {
+                                      minScore:
+                                        parseFloat(e.target.value) || 0,
+                                    })
+                                  }
+                                  style={{
+                                    width: 84,
+                                    padding: "4px 8px",
+                                  }}
+                                  required
+                                />
+                                <span
+                                  style={{
+                                    fontSize: "0.78rem",
+                                    color:
+                                      "var(--adaptive-text-muted, #64748b)",
+                                  }}
+                                >
+                                  (skor 0–100)
+                                </span>
+                              </div>
+                            )}
+                          </td>
+                          <td
+                            style={{
+                              padding: "8px 12px",
+                              fontWeight: 700,
+                              color:
+                                "var(--adaptive-info-text, #0284c7)",
+                            }}
+                          >
+                            {readOnly ? (
+                              <span>{Number(b.point).toFixed(2)}</span>
+                            ) : (
+                              <input
+                                type="number"
+                                min={0}
+                                max={10}
+                                step={0.01}
+                                value={b.point}
+                                onChange={(e) =>
+                                  handleUpdateBand(index, {
+                                    point:
+                                      parseFloat(e.target.value) || 0,
+                                  })
+                                }
+                                style={{
+                                  width: 76,
+                                  fontWeight: 700,
+                                  color:
+                                    "var(--adaptive-info-text, #0284c7)",
+                                  padding: "4px 8px",
+                                }}
+                                required
+                              />
+                            )}
+                          </td>
+                          {!readOnly && (
+                            <td
+                              style={{
+                                padding: "8px 12px",
+                                textAlign: "center",
+                              }}
+                            >
+                              <button
+                                type="button"
+                                className="button secondary"
+                                onClick={() => handleRemoveBand(index)}
+                                disabled={currentScale.bands.length <= 1}
+                                title="Hapus bobot huruf ini"
+                                style={{
+                                  padding: "4px 8px",
+                                  color: "var(--danger, #ef4444)",
+                                  opacity:
+                                    currentScale.bands.length <= 1
+                                      ? 0.4
+                                      : 1,
+                                }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </td>
+                          )}
+                        </tr>
+                      ),
+                    )}
                   </tbody>
                 </table>
+
+                {!readOnly && (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: 10,
+                      alignItems: "center",
+                      padding: "10px 14px",
+                      background: "var(--adaptive-surface, #f8fafc)",
+                      borderTop:
+                        "1px solid var(--adaptive-border, #e2e8f0)",
+                    }}
+                  >
+                    <button
+                      type="button"
+                      className="button secondary"
+                      onClick={handleAddBand}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        fontSize: "0.82rem",
+                      }}
+                    >
+                      <Plus size={14} />
+                      <span>Tambah Bobot Huruf</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="button secondary"
+                      onClick={handleSortBands}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        fontSize: "0.82rem",
+                      }}
+                    >
+                      <ArrowUpDown size={14} />
+                      <span>Urutkan Nilai (Tinggi ke Rendah)</span>
+                    </button>
+                    {GRADE_SCALE_PRESETS[scaleVersion] && (
+                      <button
+                        type="button"
+                        className="button secondary"
+                        onClick={handleResetPreset}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          fontSize: "0.82rem",
+                          marginLeft: "auto",
+                          color:
+                            "var(--adaptive-text-muted, #64748b)",
+                        }}
+                      >
+                        <RotateCcw size={14} />
+                        <span>Reset ke Standar Preset</span>
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div
                 style={{
-                  background: "var(--adaptive-info-soft, rgba(2, 132, 199, 0.05))",
-                  border: "1px solid var(--adaptive-info-border, rgba(2, 132, 199, 0.2))",
+                  background:
+                    "var(--adaptive-info-soft, rgba(2, 132, 199, 0.05))",
+                  border:
+                    "1px solid var(--adaptive-info-border, rgba(2, 132, 199, 0.2))",
                   borderRadius: 8,
                   padding: "12px 16px",
                   fontSize: "0.84rem",

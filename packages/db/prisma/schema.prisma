@@ -54,6 +54,7 @@ model AcademicSettings {
   academicYears            String[] @map("academic_years")
   defaultGradeScaleVersion String   @map("default_grade_scale_version")
   minAttendancePercentage  Float    @map("min_attendance_percentage")
+  customGradeScales        Json?    @map("custom_grade_scales")
   updatedAt                DateTime @updatedAt @map("updated_at")
 
   @@map("academic_settings")

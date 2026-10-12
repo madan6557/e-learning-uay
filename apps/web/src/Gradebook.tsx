@@ -34,6 +34,7 @@ import { confirmAction } from "./confirm";
 import {
   GRADE_SCALE_PRESETS,
   gradeScaleLabel,
+  type GradeScalePolicy,
 } from "../../../packages/shared/src/domain";
 import { parseCsv } from "./csv";
 import type { FormProps } from "./components/ui/Form";
@@ -715,6 +716,8 @@ export function Gradebook({
   user?: any;
 }) {
   const info = useApi(`/course-classes/${classId}/gradebook`);
+  const scalesApi = useApi<Record<string, GradeScalePolicy>>("/grade-scales");
+  const availableScales = scalesApi.data || GRADE_SCALE_PRESETS;
   const phone = usePhoneLayout();
   const [modal, setModal] = useState<any>(null),
     [weights, setWeights] = useState<any[]>([]),
@@ -1285,14 +1288,11 @@ export function Gradebook({
                   value={gradeScaleVersion}
                   onChange={(e) => setGradeScaleVersion(e.target.value)}
                 >
-                  <option value="2026.1">
-                    2026.1 - Standar Baru UAY 2026 (A &ge; 85, B+ &ge; 80, B
-                    &ge; 75, dst.)
-                  </option>
-                  <option value="2024.1">
-                    2024.1 - Kurikulum Transisi 2024 (A &ge; 80, B+ &ge; 75, B
-                    &ge; 70, dst.)
-                  </option>
+                  {Object.values(availableScales).map((policy) => (
+                    <option key={policy.version} value={policy.version}>
+                      {gradeScaleLabel(policy)}
+                    </option>
+                  ))}
                 </select>
               </Field>
             </div>

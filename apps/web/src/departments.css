@@ -21,7 +21,8 @@
 .governance-toolbar,
 .governance-actions,
 .governance-tags,
-.governance-form-actions {
+.governance-form-actions,
+.governance-modal-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
@@ -129,8 +130,12 @@
   align-items: center;
   gap: var(--space-3);
 }
-.governance-form-actions {
+.governance-form-actions,
+.governance-modal-actions {
+  display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-3);
   border-top: 1px solid var(--border);
   margin-top: var(--space-6);
   padding-top: var(--space-4);
@@ -546,7 +551,8 @@
   .governance-modal .governance-form-fields {
     flex: 1 0 auto;
   }
-  .governance-modal .governance-form-actions {
+  .governance-modal .governance-form-actions,
+  .governance-modal .governance-modal-actions {
     position: sticky;
     bottom: 0;
     z-index: 10;
@@ -555,14 +561,14 @@
     padding: 12px var(--modal-gutter, 16px) calc(12px + env(safe-area-inset-bottom, 0px));
     border-top: 1px solid var(--border);
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    justify-content: flex-end;
     gap: 10px;
     align-items: center;
   }
-  .governance-modal .governance-form-actions > button {
-    width: 100%;
-    min-height: 46px;
+  .governance-modal .governance-form-actions > button,
+  .governance-modal .governance-modal-actions > button {
+    min-height: 44px;
     font-size: 0.9375rem;
     font-weight: 600;
     margin: 0;

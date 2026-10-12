@@ -301,9 +301,38 @@ export const GRADE_SCALE_PRESETS: Record<string, GradeScalePolicy> = {
 export const DEFAULT_GRADE_SCALE = GRADE_SCALE_PRESETS["2026.1"]!;
 
 export function gradeScaleLabel(policy: GradeScalePolicy): string {
-  const thresholds = policy.bands.slice(0, 3)
+  const thresholds = (policy.bands || []).slice(0, 3)
     .map(b => `${b.letter} ≥ ${b.minScore}`).join(", ");
   return `${policy.version} - ${policy.name} (${thresholds}, dst.)`;
+}
+
+export function getAllGradeScalePolicies(
+  customPolicies?: Record<string, GradeScalePolicy> | null,
+): Record<string, GradeScalePolicy> {
+  return {
+    ...GRADE_SCALE_PRESETS,
+    ...(customPolicies || {}),
+  };
+}
+
+export function resolveGradeScalePolicy(
+  version?: string | null,
+  customPolicies?: Record<string, GradeScalePolicy> | null,
+  classPolicy?: GradeScalePolicy | GradeBand[] | null,
+): GradeScalePolicy {
+  if (classPolicy) {
+    if (Array.isArray(classPolicy)) {
+      return {
+        version: version || "custom",
+        name: "Kebijakan Khusus Kelas",
+        bands: classPolicy,
+      };
+    }
+    return classPolicy;
+  }
+  const all = getAllGradeScalePolicies(customPolicies);
+  const key = version || "2026.1";
+  return all[key] || GRADE_SCALE_PRESETS["2026.1"] || DEFAULT_GRADE_SCALE;
 }
 
 export const GRADE_SOURCE_TYPES = [

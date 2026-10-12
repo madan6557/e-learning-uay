@@ -22,6 +22,7 @@ import {
 } from "./core.js";
 import {
   GRADE_SCALE_PRESETS,
+  getAllGradeScalePolicies,
   blockSchema,
   advanceVideo,
   webUrl,
@@ -2227,6 +2228,18 @@ export function registerLearning(app: Express) {
   });
   app.put("/api/v1/system/settings", async (req, res) => {
     ensure(req.context.user.role === "SUPER_ADMIN", 403, "FORBIDDEN");
+    const gradeBandSchema = z.object({
+      minScore: z.number().min(0).max(100),
+      letter: z.string().trim().min(1).max(10),
+      point: z.number().min(0).max(10),
+    });
+    const gradeScalePolicySchema = z.object({
+      version: z.string().trim().min(1).max(50),
+      name: z.string().trim().min(1).max(150),
+      description: z.string().trim().max(500).optional(),
+      bands: z.array(gradeBandSchema).min(1),
+    });
+
     const data = z
       .object({
         academicYear: z.string().trim().min(3).max(50),
@@ -2236,20 +2249,34 @@ export function registerLearning(app: Express) {
           .min(1)
           .max(100)
           .optional(),
-        defaultGradeScaleVersion: z
-          .string()
-          .refine((v) => Object.hasOwn(GRADE_SCALE_PRESETS, v))
-          .optional(),
+        defaultGradeScaleVersion: z.string().trim().min(1).max(50).optional(),
         minAttendancePercentage: z.number().min(0).max(100).optional(),
+        customGradeScales: z.record(z.string(), gradeScalePolicySchema).optional(),
       })
       .parse(req.body);
     res.json(
       await mutate(req, async (tx) => {
         const before = await getAcademicSettings(tx);
+        const allAvailableScales = {
+          ...GRADE_SCALE_PRESETS,
+          ...((before.customGradeScales as Record<string, any>) || {}),
+          ...(data.customGradeScales || {}),
+        };
+        if (data.defaultGradeScaleVersion) {
+          ensure(
+            Object.hasOwn(allAvailableScales, data.defaultGradeScaleVersion),
+            400,
+            "INVALID_GRADE_SCALE_VERSION",
+          );
+        }
         const after = await tx.academicSettings.update({
           where: { id: "global" },
           data: {
             ...data,
+            customGradeScales:
+              data.customGradeScales !== undefined
+                ? (data.customGradeScales as any)
+                : before.customGradeScales,
             semesterLabel:
               data.semesterLabel ??
               "SEMESTER " + data.academicYear.toUpperCase(),
