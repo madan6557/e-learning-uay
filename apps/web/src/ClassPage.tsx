@@ -113,6 +113,37 @@ export function ClassPage({
   const [modal, setModal] = useState<any>(null),
     [message, setMessage] = useState("");
   const cls = info.data;
+  const [sectionTypeFilter, setSectionTypeFilter] = useState<string>("ALL");
+
+  const sectionCounts = useMemo(() => {
+    const counts: Record<string, number> = { ALL: cls?.sections?.length || 0 };
+    for (const sec of cls?.sections || []) {
+      const type = sec.type || "LECTURE";
+      counts[type] = (counts[type] || 0) + 1;
+    }
+    return counts;
+  }, [cls?.sections]);
+
+  const sectionFilterOptions = useMemo(() => {
+    const allTypes = [
+      { key: "ALL", label: "Semua", count: sectionCounts.ALL || 0 },
+      { key: "LECTURE", label: (t.sectionTypes as any)?.LECTURE || "Perkuliahan", count: sectionCounts.LECTURE || 0 },
+      { key: "LAB_PRACTICUM", label: (t.sectionTypes as any)?.LAB_PRACTICUM || "Praktikum", count: sectionCounts.LAB_PRACTICUM || 0 },
+      { key: "SEMINAR", label: (t.sectionTypes as any)?.SEMINAR || "Seminar", count: sectionCounts.SEMINAR || 0 },
+      { key: "WORKSHOP", label: (t.sectionTypes as any)?.WORKSHOP || "Lokakarya", count: sectionCounts.WORKSHOP || 0 },
+      { key: "EXAM", label: (t.sectionTypes as any)?.EXAM || "Ujian", count: sectionCounts.EXAM || 0 },
+      { key: "OTHER", label: (t.sectionTypes as any)?.OTHER || "Lainnya", count: sectionCounts.OTHER || 0 },
+    ];
+    return allTypes.filter(
+      (opt) => opt.key === "ALL" || opt.key === "LECTURE" || opt.key === "LAB_PRACTICUM" || opt.count > 0,
+    );
+  }, [sectionCounts]);
+
+  const filteredSections = useMemo(() => {
+    if (sectionTypeFilter === "ALL") return cls?.sections || [];
+    return (cls?.sections || []).filter((s: any) => s.type === sectionTypeFilter);
+  }, [cls?.sections, sectionTypeFilter]);
+
   useEffect(() => {
     if (!message) return;
     const t = setTimeout(() => setMessage(""), 5000);
@@ -150,37 +181,6 @@ export function ClassPage({
     canEditClass &&
     cls.status !== "ARCHIVED" &&
     cls.course.status !== "ARCHIVED";
-
-  const [sectionTypeFilter, setSectionTypeFilter] = useState<string>("ALL");
-
-  const sectionCounts = useMemo(() => {
-    const counts: Record<string, number> = { ALL: cls.sections?.length || 0 };
-    for (const sec of cls.sections || []) {
-      const type = sec.type || "LECTURE";
-      counts[type] = (counts[type] || 0) + 1;
-    }
-    return counts;
-  }, [cls.sections]);
-
-  const sectionFilterOptions = useMemo(() => {
-    const allTypes = [
-      { key: "ALL", label: "Semua", count: sectionCounts.ALL || 0 },
-      { key: "LECTURE", label: (t.sectionTypes as any)?.LECTURE || "Perkuliahan", count: sectionCounts.LECTURE || 0 },
-      { key: "LAB_PRACTICUM", label: (t.sectionTypes as any)?.LAB_PRACTICUM || "Praktikum", count: sectionCounts.LAB_PRACTICUM || 0 },
-      { key: "SEMINAR", label: (t.sectionTypes as any)?.SEMINAR || "Seminar", count: sectionCounts.SEMINAR || 0 },
-      { key: "WORKSHOP", label: (t.sectionTypes as any)?.WORKSHOP || "Lokakarya", count: sectionCounts.WORKSHOP || 0 },
-      { key: "EXAM", label: (t.sectionTypes as any)?.EXAM || "Ujian", count: sectionCounts.EXAM || 0 },
-      { key: "OTHER", label: (t.sectionTypes as any)?.OTHER || "Lainnya", count: sectionCounts.OTHER || 0 },
-    ];
-    return allTypes.filter(
-      (opt) => opt.key === "ALL" || opt.key === "LECTURE" || opt.key === "LAB_PRACTICUM" || opt.count > 0,
-    );
-  }, [sectionCounts]);
-
-  const filteredSections = useMemo(() => {
-    if (sectionTypeFilter === "ALL") return cls.sections || [];
-    return (cls.sections || []).filter((s: any) => s.type === sectionTypeFilter);
-  }, [cls.sections, sectionTypeFilter]);
   const published = (kind: string, itemId: string, visible = true) => {
     info.setData((current: any) => ({
       ...current,
