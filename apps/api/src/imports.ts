@@ -4,6 +4,7 @@ import { db, ensure, classAccess, mutate, audit, json } from "./core.js";
 import { questionSchema } from "../../../packages/shared/src/domain.js";
 import { refreshPublishedFinal } from "./grades.js";
 import { canGradeClassWork } from "../../../packages/shared/src/permissions.js";
+import { syncPracticumFromParent } from "./class-relations.js";
 const batchSchema = z.object({
   kind: z.enum(["ENROLLMENT", "GRADES", "QUESTIONS"]),
   categoryId: z.string().uuid().optional(),
@@ -144,13 +145,20 @@ export function registerImports(app: Express) {
     );
     if (batch.kind === "GRADES")
       ensure(
-        canGradeClassWork(
-          req.context.user,
-          cls.instructors.some((i) => i.userId === req.context.user.id),
-        ),
+        (Boolean(cls.parentClassId) &&
+          cls.isAssignedAssistant &&
+          cls.canManage) ||
+          canGradeClassWork(
+            req.context.user,
+            cls.instructors.some((i) => i.userId === req.context.user.id),
+          ),
         403,
         "ONLY_INSTRUCTOR_CAN_GRADE",
       );
+    if (batch.kind === "ENROLLMENT")
+      ensure(!cls.parentClassId, 409, "PRACTICUM_ROSTER_SYNCED");
+    if (batch.kind === "QUESTIONS")
+      ensure(!cls.parentClassId, 409, "COURSE_QUESTION_BANK_SHARED");
     const rows = await review(db, cls.id, cls.courseId, batch);
     res.json({
       rows: rows.map(({ user, parsed, ...row }) => row),
@@ -172,13 +180,20 @@ export function registerImports(app: Express) {
         );
         if (batch.kind === "GRADES")
           ensure(
-            canGradeClassWork(
-              req.context.user,
-              cls.instructors.some((i) => i.userId === req.context.user.id),
-            ),
+            (Boolean(cls.parentClassId) &&
+              cls.isAssignedAssistant &&
+              cls.canManage) ||
+              canGradeClassWork(
+                req.context.user,
+                cls.instructors.some((i) => i.userId === req.context.user.id),
+              ),
             403,
             "ONLY_INSTRUCTOR_CAN_GRADE",
           );
+        if (batch.kind === "ENROLLMENT")
+          ensure(!cls.parentClassId, 409, "PRACTICUM_ROSTER_SYNCED");
+        if (batch.kind === "QUESTIONS")
+          ensure(!cls.parentClassId, 409, "COURSE_QUESTION_BANK_SHARED");
         const rows = await review(tx, cls.id, cls.courseId, batch);
         ensure(
           rows.every((r) => r.status !== "ISSUE"),
@@ -250,6 +265,8 @@ export function registerImports(app: Express) {
             batch.reason,
           );
         }
+        if (batch.kind === "ENROLLMENT")
+          await syncPracticumFromParent(tx, cls.id);
         return {
           imported: selected.length,
           excluded: rows.length - selected.length,

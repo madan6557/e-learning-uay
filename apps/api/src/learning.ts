@@ -19,7 +19,9 @@ import {
   config,
   getAcademicSettings,
   getNextSectionContentOrder,
+  isAssistantClassAssignment,
 } from "./core.js";
+import { syncPracticumFromParent } from "./class-relations.js";
 import {
   GRADE_SCALE_PRESETS,
   getAllGradeScalePolicies,
@@ -290,6 +292,135 @@ async function reviewCourseBatch(
   }
   return output;
 }
+
+async function cloneClassContents(
+  tx: any,
+  sourceClassId: string,
+  targetClassId: string,
+) {
+  const categoryMap = new Map<string, string>();
+  for (const category of await tx.gradeCategory.findMany({
+    where: { classId: sourceClassId },
+  })) {
+    const {
+      id,
+      classId: _classId,
+      createdAt: _createdAt,
+      ...fields
+    } = category;
+    const created = await tx.gradeCategory.create({
+      data: { ...fields, classId: targetClassId },
+    });
+    categoryMap.set(id, created.id);
+  }
+  for (const section of await tx.section.findMany({
+    where: { classId: sourceClassId },
+    include: {
+      resources: true,
+      quizzes: { include: { questions: true } },
+      assignments: true,
+    },
+  })) {
+    const next = await tx.section.create({
+      data: {
+        classId: targetClassId,
+        title: section.title,
+        description: section.description,
+        type: section.type,
+        order: section.order,
+        isVisible: false,
+      },
+    });
+    for (const resource of section.resources) {
+      const {
+        id: _id,
+        slug: _slug,
+        sectionId: _sectionId,
+        createdAt: _createdAt,
+        updatedAt: _updatedAt,
+        ...fields
+      } = resource;
+      await tx.resourceItem.create({
+        data: {
+          ...fields,
+          dynamicPayload: json(resource.dynamicPayload),
+          completionCriteria: resource.completionCriteria
+            ? json(resource.completionCriteria)
+            : undefined,
+          sectionId: next.id,
+          availableFrom: null,
+          availableUntil: null,
+          isVisible: false,
+        },
+      });
+    }
+    for (const quiz of section.quizzes) {
+      const {
+        id: _id,
+        slug: _slug,
+        sectionId: _sectionId,
+        createdAt: _createdAt,
+        updatedAt: _updatedAt,
+        questions,
+        ...fields
+      } = quiz;
+      await tx.quiz.create({
+        data: {
+          ...fields,
+          gradeCategoryId: categoryMap.get(quiz.gradeCategoryId ?? "") ?? null,
+          sectionId: next.id,
+          status: "DRAFT",
+          availableFrom: null,
+          availableUntil: null,
+          resultReleaseAt: null,
+          questions: {
+            create: questions.map(
+              ({
+                id: _questionId,
+                quizId: _quizId,
+                createdAt: _questionCreatedAt,
+                options,
+                answerKey,
+                rubric,
+                ...question
+              }: any) => ({
+                ...question,
+                options: json(options),
+                answerKey: json(answerKey),
+                rubric: json(rubric),
+              }),
+            ),
+          },
+        },
+      });
+    }
+    for (const assignment of section.assignments) {
+      const {
+        id: _id,
+        slug: _slug,
+        sectionId: _sectionId,
+        createdAt: _createdAt,
+        updatedAt: _updatedAt,
+        ...fields
+      } = assignment;
+      await tx.assignment.create({
+        data: {
+          ...fields,
+          allowedFormats: json(assignment.allowedFormats),
+          gradeCategoryId:
+            categoryMap.get(assignment.gradeCategoryId ?? "") ?? null,
+          sectionId: next.id,
+          availableFrom: null,
+          deadline: null,
+          cutoffDate: null,
+          isVisible: false,
+        },
+      });
+    }
+  }
+  return categoryMap;
+}
+
 export function registerLearning(app: Express) {
   app.get("/api/v1/me", (req, res) => res.json(req.context.user));
   app.get("/api/v1/courses", async (req, res) => {
@@ -319,20 +450,20 @@ export function registerLearning(app: Express) {
                     },
                   },
                 }
-            : {
-                classes: {
-                  some: {
-                    OR: [
-                      { instructors: { some: { userId: user.id } } },
-                      {
-                        enrollments: {
-                          some: { userId: user.id, isActive: true },
+              : {
+                  classes: {
+                    some: {
+                      OR: [
+                        { instructors: { some: { userId: user.id } } },
+                        {
+                          enrollments: {
+                            some: { userId: user.id, isActive: true },
+                          },
                         },
-                      },
-                    ],
+                      ],
+                    },
                   },
-                },
-              };
+                };
     res.json(
       await db.course.findMany({
         where: scope,
@@ -578,6 +709,7 @@ export function registerLearning(app: Express) {
           return {
             OR: [
               { instructors: { some: { userId: u.id } } },
+              { parentClass: { instructors: { some: { userId: u.id } } } },
               {
                 enrollments: { some: { userId: u.id } },
                 status: { not: "DRAFT" as const },
@@ -594,9 +726,35 @@ export function registerLearning(app: Express) {
         name: true,
         academicYear: true,
         status: true,
+        parentClassId: true,
+        parentGradeCategoryId: true,
+        parentClass: {
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            instructors: {
+              select: {
+                userId: true,
+                isPrimary: true,
+                role: true,
+                user: { select: { role: true } },
+              },
+            },
+          },
+        },
+        practicumClass: {
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            status: true,
+            parentGradeCategoryId: true,
+          },
+        },
         course: true,
         instructors: {
-          include: { user: { select: { name: true, id: true } } },
+          include: { user: { select: { name: true, id: true, role: true } } },
         },
         enrollments: {
           where: { userId: u.id },
@@ -612,13 +770,38 @@ export function registerLearning(app: Express) {
       orderBy: { createdAt: "desc" },
     });
     const mapped = classes.map((cls) => {
+      const assignment = cls.instructors.find((i) => i.user.id === u.id);
+      const isAssignedAssistant = Boolean(
+        assignment && isAssistantClassAssignment(assignment, u),
+      );
+      const canMonitor = Boolean(
+        cls.parentClassId &&
+        cls.parentClass?.instructors.some(
+          (i) => i.userId === u.id && !isAssistantClassAssignment(i, u),
+        ),
+      );
       const canManage =
         canManageDepartment(u, cls.course.departmentCode) ||
-        cls.instructors.some((i) => i.user.id === u.id);
+        Boolean(
+          assignment &&
+          !isAssignedAssistant &&
+          u.role === "INSTRUCTOR" &&
+          !canMonitor,
+        ) ||
+        Boolean(
+          cls.parentClassId && assignment && isAssignedAssistant && !canMonitor,
+        );
       const isInactiveParticipant =
-        !canManage && cls.enrollments?.some((e) => !e.isActive);
+        !canManage &&
+        !canMonitor &&
+        !isAssignedAssistant &&
+        cls.enrollments?.some((e) => !e.isActive);
       return {
         ...cls,
+        canManage,
+        canMonitor,
+        isAssignedAssistant,
+        isPracticum: Boolean(cls.parentClassId),
         isInactiveParticipant: Boolean(isInactiveParticipant),
       };
     });
@@ -626,6 +809,151 @@ export function registerLearning(app: Express) {
       req.query.summary === "true" ? await dashboardClasses(mapped, u) : mapped,
     );
   });
+  app.post("/api/v1/course-classes/:parentId/practicum", async (req, res) =>
+    res.json(
+      await mutate(req, async (tx) => {
+        const parent = await classAccess(
+          tx,
+          req.context.user,
+          String(req.params.parentId),
+        );
+        ensure(!parent.parentClassId, 409, "PRACTICUM_PARENT_REQUIRED");
+        ensure(
+          parent.isAssignedAssistant,
+          403,
+          "ASSISTANT_ASSIGNMENT_REQUIRED",
+        );
+        ensure(
+          parent.status !== "ARCHIVED" && parent.course.status !== "ARCHIVED",
+          423,
+          "CLASS_ARCHIVED",
+        );
+        const existing = await tx.courseClass.findUnique({
+          where: { parentClassId: parent.id },
+          select: { id: true, slug: true, name: true, status: true },
+        });
+        if (existing)
+          return {
+            ...existing,
+            path: classPath({ ...existing, course: parent.course }),
+            created: false,
+          };
+
+        const assistants = parent.instructors.filter((item: any) =>
+          isAssistantClassAssignment(item, item.user),
+        );
+        const created = await tx.courseClass.create({
+          data: {
+            parentClassId: parent.id,
+            courseId: parent.courseId,
+            name: `Praktikum ${parent.name}`,
+            academicYear: parent.academicYear,
+            status: parent.status === "DRAFT" ? "DRAFT" : "PUBLISHED",
+            gradeScaleVersion: parent.gradeScaleVersion,
+            gradeScalePolicy: parent.gradeScalePolicy ?? undefined,
+            instructors: {
+              create: assistants.map((item: any) => ({
+                userId: item.userId,
+                role: "ASSISTANT",
+                isPrimary: false,
+              })),
+            },
+            gradeCategories: {
+              create: DEFAULT_GRADE_CATEGORIES_TEMPLATE.map(
+                (template, order) => ({
+                  name: template.name,
+                  weightPercent: template.weightPercent,
+                  order,
+                  kind: template.kind ?? "ASSESSMENT",
+                  sourceType: template.sourceType ?? "MANUAL",
+                  isMandatory: Boolean(template.isMandatory),
+                }),
+              ),
+            },
+          },
+          select: { id: true, slug: true, name: true, status: true },
+        });
+        await syncPracticumFromParent(tx, parent.id);
+        await audit(
+          tx,
+          req.context,
+          "CREATE_PRACTICUM_CLASS",
+          "CLASS",
+          created.id,
+          created.id,
+          null,
+          { ...created, parentClassId: parent.id },
+        );
+        return {
+          ...created,
+          path: classPath({ ...created, course: parent.course }),
+          created: true,
+        };
+      }),
+    ),
+  );
+  app.put(
+    "/api/v1/course-classes/:parentId/practicum-grade-category",
+    async (req, res) =>
+      res.json(
+        await mutate(req, async (tx) => {
+          const parent = await classAccess(
+            tx,
+            req.context.user,
+            String(req.params.parentId),
+          );
+          ensure(!parent.parentClassId, 409, "PRACTICUM_PARENT_REQUIRED");
+          ensure(parent.canManage, 403, "WRITE_ACCESS_DENIED");
+          ensure(
+            req.context.user.role === "INSTRUCTOR" ||
+              canManageDepartment(
+                req.context.user,
+                parent.course.departmentCode,
+              ),
+            403,
+            "INSTRUCTOR_REQUIRED",
+          );
+          ensure(
+            parent.status !== "ARCHIVED" && parent.course.status !== "ARCHIVED",
+            423,
+            "CLASS_ARCHIVED",
+          );
+          const { categoryId } = z
+            .object({ categoryId: z.string().uuid().nullable() })
+            .parse(req.body);
+          const child = await tx.courseClass.findUnique({
+            where: { parentClassId: parent.id },
+          });
+          ensure(child, 404, "PRACTICUM_CLASS_NOT_FOUND");
+          if (categoryId) {
+            const category = await tx.gradeCategory.findFirst({
+              where: { id: categoryId, classId: parent.id },
+            });
+            ensure(
+              category && category.kind !== "PROGRESS",
+              400,
+              "INVALID_CATEGORY",
+            );
+          }
+          const before = child.parentGradeCategoryId;
+          await tx.courseClass.update({
+            where: { id: child.id },
+            data: { parentGradeCategoryId: categoryId },
+          });
+          await audit(
+            tx,
+            req.context,
+            "MAP_PRACTICUM_GRADE_CATEGORY",
+            "CLASS",
+            child.id,
+            parent.id,
+            { categoryId: before },
+            { categoryId },
+          );
+          return { practicumClassId: child.id, categoryId };
+        }),
+      ),
+  );
   app.post("/api/v1/course-classes", async (req, res) =>
     res.status(201).json(
       await mutate(req, async (tx) => {
@@ -650,28 +978,13 @@ export function registerLearning(app: Express) {
           user,
           course.departmentCode,
         );
-        const isAssistant = user.role === "ASSISTANT";
-        const assistantAssignment = isAssistant
-          ? await tx.classInstructor.findFirst({
-              where: {
-                userId: user.id,
-                class: { courseId: course.id },
-              },
-              select: { id: true },
-            })
-          : null;
-        const isManager =
-          user.role === "INSTRUCTOR" ||
-          isDepartmentManager ||
-          Boolean(assistantAssignment);
+        const isManager = user.role === "INSTRUCTOR" || isDepartmentManager;
         ensure(isManager, 403, "WRITE_ACCESS_DENIED");
 
         const effectiveInstructorIds =
           user.role === "INSTRUCTOR" && !data.instructorIds.includes(user.id)
             ? [user.id, ...data.instructorIds]
             : data.instructorIds;
-        const effectiveAssistantIds = isAssistant ? [user.id] : [];
-
         const users = await tx.user.findMany({
           where: {
             id: { in: effectiveInstructorIds },
@@ -683,20 +996,6 @@ export function registerLearning(app: Express) {
           users.length === new Set(effectiveInstructorIds).size,
           400,
           "INVALID_INSTRUCTORS",
-        );
-        const assistantUsers = effectiveAssistantIds.length
-          ? await tx.user.findMany({
-              where: {
-                id: { in: effectiveAssistantIds },
-                status: "ACTIVE",
-                role: "ASSISTANT",
-              },
-            })
-          : [];
-        ensure(
-          assistantUsers.length === effectiveAssistantIds.length,
-          400,
-          "INVALID_ASSISTANTS",
         );
         const settings = await getAcademicSettings(tx);
         const after = await tx.courseClass.create({
@@ -714,14 +1013,8 @@ export function registerLearning(app: Express) {
                 ...users.map((u, i) => ({
                   userId: u.id,
                   isPrimary:
-                    u.id === user.id ||
-                    (user.role !== "INSTRUCTOR" && i === 0),
+                    u.id === user.id || (user.role !== "INSTRUCTOR" && i === 0),
                   role: "INSTRUCTOR",
-                })),
-                ...assistantUsers.map((assistant) => ({
-                  userId: assistant.id,
-                  isPrimary: false,
-                  role: "ASSISTANT",
                 })),
               ],
             },
@@ -802,6 +1095,7 @@ export function registerLearning(app: Express) {
         isInactiveParticipant: true,
       });
     }
+    const canViewAll = cls.canManage || cls.canMonitor;
     const sections = await db.section.findMany({
       where: { classId: cls.id },
       orderBy: { order: "asc" },
@@ -864,7 +1158,7 @@ export function registerLearning(app: Express) {
       db.announcement.findMany({
         where: {
           classId: cls.id,
-          ...(!cls.canManage
+          ...(!canViewAll
             ? { isPublished: true, publishedAt: { lte: new Date() } }
             : {}),
         },
@@ -896,7 +1190,7 @@ export function registerLearning(app: Express) {
           },
         },
       }),
-      cls.canManage
+      canViewAll
         ? Promise.all([
             db.assignmentSubmission.groupBy({
               by: ["assignmentId"],
@@ -927,7 +1221,7 @@ export function registerLearning(app: Express) {
             })),
           ])
         : [],
-      !cls.canManage
+      !canViewAll
         ? db.quizAttempt.findMany({
             where: {
               userId: req.context.user.id,
@@ -936,7 +1230,7 @@ export function registerLearning(app: Express) {
             select: { quizId: true, status: true, score: true },
           })
         : [],
-      !cls.canManage
+      !canViewAll
         ? db.assignmentSubmission.findMany({
             where: {
               userId: req.context.user.id,
@@ -945,7 +1239,7 @@ export function registerLearning(app: Express) {
             select: { assignmentId: true, status: true, score: true },
           })
         : [],
-      !cls.canManage
+      !canViewAll
         ? db.finalGradeRecord.findUnique({
             where: {
               classId_userId: { classId: cls.id, userId: req.context.user.id },
@@ -960,16 +1254,16 @@ export function registerLearning(app: Express) {
     const isClassArchived = cls.status === "ARCHIVED";
 
     const result = sections
-      .filter((s) => cls.canManage || visible(s))
+      .filter((s) => canViewAll || visible(s))
       .map((s) => ({
         ...s,
-        resources: s.resources.filter((r) => cls.canManage || visible(r)),
+        resources: s.resources.filter((r) => canViewAll || visible(r)),
         quizzes: s.quizzes
           .filter(
-            (q) => cls.canManage || (q.status === "PUBLISHED" && q.isVisible),
+            (q) => canViewAll || (q.status === "PUBLISHED" && q.isVisible),
           )
           .map((q) => {
-            if (cls.canManage) return q;
+            if (canViewAll) return q;
             const attempts = myAttempts.filter((a: any) => a.quizId === q.id);
             const isCompleted =
               attempts.some((a: any) => a.status === "GRADED_COMPLETE") ||
@@ -994,9 +1288,9 @@ export function registerLearning(app: Express) {
             };
           }),
         assignments: s.assignments
-          .filter((a) => cls.canManage || a.isVisible)
+          .filter((a) => canViewAll || a.isVisible)
           .map((a) => {
-            if (cls.canManage) return a;
+            if (canViewAll) return a;
             const subs = mySubmissions.filter(
               (sub: any) => sub.assignmentId === a.id,
             );
@@ -1034,6 +1328,7 @@ export function registerLearning(app: Express) {
       progress,
       gradingQueue,
       isGradeLocked,
+      isPracticum: Boolean(cls.parentClassId),
     });
   });
   app.patch("/api/v1/course-classes/:id", async (req, res) =>
@@ -1045,6 +1340,12 @@ export function registerLearning(app: Express) {
           String(req.params.id),
         );
         ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
+        ensure(
+          !cls.parentClassId ||
+            canManageDepartment(req.context.user, cls.course.departmentCode),
+          403,
+          "PRACTICUM_METADATA_LOCKED",
+        );
         ensure(cls.course.status !== "ARCHIVED", 423, "COURSE_ARCHIVED");
         const data = z
           .object({
@@ -1074,6 +1375,15 @@ export function registerLearning(app: Express) {
               : {}),
           },
         });
+        if (!cls.parentClassId) {
+          await tx.courseClass.updateMany({
+            where: { parentClassId: cls.id },
+            data: {
+              name: `Praktikum ${after.name}`,
+              academicYear: after.academicYear,
+            },
+          });
+        }
         await audit(
           tx,
           req.context,
@@ -1133,6 +1443,7 @@ export function registerLearning(app: Express) {
           create: { classId: cls.id, userId: req.context.user.id },
           update: { isActive: true },
         });
+        if (!cls.parentClassId) await syncPracticumFromParent(tx, cls.id);
         await audit(
           tx,
           req.context,
@@ -1149,7 +1460,7 @@ export function registerLearning(app: Express) {
   );
   app.get("/api/v1/course-classes/:id/participants", async (req, res) => {
     const cls = await classAccess(db, req.context.user, String(req.params.id));
-    ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
+    ensure(cls.canManage || cls.canMonitor, 403, "WRITE_ACCESS_DENIED");
     const enrollments = await db.enrollment.findMany({
       where: { classId: cls.id },
       include: {
@@ -1198,6 +1509,7 @@ export function registerLearning(app: Express) {
           false,
           true,
         );
+        ensure(!cls.parentClassId, 409, "PRACTICUM_ROSTER_SYNCED");
         const { userId, isActive } = z
           .object({
             userId: z.string().uuid(),
@@ -1218,6 +1530,7 @@ export function registerLearning(app: Express) {
           create: { classId: cls.id, userId, isActive },
           update: { isActive },
         });
+        await syncPracticumFromParent(tx, cls.id);
         if (!isActive && before?.isActive !== false) {
           await notify(
             tx,
@@ -1266,7 +1579,12 @@ export function registerLearning(app: Express) {
           false,
           true,
         );
-        const { userIds, primaryUserId: requestedPrimaryUserId, assistantUserIds } = z
+        ensure(!cls.parentClassId, 409, "PRACTICUM_INSTRUCTORS_SYNCED");
+        const {
+          userIds,
+          primaryUserId: requestedPrimaryUserId,
+          assistantUserIds,
+        } = z
           .object({
             userIds: z.array(z.string().uuid()).min(1),
             primaryUserId: z.string().uuid().optional(),
@@ -1291,9 +1609,15 @@ export function registerLearning(app: Express) {
         let finalPrimaryUserId: string;
 
         if (isManager) {
-          if (requestedPrimaryUserId && userIds.includes(requestedPrimaryUserId)) {
+          if (
+            requestedPrimaryUserId &&
+            userIds.includes(requestedPrimaryUserId)
+          ) {
             finalPrimaryUserId = requestedPrimaryUserId;
-          } else if (currentPrimaryUserId && userIds.includes(currentPrimaryUserId)) {
+          } else if (
+            currentPrimaryUserId &&
+            userIds.includes(currentPrimaryUserId)
+          ) {
             finalPrimaryUserId = currentPrimaryUserId;
           } else {
             finalPrimaryUserId = userIds[0];
@@ -1335,6 +1659,7 @@ export function registerLearning(app: Express) {
             };
           }),
         });
+        await syncPracticumFromParent(tx, cls.id);
         await audit(
           tx,
           req.context,
@@ -1726,7 +2051,7 @@ export function registerLearning(app: Express) {
           const before = await tx.slideProgress.findUnique({
             where: { userId_resourceItemId: { userId, resourceItemId } },
           });
-          const targetPage = page ?? (before?.currentPage ?? 1);
+          const targetPage = page ?? before?.currentPage ?? 1;
           const pages = markCompleted
             ? Array.from({ length: effectiveTotalPages }, (_, i) => i + 1)
             : page
@@ -1736,9 +2061,7 @@ export function registerLearning(app: Express) {
               : (before?.viewedPages ?? [1]);
           const percent = markCompleted
             ? 100
-            : round(
-                Math.min(100, (pages.length / effectiveTotalPages) * 100),
-              );
+            : round(Math.min(100, (pages.length / effectiveTotalPages) * 100));
           return tx.slideProgress.upsert({
             where: { userId_resourceItemId: { userId, resourceItemId } },
             create: {
@@ -2069,7 +2392,7 @@ export function registerLearning(app: Express) {
   });
   app.get("/api/v1/course-classes/:id/audit", async (req, res) => {
     const cls = await classAccess(db, req.context.user, String(req.params.id));
-    ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
+    ensure(cls.canManage || cls.canMonitor, 403, "WRITE_ACCESS_DENIED");
     const cursor =
       typeof req.query.cursor === "string" ? req.query.cursor : undefined;
     const entries = await db.auditLog.findMany({
@@ -2151,6 +2474,12 @@ export function registerLearning(app: Express) {
           String(req.params.id),
         );
         ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
+        ensure(
+          !cls.parentClassId,
+          409,
+          "PRACTICUM_CLASS_CANNOT_BE_CLONED_ALONE",
+        );
+        ensure(cls.status !== "ARCHIVED", 423, "CLASS_ARCHIVED");
         ensure(cls.course.status !== "ARCHIVED", 423, "CLASS_ARCHIVED");
         const data = z
           .object({ name: title, academicYear: title })
@@ -2273,6 +2602,60 @@ export function registerLearning(app: Express) {
             });
           }
         }
+        let practicumCopy: any = null;
+        const sourcePracticum = await tx.courseClass.findUnique({
+          where: { parentClassId: cls.id },
+          select: {
+            id: true,
+            parentGradeCategoryId: true,
+          },
+        });
+        if (sourcePracticum) {
+          const assistantIds = cls.instructors
+            .filter((item: any) => isAssistantClassAssignment(item, item.user))
+            .map((item: any) => item.userId);
+          practicumCopy = await tx.courseClass.create({
+            data: {
+              parentClassId: copy.id,
+              parentGradeCategoryId: sourcePracticum.parentGradeCategoryId
+                ? (categoryMap.get(sourcePracticum.parentGradeCategoryId) ??
+                  null)
+                : null,
+              courseId: copy.courseId,
+              name: `Praktikum ${copy.name}`,
+              academicYear: copy.academicYear,
+              status: "DRAFT",
+              gradeScaleVersion: settings.defaultGradeScaleVersion,
+              instructors: {
+                create: assistantIds.map((userId: string) => ({
+                  userId,
+                  role: "ASSISTANT",
+                  isPrimary: false,
+                })),
+              },
+            },
+            select: {
+              id: true,
+              slug: true,
+              name: true,
+              parentGradeCategoryId: true,
+            },
+          });
+          await cloneClassContents(tx, sourcePracticum.id, practicumCopy.id);
+          await audit(
+            tx,
+            req.context,
+            "CLONE_PRACTICUM_CLASS",
+            "CLASS",
+            practicumCopy.id,
+            practicumCopy.id,
+            { sourceClassId: sourcePracticum.id, parentClassId: cls.id },
+            {
+              parentClassId: copy.id,
+              parentGradeCategoryId: practicumCopy.parentGradeCategoryId,
+            },
+          );
+        }
         await audit(
           tx,
           req.context,
@@ -2283,7 +2666,14 @@ export function registerLearning(app: Express) {
           { sourceClassId: cls.id },
           copy,
         );
-        return { id: copy.id, path: classPath(copy) };
+        return {
+          id: copy.id,
+          path: classPath(copy),
+          practicumId: practicumCopy?.id ?? null,
+          practicumPath: practicumCopy
+            ? classPath({ ...practicumCopy, course: cls.course })
+            : null,
+        };
       }),
     ),
   );
@@ -2315,7 +2705,9 @@ export function registerLearning(app: Express) {
           .optional(),
         defaultGradeScaleVersion: z.string().trim().min(1).max(50).optional(),
         minAttendancePercentage: z.number().min(0).max(100).optional(),
-        customGradeScales: z.record(z.string(), gradeScalePolicySchema).optional(),
+        customGradeScales: z
+          .record(z.string(), gradeScalePolicySchema)
+          .optional(),
       })
       .parse(req.body);
     res.json(

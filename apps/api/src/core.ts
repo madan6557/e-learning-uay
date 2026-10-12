@@ -246,14 +246,14 @@ export const config = {
     );
     const hasUay = Boolean(
       (this.fileUrl || process.env.FILE_SERVICE_BASE_URL) &&
-        (this.fileKey ||
-          process.env.FILE_SERVICE_CLIENT_SECRET ||
-          process.env.FILE_SERVICE_CLIENT_ID ||
-          process.env.UAY_FILE_SERVICE_URL ||
-          process.env.FILE_SERVICE_BASE_URL ||
-          process.env.UAY_FILE_SERVICE_API_KEY ||
-          this.fileUrl.includes("/api/v1") ||
-          this.fileUrl.includes("file-service.uay.ac.id")),
+      (this.fileKey ||
+        process.env.FILE_SERVICE_CLIENT_SECRET ||
+        process.env.FILE_SERVICE_CLIENT_ID ||
+        process.env.UAY_FILE_SERVICE_URL ||
+        process.env.FILE_SERVICE_BASE_URL ||
+        process.env.UAY_FILE_SERVICE_API_KEY ||
+        this.fileUrl.includes("/api/v1") ||
+        this.fileUrl.includes("file-service.uay.ac.id")),
     );
 
     const driver = process.env.FILE_STORAGE_DRIVER?.toLowerCase().trim();
@@ -473,7 +473,10 @@ if (redis) {
     console.log("[Cache] Redis terhubung: menggunakan Redis cluster/server."),
   );
   redis.on("error", (err) =>
-    console.error("[Cache] Redis connection error (fallback ke in-memory):", err.message),
+    console.error(
+      "[Cache] Redis connection error (fallback ke in-memory):",
+      err.message,
+    ),
   );
 } else {
   console.log(
@@ -726,6 +729,19 @@ export async function mutate<T>(
 }
 export const canManageDepartment = (user: User, department: string) =>
   canManageDepartmentScope(user.role, user.departmentScopes, department);
+
+export function isAssistantClassAssignment(
+  assignment: { userId: string; isPrimary: boolean; role: string },
+  user: Pick<User, "id" | "role">,
+) {
+  return (
+    assignment.userId === user.id &&
+    (assignment.role === "ASSISTANT" ||
+      user.role === "ASSISTANT" ||
+      (!assignment.isPrimary && user.role === "STUDENT"))
+  );
+}
+
 export async function classAccess(
   tx: Prisma.TransactionClient,
   user: User,
@@ -753,52 +769,113 @@ export async function classAccess(
           },
         },
       },
+      parentClass: {
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          academicYear: true,
+          status: true,
+          instructors: {
+            select: { userId: true, isPrimary: true, role: true },
+          },
+        },
+      },
+      practicumClass: {
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          status: true,
+          parentGradeCategoryId: true,
+        },
+      },
       enrollments: { where: { userId: user.id } },
     },
   });
   ensure(item, 404, "NOT_FOUND");
-  const isClassInstructor = item.instructors.some((i) => i.userId === user.id);
+  const assignment = item.instructors.find((i) => i.userId === user.id);
+  const isAssignedAssistant = Boolean(
+    assignment && isAssistantClassAssignment(assignment, user),
+  );
+  const isAssistantOnParent = !item.parentClassId && isAssignedAssistant;
+  const isAssistantOnPracticum = Boolean(
+    item.parentClassId && isAssignedAssistant,
+  );
+  const isInstructorOnClass = Boolean(assignment && !isAssignedAssistant);
+  const isClassInstructor = Boolean(assignment);
+  const isInstructorOfParentPracticum = Boolean(
+    item.parentClassId &&
+    item.parentClass?.instructors.some(
+      (instructor) =>
+        instructor.userId === user.id &&
+        !isAssistantClassAssignment(instructor, user),
+    ),
+  );
+  const canMonitor = isInstructorOfParentPracticum;
   const manage =
     canManageDepartment(user, item.course.departmentCode) ||
-    ((user.role === "INSTRUCTOR" || user.role === "ASSISTANT" || isClassInstructor) &&
-      isClassInstructor);
+    (isInstructorOnClass && user.role === "INSTRUCTOR" && !canMonitor) ||
+    (isAssistantOnPracticum && !canMonitor);
   const activeEnrollment = item.enrollments.find((e) => e.isActive);
   const inactiveEnrollment = item.enrollments.find((e) => !e.isActive);
   const enrolled = Boolean(activeEnrollment);
   const isInactiveParticipant =
-    !manage && !enrolled && Boolean(inactiveEnrollment);
+    !manage &&
+    !canMonitor &&
+    !isAssistantOnParent &&
+    !enrolled &&
+    Boolean(inactiveEnrollment);
 
   if (isInactiveParticipant) {
     ensure(!write, 403, "PARTICIPATION_DISABLED");
-    return { ...item, canManage: false, isInactiveParticipant: true };
+    return {
+      ...item,
+      canManage: false,
+      canMonitor: false,
+      isAssignedAssistant: false,
+      isInactiveParticipant: true,
+    };
   }
   ensure(
     manage ||
+      canMonitor ||
+      isAssistantOnParent ||
       (enrolled && item.status !== "DRAFT" && item.course.status !== "DRAFT"),
     403,
     "CLASS_ACCESS_DENIED",
   );
   if (write) {
     const isDeptAdmin = canManageDepartment(user, item.course.departmentCode);
+    void administrativeWrite;
     ensure(
-      user.role === "INSTRUCTOR" ||
-        user.role === "ASSISTANT" ||
-        isClassInstructor ||
-        isDeptAdmin ||
-        (administrativeWrite &&
-          hasPermission(user.role, "MANAGE_ALL_CLASSES")) ||
-        (studentWrite && user.role === "STUDENT"),
+      isDeptAdmin ||
+        manage ||
+        (studentWrite &&
+          user.role === "STUDENT" &&
+          enrolled &&
+          !isAssignedAssistant),
       403,
-      "CLASS_READ_ONLY",
+      "WRITE_ACCESS_DENIED",
     );
-    ensure(manage || (studentWrite && enrolled), 403, "WRITE_ACCESS_DENIED");
     ensure(
       item.status !== "ARCHIVED" && item.course.status !== "ARCHIVED",
       423,
       "CLASS_ARCHIVED",
     );
+    ensure(
+      !item.parentClass || item.parentClass.status !== "ARCHIVED",
+      423,
+      "PARENT_CLASS_ARCHIVED",
+    );
   }
-  return { ...item, canManage: manage, isInactiveParticipant: false };
+  return {
+    ...item,
+    canManage: manage,
+    canMonitor,
+    isAssignedAssistant,
+    isInactiveParticipant: false,
+  };
 }
 export function available(
   item: {

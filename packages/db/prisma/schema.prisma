@@ -193,6 +193,11 @@ model CourseClass {
   id                String       @id @default(uuid()) @map("class_id")
   courseId          String       @map("course_id")
   course            Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  parentClassId          String?         @unique @map("parent_class_id")
+  parentClass            CourseClass?    @relation("ClassPracticum", fields: [parentClassId], references: [id], onDelete: Cascade)
+  practicumClass         CourseClass?    @relation("ClassPracticum")
+  parentGradeCategoryId  String?         @map("parent_grade_category_id")
+  parentGradeCategory    GradeCategory?  @relation("PracticumGradeCategory", fields: [parentGradeCategoryId], references: [id], onDelete: SetNull)
   name              String       @map("name")
   academicYear      String       @map("academic_year")
   enrollmentKeyHash String?      @map("enrollment_key_hash")
@@ -385,6 +390,7 @@ model GradeCategory {
 
   quizzes     Quiz[]
   assignments Assignment[]
+  practicumClasses CourseClass[] @relation("PracticumGradeCategory")
 
   @@index([classId, order])
   @@map("grade_categories")

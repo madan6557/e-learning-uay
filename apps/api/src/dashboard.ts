@@ -5,6 +5,9 @@ type DashboardClass = {
   id: string;
   course: { departmentCode: string };
   instructors: { userId: string }[];
+  canManage?: boolean;
+  canMonitor?: boolean;
+  isAssignedAssistant?: boolean;
 };
 
 // Load only dashboard fields, in batches across the already-authorized classes.
@@ -19,8 +22,9 @@ export async function dashboardClasses<T extends DashboardClass>(
     classes
       .filter(
         (c) =>
-          canManageDepartment(user, c.course.departmentCode) ||
-          c.instructors.some((i) => i.userId === user.id),
+          Boolean(c.canManage) ||
+          Boolean(c.canMonitor) ||
+          canManageDepartment(user, c.course.departmentCode),
       )
       .map((c) => c.id),
   );
@@ -141,23 +145,27 @@ export async function dashboardClasses<T extends DashboardClass>(
   );
   const quizCounts = new Map(quizzes.map((q) => [q.quizId, q._count]));
   return classes.map((cls) => {
-    const canManage = managed.has(cls.id);
+    const canManage =
+      Boolean(cls.canManage) ||
+      canManageDepartment(user, cls.course.departmentCode);
+    const canViewAll = managed.has(cls.id);
     const isInactiveParticipant =
-      !canManage &&
+      !canViewAll &&
+      !cls.isAssignedAssistant &&
       (Boolean((cls as any).isInactiveParticipant) ||
         (cls as any).enrollments?.some((e: any) => !e.isActive));
     const sections = isInactiveParticipant
       ? []
       : (byClass.get(cls.id) ?? [])
-          .filter((s) => canManage || visible(s))
+          .filter((s) => canViewAll || visible(s))
           .map((s) => ({
             id: s.id,
             resources: s.resources
-              .filter((r) => canManage || visible(r))
+              .filter((r) => canViewAll || visible(r))
               .map(({ id, resourceType }) => ({ id, resourceType })),
-            assignments: s.assignments.filter((a) => canManage || a.isVisible),
+            assignments: s.assignments.filter((a) => canViewAll || a.isVisible),
             quizzes: s.quizzes.filter(
-              (q) => canManage || (q.isVisible && q.status === "PUBLISHED"),
+              (q) => canViewAll || (q.isVisible && q.status === "PUBLISHED"),
             ),
           }));
     const ids = sections.flatMap((s) => s.resources.map((r) => r.id));
@@ -175,7 +183,7 @@ export async function dashboardClasses<T extends DashboardClass>(
             downloads: collect(downloadsById),
             text: collect(textById),
           },
-      gradingQueue: canManage
+      gradingQueue: canViewAll
         ? sections.flatMap((s) => [
             ...s.assignments.flatMap((a) =>
               assignmentCounts.has(a.id)

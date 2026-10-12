@@ -179,12 +179,15 @@ export function Attendance({
   classId,
   writable,
   canManage,
+  canMonitor = false,
 }: {
   classId: string;
   writable: boolean;
   canManage: boolean;
+  canMonitor?: boolean;
   user: any;
 }) {
+  const canViewAll = canManage || canMonitor;
   const [activeTab, setActiveTab] = useState<"sessions" | "recap">("sessions");
   const sessionsApi = useApi<any[]>(`/course-classes/${classId}/attendance`);
   const [modal, setModal] = useState<
@@ -208,32 +211,26 @@ export function Attendance({
 
   // Cari sesi aktif yang sedang dibuka untuk notifikasi mahasiswa
   const activeOpenSession = useMemo(() => {
-    if (canManage) return null;
+    if (canViewAll) return null;
     return sessions.find(
       (s) => s.isOpen && s.allowSelfCheckIn && s.myRecord?.status !== "PRESENT",
     );
-  }, [sessions, canManage]);
+  }, [sessions, canViewAll]);
 
   if (sessionsApi.loading && !sessionsApi.data) return <Loading />;
   if (sessionsApi.error) return <Notice error={sessionsApi.error} />;
 
   return (
-    <div
-      className="attendance-view"
-      style={{ paddingBottom: 40 }}
-    >
-      {message && (
-        <Notice onClose={() => setMessage(null)}>
-          {message}
-        </Notice>
-      )}
+    <div className="attendance-view" style={{ paddingBottom: 40 }}>
+      {message && <Notice onClose={() => setMessage(null)}>{message}</Notice>}
 
       {/* Banner Notifikasi Presensi Aktif untuk Mahasiswa */}
       {activeOpenSession && (
         <div
           className="active-attendance-banner"
           style={{
-            background: "linear-gradient(135deg, var(--adaptive-info-fill, #0284c7) 0%, var(--adaptive-emphasis-background, #0369a1) 100%)",
+            background:
+              "linear-gradient(135deg, var(--adaptive-info-fill, #0284c7) 0%, var(--adaptive-emphasis-background, #0369a1) 100%)",
             color: "#ffffff",
             padding: "20px 24px",
             borderRadius: 12,
@@ -354,13 +351,13 @@ export function Attendance({
               fontSize: "0.9rem",
             }}
           >
-            {canManage
+            {canViewAll
               ? "Kelola kehadiran mahasiswa tatap muka per pertemuan dan pantau rekapitulasi kelayakan ujian."
               : "Riwayat status kehadiran dan pengisian presensi mandiri perkuliahan."}
           </p>
         </div>
 
-        {canManage && (
+        {canViewAll && (
           <div className="toolbar" style={{ flexWrap: "wrap", gap: 8 }}>
             <div
               role="tablist"
@@ -533,7 +530,8 @@ export function Attendance({
                           style={{
                             background: "var(--adaptive-success-soft, #ecfdf5)",
                             color: "var(--adaptive-success-text, #15803d)",
-                            border: "1px solid var(--adaptive-success-border, #bbf7d0)",
+                            border:
+                              "1px solid var(--adaptive-success-border, #bbf7d0)",
                             fontSize: "0.72rem",
                             fontWeight: 700,
                             padding: "2px 8px",
@@ -548,7 +546,8 @@ export function Attendance({
                               width: 6,
                               height: 6,
                               borderRadius: "50%",
-                              background: "var(--adaptive-success-fill, #22c55e)",
+                              background:
+                                "var(--adaptive-success-fill, #22c55e)",
                             }}
                           />
                           Sesi Dibuka
@@ -596,7 +595,8 @@ export function Attendance({
                           style={{
                             background: "var(--adaptive-warning-soft, #fffbeb)",
                             color: "var(--adaptive-warning-text, #92400e)",
-                            border: "1px solid var(--adaptive-warning-border, #fde68a)",
+                            border:
+                              "1px solid var(--adaptive-warning-border, #fde68a)",
                             fontSize: "0.72rem",
                             fontWeight: 600,
                             padding: "2px 8px",
@@ -613,7 +613,8 @@ export function Attendance({
                           style={{
                             background: "var(--adaptive-success-soft, #f0fdf4)",
                             color: "var(--adaptive-success-text, #166534)",
-                            border: "1px solid var(--adaptive-success-border, #dcfce7)",
+                            border:
+                              "1px solid var(--adaptive-success-border, #dcfce7)",
                             fontSize: "0.72rem",
                             fontWeight: 600,
                             padding: "2px 8px",
@@ -653,7 +654,8 @@ export function Attendance({
                             fontSize: "0.78rem",
                             color: "var(--adaptive-success-text, #166534)",
                             background: "var(--adaptive-success-soft, #f0fdf4)",
-                            border: "1px solid var(--adaptive-success-border, #dcfce7)",
+                            border:
+                              "1px solid var(--adaptive-success-border, #dcfce7)",
                             padding: "2px 8px",
                             borderRadius: 6,
                             fontWeight: 500,
@@ -703,7 +705,7 @@ export function Attendance({
                     )}
 
                     {/* Stats Ringkas & Rapi untuk Dosen */}
-                    {canManage && s.stats && (
+                    {canViewAll && s.stats && (
                       <div
                         style={{
                           display: "inline-flex",
@@ -718,19 +720,44 @@ export function Attendance({
                           borderRadius: 8,
                         }}
                       >
-                        <span style={{ color: "var(--adaptive-success-text, #15803d)", fontWeight: 600 }}>
+                        <span
+                          style={{
+                            color: "var(--adaptive-success-text, #15803d)",
+                            fontWeight: 600,
+                          }}
+                        >
                           Hadir: {s.stats.presentCount}
                         </span>
-                        <span style={{ color: "var(--adaptive-warning-text, #b45309)", fontWeight: 500 }}>
+                        <span
+                          style={{
+                            color: "var(--adaptive-warning-text, #b45309)",
+                            fontWeight: 500,
+                          }}
+                        >
                           Izin: {s.stats.excusedCount}
                         </span>
-                        <span style={{ color: "var(--adaptive-info-text, #1d4ed8)", fontWeight: 500 }}>
+                        <span
+                          style={{
+                            color: "var(--adaptive-info-text, #1d4ed8)",
+                            fontWeight: 500,
+                          }}
+                        >
                           Sakit: {s.stats.sickCount}
                         </span>
-                        <span style={{ color: "var(--adaptive-violet-text, #7c3aed)", fontWeight: 500 }}>
+                        <span
+                          style={{
+                            color: "var(--adaptive-violet-text, #7c3aed)",
+                            fontWeight: 500,
+                          }}
+                        >
                           Terlambat: {s.stats.lateCount}
                         </span>
-                        <span style={{ color: "var(--adaptive-danger-text, #b91c1c)", fontWeight: 500 }}>
+                        <span
+                          style={{
+                            color: "var(--adaptive-danger-text, #b91c1c)",
+                            fontWeight: 500,
+                          }}
+                        >
                           Alpa: {s.stats.absentCount}
                         </span>
                         <span
@@ -746,7 +773,7 @@ export function Attendance({
                     )}
 
                     {/* Status untuk Mahasiswa */}
-                    {!canManage && (
+                    {!canViewAll && (
                       <div
                         style={{
                           marginTop: 8,
@@ -779,7 +806,7 @@ export function Attendance({
                             (Presensi pukul {clock(s.myRecord.checkedInAt)})
                           </span>
                         )}
-                        {!canManage && !s.allowSelfCheckIn && (
+                        {!canViewAll && !s.allowSelfCheckIn && (
                           <p className="muted">
                             Presensi mandiri tidak diaktifkan. Kehadiran dicatat
                             oleh dosen pengampu.
@@ -809,7 +836,7 @@ export function Attendance({
                       flexWrap: "wrap",
                     }}
                   >
-                    {canManage ? (
+                    {canViewAll ? (
                       <>
                         {/* Tombol Cepat Buka/Tutup Sesi Langsung */}
                         {writable && (
@@ -829,8 +856,12 @@ export function Attendance({
                               padding: "7px 12px",
                               borderRadius: 8,
                               cursor: "pointer",
-                              background: s.isOpen ? "var(--adaptive-danger-soft, #fee2e2)" : "var(--adaptive-success-soft, #f0fdf4)",
-                              color: s.isOpen ? "var(--adaptive-danger-text, #991b1b)" : "var(--adaptive-success-text, #166534)",
+                              background: s.isOpen
+                                ? "var(--adaptive-danger-soft, #fee2e2)"
+                                : "var(--adaptive-success-soft, #f0fdf4)",
+                              color: s.isOpen
+                                ? "var(--adaptive-danger-text, #991b1b)"
+                                : "var(--adaptive-success-text, #166534)",
                               border: `1px solid ${s.isOpen ? "var(--adaptive-danger-border, #fecaca)" : "var(--adaptive-success-border, #bbf7d0)"}`,
                               fontWeight: 600,
                             }}
@@ -1066,7 +1097,8 @@ export function Attendance({
               className="attendance-code-card"
               style={{
                 display: "inline-block",
-                background: "linear-gradient(135deg, var(--adaptive-info-soft, #f0f9ff) 0%, var(--adaptive-info-soft, #e0f2fe) 100%)",
+                background:
+                  "linear-gradient(135deg, var(--adaptive-info-soft, #f0f9ff) 0%, var(--adaptive-info-soft, #e0f2fe) 100%)",
                 border: "2px dashed var(--adaptive-info-border, #0284c7)",
                 borderRadius: 16,
                 marginBottom: 24,
@@ -1101,7 +1133,9 @@ export function Attendance({
                 type="button"
                 className="button"
                 style={{
-                  background: modal.session.isOpen ? "var(--adaptive-danger-fill, #ef4444)" : "var(--adaptive-success-fill, #10b981)",
+                  background: modal.session.isOpen
+                    ? "var(--adaptive-danger-fill, #ef4444)"
+                    : "var(--adaptive-success-fill, #10b981)",
                   color: "#ffffff",
                   display: "inline-flex",
                   alignItems: "center",
@@ -1189,7 +1223,8 @@ export function Attendance({
                   code,
                 });
                 setModal(null);
-                const msg = "Presensi berhasil dicatat! Status Anda kini Hadir.";
+                const msg =
+                  "Presensi berhasil dicatat! Status Anda kini Hadir.";
                 setMessage(msg);
                 notifyAction(msg);
                 sessionsApi.reload();
@@ -1302,7 +1337,8 @@ export function Attendance({
                       { code: "" },
                     );
                     setModal(null);
-                    const msg = "Presensi berhasil dicatat! Status Anda kini Hadir.";
+                    const msg =
+                      "Presensi berhasil dicatat! Status Anda kini Hadir.";
                     setMessage(msg);
                     notifyAction(msg);
                     sessionsApi.reload();
@@ -1766,7 +1802,9 @@ export function ScheduleSessionModal({
                   style={{
                     fontWeight: 700,
                     fontSize: "0.95rem",
-                    color: isOpen ? "var(--adaptive-success-text, #15803d)" : "var(--adaptive-text-muted, #64748b)",
+                    color: isOpen
+                      ? "var(--adaptive-success-text, #15803d)"
+                      : "var(--adaptive-text-muted, #64748b)",
                     marginTop: 2,
                   }}
                 >
@@ -1779,8 +1817,12 @@ export function ScheduleSessionModal({
                 type="button"
                 className="button"
                 style={{
-                  background: isOpen ? "var(--adaptive-danger-soft, #fee2e2)" : "var(--adaptive-success-soft, #dcfce7)",
-                  color: isOpen ? "var(--adaptive-danger-text, #991b1b)" : "var(--adaptive-success-text, #15803d)",
+                  background: isOpen
+                    ? "var(--adaptive-danger-soft, #fee2e2)"
+                    : "var(--adaptive-success-soft, #dcfce7)",
+                  color: isOpen
+                    ? "var(--adaptive-danger-text, #991b1b)"
+                    : "var(--adaptive-success-text, #15803d)",
                   border: `1px solid ${isOpen ? "var(--adaptive-danger-border, #fecaca)" : "var(--adaptive-success-border, #bbf7d0)"}`,
                   fontSize: "0.82rem",
                   padding: "6px 14px",
@@ -2161,7 +2203,10 @@ function ManualAttendanceModal({
             }}
             onClick={markAllPresent}
           >
-            <CheckCircle2 size={16} style={{ color: "var(--adaptive-success-text, #10b981)" }} />
+            <CheckCircle2
+              size={16}
+              style={{ color: "var(--adaptive-success-text, #10b981)" }}
+            />
             <span>Tandai Semua Hadir</span>
           </button>
         )}
@@ -2222,8 +2267,12 @@ function ManualAttendanceModal({
                               fontSize: "0.75rem",
                               fontWeight: isSelected ? 700 : 500,
                               cursor: "pointer",
-                              background: isSelected ? conf.color : "var(--adaptive-surface, #f1f5f9)",
-                              color: isSelected ? "var(--primary-foreground, #ffffff)" : "var(--adaptive-text, #475569)",
+                              background: isSelected
+                                ? conf.color
+                                : "var(--adaptive-surface, #f1f5f9)",
+                              color: isSelected
+                                ? "var(--primary-foreground, #ffffff)"
+                                : "var(--adaptive-text, #475569)",
                               transition: "all 0.1s ease",
                             }}
                           >
@@ -2396,7 +2445,8 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
                       NIM: {item.user.identifierValue}
                     </small>
                   </td>
-                  <td data-label="Hadir"
+                  <td
+                    data-label="Hadir"
                     style={{
                       textAlign: "center",
                       color: "var(--adaptive-success-text, #10b981)",
@@ -2405,7 +2455,8 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
                   >
                     {item.presentCount}
                   </td>
-                  <td data-label="Izin"
+                  <td
+                    data-label="Izin"
                     style={{
                       textAlign: "center",
                       color: "var(--adaptive-warning-text, #f59e0b)",
@@ -2414,7 +2465,8 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
                   >
                     {item.excusedCount}
                   </td>
-                  <td data-label="Sakit"
+                  <td
+                    data-label="Sakit"
                     style={{
                       textAlign: "center",
                       color: "var(--adaptive-info-text, #3b82f6)",
@@ -2423,7 +2475,8 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
                   >
                     {item.sickCount}
                   </td>
-                  <td data-label="Alpa"
+                  <td
+                    data-label="Alpa"
                     style={{
                       textAlign: "center",
                       color: "var(--adaptive-danger-text, #ef4444)",
@@ -2432,7 +2485,8 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
                   >
                     {item.absentCount}
                   </td>
-                  <td data-label="Terlambat"
+                  <td
+                    data-label="Terlambat"
                     style={{
                       textAlign: "center",
                       color: "var(--adaptive-violet-text, #8b5cf6)",
@@ -2441,10 +2495,16 @@ function AttendanceRecapTable({ classId }: { classId: string }) {
                   >
                     {item.lateCount}
                   </td>
-                  <td data-label="Kehadiran" style={{ textAlign: "center", fontWeight: 700 }}>
+                  <td
+                    data-label="Kehadiran"
+                    style={{ textAlign: "center", fontWeight: 700 }}
+                  >
                     {item.percentage}%
                   </td>
-                  <td data-label="Kelayakan ujian" style={{ textAlign: "center" }}>
+                  <td
+                    data-label="Kelayakan ujian"
+                    style={{ textAlign: "center" }}
+                  >
                     {item.isEligibleForExam ? (
                       <span
                         style={{

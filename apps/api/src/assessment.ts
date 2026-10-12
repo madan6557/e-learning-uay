@@ -286,7 +286,7 @@ export async function finalizeAttempt(
 export function registerAssessment(app: Express) {
   app.get("/api/v1/course-classes/:id/question-banks", async (req, res) => {
     const cls = await classAccess(db, req.context.user, String(req.params.id));
-    ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
+    ensure(cls.canManage || cls.canMonitor, 403, "WRITE_ACCESS_DENIED");
     res.json(
       await db.questionBank.findMany({
         where: { courseId: cls.courseId },
@@ -305,6 +305,7 @@ export function registerAssessment(app: Express) {
           String(req.params.id),
           true,
         );
+        ensure(!cls.parentClassId, 409, "COURSE_QUESTION_BANK_SHARED");
         const data = z
           .object({
             title,
@@ -351,6 +352,7 @@ export function registerAssessment(app: Express) {
             String(req.params.id),
             true,
           );
+          ensure(!cls.parentClassId, 409, "COURSE_QUESTION_BANK_SHARED");
           const bank = await tx.questionBank.findUnique({
             where: { id: String(req.params.bankId) },
           });
@@ -510,14 +512,15 @@ export function registerAssessment(app: Express) {
     });
     ensure(quiz, 404, "NOT_FOUND");
     const cls = await itemAccess(db, req.context.user, quiz.sectionId);
-    if (!cls.canManage) {
+    const canViewAll = cls.canManage || cls.canMonitor;
+    if (!canViewAll) {
       ensure(quiz.status === "PUBLISHED", 403, "CONTENT_HIDDEN");
       available(quiz);
     }
     const attempts = await db.quizAttempt.findMany({
       where: {
         quizId: quiz.id,
-        ...(!cls.canManage ? { userId: req.context.user.id } : {}),
+        ...(!canViewAll ? { userId: req.context.user.id } : {}),
       },
       include: {
         user: { select: { name: true, identifierValue: true } },
@@ -525,7 +528,7 @@ export function registerAssessment(app: Express) {
       },
       orderBy: { startedAt: "desc" },
     });
-    const finalGrade = !cls.canManage
+    const finalGrade = !canViewAll
       ? await db.finalGradeRecord.findUnique({
           where: {
             classId_userId: { classId: cls.id, userId: req.context.user.id },
@@ -547,9 +550,10 @@ export function registerAssessment(app: Express) {
 
     res.json({
       ...quiz,
-      questions: cls.canManage ? quiz.questions : undefined,
-      attempts: attempts.map((a) => presentAttempt(a, cls.canManage)),
+      questions: canViewAll ? quiz.questions : undefined,
+      attempts: attempts.map((a) => presentAttempt(a, canViewAll)),
       canManage: cls.canManage,
+      canMonitor: cls.canMonitor,
       classId: cls.id,
       classPath: classPath(cls),
       path: contentPath(cls, "quizzes", quiz, []),
@@ -576,7 +580,7 @@ export function registerAssessment(app: Express) {
           true,
           true,
         );
-        ensure(!cls.canManage, 403, "STUDENT_REQUIRED");
+        ensure(!cls.canManage && !cls.canMonitor, 403, "STUDENT_REQUIRED");
         ensure(quiz.status === "PUBLISHED", 403, "CONTENT_HIDDEN");
         available(quiz);
         const finalGrade = await tx.finalGradeRecord.findUnique({
@@ -724,7 +728,9 @@ export function registerAssessment(app: Express) {
           ensure(
             req.context.user.role === "INSTRUCTOR" ||
               req.context.user.role === "ASSISTANT" ||
-              cls.instructors.some((i: any) => i.userId === req.context.user.id),
+              cls.instructors.some(
+                (i: any) => i.userId === req.context.user.id,
+              ),
             403,
             "ONLY_INSTRUCTOR_CAN_GRADE",
           );
@@ -921,7 +927,8 @@ export function registerAssessment(app: Express) {
         let publishedCount = 0;
         const newlyPublished: typeof attempts = [];
         for (const before of attempts) {
-          if (before.status !== "GRADED_COMPLETE" || before.publishedAt) continue;
+          if (before.status !== "GRADED_COMPLETE" || before.publishedAt)
+            continue;
           const after = await tx.quizAttempt.update({
             where: { id: before.id },
             data: { publishedAt: new Date() },
@@ -1086,18 +1093,19 @@ export function registerAssessment(app: Express) {
     });
     ensure(assignment, 404, "NOT_FOUND");
     const cls = await itemAccess(db, req.context.user, assignment.sectionId);
-    if (!cls.canManage) available(assignment);
+    const canViewAll = cls.canManage || cls.canMonitor;
+    if (!canViewAll) available(assignment);
     const submissions = await db.assignmentSubmission.findMany({
       where: {
         assignmentId: assignment.id,
-        ...(!cls.canManage ? { userId: req.context.user.id } : {}),
+        ...(!canViewAll ? { userId: req.context.user.id } : {}),
       },
       include: {
         user: { select: { name: true, identifierValue: true } },
       },
       orderBy: [{ submittedAt: "desc" }],
     });
-    const finalGrade = !cls.canManage
+    const finalGrade = !canViewAll
       ? await db.finalGradeRecord.findUnique({
           where: {
             classId_userId: { classId: cls.id, userId: req.context.user.id },
@@ -1121,8 +1129,9 @@ export function registerAssessment(app: Express) {
 
     res.json({
       ...assignment,
-      submissions: submissions.map((s) => presentSubmission(s, cls.canManage)),
+      submissions: submissions.map((s) => presentSubmission(s, canViewAll)),
       canManage: cls.canManage,
+      canMonitor: cls.canMonitor,
       classId: cls.id,
       classPath: classPath(cls),
       path: contentPath(cls, "assignments", assignment, []),
@@ -1149,13 +1158,23 @@ export function registerAssessment(app: Express) {
           true,
           true,
         );
-        ensure(cls.canManage || req.context.user.role === "STUDENT", 403, "STUDENT_REQUIRED");
+        ensure(
+          cls.canManage || req.context.user.role === "STUDENT",
+          403,
+          "STUDENT_REQUIRED",
+        );
         if (!cls.canManage) available(assignment);
         const now = new Date();
         const late = !!assignment.deadline && now > assignment.deadline;
-        ensure(cls.canManage || !late || assignment.allowLate, 403, "DEADLINE_PASSED");
         ensure(
-          cls.canManage || !assignment.cutoffDate || now <= assignment.cutoffDate,
+          cls.canManage || !late || assignment.allowLate,
+          403,
+          "DEADLINE_PASSED",
+        );
+        ensure(
+          cls.canManage ||
+            !assignment.cutoffDate ||
+            now <= assignment.cutoffDate,
           403,
           "CUTOFF_PASSED",
         );

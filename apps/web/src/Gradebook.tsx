@@ -41,6 +41,7 @@ import {
 } from "../../../packages/shared/src/domain";
 import { parseCsv } from "./csv";
 import type { FormProps } from "./components/ui/Form";
+import { classPath } from "./router";
 export { parseCsv };
 
 export function GradebookEditor({
@@ -143,11 +144,13 @@ async function exportSheet(name: string, headers: string[], rows: unknown[][]) {
 function StudentGradeReviewModal({
   classId,
   userId,
+  writable,
   onClose,
   onSaved,
 }: {
   classId: string;
   userId: string;
+  writable: boolean;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -294,10 +297,16 @@ function StudentGradeReviewModal({
           }}
         >
           Berikut adalah rincian aktivitas capaian mahasiswa per bagian bobot
-          penilaian. Hasil kalkulasi sistem disajikan sebagai{" "}
-          <strong>rekomendasi/saran</strong>. Anda dapat mengecek dan mengoreksi
-          nilai section sesuai evaluasi akademik Anda sebelum menekan tombol
-          simpan draf.
+          penilaian.{" "}
+          {writable ? (
+            <>
+              Hasil kalkulasi sistem disajikan sebagai{" "}
+              <strong>rekomendasi/saran</strong>. Anda dapat meninjau dan
+              mengoreksi nilai sebelum menyimpan draf.
+            </>
+          ) : (
+            "Tampilan ini hanya-baca untuk pemantauan dosen."
+          )}
         </p>
 
         <div
@@ -341,7 +350,8 @@ function StudentGradeReviewModal({
                     </h3>
                     <span
                       style={{
-                        background: "var(--adaptive-info-soft, rgba(2, 132, 199, 0.1))",
+                        background:
+                          "var(--adaptive-info-soft, rgba(2, 132, 199, 0.1))",
                         color: "var(--adaptive-info-text, #0284c7)",
                         fontWeight: 700,
                         fontSize: "0.75rem",
@@ -412,7 +422,11 @@ function StudentGradeReviewModal({
                   >
                     <table style={{ margin: 0, fontSize: "0.82rem" }}>
                       <thead>
-                        <tr style={{ background: "var(--adaptive-surface, #f1f5f9)" }}>
+                        <tr
+                          style={{
+                            background: "var(--adaptive-surface, #f1f5f9)",
+                          }}
+                        >
                           <th style={{ padding: "6px 10px" }}>Aktivitas</th>
                           <th
                             style={{ padding: "6px 10px", textAlign: "center" }}
@@ -434,7 +448,10 @@ function StudentGradeReviewModal({
                       <tbody>
                         {cat.activities.map((act: any, idx: number) => (
                           <tr key={act.id || idx}>
-                            <td className="record-title" style={{ padding: "6px 10px" }}>
+                            <td
+                              className="record-title"
+                              style={{ padding: "6px 10px" }}
+                            >
                               <strong>{act.title}</strong>
                               <small
                                 style={{
@@ -523,16 +540,20 @@ function StudentGradeReviewModal({
                     <label style={{ fontSize: "0.85rem", fontWeight: 600 }}>
                       Nilai Akhir Bagian ({cat.name}):
                     </label>
-                    <GradeScoreInput
-                      ariaLabel={`Nilai ${cat.name}`}
-                      value={currentVal}
-                      onChange={(val) =>
-                        setEditedScores((prev) => ({
-                          ...prev,
-                          [cat.categoryId]: val,
-                        }))
-                      }
-                    />
+                    {writable ? (
+                      <GradeScoreInput
+                        ariaLabel={`Nilai ${cat.name}`}
+                        value={currentVal}
+                        onChange={(val) =>
+                          setEditedScores((prev) => ({
+                            ...prev,
+                            [cat.categoryId]: val,
+                          }))
+                        }
+                      />
+                    ) : (
+                      <strong>{Number(currentVal).toFixed(2)}</strong>
+                    )}
                     <span
                       style={{
                         fontSize: "0.8rem",
@@ -543,7 +564,7 @@ function StudentGradeReviewModal({
                     </span>
                   </div>
 
-                  {cat.sourceType !== "MANUAL" && (
+                  {writable && cat.sourceType !== "MANUAL" && (
                     <button
                       type="button"
                       className="button secondary sm"
@@ -571,37 +592,40 @@ function StudentGradeReviewModal({
           })}
         </div>
 
-        <div>
-          <label
-            style={{
-              display: "block",
-              fontSize: "0.85rem",
-              fontWeight: 600,
-              marginBottom: 6,
-            }}
-          >
-            Alasan Perubahan / Catatan (Opsional)
-          </label>
-          <textarea
-            rows={2}
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="Catatan penyesuaian nilai atau hasil evaluasi..."
-            style={{
-              width: "100%",
-              fontSize: "0.85rem",
-              padding: "10px 14px",
-              borderRadius: 8,
-              border: "1px solid var(--border, #cbd5e1)",
-            }}
-          />
-        </div>
+        {writable && (
+          <div>
+            <label
+              style={{
+                display: "block",
+                fontSize: "0.85rem",
+                fontWeight: 600,
+                marginBottom: 6,
+              }}
+            >
+              Alasan Perubahan / Catatan (Opsional)
+            </label>
+            <textarea
+              rows={2}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Catatan penyesuaian nilai atau hasil evaluasi..."
+              style={{
+                width: "100%",
+                fontSize: "0.85rem",
+                padding: "10px 14px",
+                borderRadius: 8,
+                border: "1px solid var(--border, #cbd5e1)",
+              }}
+            />
+          </div>
+        )}
 
         <div
           style={{
             position: "sticky",
             bottom: -28,
-            background: "var(--adaptive-surface-glass, rgba(255, 255, 255, 0.95))",
+            background:
+              "var(--adaptive-surface-glass, rgba(255, 255, 255, 0.95))",
             backdropFilter: "blur(8px)",
             padding: "16px 0 8px 0",
             borderTop: "1px solid var(--border, #e2e8f0)",
@@ -620,14 +644,16 @@ function StudentGradeReviewModal({
           >
             Batal
           </button>
-          <button
-            type="button"
-            className="button primary"
-            onClick={handleSave}
-            disabled={saving}
-          >
-            {saving ? "Menyimpan..." : "Simpan ke Draf"}
-          </button>
+          {writable && (
+            <button
+              type="button"
+              className="button primary"
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving ? "Menyimpan..." : "Simpan ke Draf"}
+            </button>
+          )}
         </div>
       </div>
     </Modal>
@@ -638,12 +664,14 @@ export function PhoneGradeRecord({
   row,
   changes,
   writable,
+  canReview = writable,
   onScoreChange,
   onReview,
 }: {
   row: any;
   changes: Record<string, { score: string }>;
   writable: boolean;
+  canReview?: boolean;
   onScoreChange: (userId: string, category: any, score: string) => void;
   onReview: () => void;
 }) {
@@ -664,7 +692,7 @@ export function PhoneGradeRecord({
         {row.pending.length > 0 && (
           <p className="callout warning">{t.pendingGrading}</p>
         )}
-        {writable && (
+        {canReview && (
           <button
             type="button"
             className="secondary"
@@ -729,6 +757,8 @@ export function Gradebook({
     [gradeScaleVersion, setGradeScaleVersion] = useState("2026.1"),
     [autoAssignEnabled, setAutoAssignEnabled] = useState(true),
     [autoAssigning, setAutoAssigning] = useState(false);
+  const [practicumCategoryId, setPracticumCategoryId] = useState("");
+  const [savingPracticumMapping, setSavingPracticumMapping] = useState(false);
   const [changes, setChanges] = useState<
     Record<string, { userId: string; categoryId: string; score: string }>
   >({});
@@ -751,6 +781,15 @@ export function Gradebook({
     }
   }, [data?.class?.gradeScaleVersion]);
 
+  useEffect(() => {
+    setPracticumCategoryId(
+      data?.class?.practicumClass?.parentGradeCategoryId ?? "",
+    );
+  }, [
+    data?.class?.practicumClass?.id,
+    data?.class?.practicumClass?.parentGradeCategoryId,
+  ]);
+
   const pagination = usePagination(data?.rows ?? [], 25);
   const changeScore = (userId: string, category: any, score: string) => {
     const key = userId + ":" + category.categoryId;
@@ -765,7 +804,7 @@ export function Gradebook({
   if (info.loading && !data) return <Loading />;
   if (info.error) return <Notice error={info.error} />;
   if (!data) return null;
-  if (!data.canManage) {
+  if (!data.canManage && !data.canMonitor) {
     const record = data.record;
     return record ? (
       <div className="grade-result">
@@ -888,7 +927,8 @@ export function Gradebook({
                         }
                       }
                       if (!batchChanges.length) {
-                        const msg = "Tidak ada nilai kalkulasi otomatis yang tersedia untuk diterapkan.";
+                        const msg =
+                          "Tidak ada nilai kalkulasi otomatis yang tersedia untuk diterapkan.";
                         setMessage(msg);
                         notifyAction(msg);
                         return false;
@@ -917,6 +957,62 @@ export function Gradebook({
           )}
         </div>
       </div>
+      {data.canManage &&
+        writable &&
+        !data.class.parentClassId &&
+        data.class.practicumClass && (
+          <div className="card practicum-grade-mapping">
+            <strong>Nilai kelas praktikum</strong>
+            <p>
+              Nilai akhir praktikum hanya masuk ke rekap utama setelah
+              diterbitkan oleh asdos dan dipetakan ke kategori.
+            </p>
+            <div className="toolbar">
+              <select
+                aria-label="Kategori nilai praktikum"
+                value={practicumCategoryId}
+                onChange={(event) => setPracticumCategoryId(event.target.value)}
+              >
+                <option value="">Tidak dipetakan</option>
+                {data.categories
+                  .filter((category: any) => category.kind !== "PROGRESS")
+                  .map((category: any) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+              </select>
+              <Action
+                disabled={
+                  savingPracticumMapping ||
+                  practicumCategoryId ===
+                    (data.class.practicumClass.parentGradeCategoryId ?? "")
+                }
+                run={async () => {
+                  setSavingPracticumMapping(true);
+                  try {
+                    await api(
+                      `/course-classes/${classId}/practicum-grade-category`,
+                      "PUT",
+                      { categoryId: practicumCategoryId || null },
+                    );
+                    info.reload();
+                    notifyAction("Pemetaan nilai praktikum disimpan.");
+                  } finally {
+                    setSavingPracticumMapping(false);
+                  }
+                }}
+              >
+                Simpan pemetaan
+              </Action>
+              <a
+                href={`${classPath({ slug: data.class.practicumClass.slug })}/gradebook`}
+              >
+                Buka rincian praktikum
+              </a>
+            </div>
+          </div>
+        )}
       {message && <Notice onClose={() => setMessage("")}>{message}</Notice>}
       {user?.role === "DEPARTMENT_ADMIN" && (
         <div className="callout note">
@@ -1027,6 +1123,7 @@ export function Gradebook({
                 onReview={() =>
                   setModal({ kind: "student_review", userId: row.user.id })
                 }
+                canReview={Boolean(data.canManage || data.canMonitor)}
               />
             ))}
             {!data.rows.length && <Empty>{t.noParticipants}</Empty>}
@@ -1067,7 +1164,8 @@ export function Gradebook({
                         target.tagName === "TEXTAREA" ||
                         target.closest("button") ||
                         target.closest("input") ||
-                        target.closest("textarea")
+                        target.closest("textarea") ||
+                        target.closest("a")
                       ) {
                         return;
                       }
@@ -1088,7 +1186,7 @@ export function Gradebook({
                         }}
                       >
                         <strong>{r.user.name}</strong>
-                        {writable && (
+                        {(data.canManage || data.canMonitor) && (
                           <button
                             type="button"
                             className="secondary sm"
@@ -1101,7 +1199,8 @@ export function Gradebook({
                             }
                             style={{
                               fontSize: "0.72rem",
-                              background: "var(--adaptive-info-soft, rgba(2, 132, 199, 0.1))",
+                              background:
+                                "var(--adaptive-info-soft, rgba(2, 132, 199, 0.1))",
                               color: "var(--adaptive-info-text, #0284c7)",
                               padding: "1px 6px",
                               borderRadius: 4,
@@ -1134,6 +1233,25 @@ export function Gradebook({
                           />
                         ) : (
                           c.score.toFixed(2)
+                        )}
+                        {c.practicum && (
+                          <small className="block">
+                            Praktikum:{" "}
+                            {c.practicum.score == null
+                              ? "Belum terbit"
+                              : c.practicum.score.toFixed(2)}
+                            {c.practicum.score != null && (
+                              <>
+                                {" "}
+                                ·{" "}
+                                <a
+                                  href={`${classPath({ slug: c.practicum.slug })}/gradebook`}
+                                >
+                                  Lihat kelas praktikum
+                                </a>
+                              </>
+                            )}
+                          </small>
                         )}
                       </td>
                     ))}
@@ -1260,6 +1378,7 @@ export function Gradebook({
         <StudentGradeReviewModal
           classId={classId}
           userId={modal.userId}
+          writable={writable}
           onClose={() => setModal(null)}
           onSaved={() => {
             const msg = "Nilai draf berhasil disimpan.";
@@ -1419,7 +1538,8 @@ export function Gradebook({
                   margin: "8px 0 0",
                 }}
               >
-                Pilih preset untuk menerapkan standar UAY (30% Tugas, 35% UTS, 35% UAS) atau skema akademik lainnya.
+                Pilih preset untuk menerapkan standar UAY (30% Tugas, 35% UTS,
+                35% UAS) atau skema akademik lainnya.
               </p>
             </div>
 
@@ -1491,7 +1611,8 @@ export function Gradebook({
                             <span
                               style={{
                                 fontSize: "0.72rem",
-                                background: "var(--adaptive-info-fill, #0284c7)",
+                                background:
+                                  "var(--adaptive-info-fill, #0284c7)",
                                 color: "#fff",
                                 padding: "2px 6px",
                                 borderRadius: 4,
@@ -1624,8 +1745,8 @@ export function Gradebook({
               <div className="points-counter" style={{ margin: 0 }}>
                 <strong>
                   {t.weight}:{" "}
-                  {weights.reduce((s, c) => s + c.weightPercent, 0).toFixed(2)} /{" "}
-                  100%
+                  {weights.reduce((s, c) => s + c.weightPercent, 0).toFixed(2)}{" "}
+                  / 100%
                 </strong>
               </div>
             </div>
@@ -1662,7 +1783,8 @@ export function Gradebook({
                   onChange={(e) => setAutoAssignEnabled(e.target.checked)}
                 />
                 <span>
-                  Auto-assign seluruh tugas &amp; kuis ke kategori yang sesuai saat disimpan
+                  Auto-assign seluruh tugas &amp; kuis ke kategori yang sesuai
+                  saat disimpan
                 </span>
               </label>
               <button
@@ -1689,7 +1811,9 @@ export function Gradebook({
                 }}
               >
                 <Sparkles size={14} style={{ marginRight: 5 }} />
-                {autoAssigning ? "Memetakan..." : "Jalankan Auto-Assign Sekarang"}
+                {autoAssigning
+                  ? "Memetakan..."
+                  : "Jalankan Auto-Assign Sekarang"}
               </button>
             </div>
           </Form>
@@ -2104,11 +2228,7 @@ export function ImportPanel({
                 busyLabel="Menyimpan hasil impor…"
                 successMessage="Impor berhasil disimpan."
                 disabledReason="Pratinjau harus selesai dan semua masalah baris harus diperbaiki sebelum impor."
-                disabled={
-                  !review ||
-                  review.issues > 0 ||
-                  review.ready === 0
-                }
+                disabled={!review || review.issues > 0 || review.ready === 0}
                 run={async () => {
                   setCommitting(true);
                   try {

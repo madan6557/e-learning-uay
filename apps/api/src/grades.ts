@@ -71,6 +71,16 @@ export async function calculateGradebook(
         academicYear: true,
         gradeScaleVersion: true,
         gradeScalePolicy: true,
+        parentClassId: true,
+        parentGradeCategoryId: true,
+        practicumClass: {
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            parentGradeCategoryId: true,
+          },
+        },
       },
     }),
     tx.gradeCategory.findMany({
@@ -137,7 +147,7 @@ export async function calculateGradebook(
     }),
   ]);
 
-  const [textProgress, saved] = await Promise.all([
+  const [textProgress, saved, practicumGrades] = await Promise.all([
     tx.resourceProgress.findMany({
       where: {
         resourceItemId: { in: resources.map((r) => r.id) },
@@ -147,13 +157,25 @@ export async function calculateGradebook(
     tx.finalGradeRecord.findMany({
       where: { classId, ...(onlyUserId ? { userId: onlyUserId } : {}) },
     }),
+    cls?.practicumClass?.parentGradeCategoryId
+      ? tx.finalGradeRecord.findMany({
+          where: {
+            classId: cls.practicumClass.id,
+            publishedAt: { not: null },
+            ...(onlyUserId ? { userId: onlyUserId } : {}),
+          },
+          select: { userId: true, finalScore: true, publishedAt: true },
+        })
+      : Promise.resolve([]),
   ]);
 
   const systemSettings = await getAcademicSettings(tx);
   const policy = resolveGradeScalePolicy(
-    cls?.gradeScaleVersion ?? systemSettings.defaultGradeScaleVersion ?? "2026.1",
-    (systemSettings.customGradeScales as any),
-    (cls?.gradeScalePolicy as any),
+    cls?.gradeScaleVersion ??
+      systemSettings.defaultGradeScaleVersion ??
+      "2026.1",
+    systemSettings.customGradeScales as any,
+    cls?.gradeScalePolicy as any,
   );
 
   const now = new Date();
@@ -220,6 +242,11 @@ export async function calculateGradebook(
       const effectiveSource =
         category.sourceType ||
         (category.kind === "PROGRESS" ? "PROGRESS" : "MANUAL");
+      const hasPracticumMapping =
+        cls?.practicumClass?.parentGradeCategoryId === category.id;
+      const practicumRecord = hasPracticumMapping
+        ? practicumGrades.find((item) => item.userId === user.id)
+        : undefined;
 
       let suggestedScore = 0;
 
@@ -239,6 +266,13 @@ export async function calculateGradebook(
             : 100;
       } else {
         const values: { score: number; points: number }[] = [];
+        if (hasPracticumMapping) {
+          if (practicumRecord) {
+            values.push({ score: practicumRecord.finalScore, points: 100 });
+          } else {
+            missing.push(cls!.practicumClass!.name);
+          }
+        }
         const includeQuizzes =
           effectiveSource === "QUIZ" ||
           effectiveSource === "ASSIGNMENT_AND_QUIZ" ||
@@ -306,11 +340,7 @@ export async function calculateGradebook(
           }
         }
 
-        if (
-          !values.length &&
-          !override &&
-          category.weightPercent > 0
-        ) {
+        if (!values.length && !override && category.weightPercent > 0) {
           missing.push(category.name);
         }
 
@@ -353,6 +383,15 @@ export async function calculateGradebook(
           : category.kind === "PROGRESS"
             ? "PROGRESS"
             : "ASSESSMENT",
+        practicum: hasPracticumMapping
+          ? {
+              classId: cls!.practicumClass!.id,
+              slug: cls!.practicumClass!.slug,
+              name: cls!.practicumClass!.name,
+              score: practicumRecord?.finalScore ?? null,
+              publishedAt: practicumRecord?.publishedAt ?? null,
+            }
+          : null,
       };
     });
 
@@ -384,6 +423,8 @@ export async function calculateGradebook(
       academicYear: cls?.academicYear,
       gradeScaleVersion: cls?.gradeScaleVersion ?? "2026.1",
       gradeScalePolicy: cls?.gradeScalePolicy ?? null,
+      parentClassId: cls?.parentClassId ?? null,
+      practicumClass: cls?.practicumClass ?? null,
     },
     categories,
     rows,
@@ -471,12 +512,19 @@ export async function executeAutoAssign(
     }),
   ]);
 
-  const assignmentsPlan = autoAssignItems(categories, assignments, "ASSIGNMENT");
+  const assignmentsPlan = autoAssignItems(
+    categories,
+    assignments,
+    "ASSIGNMENT",
+  );
   const quizzesPlan = autoAssignItems(categories, quizzes, "QUIZ");
 
   let updatedAssignments = 0;
   for (const item of assignmentsPlan) {
-    if (item.targetCategoryId && item.targetCategoryId !== item.currentCategoryId) {
+    if (
+      item.targetCategoryId &&
+      item.targetCategoryId !== item.currentCategoryId
+    ) {
       await tx.assignment.update({
         where: { id: item.id },
         data: { gradeCategoryId: item.targetCategoryId },
@@ -487,7 +535,10 @@ export async function executeAutoAssign(
 
   let updatedQuizzes = 0;
   for (const item of quizzesPlan) {
-    if (item.targetCategoryId && item.targetCategoryId !== item.currentCategoryId) {
+    if (
+      item.targetCategoryId &&
+      item.targetCategoryId !== item.currentCategoryId
+    ) {
       await tx.quiz.update({
         where: { id: item.id },
         data: { gradeCategoryId: item.targetCategoryId },
@@ -517,7 +568,7 @@ export async function executeAutoAssign(
 export function registerGrades(app: Express) {
   app.get("/api/v1/course-classes/:id/gradebook", async (req, res) => {
     const cls = await classAccess(db, req.context.user, String(req.params.id));
-    if (!cls.canManage) {
+    if (!cls.canManage && !cls.canMonitor) {
       const record = await db.finalGradeRecord.findFirst({
         where: {
           classId: cls.id,
@@ -525,10 +576,14 @@ export function registerGrades(app: Express) {
           publishedAt: { not: null },
         },
       });
-      res.json({ canManage: false, record });
+      res.json({ canManage: false, canMonitor: false, record });
       return;
     }
-    res.json({ canManage: true, ...(await calculateGradebook(db, cls.id)) });
+    res.json({
+      canManage: cls.canManage,
+      canMonitor: cls.canMonitor,
+      ...(await calculateGradebook(db, cls.id)),
+    });
   });
   app.get("/api/v1/grade-scales", async (_req, res) => {
     const settings = await getAcademicSettings();
@@ -546,10 +601,14 @@ export function registerGrades(app: Express) {
   app.get(
     "/api/v1/course-classes/:id/students/:userId/grade-breakdown",
     async (req, res) => {
-      const cls = await classAccess(db, req.context.user, String(req.params.id));
+      const cls = await classAccess(
+        db,
+        req.context.user,
+        String(req.params.id),
+      );
       const targetUserId = String(req.params.userId);
       ensure(
-        cls.canManage || req.context.user.id === targetUserId,
+        cls.canManage || cls.canMonitor || req.context.user.id === targetUserId,
         403,
         "FORBIDDEN",
       );
@@ -595,8 +654,7 @@ export function registerGrades(app: Express) {
           cat.isMandatory ||
           ["uts", "uas"].includes(cat.name.trim().toLowerCase());
         const effectiveSource =
-          cat.sourceType ||
-          (cat.kind === "PROGRESS" ? "PROGRESS" : "MANUAL");
+          cat.sourceType || (cat.kind === "PROGRESS" ? "PROGRESS" : "MANUAL");
 
         const activities: any[] = [];
 
@@ -707,6 +765,21 @@ export function registerGrades(app: Express) {
             status: `${attPct}% Kehadiran`,
           });
         }
+        if (catScoreInfo?.practicum) {
+          activities.push({
+            id: catScoreInfo.practicum.classId,
+            title: catScoreInfo.practicum.name,
+            type: "PRACTICUM",
+            rawScore: catScoreInfo.practicum.score,
+            maxScore: 100,
+            normalizedScore: catScoreInfo.practicum.score ?? 0,
+            date: catScoreInfo.practicum.publishedAt,
+            status: catScoreInfo.practicum.publishedAt
+              ? "Nilai praktikum terbit"
+              : "Nilai praktikum belum diterbitkan",
+            classPath: `/classes/${catScoreInfo.practicum.slug}`,
+          });
+        }
 
         return {
           categoryId: cat.id,
@@ -750,7 +823,8 @@ export function registerGrades(app: Express) {
           true,
         );
         ensure(
-          req.context.user.role === "INSTRUCTOR",
+          (req.context.user.role === "INSTRUCTOR" && !cls.canMonitor) ||
+            (Boolean(cls.parentClassId) && cls.isAssignedAssistant),
           403,
           "ONLY_INSTRUCTOR_CAN_GRADE",
         );
@@ -857,7 +931,9 @@ export function registerGrades(app: Express) {
         }
         if (gradeScaleVersion) {
           const settings = await getAcademicSettings(tx);
-          const allPolicies = getAllGradeScalePolicies(settings.customGradeScales as any);
+          const allPolicies = getAllGradeScalePolicies(
+            settings.customGradeScales as any,
+          );
           if (allPolicies[gradeScaleVersion]) {
             await tx.courseClass.update({
               where: { id: cls.id },
@@ -903,7 +979,8 @@ export function registerGrades(app: Express) {
             true,
           );
           ensure(
-            req.context.user.role === "INSTRUCTOR",
+            (req.context.user.role === "INSTRUCTOR" && !cls.canMonitor) ||
+              (Boolean(cls.parentClassId) && cls.isAssignedAssistant),
             403,
             "ONLY_INSTRUCTOR_CAN_GRADE",
           );
@@ -990,7 +1067,8 @@ export function registerGrades(app: Express) {
               true,
             );
             ensure(
-              req.context.user.role === "INSTRUCTOR",
+              (req.context.user.role === "INSTRUCTOR" && !cls.canMonitor) ||
+                (Boolean(cls.parentClassId) && cls.isAssignedAssistant),
               403,
               "ONLY_INSTRUCTOR_CAN_GRADE",
             );
@@ -1071,14 +1149,19 @@ export function registerGrades(app: Express) {
             true,
           );
           ensure(
-            req.context.user.role === "INSTRUCTOR",
+            (req.context.user.role === "INSTRUCTOR" && !cls.canMonitor) ||
+              (Boolean(cls.parentClassId) && cls.isAssignedAssistant),
             403,
             "ONLY_INSTRUCTOR_CAN_GRADE",
           );
           const item = z.object({
             userId: z.string().uuid(),
             categoryId: z.string().uuid(),
-            score: z.number().min(0).max(100).transform((val) => clampGrade(val)),
+            score: z
+              .number()
+              .min(0)
+              .max(100)
+              .transform((val) => clampGrade(val)),
             reason: z.string().trim().min(5).max(2000).optional(),
           });
           const batch = req.path.endsWith("/batch");

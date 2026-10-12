@@ -84,7 +84,12 @@ type UserSearchResult = {
   name: string;
   identifierValue: string | null;
   role:
-    "SUPER_ADMIN" | "DEPARTMENT_ADMIN" | "RECTOR" | "INSTRUCTOR" | "ASSISTANT" | "STUDENT";
+    | "SUPER_ADMIN"
+    | "DEPARTMENT_ADMIN"
+    | "RECTOR"
+    | "INSTRUCTOR"
+    | "ASSISTANT"
+    | "STUDENT";
 };
 type CourseOption = {
   id: string;
@@ -196,18 +201,14 @@ export function Dashboard({
     [modal, setModal] = useState(false);
   const teacher = user.role === "INSTRUCTOR" || user.role === "ASSISTANT";
   if (classes.loading && !classes.data) return <Loading />;
-  const canCreateClass = [
-    "DEPARTMENT_ADMIN",
-    "INSTRUCTOR",
-    "ASSISTANT",
-  ].includes(
-    user.role,
-  );
+  const canCreateClass = ["DEPARTMENT_ADMIN", "INSTRUCTOR"].includes(user.role);
   const departments = [
-    ...new Set([
-      ...Object.keys(DEPARTMENT_NAMES),
-      ...(classes.data ?? []).map((c) => c.course.departmentCode as string),
-    ].filter(Boolean)),
+    ...new Set(
+      [
+        ...Object.keys(DEPARTMENT_NAMES),
+        ...(classes.data ?? []).map((c) => c.course.departmentCode as string),
+      ].filter(Boolean),
+    ),
   ].sort();
   const scopedClasses = (classes.data ?? []).filter(
     (c) =>
@@ -391,7 +392,8 @@ export function Dashboard({
                       color: "var(--success, #16a34a)",
                       fontSize: "0.82rem",
                       fontWeight: 600,
-                      background: "var(--adaptive-success-soft, rgba(22, 163, 74, 0.08))",
+                      background:
+                        "var(--adaptive-success-soft, rgba(22, 163, 74, 0.08))",
                       padding: "4px 10px",
                       borderRadius: 16,
                       whiteSpace: "nowrap",
@@ -579,8 +581,10 @@ export function Dashboard({
                   marginBottom: 16,
                   padding: "12px 18px",
                   borderRadius: 10,
-                  background: "var(--adaptive-warning-soft, rgba(245, 158, 11, 0.08))",
-                  border: "1px solid var(--adaptive-warning-border, rgba(245, 158, 11, 0.3))",
+                  background:
+                    "var(--adaptive-warning-soft, rgba(245, 158, 11, 0.08))",
+                  border:
+                    "1px solid var(--adaptive-warning-border, rgba(245, 158, 11, 0.3))",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
@@ -594,7 +598,8 @@ export function Dashboard({
                       width: 34,
                       height: 34,
                       borderRadius: "50%",
-                      background: "var(--adaptive-warning-soft, rgba(245, 158, 11, 0.15))",
+                      background:
+                        "var(--adaptive-warning-soft, rgba(245, 158, 11, 0.15))",
                       color: "var(--adaptive-warning-text, #d97706)",
                       display: "flex",
                       alignItems: "center",
@@ -605,7 +610,12 @@ export function Dashboard({
                     <AlertTriangle size={18} />
                   </span>
                   <div>
-                    <strong style={{ fontSize: "0.92rem", color: "var(--adaptive-warning-text, #92400e)" }}>
+                    <strong
+                      style={{
+                        fontSize: "0.92rem",
+                        color: "var(--adaptive-warning-text, #92400e)",
+                      }}
+                    >
                       Pengingat Batas Waktu Tugas ({urgentAssignments.length}{" "}
                       tugas mendekati deadline)
                     </strong>
@@ -681,7 +691,9 @@ export function Dashboard({
                       background: latestNotice.isImportant
                         ? "var(--adaptive-danger-soft, rgba(220, 38, 38, 0.12))"
                         : "var(--adaptive-info-soft, rgba(2, 132, 199, 0.12))",
-                      color: latestNotice.isImportant ? "var(--adaptive-danger-text, #dc2626)" : "var(--adaptive-info-text, #0284c7)",
+                      color: latestNotice.isImportant
+                        ? "var(--adaptive-danger-text, #dc2626)"
+                        : "var(--adaptive-info-text, #0284c7)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -1482,9 +1494,7 @@ export function ClassForm({
         onSubmit={async (f) => {
           if (!selected.length) {
             setError(
-              Error(
-                "Pilih minimal satu dosen pengampu untuk kelas baru ini.",
-              ),
+              Error("Pilih minimal satu dosen pengampu untuk kelas baru ini."),
             );
             return false;
           }
@@ -1576,7 +1586,8 @@ export function ClassForm({
               fontSize: "0.82rem",
             }}
           >
-            Kunci pendaftaran otomatis terisi 6 huruf kapital. Mahasiswa dapat menggunakan kunci ini untuk bergabung secara mandiri.
+            Kunci pendaftaran otomatis terisi 6 huruf kapital. Mahasiswa dapat
+            menggunakan kunci ini untuk bergabung secara mandiri.
           </small>
         </Field>
         <Field label={t.instructors}>
@@ -1618,7 +1629,11 @@ export function ClassForm({
             </div>
             {search.trim().length > 0 && search.trim().length < 2 && (
               <small
-                style={{ display: "block", marginTop: 4, color: "var(--adaptive-text-muted, #64748b)" }}
+                style={{
+                  display: "block",
+                  marginTop: 4,
+                  color: "var(--adaptive-text-muted, #64748b)",
+                }}
               >
                 Ketik minimal 2 karakter untuk mencari dosen...
               </small>
@@ -1689,12 +1704,14 @@ export function ClassForm({
                   gap: 6,
                   padding: "4px 10px",
                   borderRadius: 16,
-                  background: isInstructor && u.id === user?.id
-                    ? "var(--adaptive-success-soft, #dcfce7)"
-                    : "var(--adaptive-info-soft, #e0f2fe)",
-                  color: isInstructor && u.id === user?.id
-                    ? "var(--adaptive-success-text, #166534)"
-                    : "var(--adaptive-info-text, #0369a1)",
+                  background:
+                    isInstructor && u.id === user?.id
+                      ? "var(--adaptive-success-soft, #dcfce7)"
+                      : "var(--adaptive-info-soft, #e0f2fe)",
+                  color:
+                    isInstructor && u.id === user?.id
+                      ? "var(--adaptive-success-text, #166534)"
+                      : "var(--adaptive-info-text, #0369a1)",
                   fontSize: "0.85rem",
                   fontWeight: 500,
                 }}
@@ -1702,7 +1719,11 @@ export function ClassForm({
                 <span>
                   {u.name}{" "}
                   <small style={{ opacity: 0.85 }}>
-                    ({isInstructor && u.id === user?.id ? "Pengampu Utama" : "Kolaborator"})
+                    (
+                    {isInstructor && u.id === user?.id
+                      ? "Pengampu Utama"
+                      : "Kolaborator"}
+                    )
                   </small>
                 </span>
                 {!(isInstructor && u.id === user?.id) && (
@@ -2087,7 +2108,9 @@ export function AcademicGovernanceModal({
         {readOnly && (
           <p>Pengaturan global hanya dapat diubah oleh Super Admin.</p>
         )}
-        {saveError && <Notice error={saveError} onClose={() => setSaveError(null)} />}
+        {saveError && (
+          <Notice error={saveError} onClose={() => setSaveError(null)} />
+        )}
         <fieldset
           disabled={readOnly || saving}
           style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}
@@ -2177,8 +2200,12 @@ export function AcademicGovernanceModal({
                           display: "inline-flex",
                           alignItems: "center",
                           gap: 8,
-                          background: isActive ? "var(--adaptive-info-fill, #0284c7)" : "var(--adaptive-surface, #ffffff)",
-                          color: isActive ? "#ffffff" : "var(--adaptive-text, #1e293b)",
+                          background: isActive
+                            ? "var(--adaptive-info-fill, #0284c7)"
+                            : "var(--adaptive-surface, #ffffff)",
+                          color: isActive
+                            ? "#ffffff"
+                            : "var(--adaptive-text, #1e293b)",
                           border: isActive
                             ? "1px solid var(--adaptive-info-border, #0284c7)"
                             : "1px solid var(--adaptive-border, #cbd5e1)",
@@ -2442,9 +2469,7 @@ export function AcademicGovernanceModal({
                     step={1}
                     required
                     value={minAttendance}
-                    onChange={(e) =>
-                      setMinAttendance(Number(e.target.value))
-                    }
+                    onChange={(e) => setMinAttendance(Number(e.target.value))}
                     style={{ maxWidth: 160 }}
                   />
                 </Field>
@@ -2462,8 +2487,7 @@ export function AcademicGovernanceModal({
                   style={{
                     background: "var(--adaptive-surface, #f8fafc)",
                     padding: "10px 16px",
-                    borderBottom:
-                      "1px solid var(--adaptive-border, #e2e8f0)",
+                    borderBottom: "1px solid var(--adaptive-border, #e2e8f0)",
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
@@ -2520,148 +2544,134 @@ export function AcademicGovernanceModal({
                     </tr>
                   </thead>
                   <tbody>
-                    {currentScale.bands.map(
-                      (b: any, index: number) => (
-                        <tr key={index}>
-                          <td style={{ padding: "8px 12px" }}>
-                            {readOnly ? (
-                              <span className="letter-badge">
-                                {b.letter}
-                              </span>
-                            ) : (
-                              <input
-                                type="text"
-                                maxLength={6}
-                                value={b.letter}
-                                onChange={(e) =>
-                                  handleUpdateBand(index, {
-                                    letter:
-                                      e.target.value.toUpperCase(),
-                                  })
-                                }
-                                style={{
-                                  width: 68,
-                                  fontWeight: 700,
-                                  textAlign: "center",
-                                  textTransform: "uppercase",
-                                  padding: "4px 8px",
-                                }}
-                                required
-                              />
-                            )}
-                          </td>
-                          <td
-                            style={{
-                              padding: "8px 12px",
-                              fontWeight: 600,
-                            }}
-                          >
-                            {readOnly ? (
-                              <span>&ge; {b.minScore}.00</span>
-                            ) : (
-                              <div
-                                style={{
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: 6,
-                                }}
-                              >
-                                <span style={{ fontWeight: 700 }}>
-                                  &ge;
-                                </span>
-                                <input
-                                  type="number"
-                                  min={0}
-                                  max={100}
-                                  step={0.5}
-                                  value={b.minScore}
-                                  onChange={(e) =>
-                                    handleUpdateBand(index, {
-                                      minScore:
-                                        parseFloat(e.target.value) || 0,
-                                    })
-                                  }
-                                  style={{
-                                    width: 84,
-                                    padding: "4px 8px",
-                                  }}
-                                  required
-                                />
-                                <span
-                                  style={{
-                                    fontSize: "0.78rem",
-                                    color:
-                                      "var(--adaptive-text-muted, #64748b)",
-                                  }}
-                                >
-                                  (skor 0–100)
-                                </span>
-                              </div>
-                            )}
-                          </td>
-                          <td
-                            style={{
-                              padding: "8px 12px",
-                              fontWeight: 700,
-                              color:
-                                "var(--adaptive-info-text, #0284c7)",
-                            }}
-                          >
-                            {readOnly ? (
-                              <span>{Number(b.point).toFixed(2)}</span>
-                            ) : (
+                    {currentScale.bands.map((b: any, index: number) => (
+                      <tr key={index}>
+                        <td style={{ padding: "8px 12px" }}>
+                          {readOnly ? (
+                            <span className="letter-badge">{b.letter}</span>
+                          ) : (
+                            <input
+                              type="text"
+                              maxLength={6}
+                              value={b.letter}
+                              onChange={(e) =>
+                                handleUpdateBand(index, {
+                                  letter: e.target.value.toUpperCase(),
+                                })
+                              }
+                              style={{
+                                width: 68,
+                                fontWeight: 700,
+                                textAlign: "center",
+                                textTransform: "uppercase",
+                                padding: "4px 8px",
+                              }}
+                              required
+                            />
+                          )}
+                        </td>
+                        <td
+                          style={{
+                            padding: "8px 12px",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {readOnly ? (
+                            <span>&ge; {b.minScore}.00</span>
+                          ) : (
+                            <div
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                              }}
+                            >
+                              <span style={{ fontWeight: 700 }}>&ge;</span>
                               <input
                                 type="number"
                                 min={0}
-                                max={10}
-                                step={0.01}
-                                value={b.point}
+                                max={100}
+                                step={0.5}
+                                value={b.minScore}
                                 onChange={(e) =>
                                   handleUpdateBand(index, {
-                                    point:
-                                      parseFloat(e.target.value) || 0,
+                                    minScore: parseFloat(e.target.value) || 0,
                                   })
                                 }
                                 style={{
-                                  width: 76,
-                                  fontWeight: 700,
-                                  color:
-                                    "var(--adaptive-info-text, #0284c7)",
+                                  width: 84,
                                   padding: "4px 8px",
                                 }}
                                 required
                               />
-                            )}
-                          </td>
-                          {!readOnly && (
-                            <td
-                              style={{
-                                padding: "8px 12px",
-                                textAlign: "center",
-                              }}
-                            >
-                              <button
-                                type="button"
-                                className="button secondary"
-                                onClick={() => handleRemoveBand(index)}
-                                disabled={currentScale.bands.length <= 1}
-                                title="Hapus bobot huruf ini"
+                              <span
                                 style={{
-                                  padding: "4px 8px",
-                                  color: "var(--danger, #ef4444)",
-                                  opacity:
-                                    currentScale.bands.length <= 1
-                                      ? 0.4
-                                      : 1,
+                                  fontSize: "0.78rem",
+                                  color: "var(--adaptive-text-muted, #64748b)",
                                 }}
                               >
-                                <Trash2 size={14} />
-                              </button>
-                            </td>
+                                (skor 0–100)
+                              </span>
+                            </div>
                           )}
-                        </tr>
-                      ),
-                    )}
+                        </td>
+                        <td
+                          style={{
+                            padding: "8px 12px",
+                            fontWeight: 700,
+                            color: "var(--adaptive-info-text, #0284c7)",
+                          }}
+                        >
+                          {readOnly ? (
+                            <span>{Number(b.point).toFixed(2)}</span>
+                          ) : (
+                            <input
+                              type="number"
+                              min={0}
+                              max={10}
+                              step={0.01}
+                              value={b.point}
+                              onChange={(e) =>
+                                handleUpdateBand(index, {
+                                  point: parseFloat(e.target.value) || 0,
+                                })
+                              }
+                              style={{
+                                width: 76,
+                                fontWeight: 700,
+                                color: "var(--adaptive-info-text, #0284c7)",
+                                padding: "4px 8px",
+                              }}
+                              required
+                            />
+                          )}
+                        </td>
+                        {!readOnly && (
+                          <td
+                            style={{
+                              padding: "8px 12px",
+                              textAlign: "center",
+                            }}
+                          >
+                            <button
+                              type="button"
+                              className="button secondary"
+                              onClick={() => handleRemoveBand(index)}
+                              disabled={currentScale.bands.length <= 1}
+                              title="Hapus bobot huruf ini"
+                              style={{
+                                padding: "4px 8px",
+                                color: "var(--danger, #ef4444)",
+                                opacity:
+                                  currentScale.bands.length <= 1 ? 0.4 : 1,
+                              }}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
 
@@ -2674,8 +2684,7 @@ export function AcademicGovernanceModal({
                       alignItems: "center",
                       padding: "10px 14px",
                       background: "var(--adaptive-surface, #f8fafc)",
-                      borderTop:
-                        "1px solid var(--adaptive-border, #e2e8f0)",
+                      borderTop: "1px solid var(--adaptive-border, #e2e8f0)",
                     }}
                   >
                     <button
@@ -2717,8 +2726,7 @@ export function AcademicGovernanceModal({
                           gap: 6,
                           fontSize: "0.82rem",
                           marginLeft: "auto",
-                          color:
-                            "var(--adaptive-text-muted, #64748b)",
+                          color: "var(--adaptive-text-muted, #64748b)",
                         }}
                       >
                         <RotateCcw size={14} />
@@ -3295,7 +3303,8 @@ export function CourseImportModal({
               display: "inline-flex",
               padding: 12,
               borderRadius: "50%",
-              background: "var(--adaptive-success-soft, rgba(34, 197, 94, 0.1))",
+              background:
+                "var(--adaptive-success-soft, rgba(34, 197, 94, 0.1))",
               color: "var(--adaptive-success-text, #16a34a)",
               marginBottom: 12,
             }}
@@ -3414,9 +3423,18 @@ export function CourseImportModal({
               >
                 <div style={{ fontSize: "0.88rem", fontWeight: 600 }}>
                   Pratinjau Impor:{" "}
-                  <span style={{ color: "var(--adaptive-success-text, #16a34a)" }}>{review.ready} Siap</span>
+                  <span
+                    style={{ color: "var(--adaptive-success-text, #16a34a)" }}
+                  >
+                    {review.ready} Siap
+                  </span>
                   {review.issues > 0 && (
-                    <span style={{ color: "var(--adaptive-danger-text, #dc2626)", marginLeft: 8 }}>
+                    <span
+                      style={{
+                        color: "var(--adaptive-danger-text, #dc2626)",
+                        marginLeft: 8,
+                      }}
+                    >
                       • {review.issues} Perlu Diperiksa
                     </span>
                   )}{" "}
@@ -3466,9 +3484,13 @@ export function CourseImportModal({
                           <td data-label="Kode">
                             <strong>{row.values?.code || "—"}</strong>
                           </td>
-                          <td className="record-title">{row.values?.title || "—"}</td>
+                          <td className="record-title">
+                            {row.values?.title || "—"}
+                          </td>
                           <td data-label="SKS">{row.values?.credits}</td>
-                          <td data-label="Prodi">{row.values?.departmentCode}</td>
+                          <td data-label="Prodi">
+                            {row.values?.departmentCode}
+                          </td>
                           <td data-label="Status / catatan">
                             {isExcluded ? (
                               <span
@@ -3478,7 +3500,11 @@ export function CourseImportModal({
                               </span>
                             ) : isReady ? (
                               <span
-                                style={{ color: "var(--adaptive-success-text, #16a34a)", fontWeight: 600 }}
+                                style={{
+                                  color:
+                                    "var(--adaptive-success-text, #16a34a)",
+                                  fontWeight: 600,
+                                }}
                               >
                                 {row.existingId
                                   ? "Siap Ditimpa"
@@ -3486,7 +3512,10 @@ export function CourseImportModal({
                               </span>
                             ) : (
                               <span
-                                style={{ color: "var(--adaptive-danger-text, #dc2626)", fontSize: "0.8rem" }}
+                                style={{
+                                  color: "var(--adaptive-danger-text, #dc2626)",
+                                  fontSize: "0.8rem",
+                                }}
                               >
                                 {issuesList
                                   .map((issue: string) => {
@@ -3691,8 +3720,10 @@ export function Profile({
                       : user.userType === "STUDENT"
                         ? "NIM"
                         : user.userType === "LECTURER"
-                          ? (user.identifierType === "NIP" ? "NIP" : "NIDN")
-                          : (user.identifierType || "OTHER");
+                          ? user.identifierType === "NIP"
+                            ? "NIP"
+                            : "NIDN"
+                          : user.identifierType || "OTHER";
                   return (
                     (t.identifierTypes as any)[effectiveType] ??
                     "Nomor identitas"
@@ -3795,8 +3826,14 @@ export function Profile({
             >
               Hapus draft lokal
             </Action>
-            {cleared && <Notice onClose={() => setCleared(false)}>Draft lokal berhasil dihapus.</Notice>}
-            {failure && <Notice error={failure} onClose={() => setFailure(null)} />}
+            {cleared && (
+              <Notice onClose={() => setCleared(false)}>
+                Draft lokal berhasil dihapus.
+              </Notice>
+            )}
+            {failure && (
+              <Notice error={failure} onClose={() => setFailure(null)} />
+            )}
           </section>
         </div>
       </div>

@@ -130,16 +130,17 @@ export function registerAttendanceRoutes(app: Express) {
               notes: myRecord.notes,
             }
           : null,
-        stats: cls.canManage
-          ? {
-              totalStudents,
-              presentCount,
-              excusedCount,
-              sickCount,
-              absentCount,
-              lateCount,
-            }
-          : undefined,
+        stats:
+          cls.canManage || cls.canMonitor
+            ? {
+                totalStudents,
+                presentCount,
+                excusedCount,
+                sickCount,
+                absentCount,
+                lateCount,
+              }
+            : undefined,
       };
     });
 
@@ -157,7 +158,13 @@ export function registerAttendanceRoutes(app: Express) {
           String(req.params.id),
         );
         ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
-        ensure(cls.course.status !== "ARCHIVED", 423, "CLASS_ARCHIVED");
+        ensure(
+          cls.status !== "ARCHIVED" &&
+            cls.course.status !== "ARCHIVED" &&
+            cls.parentClass?.status !== "ARCHIVED",
+          423,
+          "CLASS_ARCHIVED",
+        );
 
         const data = z
           .object({
@@ -275,7 +282,13 @@ export function registerAttendanceRoutes(app: Express) {
 
         const cls = await classAccess(tx, req.context.user, session.classId);
         ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
-        ensure(cls.course.status !== "ARCHIVED", 423, "CLASS_ARCHIVED");
+        ensure(
+          cls.status !== "ARCHIVED" &&
+            cls.course.status !== "ARCHIVED" &&
+            cls.parentClass?.status !== "ARCHIVED",
+          423,
+          "CLASS_ARCHIVED",
+        );
 
         const data = z
           .object({
@@ -373,7 +386,7 @@ export function registerAttendanceRoutes(app: Express) {
     ensure(session, 404, "NOT_FOUND");
 
     const cls = await classAccess(db, req.context.user, session.classId);
-    ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
+    ensure(cls.canManage || cls.canMonitor, 403, "WRITE_ACCESS_DENIED");
 
     // Ambil seluruh mahasiswa yang aktif terdaftar
     const enrollments = await db.enrollment.findMany({
@@ -429,7 +442,13 @@ export function registerAttendanceRoutes(app: Express) {
 
         const cls = await classAccess(tx, req.context.user, session.classId);
         ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
-        ensure(cls.course.status !== "ARCHIVED", 423, "CLASS_ARCHIVED");
+        ensure(
+          cls.status !== "ARCHIVED" &&
+            cls.course.status !== "ARCHIVED" &&
+            cls.parentClass?.status !== "ARCHIVED",
+          423,
+          "CLASS_ARCHIVED",
+        );
 
         const data = z
           .object({
@@ -655,7 +674,7 @@ export function registerAttendanceRoutes(app: Express) {
   // Rekapitulasi Kehadiran & Ambang Batas Ujian dari pengaturan akademik
   app.get("/api/v1/course-classes/:id/attendance/recap", async (req, res) => {
     const cls = await classAccess(db, req.context.user, String(req.params.id));
-    ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
+    ensure(cls.canManage || cls.canMonitor, 403, "WRITE_ACCESS_DENIED");
 
     const sessions = await db.attendanceSession.findMany({
       where: { classId: cls.id },

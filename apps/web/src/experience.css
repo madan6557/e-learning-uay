@@ -263,7 +263,7 @@ tbody tr:hover {
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
-  box-shadow: 0 -8px 14px #ffffffd9;
+  box-shadow: var(--shadow-sticky-actions);
   margin-top: 24px;
 }
 .draft-status {

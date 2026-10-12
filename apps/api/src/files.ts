@@ -148,12 +148,14 @@ async function authorizeFileAccess(
       "FILE_ACCESS_DENIED",
     );
     const cls = await itemAccess(db, req.context.user, resource.sectionId);
-    if (!cls.canManage) available(resource);
+    if (!cls.canManage && !cls.canMonitor) available(resource);
     if (["SUBMISSION", "QUIZ_ANSWER"].includes(file.purpose)) {
       const fileClass = await classAccess(db, req.context.user, file.classId);
       ensure(!fileClass.isInactiveParticipant, 403, "PARTICIPATION_DISABLED");
       ensure(
-        fileClass.canManage || file.ownerId === req.context.user.id,
+        fileClass.canManage ||
+          fileClass.canMonitor ||
+          file.ownerId === req.context.user.id,
         403,
         "FILE_ACCESS_DENIED",
       );
@@ -163,7 +165,7 @@ async function authorizeFileAccess(
   const cls = await classAccess(db, req.context.user, file.classId);
   ensure(!cls.isInactiveParticipant, 403, "PARTICIPATION_DISABLED");
   ensure(
-    cls.canManage || file.ownerId === req.context.user.id,
+    cls.canManage || cls.canMonitor || file.ownerId === req.context.user.id,
     403,
     "FILE_ACCESS_DENIED",
   );
@@ -681,14 +683,10 @@ export async function uayTrash(
   const endpoint = getUayEndpoint(
     `/v1/repositories/${repoId}/files/${encodeURIComponent(fileId)}`,
   );
-  const res = await serviceFetch(
-    "file_service",
-    endpoint,
-    {
-      method: "DELETE",
-      headers: getUayHeaders({ ...options, token }),
-    },
-  );
+  const res = await serviceFetch("file_service", endpoint, {
+    method: "DELETE",
+    headers: getUayHeaders({ ...options, token }),
+  });
   ensure(res.ok, 502, "FILE_SERVICE_REJECTED");
   const raw = await serviceJson(res);
   return raw?.data ?? raw;
@@ -714,15 +712,11 @@ export async function uayRestore(
   const endpoint = getUayEndpoint(
     `/v1/repositories/${repoId}/files/${encodeURIComponent(fileId)}/restore`,
   );
-  const res = await serviceFetch(
-    "file_service",
-    endpoint,
-    {
-      method: "POST",
-      headers: getUayHeaders({ ...options, token }),
-      body: JSON.stringify({}),
-    },
-  );
+  const res = await serviceFetch("file_service", endpoint, {
+    method: "POST",
+    headers: getUayHeaders({ ...options, token }),
+    body: JSON.stringify({}),
+  });
   ensure(res.ok, 502, "FILE_SERVICE_REJECTED");
   const raw = await serviceJson(res);
   return raw?.data ?? raw;
@@ -1246,7 +1240,11 @@ export function registerFiles(app: Express) {
           student,
         );
         if (student) {
-          ensure(cls.canManage || req.context.user.role === "STUDENT", 403, "STUDENT_REQUIRED");
+          ensure(
+            cls.canManage || req.context.user.role === "STUDENT",
+            403,
+            "STUDENT_REQUIRED",
+          );
           ensure(data.contextId, 400, "FILE_CONTEXT_REQUIRED");
           if (data.purpose === "SUBMISSION") {
             const item = await tx.assignment.findUnique({
@@ -1261,7 +1259,9 @@ export function registerFiles(app: Express) {
             await itemAccess(tx, req.context.user, item.sectionId, true, true);
             if (!cls.canManage) available(item);
             ensure(
-              cls.canManage || !item.cutoffDate || new Date() <= item.cutoffDate,
+              cls.canManage ||
+                !item.cutoffDate ||
+                new Date() <= item.cutoffDate,
               403,
               "CUTOFF_PASSED",
             );
@@ -1719,7 +1719,7 @@ export function registerFiles(app: Express) {
 
   app.get("/api/v1/course-classes/:id/files", async (req, res) => {
     const cls = await classAccess(db, req.context.user, String(req.params.id));
-    ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
+    ensure(cls.canManage || cls.canMonitor, 403, "WRITE_ACCESS_DENIED");
     res.json(
       await db.fileReference.findMany({
         where: {

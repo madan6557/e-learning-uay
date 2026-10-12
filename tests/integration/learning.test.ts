@@ -27,6 +27,7 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
   };
   const admin = await makeUser("SUPER_ADMIN"),
     teacher = await makeUser("INSTRUCTOR", ["IF"]),
+    assistant = await makeUser("ASSISTANT"),
     student = await makeUser("STUDENT"),
     outsider = await makeUser("STUDENT", ["OTHER"]),
     department = await makeUser("DEPARTMENT_ADMIN", ["OTHER"]),
@@ -62,6 +63,7 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
   for (const user of [
     admin,
     teacher,
+    assistant,
     student,
     outsider,
     department,
@@ -84,6 +86,7 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
   }
   let course: any,
     cls: any,
+    practicum: any,
     section: any,
     resource: any,
     assignment: any,
@@ -167,7 +170,7 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
             academicYear: "2026/2027",
             instructorIds: [teacher.id],
           },
-          403,
+          201,
         );
         cls = await request(
           admin,
@@ -318,6 +321,393 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
           "POST",
           { title: "Forbidden classroom authoring" },
           403,
+        );
+      },
+    );
+    await suite.test(
+      "assistant operates an isolated linked practicum, roster syncs, and instructor monitors read-only",
+      async () => {
+        const practicumParent = await request(
+          admin,
+          "/course-classes",
+          "POST",
+          {
+            courseId: course.id,
+            name: "Practicum Integration Parent",
+            academicYear: "2026/2027",
+            instructorIds: [teacher.id],
+            status: "PUBLISHED",
+          },
+          201,
+        );
+        await request(
+          teacher,
+          `/course-classes/${practicumParent.id}/participants`,
+          "POST",
+          { userId: student.id },
+        );
+        const parentCategories = await request(
+          teacher,
+          `/course-classes/${practicumParent.id}/grade-categories`,
+        );
+
+        await request(
+          teacher,
+          `/course-classes/${practicumParent.id}/instructors`,
+          "POST",
+          {
+            userIds: [teacher.id, assistant.id],
+            assistantUserIds: [assistant.id],
+          },
+        );
+        const parentAssistantView = await request(
+          assistant,
+          `/course-classes/${practicumParent.id}`,
+        );
+        assert.equal(parentAssistantView.canManage, false);
+        assert.equal(parentAssistantView.isAssignedAssistant, true);
+        await request(
+          assistant,
+          "/course-classes",
+          "POST",
+          {
+            courseId: course.id,
+            name: "Class created by assistant",
+            academicYear: "2026/2027",
+            instructorIds: [teacher.id],
+          },
+          403,
+        );
+        await request(
+          assistant,
+          `/course-classes/${practicumParent.id}/sections`,
+          "POST",
+          { title: "Main class edit denied" },
+          403,
+        );
+        await request(
+          assistant,
+          `/course-classes/${practicumParent.id}/participants`,
+          "POST",
+          { userId: outsider.id },
+          403,
+        );
+        await request(
+          assistant,
+          `/course-classes/${practicumParent.id}/attendance`,
+          "POST",
+          { title: "Main attendance denied" },
+          403,
+        );
+        await request(
+          assistant,
+          `/course-classes/${practicumParent.id}/grade-categories`,
+          "PUT",
+          { categories: parentCategories },
+          403,
+        );
+
+        const created = await request(
+          assistant,
+          `/course-classes/${practicumParent.id}/practicum`,
+          "POST",
+          {},
+        );
+        assert.equal(created.created, true);
+        practicum = created;
+        const repeated = await request(
+          assistant,
+          `/course-classes/${practicumParent.id}/practicum`,
+          "POST",
+          {},
+        );
+        assert.equal(repeated.id, created.id);
+        assert.equal(repeated.created, false);
+        assert.equal(
+          await db.enrollment.count({
+            where: {
+              classId: practicum.id,
+              userId: student.id,
+              isActive: true,
+            },
+          }),
+          1,
+        );
+
+        const childSection = await request(
+          assistant,
+          `/course-classes/${practicum.id}/sections`,
+          "POST",
+          { title: "Draft practicum work" },
+          201,
+        );
+        const session = await request(
+          assistant,
+          `/course-classes/${practicum.id}/attendance`,
+          "POST",
+          { title: "Practicum attendance" },
+          201,
+        );
+        await request(
+          assistant,
+          `/attendance/${session.id}/records/${student.id}`,
+          "PATCH",
+          { status: "PRESENT" },
+        );
+        await request(
+          assistant,
+          `/course-classes/${practicum.id}/participants`,
+          "POST",
+          { userId: outsider.id },
+          409,
+        );
+        await request(
+          teacher,
+          `/sections/${childSection.id}`,
+          "PATCH",
+          { title: "Teacher edit denied" },
+          403,
+        );
+        await request(
+          teacher,
+          `/attendance/${session.id}/records/${student.id}`,
+          "PATCH",
+          { status: "ABSENT" },
+          403,
+        );
+
+        const monitored = await request(
+          teacher,
+          `/course-classes/${practicum.id}`,
+        );
+        assert.equal(monitored.canManage, false);
+        assert.equal(monitored.canMonitor, true);
+        assert.equal(monitored.sections.length, 1);
+        assert.equal(monitored.sections[0].isVisible, false);
+        const roster = await request(
+          teacher,
+          `/course-classes/${practicum.id}/participants`,
+        );
+        assert.equal(
+          roster.some((row: any) => row.userId === student.id),
+          true,
+        );
+        const records = await request(
+          teacher,
+          `/attendance/${session.id}/records`,
+        );
+        assert.equal(
+          records.roster.find((row: any) => row.userId === student.id).status,
+          "PRESENT",
+        );
+
+        const importBody = {
+          kind: "ENROLLMENT",
+          rows: [
+            {
+              values: { identifierValue: outsider.identifierValue },
+              exclude: false,
+              override: false,
+            },
+          ],
+        };
+        await request(
+          teacher,
+          `/course-classes/${practicumParent.id}/imports/commit`,
+          "POST",
+          importBody,
+        );
+        assert.equal(
+          await db.enrollment.count({
+            where: {
+              classId: practicum.id,
+              userId: outsider.id,
+              isActive: true,
+            },
+          }),
+          1,
+        );
+        await request(
+          teacher,
+          `/course-classes/${practicumParent.id}/participants`,
+          "POST",
+          { userId: student.id, isActive: false },
+        );
+        assert.equal(
+          (
+            await db.enrollment.findUniqueOrThrow({
+              where: {
+                classId_userId: { classId: practicum.id, userId: student.id },
+              },
+            })
+          ).isActive,
+          false,
+        );
+        assert.equal(
+          await db.attendanceRecord.count({
+            where: { sessionId: session.id, userId: student.id },
+          }),
+          1,
+        );
+        await request(
+          teacher,
+          `/course-classes/${practicumParent.id}/participants`,
+          "POST",
+          { userId: student.id, isActive: true },
+        );
+        assert.equal(
+          (
+            await db.enrollment.findUniqueOrThrow({
+              where: {
+                classId_userId: { classId: practicum.id, userId: student.id },
+              },
+            })
+          ).isActive,
+          true,
+        );
+
+        const childCategories = await request(
+          assistant,
+          `/course-classes/${practicum.id}/grade-categories`,
+        );
+        const childCategory = childCategories.find(
+          (category: any) => category.kind !== "PROGRESS",
+        );
+        const parentCategory = parentCategories.find(
+          (category: any) => category.kind !== "PROGRESS",
+        );
+        await request(
+          assistant,
+          `/course-classes/${practicum.id}/manual-grades`,
+          "POST",
+          {
+            userId: student.id,
+            categoryId: childCategory.id,
+            score: 86,
+          },
+        );
+        await request(
+          assistant,
+          `/course-classes/${practicum.id}/gradebook/calculate`,
+          "POST",
+          {},
+        );
+        const draftRecord = await db.finalGradeRecord.findUniqueOrThrow({
+          where: {
+            classId_userId: { classId: practicum.id, userId: student.id },
+          },
+        });
+        assert.equal(draftRecord.publishedAt, null);
+        await request(
+          teacher,
+          `/course-classes/${practicumParent.id}/practicum-grade-category`,
+          "PUT",
+          { categoryId: parentCategory.id },
+        );
+        const parentDraft = await request(
+          teacher,
+          `/course-classes/${practicumParent.id}/gradebook`,
+        );
+        const draftRow = parentDraft.rows.find(
+          (row: any) => row.user.id === student.id,
+        );
+        assert.equal(
+          draftRow.categoryScores.find(
+            (category: any) => category.categoryId === parentCategory.id,
+          ).practicum.score,
+          null,
+        );
+        await request(
+          assistant,
+          `/course-classes/${practicum.id}/gradebook/publish`,
+          "POST",
+          { acknowledgeMissing: true },
+        );
+        const publishedRecord = await db.finalGradeRecord.findUniqueOrThrow({
+          where: {
+            classId_userId: { classId: practicum.id, userId: student.id },
+          },
+        });
+        assert.ok(publishedRecord.publishedAt);
+        const parentPublished = await request(
+          teacher,
+          `/course-classes/${practicumParent.id}/gradebook`,
+        );
+        const publishedRow = parentPublished.rows.find(
+          (row: any) => row.user.id === student.id,
+        );
+        assert.equal(
+          publishedRow.categoryScores.find(
+            (category: any) => category.categoryId === parentCategory.id,
+          ).practicum.score,
+          publishedRecord.finalScore,
+        );
+        const monitoredGrades = await request(
+          teacher,
+          `/course-classes/${practicum.id}/gradebook`,
+        );
+        assert.equal(monitoredGrades.canMonitor, true);
+        assert.equal(monitoredGrades.canManage, false);
+
+        const copy = await request(
+          teacher,
+          `/course-classes/${practicumParent.id}/clone`,
+          "POST",
+          {
+            name: "Practicum Integration Copy",
+            academicYear: "2027/2028",
+          },
+        );
+        assert.ok(copy.practicumId);
+        const clonedParent = await request(
+          teacher,
+          `/course-classes/${copy.id}`,
+        );
+        const clonedPracticum = await request(
+          teacher,
+          `/course-classes/${copy.practicumId}`,
+        );
+        assert.equal(clonedPracticum.parentClassId, copy.id);
+        assert.equal(clonedPracticum.name, `Praktikum ${clonedParent.name}`);
+        assert.equal(clonedPracticum.status, "DRAFT");
+        assert.equal(clonedPracticum.sections.length, 1);
+        const clonedParentCategories = await request(
+          teacher,
+          `/course-classes/${copy.id}/grade-categories`,
+        );
+        assert.ok(clonedPracticum.parentGradeCategoryId);
+        assert.equal(
+          clonedParentCategories.some(
+            (category: any) =>
+              category.id === clonedPracticum.parentGradeCategoryId,
+          ),
+          true,
+        );
+        assert.equal(
+          await db.enrollment.count({ where: { classId: copy.id } }),
+          0,
+        );
+        assert.equal(
+          await db.enrollment.count({ where: { classId: copy.practicumId } }),
+          0,
+        );
+        assert.equal(
+          await db.attendanceSession.count({
+            where: { classId: copy.practicumId },
+          }),
+          0,
+        );
+        assert.equal(
+          await db.finalGradeRecord.count({
+            where: { classId: copy.practicumId },
+          }),
+          0,
+        );
+        assert.equal(
+          await db.manualGradeRecord.count({
+            where: { classId: copy.practicumId },
+          }),
+          0,
         );
       },
     );

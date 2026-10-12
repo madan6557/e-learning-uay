@@ -113,6 +113,7 @@ export function ClassPage({
   const [modal, setModal] = useState<any>(null),
     [message, setMessage] = useState("");
   const cls = info.data;
+  const canViewAll = Boolean(cls?.canManage || cls?.canMonitor);
   const [sectionTypeFilter, setSectionTypeFilter] = useState<string>("ALL");
 
   const sectionCounts = useMemo(() => {
@@ -127,21 +128,51 @@ export function ClassPage({
   const sectionFilterOptions = useMemo(() => {
     const allTypes = [
       { key: "ALL", label: "Semua", count: sectionCounts.ALL || 0 },
-      { key: "LECTURE", label: (t.sectionTypes as any)?.LECTURE || "Perkuliahan", count: sectionCounts.LECTURE || 0 },
-      { key: "LAB_PRACTICUM", label: (t.sectionTypes as any)?.LAB_PRACTICUM || "Praktikum", count: sectionCounts.LAB_PRACTICUM || 0 },
-      { key: "SEMINAR", label: (t.sectionTypes as any)?.SEMINAR || "Seminar", count: sectionCounts.SEMINAR || 0 },
-      { key: "WORKSHOP", label: (t.sectionTypes as any)?.WORKSHOP || "Lokakarya", count: sectionCounts.WORKSHOP || 0 },
-      { key: "EXAM", label: (t.sectionTypes as any)?.EXAM || "Ujian", count: sectionCounts.EXAM || 0 },
-      { key: "OTHER", label: (t.sectionTypes as any)?.OTHER || "Lainnya", count: sectionCounts.OTHER || 0 },
+      {
+        key: "LECTURE",
+        label: (t.sectionTypes as any)?.LECTURE || "Perkuliahan",
+        count: sectionCounts.LECTURE || 0,
+      },
+      {
+        key: "LAB_PRACTICUM",
+        label: (t.sectionTypes as any)?.LAB_PRACTICUM || "Praktikum",
+        count: sectionCounts.LAB_PRACTICUM || 0,
+      },
+      {
+        key: "SEMINAR",
+        label: (t.sectionTypes as any)?.SEMINAR || "Seminar",
+        count: sectionCounts.SEMINAR || 0,
+      },
+      {
+        key: "WORKSHOP",
+        label: (t.sectionTypes as any)?.WORKSHOP || "Lokakarya",
+        count: sectionCounts.WORKSHOP || 0,
+      },
+      {
+        key: "EXAM",
+        label: (t.sectionTypes as any)?.EXAM || "Ujian",
+        count: sectionCounts.EXAM || 0,
+      },
+      {
+        key: "OTHER",
+        label: (t.sectionTypes as any)?.OTHER || "Lainnya",
+        count: sectionCounts.OTHER || 0,
+      },
     ];
     return allTypes.filter(
-      (opt) => opt.key === "ALL" || opt.key === "LECTURE" || opt.key === "LAB_PRACTICUM" || opt.count > 0,
+      (opt) =>
+        opt.key === "ALL" ||
+        opt.key === "LECTURE" ||
+        opt.key === "LAB_PRACTICUM" ||
+        opt.count > 0,
     );
   }, [sectionCounts]);
 
   const filteredSections = useMemo(() => {
     if (sectionTypeFilter === "ALL") return cls?.sections || [];
-    return (cls?.sections || []).filter((s: any) => s.type === sectionTypeFilter);
+    return (cls?.sections || []).filter(
+      (s: any) => s.type === sectionTypeFilter,
+    );
   }, [cls?.sections, sectionTypeFilter]);
 
   useEffect(() => {
@@ -168,33 +199,25 @@ export function ClassPage({
   if (info.error) return <Notice error={info.error} />;
   if (!cls) return null;
   const isDeptAdminForClass = user.role === "DEPARTMENT_ADMIN" && cls.canManage;
-  // Asisten yang ditetapkan khusus pada kelas bisa tetap memiliki role global
-  // STUDENT; hak mengelola konten mengikuti penugasan asisten di kelas ini.
-  const isAssignedClassAssistant = cls.instructors?.some(
-    (instructor: any) =>
-      (instructor.userId === user.id || instructor.user?.id === user.id) &&
-      !instructor.isPrimary &&
-      (instructor.role === "ASSISTANT" ||
-        instructor.user?.role === "ASSISTANT" ||
-        instructor.user?.role === "STUDENT"),
+  const isParentAssistant = Boolean(
+    cls.isAssignedAssistant && !cls.parentClassId,
   );
-  const canEditClass =
-    (user.role === "INSTRUCTOR" ||
-      user.role === "ASSISTANT" ||
-      isDeptAdminForClass ||
-      isAssignedClassAssistant) &&
-    cls.canManage;
+  const canEditClass = Boolean(cls.canManage);
   const canAdministerClass =
     cls.canManage &&
+    !cls.parentClassId &&
     (canEditClass || hasPermission(user.role, "MANAGE_ALL_CLASSES"));
+  const parentArchived = cls.parentClass?.status === "ARCHIVED";
   const administrativeWritable =
     canAdministerClass &&
     cls.status !== "ARCHIVED" &&
-    cls.course.status !== "ARCHIVED";
+    cls.course.status !== "ARCHIVED" &&
+    !parentArchived;
   const writable =
     canEditClass &&
     cls.status !== "ARCHIVED" &&
-    cls.course.status !== "ARCHIVED";
+    cls.course.status !== "ARCHIVED" &&
+    !parentArchived;
   const published = (kind: string, itemId: string, visible = true) => {
     info.setData((current: any) => ({
       ...current,
@@ -238,10 +261,14 @@ export function ClassPage({
   const isArchived = cls.status === "ARCHIVED";
   const tabs = [
     ["content", t.content],
-    ["attendance", "Presensi"],
-    ["gradebook", t.gradebook],
-    ["announcements", t.announcements],
-    ...(cls.canManage
+    ...(!isParentAssistant
+      ? [
+          ["attendance", "Presensi"],
+          ["gradebook", t.gradebook],
+          ["announcements", t.announcements],
+        ]
+      : []),
+    ...(canViewAll
       ? [
           ["participants", t.participants],
           ["banks", t.questionBanks],
@@ -423,17 +450,55 @@ export function ClassPage({
                     {t.settings}
                   </button>
                 )}
-                {canAdministerClass && cls.course.status !== "ARCHIVED" && (
-                  <button
-                    className="secondary"
-                    onClick={() => setModal({ kind: "clone" })}
-                  >
-                    <Copy size={16} />
-                    {t.cloneClass}
-                  </button>
-                )}
+                {canAdministerClass &&
+                  !isArchived &&
+                  cls.course.status !== "ARCHIVED" && (
+                    <button
+                      className="secondary"
+                      onClick={() => setModal({ kind: "clone" })}
+                    >
+                      <Copy size={16} />
+                      {t.cloneClass}
+                    </button>
+                  )}
               </div>
             </details>
+          )}
+          {isParentAssistant && (
+            <Action
+              className="secondary"
+              disabled={isArchived || cls.course.status === "ARCHIVED"}
+              busyLabel="Membuka kelas praktikum…"
+              run={async () => {
+                const target = cls.practicumClass
+                  ? cls.practicumClass
+                  : await api(
+                      `/course-classes/${cls.id}/practicum`,
+                      "POST",
+                      {},
+                    );
+                info.reload();
+                navigate(target.path || classPath(target));
+              }}
+            >
+              <Plus size={16} />
+              {cls.practicumClass
+                ? "Buka kelas praktikum"
+                : "Buat kelas praktikum"}
+            </Action>
+          )}
+          {!cls.parentClassId && cls.canManage && cls.practicumClass && (
+            <a
+              className="button secondary"
+              href={classPath(cls.practicumClass)}
+            >
+              <BookOpen size={16} /> Pantau kelas praktikum
+            </a>
+          )}
+          {cls.parentClassId && cls.parentClass && (
+            <a className="button secondary" href={classPath(cls.parentClass)}>
+              <ArrowLeft size={16} /> Kelas utama
+            </a>
           )}
         </div>
       </div>
@@ -467,6 +532,26 @@ export function ClassPage({
                   {t.reopenClass || "Buka kembali kelas"}
                 </Action>
               )}
+            </div>
+          )}
+          {parentArchived && (
+            <div className="callout note archived-banner">
+              Kelas utama diarsipkan. Kelas praktikum ini tersedia dalam mode
+              baca saja.
+            </div>
+          )}
+          {cls.canMonitor && (
+            <div className="callout note">
+              Mode pemantauan dosen: seluruh isi, presensi, pengumpulan, dan
+              nilai praktikum dapat dilihat. Perubahan hanya dapat dilakukan
+              dari kelas praktikum oleh asdos.
+            </div>
+          )}
+          {cls.parentClassId && cls.parentClass && cls.isAssignedAssistant && (
+            <div className="callout note">
+              Kelas praktikum tertaut ke kelas utama{" "}
+              <a href={classPath(cls.parentClass)}>{cls.parentClass.name}</a>.
+              Daftar mahasiswa mengikuti kelas utama secara otomatis.
             </div>
           )}
           {user.role === "SUPER_ADMIN" && (
@@ -591,7 +676,9 @@ export function ClassPage({
                             ? "var(--primary, #0284c7)"
                             : "var(--foreground, #334155)",
                           cursor: "pointer",
-                          boxShadow: isActive ? "0 1px 3px rgba(2, 132, 199, 0.15)" : "none",
+                          boxShadow: isActive
+                            ? "0 1px 3px rgba(2, 132, 199, 0.15)"
+                            : "none",
                           transition: "all 0.15s ease-in-out",
                         }}
                       >
@@ -628,7 +715,10 @@ export function ClassPage({
                 <Empty>
                   <div style={{ textAlign: "center", padding: "16px 0" }}>
                     <p style={{ margin: "0 0 10px", color: "var(--muted)" }}>
-                      Belum ada pertemuan bertipe "{(t.sectionTypes as any)?.[sectionTypeFilter] || sectionTypeFilter}".
+                      Belum ada pertemuan bertipe "
+                      {(t.sectionTypes as any)?.[sectionTypeFilter] ||
+                        sectionTypeFilter}
+                      ".
                     </p>
                     <button
                       type="button"
@@ -642,7 +732,9 @@ export function ClassPage({
               ) : (
                 <div className="section-list">
                   {filteredSections.map((section: any) => {
-                    const originalIndex = cls.sections.findIndex((s: any) => s.id === section.id);
+                    const originalIndex = cls.sections.findIndex(
+                      (s: any) => s.id === section.id,
+                    );
                     const index = originalIndex >= 0 ? originalIndex : 0;
                     return (
                       <section className="meeting-card" key={section.id}>
@@ -650,473 +742,495 @@ export function ClassPage({
                           <span className="meeting-number">
                             {String(index + 1).padStart(2, "0")}
                           </span>
-                      <div className="meeting-info">
-                        <div className="meeting-tags">
-                          <span
-                            className={`meeting-type-tag type-${section.type.toLowerCase()}`}
-                          >
-                            {(t.sectionTypes as any)[section.type]}
-                          </span>
-                          {section.startDate && (
-                            <span className="meeting-date">
-                              <CalendarDays size={13} />
-                              {date(section.startDate)}
-                            </span>
+                          <div className="meeting-info">
+                            <div className="meeting-tags">
+                              <span
+                                className={`meeting-type-tag type-${section.type.toLowerCase()}`}
+                              >
+                                {(t.sectionTypes as any)[section.type]}
+                              </span>
+                              {section.startDate && (
+                                <span className="meeting-date">
+                                  <CalendarDays size={13} />
+                                  {date(section.startDate)}
+                                </span>
+                              )}
+                            </div>
+                            <h2>{section.title}</h2>
+                          </div>
+                          {!section.isVisible && <Badge value="DRAFT" />}
+                          {writable && (
+                            <div className="toolbar">
+                              <PublishButton
+                                path={`/sections/${section.id}`}
+                                title={section.title}
+                                published={section.isVisible}
+                                onPublished={() =>
+                                  published(
+                                    "sections",
+                                    section.id,
+                                    !section.isVisible,
+                                  )
+                                }
+                              />
+                              <Action
+                                className="icon-button"
+                                disabled={index === 0}
+                                run={async () => {
+                                  const ids = cls.sections.map(
+                                    (s: any) => s.id,
+                                  );
+                                  [ids[index], ids[index - 1]] = [
+                                    ids[index - 1],
+                                    ids[index],
+                                  ];
+                                  await api(
+                                    `/course-classes/${cls.id}/section-order`,
+                                    "PUT",
+                                    { ids },
+                                  );
+                                  info.reload();
+                                }}
+                              >
+                                <ArrowUp size={16} />
+                                <span className="sr-only">{t.moveUp}</span>
+                              </Action>
+                              <Action
+                                className="icon-button"
+                                disabled={index === cls.sections.length - 1}
+                                run={async () => {
+                                  const ids = cls.sections.map(
+                                    (s: any) => s.id,
+                                  );
+                                  [ids[index], ids[index + 1]] = [
+                                    ids[index + 1],
+                                    ids[index],
+                                  ];
+                                  await api(
+                                    `/course-classes/${cls.id}/section-order`,
+                                    "PUT",
+                                    { ids },
+                                  );
+                                  info.reload();
+                                }}
+                              >
+                                <ArrowDown size={16} />
+                                <span className="sr-only">{t.moveDown}</span>
+                              </Action>
+                              <button
+                                className="text-button"
+                                onClick={() =>
+                                  setModal({ kind: "section", section })
+                                }
+                              >
+                                {t.edit}
+                              </button>
+                            </div>
                           )}
                         </div>
-                        <h2>{section.title}</h2>
-                      </div>
-                      {!section.isVisible && <Badge value="DRAFT" />}
-                      {writable && (
-                        <div className="toolbar">
-                          <PublishButton
-                            path={`/sections/${section.id}`}
-                            title={section.title}
-                            published={section.isVisible}
-                            onPublished={() =>
-                              published(
-                                "sections",
-                                section.id,
-                                !section.isVisible,
-                              )
-                            }
-                          />
-                          <Action
-                            className="icon-button"
-                            disabled={index === 0}
-                            run={async () => {
-                              const ids = cls.sections.map((s: any) => s.id);
-                              [ids[index], ids[index - 1]] = [
-                                ids[index - 1],
-                                ids[index],
-                              ];
-                              await api(
-                                `/course-classes/${cls.id}/section-order`,
-                                "PUT",
-                                { ids },
-                              );
-                              info.reload();
-                            }}
-                          >
-                            <ArrowUp size={16} />
-                            <span className="sr-only">{t.moveUp}</span>
-                          </Action>
-                          <Action
-                            className="icon-button"
-                            disabled={index === cls.sections.length - 1}
-                            run={async () => {
-                              const ids = cls.sections.map((s: any) => s.id);
-                              [ids[index], ids[index + 1]] = [
-                                ids[index + 1],
-                                ids[index],
-                              ];
-                              await api(
-                                `/course-classes/${cls.id}/section-order`,
-                                "PUT",
-                                { ids },
-                              );
-                              info.reload();
-                            }}
-                          >
-                            <ArrowDown size={16} />
-                            <span className="sr-only">{t.moveDown}</span>
-                          </Action>
-                          <button
-                            className="text-button"
-                            onClick={() =>
-                              setModal({ kind: "section", section })
-                            }
-                          >
-                            {t.edit}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    {section.description && (
-                      <div className="meeting-description formatted-content">
-                        <Html text={formatContentHtml(section.description)} />
-                      </div>
-                    )}
-                    {(() => {
-                      const allItems = [
-                        ...section.resources.map((r: any) => ({
-                          ...r,
-                          _kind: "resource" as const,
-                        })),
-                        ...section.quizzes.map((q: any) => ({
-                          ...q,
-                          _kind: "quiz" as const,
-                        })),
-                        ...section.assignments.map((a: any) => ({
-                          ...a,
-                          _kind: "assignment" as const,
-                        })),
-                      ].sort((a, b) => {
-                        const orderA = a.contentOrder ?? 0;
-                        const orderB = b.contentOrder ?? 0;
-                        if (orderA !== orderB) return orderA - orderB;
-                        const rank: Record<string, number> = {
-                          resource: 0,
-                          quiz: 1,
-                          assignment: 2,
-                        };
-                        const rankDiff =
-                          (rank[a._kind] ?? 0) - (rank[b._kind] ?? 0);
-                        if (rankDiff !== 0) return rankDiff;
-                        const dateA = new Date(a.createdAt ?? 0).getTime();
-                        const dateB = new Date(b.createdAt ?? 0).getTime();
-                        if (dateA !== dateB) return dateA - dateB;
-                        return String(a.id).localeCompare(String(b.id));
-                      });
+                        {section.description && (
+                          <div className="meeting-description formatted-content">
+                            <Html
+                              text={formatContentHtml(section.description)}
+                            />
+                          </div>
+                        )}
+                        {(() => {
+                          const allItems = [
+                            ...section.resources.map((r: any) => ({
+                              ...r,
+                              _kind: "resource" as const,
+                            })),
+                            ...section.quizzes.map((q: any) => ({
+                              ...q,
+                              _kind: "quiz" as const,
+                            })),
+                            ...section.assignments.map((a: any) => ({
+                              ...a,
+                              _kind: "assignment" as const,
+                            })),
+                          ].sort((a, b) => {
+                            const orderA = a.contentOrder ?? 0;
+                            const orderB = b.contentOrder ?? 0;
+                            if (orderA !== orderB) return orderA - orderB;
+                            const rank: Record<string, number> = {
+                              resource: 0,
+                              quiz: 1,
+                              assignment: 2,
+                            };
+                            const rankDiff =
+                              (rank[a._kind] ?? 0) - (rank[b._kind] ?? 0);
+                            if (rankDiff !== 0) return rankDiff;
+                            const dateA = new Date(a.createdAt ?? 0).getTime();
+                            const dateB = new Date(b.createdAt ?? 0).getTime();
+                            if (dateA !== dateB) return dateA - dateB;
+                            return String(a.id).localeCompare(String(b.id));
+                          });
 
-                      const moveItem = async (index: number, delta: number) => {
-                        const target = index + delta;
-                        if (target < 0 || target >= allItems.length) return;
-                        const copy = [...allItems];
-                        [copy[index], copy[target]] = [
-                          copy[target],
-                          copy[index],
-                        ];
-                        await api(`/sections/${section.id}/item-order`, "PUT", {
-                          items: copy.map((it) => ({
-                            id: it.id,
-                            kind: it._kind,
-                          })),
-                        });
-                        info.reload();
-                      };
+                          const moveItem = async (
+                            index: number,
+                            delta: number,
+                          ) => {
+                            const target = index + delta;
+                            if (target < 0 || target >= allItems.length) return;
+                            const copy = [...allItems];
+                            [copy[index], copy[target]] = [
+                              copy[target],
+                              copy[index],
+                            ];
+                            await api(
+                              `/sections/${section.id}/item-order`,
+                              "PUT",
+                              {
+                                items: copy.map((it) => ({
+                                  id: it.id,
+                                  kind: it._kind,
+                                })),
+                              },
+                            );
+                            info.reload();
+                          };
 
-                      return (
-                        <div className="learning-items">
-                          {allItems.map((item: any, itemIndex: number) => {
-                            if (item._kind === "resource") {
-                              const r = item;
-                              const done = !cls.canManage && isResourceDone(r);
-                              const progressPct = !cls.canManage
-                                ? Math.round(getResourceProgress(r))
-                                : 0;
-                              return (
-                                <div
-                                  className={`learning-item ${done ? "item-completed" : ""}`}
-                                  key={r.id}
-                                >
-                                  <a
-                                    href={contentPath(
-                                      cls,
-                                      "resources",
-                                      r,
-                                      section.resources,
-                                    )}
-                                  >
-                                    <span className="activity-icon material">
-                                      <BookOpen size={19} />
-                                    </span>
-                                    <div>
-                                      <h3>{r.title}</h3>
-                                      <small>
-                                        {(t.resourceTypes as any)[
-                                          r.resourceType
-                                        ]}
-                                      </small>
-                                    </div>
-                                    {!cls.canManage &&
-                                      (done ? (
-                                        <span className="status-pill completed">
-                                          <CheckCircle2 size={13} />
-                                          {t.completed}
-                                        </span>
-                                      ) : progressPct > 0 ? (
-                                        <span
-                                          className="status-pill in-progress"
-                                          style={{
-                                            fontWeight: 700,
-                                            fontSize: "0.78rem",
-                                            padding: "2px 8px",
-                                            borderRadius: "12px",
-                                            background:
-                                              "var(--adaptive-info-soft, #f0f9ff)",
-                                            color: "var(--primary, #0284c7)",
-                                            border:
-                                              "1px solid var(--primary-light, #bae6fd)",
-                                            display: "inline-flex",
-                                            alignItems: "center",
-                                            gap: "4px",
-                                          }}
-                                        >
-                                          {progressPct}%
-                                        </span>
-                                      ) : null)}
-                                    <ChevronRight size={16} />
-                                  </a>
-                                  {!r.isVisible && <Badge value="DRAFT" />}
-                                  {writable && (
-                                    <PublishButton
-                                      path={`/resources/${r.id}`}
-                                      title={r.title}
-                                      published={r.isVisible}
-                                      onPublished={() =>
-                                        published(
-                                          "resources",
-                                          r.id,
-                                          !r.isVisible,
-                                        )
-                                      }
-                                    />
-                                  )}
-                                  {writable && (
-                                    <>
-                                      <Action
-                                        className="icon-button"
-                                        disabled={itemIndex === 0}
-                                        run={() => moveItem(itemIndex, -1)}
-                                      >
-                                        <ArrowUp size={16} />
-                                        <span className="sr-only">
-                                          {t.moveUp}
-                                        </span>
-                                      </Action>
-                                      <Action
-                                        className="icon-button"
-                                        disabled={
-                                          itemIndex === allItems.length - 1
-                                        }
-                                        run={() => moveItem(itemIndex, 1)}
-                                      >
-                                        <ArrowDown size={16} />
-                                        <span className="sr-only">
-                                          {t.moveDown}
-                                        </span>
-                                      </Action>
-                                    </>
-                                  )}
-                                  {writable && (
-                                    <button
-                                      className="text-button"
-                                      onClick={() =>
-                                        setModal({
-                                          kind: "resource",
-                                          sectionId: section.id,
-                                          resource: r,
-                                        })
-                                      }
+                          return (
+                            <div className="learning-items">
+                              {allItems.map((item: any, itemIndex: number) => {
+                                if (item._kind === "resource") {
+                                  const r = item;
+                                  const done = !canViewAll && isResourceDone(r);
+                                  const progressPct = !canViewAll
+                                    ? Math.round(getResourceProgress(r))
+                                    : 0;
+                                  return (
+                                    <div
+                                      className={`learning-item ${done ? "item-completed" : ""}`}
+                                      key={r.id}
                                     >
-                                      {t.edit}
-                                    </button>
-                                  )}
-                                </div>
-                              );
-                            }
-                            if (item._kind === "quiz") {
-                              const q = item;
-                              return (
-                                <div className="learning-item" key={q.id}>
-                                  <a
-                                    href={contentPath(
-                                      cls,
-                                      "quizzes",
-                                      q,
-                                      section.quizzes,
-                                    )}
-                                  >
-                                    <span className="activity-icon quiz">
-                                      <ClipboardCheck size={19} />
-                                    </span>
-                                    <div>
-                                      <h3>{q.title}</h3>
-                                      <small>
-                                        {t.quiz} · {q.timeLimitMinutes} min{" "}
-                                        {q.availableUntil &&
-                                          ` · ${date(q.availableUntil)}`}
-                                      </small>
+                                      <a
+                                        href={contentPath(
+                                          cls,
+                                          "resources",
+                                          r,
+                                          section.resources,
+                                        )}
+                                      >
+                                        <span className="activity-icon material">
+                                          <BookOpen size={19} />
+                                        </span>
+                                        <div>
+                                          <h3>{r.title}</h3>
+                                          <small>
+                                            {
+                                              (t.resourceTypes as any)[
+                                                r.resourceType
+                                              ]
+                                            }
+                                          </small>
+                                        </div>
+                                        {!canViewAll &&
+                                          (done ? (
+                                            <span className="status-pill completed">
+                                              <CheckCircle2 size={13} />
+                                              {t.completed}
+                                            </span>
+                                          ) : progressPct > 0 ? (
+                                            <span
+                                              className="status-pill in-progress"
+                                              style={{
+                                                fontWeight: 700,
+                                                fontSize: "0.78rem",
+                                                padding: "2px 8px",
+                                                borderRadius: "12px",
+                                                background:
+                                                  "var(--adaptive-info-soft, #f0f9ff)",
+                                                color:
+                                                  "var(--primary, #0284c7)",
+                                                border:
+                                                  "1px solid var(--primary-light, #bae6fd)",
+                                                display: "inline-flex",
+                                                alignItems: "center",
+                                                gap: "4px",
+                                              }}
+                                            >
+                                              {progressPct}%
+                                            </span>
+                                          ) : null)}
+                                        <ChevronRight size={16} />
+                                      </a>
+                                      {!r.isVisible && <Badge value="DRAFT" />}
+                                      {writable && (
+                                        <PublishButton
+                                          path={`/resources/${r.id}`}
+                                          title={r.title}
+                                          published={r.isVisible}
+                                          onPublished={() =>
+                                            published(
+                                              "resources",
+                                              r.id,
+                                              !r.isVisible,
+                                            )
+                                          }
+                                        />
+                                      )}
+                                      {writable && (
+                                        <>
+                                          <Action
+                                            className="icon-button"
+                                            disabled={itemIndex === 0}
+                                            run={() => moveItem(itemIndex, -1)}
+                                          >
+                                            <ArrowUp size={16} />
+                                            <span className="sr-only">
+                                              {t.moveUp}
+                                            </span>
+                                          </Action>
+                                          <Action
+                                            className="icon-button"
+                                            disabled={
+                                              itemIndex === allItems.length - 1
+                                            }
+                                            run={() => moveItem(itemIndex, 1)}
+                                          >
+                                            <ArrowDown size={16} />
+                                            <span className="sr-only">
+                                              {t.moveDown}
+                                            </span>
+                                          </Action>
+                                        </>
+                                      )}
+                                      {writable && (
+                                        <button
+                                          className="text-button"
+                                          onClick={() =>
+                                            setModal({
+                                              kind: "resource",
+                                              sectionId: section.id,
+                                              resource: r,
+                                            })
+                                          }
+                                        >
+                                          {t.edit}
+                                        </button>
+                                      )}
                                     </div>
-                                    <ChevronRight size={16} />
-                                  </a>
-                                  {cls.canManage ? (
-                                    <Badge
-                                      value={
-                                        q.isVisible ? q.status : "DRAFT"
-                                      }
-                                    />
-                                  ) : (
-                                    <Badge
-                                      value={
-                                        q.userStatus ??
-                                        (q.isVisible ? q.status : "DRAFT")
-                                      }
-                                    />
-                                  )}
-                                  {writable && (
-                                    <PublishButton
-                                      path={`/quizzes/${q.id}`}
-                                      title={q.title}
-                                      published={
-                                        q.status === "PUBLISHED" && q.isVisible
-                                      }
-                                      onPublished={() =>
-                                        published(
+                                  );
+                                }
+                                if (item._kind === "quiz") {
+                                  const q = item;
+                                  return (
+                                    <div className="learning-item" key={q.id}>
+                                      <a
+                                        href={contentPath(
+                                          cls,
                                           "quizzes",
-                                          q.id,
-                                          !(
+                                          q,
+                                          section.quizzes,
+                                        )}
+                                      >
+                                        <span className="activity-icon quiz">
+                                          <ClipboardCheck size={19} />
+                                        </span>
+                                        <div>
+                                          <h3>{q.title}</h3>
+                                          <small>
+                                            {t.quiz} · {q.timeLimitMinutes} min{" "}
+                                            {q.availableUntil &&
+                                              ` · ${date(q.availableUntil)}`}
+                                          </small>
+                                        </div>
+                                        <ChevronRight size={16} />
+                                      </a>
+                                      {canViewAll ? (
+                                        <Badge
+                                          value={
+                                            q.isVisible ? q.status : "DRAFT"
+                                          }
+                                        />
+                                      ) : (
+                                        <Badge
+                                          value={
+                                            q.userStatus ??
+                                            (q.isVisible ? q.status : "DRAFT")
+                                          }
+                                        />
+                                      )}
+                                      {writable && (
+                                        <PublishButton
+                                          path={`/quizzes/${q.id}`}
+                                          title={q.title}
+                                          published={
                                             q.status === "PUBLISHED" &&
                                             q.isVisible
-                                          ),
-                                        )
-                                      }
-                                    />
-                                  )}
-                                  {writable && (
-                                    <>
-                                      <Action
-                                        className="icon-button"
-                                        disabled={itemIndex === 0}
-                                        run={() => moveItem(itemIndex, -1)}
-                                      >
-                                        <ArrowUp size={16} />
-                                        <span className="sr-only">
-                                          {t.moveUp}
-                                        </span>
-                                      </Action>
-                                      <Action
-                                        className="icon-button"
-                                        disabled={
-                                          itemIndex === allItems.length - 1
-                                        }
-                                        run={() => moveItem(itemIndex, 1)}
-                                      >
-                                        <ArrowDown size={16} />
-                                        <span className="sr-only">
-                                          {t.moveDown}
-                                        </span>
-                                      </Action>
-                                    </>
-                                  )}
-                                </div>
-                              );
-                            }
-                            if (item._kind === "assignment") {
-                              const a = item;
-                              return (
-                                <div className="learning-item" key={a.id}>
-                                  <a
-                                    href={contentPath(
-                                      cls,
-                                      "assignments",
-                                      a,
-                                      section.assignments,
-                                    )}
-                                  >
-                                    <span className="activity-icon assignment">
-                                      <FileText size={19} />
-                                    </span>
-                                    <div>
-                                      <h3>{a.title}</h3>
-                                      <small>
-                                        {t.assignment} ·{" "}
-                                        {a.deadline
-                                          ? date(a.deadline)
-                                          : t.noDeadline}
-                                      </small>
-                                    </div>
-                                    <ChevronRight size={16} />
-                                  </a>
-                                  {cls.canManage
-                                    ? !a.isVisible && <Badge value="DRAFT" />
-                                    : a.userStatus && (
-                                        <Badge value={a.userStatus} />
+                                          }
+                                          onPublished={() =>
+                                            published(
+                                              "quizzes",
+                                              q.id,
+                                              !(
+                                                q.status === "PUBLISHED" &&
+                                                q.isVisible
+                                              ),
+                                            )
+                                          }
+                                        />
                                       )}
-                                  {writable && (
-                                    <PublishButton
-                                      path={`/assignments/${a.id}`}
-                                      title={a.title}
-                                      published={a.isVisible}
-                                      onPublished={() =>
-                                        published(
+                                      {writable && (
+                                        <>
+                                          <Action
+                                            className="icon-button"
+                                            disabled={itemIndex === 0}
+                                            run={() => moveItem(itemIndex, -1)}
+                                          >
+                                            <ArrowUp size={16} />
+                                            <span className="sr-only">
+                                              {t.moveUp}
+                                            </span>
+                                          </Action>
+                                          <Action
+                                            className="icon-button"
+                                            disabled={
+                                              itemIndex === allItems.length - 1
+                                            }
+                                            run={() => moveItem(itemIndex, 1)}
+                                          >
+                                            <ArrowDown size={16} />
+                                            <span className="sr-only">
+                                              {t.moveDown}
+                                            </span>
+                                          </Action>
+                                        </>
+                                      )}
+                                    </div>
+                                  );
+                                }
+                                if (item._kind === "assignment") {
+                                  const a = item;
+                                  return (
+                                    <div className="learning-item" key={a.id}>
+                                      <a
+                                        href={contentPath(
+                                          cls,
                                           "assignments",
-                                          a.id,
-                                          !a.isVisible,
-                                        )
-                                      }
-                                    />
-                                  )}
-                                  {writable && (
-                                    <>
-                                      <Action
-                                        className="icon-button"
-                                        disabled={itemIndex === 0}
-                                        run={() => moveItem(itemIndex, -1)}
+                                          a,
+                                          section.assignments,
+                                        )}
                                       >
-                                        <ArrowUp size={16} />
-                                        <span className="sr-only">
-                                          {t.moveUp}
+                                        <span className="activity-icon assignment">
+                                          <FileText size={19} />
                                         </span>
-                                      </Action>
-                                      <Action
-                                        className="icon-button"
-                                        disabled={
-                                          itemIndex === allItems.length - 1
-                                        }
-                                        run={() => moveItem(itemIndex, 1)}
-                                      >
-                                        <ArrowDown size={16} />
-                                        <span className="sr-only">
-                                          {t.moveDown}
-                                        </span>
-                                      </Action>
-                                    </>
-                                  )}
-                                </div>
-                              );
-                            }
-                            return null;
-                          })}
-                          {!allItems.length && (
-                            <p className="empty-inline">{t.emptyContent}</p>
-                          )}
-                        </div>
-                      );
-                    })()}
-                    {writable && (
-                      <div className="meeting-actions">
-                        <button
-                          className="text-button"
-                          onClick={() =>
-                            setModal({
-                              kind: "resource",
-                              sectionId: section.id,
-                            })
-                          }
-                        >
-                          <Plus size={14} />
-                          {t.material}
-                        </button>
-                        <button
-                          className="text-button"
-                          onClick={() =>
-                            setModal({ kind: "quiz", sectionId: section.id })
-                          }
-                        >
-                          <Plus size={14} />
-                          {t.quiz}
-                        </button>
-                        <button
-                          className="text-button"
-                          onClick={() =>
-                            setModal({
-                              kind: "assignment",
-                              sectionId: section.id,
-                            })
-                          }
-                        >
-                          <Plus size={14} />
-                          {t.assignment}
-                        </button>
-                      </div>
-                    )}
-                  </section>
-                );
-              })}
-            </div>
-          )}
+                                        <div>
+                                          <h3>{a.title}</h3>
+                                          <small>
+                                            {t.assignment} ·{" "}
+                                            {a.deadline
+                                              ? date(a.deadline)
+                                              : t.noDeadline}
+                                          </small>
+                                        </div>
+                                        <ChevronRight size={16} />
+                                      </a>
+                                      {canViewAll
+                                        ? !a.isVisible && (
+                                            <Badge value="DRAFT" />
+                                          )
+                                        : a.userStatus && (
+                                            <Badge value={a.userStatus} />
+                                          )}
+                                      {writable && (
+                                        <PublishButton
+                                          path={`/assignments/${a.id}`}
+                                          title={a.title}
+                                          published={a.isVisible}
+                                          onPublished={() =>
+                                            published(
+                                              "assignments",
+                                              a.id,
+                                              !a.isVisible,
+                                            )
+                                          }
+                                        />
+                                      )}
+                                      {writable && (
+                                        <>
+                                          <Action
+                                            className="icon-button"
+                                            disabled={itemIndex === 0}
+                                            run={() => moveItem(itemIndex, -1)}
+                                          >
+                                            <ArrowUp size={16} />
+                                            <span className="sr-only">
+                                              {t.moveUp}
+                                            </span>
+                                          </Action>
+                                          <Action
+                                            className="icon-button"
+                                            disabled={
+                                              itemIndex === allItems.length - 1
+                                            }
+                                            run={() => moveItem(itemIndex, 1)}
+                                          >
+                                            <ArrowDown size={16} />
+                                            <span className="sr-only">
+                                              {t.moveDown}
+                                            </span>
+                                          </Action>
+                                        </>
+                                      )}
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })}
+                              {!allItems.length && (
+                                <p className="empty-inline">{t.emptyContent}</p>
+                              )}
+                            </div>
+                          );
+                        })()}
+                        {writable && (
+                          <div className="meeting-actions">
+                            <button
+                              className="text-button"
+                              onClick={() =>
+                                setModal({
+                                  kind: "resource",
+                                  sectionId: section.id,
+                                })
+                              }
+                            >
+                              <Plus size={14} />
+                              {t.material}
+                            </button>
+                            <button
+                              className="text-button"
+                              onClick={() =>
+                                setModal({
+                                  kind: "quiz",
+                                  sectionId: section.id,
+                                })
+                              }
+                            >
+                              <Plus size={14} />
+                              {t.quiz}
+                            </button>
+                            <button
+                              className="text-button"
+                              onClick={() =>
+                                setModal({
+                                  kind: "assignment",
+                                  sectionId: section.id,
+                                })
+                              }
+                            >
+                              <Plus size={14} />
+                              {t.assignment}
+                            </button>
+                          </div>
+                        )}
+                      </section>
+                    );
+                  })}
+                </div>
+              )}
               {writable && cls.sections.length > 0 && (
                 <div
                   style={{
@@ -1149,32 +1263,32 @@ export function ClassPage({
               classId={cls.id}
               writable={writable}
               canManage={cls.canManage}
+              canMonitor={cls.canMonitor}
               user={user}
             />
           )}
           {tab === "gradebook" && (
-            <Gradebook
-              classId={cls.id}
-              writable={(user.role === "INSTRUCTOR" || user.role === "ASSISTANT") && writable}
-              user={user}
-            />
+            <Gradebook classId={cls.id} writable={writable} user={user} />
           )}
-          {tab === "participants" && cls.canManage && (
+          {tab === "participants" && canViewAll && (
             <Participants
               classId={cls.id}
-              writable={administrativeWritable}
+              writable={administrativeWritable && !cls.parentClassId}
               instructors={cls.instructors}
               user={user}
               onInstructorsUpdated={() => info.reload()}
             />
           )}
-          {tab === "banks" && cls.canManage && (
-            <QuestionBanks classId={cls.id} writable={writable} />
+          {tab === "banks" && canViewAll && (
+            <QuestionBanks
+              classId={cls.id}
+              writable={writable && !cls.parentClassId}
+            />
           )}
-          {tab === "files" && cls.canManage && (
+          {tab === "files" && canViewAll && (
             <Files classId={cls.id} writable={writable} />
           )}
-          {tab === "audit" && cls.canManage && <Audit classId={cls.id} />}
+          {tab === "audit" && canViewAll && <Audit classId={cls.id} />}
           {tab === "announcements" && (
             <>
               <div className="section-heading">

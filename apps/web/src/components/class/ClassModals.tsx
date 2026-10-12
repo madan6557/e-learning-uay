@@ -20,13 +20,15 @@ export interface SectionModalProps {
   onSaved: () => void;
 }
 
-export function SectionModal({ cls, section, onClose, onSaved }: SectionModalProps) {
+export function SectionModal({
+  cls,
+  section,
+  onClose,
+  onSaved,
+}: SectionModalProps) {
   const [description, setDescription] = useState(section?.description ?? "");
   return (
-    <Modal
-      title={section ? t.edit : t.newSection}
-      onClose={onClose}
-    >
+    <Modal title={section ? t.edit : t.newSection} onClose={onClose}>
       <Form
         draftKey={`section:${section?.id ?? "new"}`}
         draftVersion={section?.updatedAt}
@@ -40,11 +42,7 @@ export function SectionModal({ cls, section, onClose, onSaved }: SectionModalPro
           published: section?.isVisible ?? false,
           onUnpublish: section
             ? async () => {
-                await api(
-                  `/sections/${section.id}/unpublish`,
-                  "POST",
-                  {},
-                );
+                await api(`/sections/${section.id}/unpublish`, "POST", {});
                 onSaved();
               }
             : undefined,
@@ -69,11 +67,7 @@ export function SectionModal({ cls, section, onClose, onSaved }: SectionModalPro
         }}
       >
         <Field label={t.sectionTitle}>
-          <input
-            name="title"
-            required
-            defaultValue={section?.title}
-          />
+          <input name="title" required defaultValue={section?.title} />
         </Field>
         <Field label={`${t.description} (Format Teks Rapi)`}>
           <RichTextEditor
@@ -87,10 +81,7 @@ export function SectionModal({ cls, section, onClose, onSaved }: SectionModalPro
           />
         </Field>
         <Field label={t.sectionType}>
-          <select
-            name="type"
-            defaultValue={section?.type ?? "LECTURE"}
-          >
+          <select name="type" defaultValue={section?.type ?? "LECTURE"}>
             {Object.entries(t.sectionTypes).map(([value, label]) => (
               <option value={value} key={value}>
                 {label}
@@ -125,7 +116,11 @@ export interface AnnouncementModalProps {
   onSaved: () => void;
 }
 
-export function AnnouncementModal({ cls, onClose, onSaved }: AnnouncementModalProps) {
+export function AnnouncementModal({
+  cls,
+  onClose,
+  onSaved,
+}: AnnouncementModalProps) {
   const [content, setContent] = useState("");
   return (
     <Modal title={t.newAnnouncement} onClose={onClose}>
@@ -180,7 +175,11 @@ export interface ClassSettingsModalProps {
   onSaved: () => void;
 }
 
-export function ClassSettingsModal({ cls, onClose, onSaved }: ClassSettingsModalProps) {
+export function ClassSettingsModal({
+  cls,
+  onClose,
+  onSaved,
+}: ClassSettingsModalProps) {
   return (
     <Modal title={t.settings} onClose={onClose}>
       <Form
@@ -188,10 +187,7 @@ export function ClassSettingsModal({ cls, onClose, onSaved }: ClassSettingsModal
         draftVersion={cls.updatedAt}
         onSubmit={async (f) => {
           const status = textValue(f, "status");
-          if (
-            status === "ARCHIVED" &&
-            !(await confirmAction(t.confirmArchive))
-          )
+          if (status === "ARCHIVED" && !(await confirmAction(t.confirmArchive)))
             return false;
           await api(`/course-classes/${cls.id}`, "PATCH", {
             name: textValue(f, "name"),
@@ -208,11 +204,7 @@ export function ClassSettingsModal({ cls, onClose, onSaved }: ClassSettingsModal
           <input required name="name" defaultValue={cls.name} />
         </Field>
         <Field label={t.academicYear}>
-          <input
-            required
-            name="academicYear"
-            defaultValue={cls.academicYear}
-          />
+          <input required name="academicYear" defaultValue={cls.academicYear} />
         </Field>
         <Field label={t.status}>
           <select name="status" defaultValue={cls.status}>
@@ -237,14 +229,26 @@ export interface ClassCloneModalProps {
   onClose: () => void;
 }
 
-export function ClassCloneModal({ cls, config, onClose }: ClassCloneModalProps) {
+export function ClassCloneModal({
+  cls,
+  config,
+  onClose,
+}: ClassCloneModalProps) {
   return (
     <Modal title={t.cloneClass} onClose={onClose}>
       <p>{t.cloneDescription}</p>
+      {cls.practicumClass && (
+        <p className="callout note">
+          Kelas praktikum tertaut juga akan disalin ke kelas semester baru,
+          termasuk materi, kategori, dan pemetaan nilainya. Peserta serta
+          riwayat nilai dan presensi tetap dimulai dari kosong.
+        </p>
+      )}
       <div
         style={{
           background: "var(--adaptive-info-soft, rgba(2, 132, 199, 0.06))",
-          border: "1px solid var(--adaptive-info-border, rgba(2, 132, 199, 0.2))",
+          border:
+            "1px solid var(--adaptive-info-border, rgba(2, 132, 199, 0.2))",
           borderRadius: 8,
           padding: "10px 14px",
           marginBottom: 16,
@@ -255,21 +259,23 @@ export function ClassCloneModal({ cls, config, onClose }: ClassCloneModalProps) 
       >
         <strong>Informasi Penanganan Jadwal &amp; Peserta:</strong>
         <ul style={{ paddingLeft: 16, margin: "6px 0 0 0" }}>
-          <li>Seluruh jadwal rilis dan deadline periode lama otomatis di-reset ke draf bersih agar tidak mengunci di semester baru.</li>
-          <li>Peserta (mahasiswa) lama tidak diikutsertakan. Kelas baru akan dimulai dengan 0 peserta siap untuk pendaftaran angkatan baru.</li>
+          <li>
+            Seluruh jadwal rilis dan deadline periode lama otomatis di-reset ke
+            draf bersih agar tidak mengunci di semester baru.
+          </li>
+          <li>
+            Peserta (mahasiswa) lama tidak diikutsertakan. Kelas baru akan
+            dimulai dengan 0 peserta siap untuk pendaftaran angkatan baru.
+          </li>
         </ul>
       </div>
       <Form
         draftKey="clone-class"
         onSubmit={async (f) => {
-          const result = await api(
-            `/course-classes/${cls.id}/clone`,
-            "POST",
-            {
-              name: textValue(f, "name"),
-              academicYear: textValue(f, "academicYear"),
-            },
-          );
+          const result = await api(`/course-classes/${cls.id}/clone`, "POST", {
+            name: textValue(f, "name"),
+            academicYear: textValue(f, "academicYear"),
+          });
           onClose();
           navigate(result.path);
         }}
