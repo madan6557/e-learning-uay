@@ -300,21 +300,39 @@ export function ClassPage({
   }
   if (resourceSlug && !resource && !cls.isInactiveParticipant)
     return <Empty>Materi tidak ditemukan.</Empty>;
+  const getResourceProgress = (r: any): number => {
+    if (!cls?.progress) return 0;
+    if (r.resourceType === "VIDEO_MEDIA") {
+      return (
+        cls.progress.video?.find((p: any) => p.resourceItemId === r.id)
+          ?.percent ?? 0
+      );
+    }
+    if (r.resourceType === "DOCUMENT") {
+      const slidePercent =
+        cls.progress.slides?.find((p: any) => p.resourceItemId === r.id)
+          ?.percent ?? 0;
+      const downloadDone = cls.progress.downloads?.some(
+        (p: any) => p.resourceItemId === r.id,
+      );
+      return Math.max(slidePercent, downloadDone ? 100 : 0);
+    }
+    const isDone = [
+      ...(cls.progress.text ?? []),
+      ...(cls.progress.downloads ?? []),
+    ].some((p: any) => p.resourceItemId === r.id);
+    return isDone ? 100 : 0;
+  };
+
   const isResourceDone = (r: any) => {
     if (!cls?.progress) return false;
     if (r.resourceType === "VIDEO_MEDIA") {
       const minPercent = r.dynamicPayload?.minWatchPercent ?? 85;
-      return (
-        (cls.progress.video?.find((p: any) => p.resourceItemId === r.id)
-          ?.percent ?? 0) >= minPercent
-      );
+      return getResourceProgress(r) >= minPercent;
     }
     if (r.resourceType === "DOCUMENT") {
       const minPercent = r.dynamicPayload?.minSlidePercent ?? 80;
-      return (
-        (cls.progress.slides?.find((p: any) => p.resourceItemId === r.id)
-          ?.percent ?? 0) >= minPercent
-      );
+      return getResourceProgress(r) >= minPercent;
     }
     return [
       ...(cls.progress.text ?? []),
@@ -758,6 +776,9 @@ export function ClassPage({
                             if (item._kind === "resource") {
                               const r = item;
                               const done = !cls.canManage && isResourceDone(r);
+                              const progressPct = !cls.canManage
+                                ? Math.round(getResourceProgress(r))
+                                : 0;
                               return (
                                 <div
                                   className={`learning-item ${done ? "item-completed" : ""}`}
@@ -782,12 +803,33 @@ export function ClassPage({
                                         ]}
                                       </small>
                                     </div>
-                                    {done && (
-                                      <span className="status-pill completed">
-                                        <CheckCircle2 size={13} />
-                                        {t.completed}
-                                      </span>
-                                    )}
+                                    {!cls.canManage &&
+                                      (done ? (
+                                        <span className="status-pill completed">
+                                          <CheckCircle2 size={13} />
+                                          {t.completed}
+                                        </span>
+                                      ) : progressPct > 0 ? (
+                                        <span
+                                          className="status-pill in-progress"
+                                          style={{
+                                            fontWeight: 700,
+                                            fontSize: "0.78rem",
+                                            padding: "2px 8px",
+                                            borderRadius: "12px",
+                                            background:
+                                              "var(--adaptive-info-soft, #f0f9ff)",
+                                            color: "var(--primary, #0284c7)",
+                                            border:
+                                              "1px solid var(--primary-light, #bae6fd)",
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            gap: "4px",
+                                          }}
+                                        >
+                                          {progressPct}%
+                                        </span>
+                                      ) : null)}
                                     <ChevronRight size={16} />
                                   </a>
                                   {!r.isVisible && <Badge value="DRAFT" />}

@@ -178,9 +178,11 @@ export async function calculateGradebook(
                   ? 100
                   : (value / (p.minWatchPercent ?? 85)) * 100;
             } else if (r.resourceType === "DOCUMENT")
-              percent =
+              percent = Math.max(
                 r.slideProgresses.find((s) => s.userId === user.id)?.percent ??
-                0;
+                  0,
+                r.downloads.some((d) => d.userId === user.id) ? 100 : 0,
+              );
             else if (r.resourceType === "LAB_PRACTICUM" && p.fileObjectId)
               percent = r.downloads.some((d) => d.userId === user.id) ? 100 : 0;
             else {

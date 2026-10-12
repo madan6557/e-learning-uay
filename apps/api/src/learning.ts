@@ -1654,16 +1654,17 @@ export function registerLearning(app: Express) {
           });
         }
         if (resource.resourceType === "DOCUMENT") {
-          const { page, totalPages } = z
+          const { page, totalPages, markCompleted } = z
             .object({
-              page: z.number().int().min(1).max(10000),
+              page: z.number().int().min(1).max(10000).optional(),
               totalPages: z.number().int().min(1).max(10000).optional(),
+              markCompleted: z.boolean().optional(),
             })
             .parse(req.body);
           const effectiveTotalPages = Math.max(
             payload.totalPages ?? 1,
             totalPages ?? 1,
-            page,
+            page ?? 1,
           );
           if (effectiveTotalPages !== payload.totalPages) {
             await tx.resourceItem.update({
@@ -1679,24 +1680,31 @@ export function registerLearning(app: Express) {
           const before = await tx.slideProgress.findUnique({
             where: { userId_resourceItemId: { userId, resourceItemId } },
           });
-          const pages = [
-            ...new Set([...(before?.viewedPages ?? []), page]),
-          ].sort((a, b) => a - b);
-          const percent = round(
-            Math.min(100, (pages.length / effectiveTotalPages) * 100),
-          );
+          const targetPage = page ?? (before?.currentPage ?? 1);
+          const pages = markCompleted
+            ? Array.from({ length: effectiveTotalPages }, (_, i) => i + 1)
+            : page
+              ? [...new Set([...(before?.viewedPages ?? []), page])].sort(
+                  (a, b) => a - b,
+                )
+              : (before?.viewedPages ?? [1]);
+          const percent = markCompleted
+            ? 100
+            : round(
+                Math.min(100, (pages.length / effectiveTotalPages) * 100),
+              );
           return tx.slideProgress.upsert({
             where: { userId_resourceItemId: { userId, resourceItemId } },
             create: {
               userId,
               resourceItemId,
               viewedPages: pages,
-              currentPage: page,
+              currentPage: targetPage,
               percent,
             },
             update: {
               viewedPages: pages,
-              currentPage: page,
+              currentPage: targetPage,
               percent,
             },
           });

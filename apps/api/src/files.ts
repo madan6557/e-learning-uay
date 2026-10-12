@@ -1532,6 +1532,28 @@ export function registerFiles(app: Express) {
           create: { userId, resourceItemId },
           update: {},
         });
+        if (resource.resourceType === "DOCUMENT") {
+          const effectiveTotalPages = payload.totalPages ?? 1;
+          const pages = Array.from(
+            { length: effectiveTotalPages },
+            (_, i) => i + 1,
+          );
+          await tx.slideProgress.upsert({
+            where: { userId_resourceItemId: { userId, resourceItemId } },
+            create: {
+              userId,
+              resourceItemId,
+              viewedPages: pages,
+              currentPage: effectiveTotalPages,
+              percent: 100,
+            },
+            update: {
+              viewedPages: pages,
+              currentPage: effectiveTotalPages,
+              percent: 100,
+            },
+          });
+        }
         return after;
       }),
     ),
