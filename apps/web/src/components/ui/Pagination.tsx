@@ -1,3 +1,5 @@
+import React from "react";
+
 export interface PaginationProps {
   page: number;
   totalPages: number;
@@ -47,7 +49,16 @@ export function Pagination({
   };
 
   return (
-    <div className="pagination-bar">
+    <div
+      className="pagination-bar"
+      style={{
+        margin: "18px 4px 28px 4px",
+        padding: "14px 16px",
+        borderRadius: "var(--radius-lg, 10px)",
+        background: "var(--surface)",
+        border: "1px solid var(--border, #e2e8f0)",
+      }}
+    >
       <span className="pagination-summary">
         Menampilkan{" "}
         <strong>

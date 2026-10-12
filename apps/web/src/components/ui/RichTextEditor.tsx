@@ -18,24 +18,8 @@ import { FieldContext } from "./Field";
 import { AiPromptModal, type AiPromptTemplate } from "./AiPromptModal";
 export type { AiPromptTemplate } from "./AiPromptModal";
 
-export function formatContentHtml(raw?: string | null): string {
-  if (!raw || !raw.trim()) return "";
-  if (/<(p|div|ul|ol|h[1-6]|blockquote|table|hr)\b/i.test(raw)) {
-    return raw;
-  }
-  return raw
-    .split(/\n{2,}/)
-    .map((paragraph) => `<p>${paragraph.replace(/\n/g, "<br />")}</p>`)
-    .join("");
-}
-
-export function stripHtmlTags(raw?: string | null): string {
-  if (!raw) return "";
-  return raw
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
+import { formatContentHtml, stripHtmlTags } from "./textUtils";
+export { formatContentHtml, stripHtmlTags };
 
 export const AI_PROMPT_TEMPLATES: Record<string, AiPromptTemplate> = {
   assignment: {

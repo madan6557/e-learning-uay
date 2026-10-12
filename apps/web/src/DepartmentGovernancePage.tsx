@@ -21,6 +21,7 @@ import {
   UploadCloud,
   Download,
   FileSpreadsheet,
+  History,
 } from "lucide-react";
 import {
   api,
@@ -38,6 +39,7 @@ import {
   formatDepartmentDisplay,
   normalizeDepartmentCode,
 } from "../../../packages/shared/src/departments";
+import { AuditLogView } from "./components/admin/AuditLogView";
 
 interface DepartmentRecord {
   id: string;
@@ -420,9 +422,25 @@ export function DepartmentGovernancePage({
   user: any;
   config?: any;
 }) {
-  const [activeTab, setActiveTab] = useState<"PRODI" | "MANUAL" | "SIAKAD">(
-    "PRODI",
-  );
+  const tabParam =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("tab")?.toUpperCase()
+      : null;
+  const isAuditRoute =
+    typeof window !== "undefined" &&
+    window.location.pathname.startsWith("/audit");
+  const defaultTab =
+    isAuditRoute || tabParam === "AUDIT" || user.role === "DEPARTMENT_ADMIN"
+      ? "AUDIT"
+      : tabParam === "MANUAL"
+        ? "MANUAL"
+        : tabParam === "SIAKAD"
+          ? "SIAKAD"
+          : "PRODI";
+
+  const [activeTab, setActiveTab] = useState<
+    "PRODI" | "MANUAL" | "SIAKAD" | "AUDIT"
+  >(defaultTab as any);
   const [departments, setDepartments] = useState<DepartmentRecord[]>([]);
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [loadingDepts, setLoadingDepts] = useState(false);
@@ -778,6 +796,22 @@ export function DepartmentGovernancePage({
     return (
       <Notice error="Pengelolaan program studi dan otoritas hanya tersedia untuk Super Admin." />
     );
+
+  const governanceTabs = [
+    {
+      id: "PRODI" as const,
+      icon: Building2,
+      title: "Master Program Studi",
+    },
+    { id: "MANUAL" as const, icon: Users, title: "Pengguna" },
+    { id: "SIAKAD" as const, icon: Code, title: "Sinkronisasi SIAKAD" },
+    {
+      id: "AUDIT" as const,
+      icon: History,
+      title: "Rekaman Jejak Aktivitas",
+    },
+  ];
+
   return (
     <div className="departments-governance-page">
       <div className="page-heading">
@@ -785,28 +819,29 @@ export function DepartmentGovernancePage({
           <div className="eyebrow">
             <Building2 size={16} /> Tata Kelola Akademik
           </div>
-          <h1>Program Studi &amp; Pengguna</h1>
+          <h1>
+            {user.role === "SUPER_ADMIN"
+              ? "Program Studi, Pengguna & Jejak Aktivitas"
+              : "Jejak Aktivitas & Program Studi"}
+          </h1>
           <p>
-            Kelola program studi serta penugasan pengguna.
+            {user.role === "SUPER_ADMIN"
+              ? "Kelola program studi, penugasan pengguna, serta pantau rekaman jejak aktivitas sistem."
+              : "Pantau rekaman jejak aktivitas operasional akademik program studi Anda."}
           </p>
         </div>
       </div>
       <div className="governance-tabs" aria-label="Bagian tata kelola">
-        {(
-          [
-            ["PRODI", Building2, "Master Program Studi"],
-            ["MANUAL", Users, "Pengguna"],
-          ] as const
-        ).map(([tab, Icon, title]) => (
+        {governanceTabs.map((item) => (
           <button
-            key={tab}
+            key={item.id}
             type="button"
-            aria-pressed={activeTab === tab}
-            className={activeTab === tab ? "primary" : "secondary"}
-            onClick={() => setActiveTab(tab)}
+            aria-pressed={activeTab === item.id}
+            className={activeTab === item.id ? "primary" : "secondary"}
+            onClick={() => setActiveTab(item.id)}
           >
-            <Icon size={18} />
-            {title}
+            <item.icon size={18} />
+            {item.title}
           </button>
         ))}
       </div>
@@ -836,14 +871,16 @@ export function DepartmentGovernancePage({
                 <RefreshCw size={16} />
                 Segarkan
               </Action>
-              <button
-                type="button"
-                className="primary"
-                onClick={() => openDept()}
-              >
-                <Plus size={18} />
-                Tambah Program Studi
-              </button>
+              {user.role === "SUPER_ADMIN" && (
+                <button
+                  type="button"
+                  className="primary"
+                  onClick={() => openDept()}
+                >
+                  <Plus size={18} />
+                  Tambah Program Studi
+                </button>
+              )}
             </div>
           </div>
           {deptError && <Notice error={deptError} />}
@@ -862,7 +899,7 @@ export function DepartmentGovernancePage({
                       <th scope="col">Nama Program Studi</th>
                       <th scope="col">Fakultas / Unit</th>
                       <th scope="col">Status</th>
-                      <th scope="col">Aksi</th>
+                      {user.role === "SUPER_ADMIN" && <th scope="col">Aksi</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -882,28 +919,30 @@ export function DepartmentGovernancePage({
                             {dept.isActive ? "Aktif" : "Tidak aktif"}
                           </span>
                         </td>
-                        <td data-label="Aksi" className="record-actions">
-                          <div className="governance-actions">
-                            <button
-                              type="button"
-                              className="secondary"
-                              onClick={() => openDept(dept)}
-                              aria-label={`Edit program studi ${dept.code}`}
-                            >
-                              <Pencil size={16} />
-                              Edit
-                            </button>
-                            <Action
-                              className="danger"
-                              run={() => deleteDepartment(dept)}
-                              label={`Hapus atau nonaktifkan ${dept.code}`}
-                              busyLabel="Memproses…"
-                            >
-                              <Trash2 size={16} />
-                              Hapus / Nonaktifkan
-                            </Action>
-                          </div>
-                        </td>
+                        {user.role === "SUPER_ADMIN" && (
+                          <td data-label="Aksi" className="record-actions">
+                            <div className="governance-actions">
+                              <button
+                                type="button"
+                                className="secondary"
+                                onClick={() => openDept(dept)}
+                                aria-label={`Edit program studi ${dept.code}`}
+                              >
+                                <Pencil size={16} />
+                                Edit
+                              </button>
+                              <Action
+                                className="danger"
+                                run={() => deleteDepartment(dept)}
+                                label={`Hapus atau nonaktifkan ${dept.code}`}
+                                busyLabel="Memproses…"
+                              >
+                                <Trash2 size={16} />
+                                Hapus / Nonaktifkan
+                              </Action>
+                            </div>
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -1221,6 +1260,10 @@ export function DepartmentGovernancePage({
             </div>
           )}
         </section>
+      )}
+
+      {activeTab === "AUDIT" && (
+        <AuditLogView user={user} departments={departments} />
       )}
 
       {showDeptForm && (

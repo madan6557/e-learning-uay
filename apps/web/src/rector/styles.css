@@ -762,12 +762,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-top: 1px solid var(--border);
-  padding-top: 16px;
-  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin: 18px 4px 28px 4px;
+  background: var(--adaptive-surface, white);
   color: var(--adaptive-text-muted, #8a9aac);
-  font-size: 16px;
-  gap: 10px;
+  font-size: 15px;
+  gap: 12px;
 }
 .rector-dashboard .pagination > div {
   display: flex;

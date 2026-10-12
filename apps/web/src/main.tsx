@@ -79,6 +79,11 @@ const DepartmentGovernancePage = lazy(() =>
     default: m.DepartmentGovernancePage,
   })),
 );
+const AuditLogView = lazy(() =>
+  import("./components/admin/AuditLogView").then((m) => ({
+    default: m.AuditLogView,
+  })),
+);
 
 function AuthCallbackPage({
   config,
@@ -452,6 +457,23 @@ function App() {
         </a>
       </Empty>
     );
+  else if (section === "audit")
+    page =
+      ["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(user.role) ? (
+        <div className="departments-governance-page">
+          <AuditLogView user={user} />
+        </div>
+      ) : (
+        <Empty>
+          <h1>Akses Dibatasi</h1>
+          <p>
+            Rekaman jejak aktivitas hanya dapat diakses oleh Administrator.
+          </p>
+          <a className="button" href="/dashboard">
+            Kembali ke beranda
+          </a>
+        </Empty>
+      );
   else if (section === "departments")
     page =
       user.role === "SUPER_ADMIN" ? (

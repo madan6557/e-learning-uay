@@ -15,6 +15,7 @@ import {
   PanelLeftOpen,
   Megaphone,
   Building2,
+  History,
 } from "lucide-react";
 import { Action, Loading } from "../ui";
 import { Breadcrumbs, IconButton, UserChip } from "../../ui";
@@ -143,6 +144,7 @@ export function AuthShell({
               ["/departments", Building2, "Program Studi & Otoritas"],
             ]
           : []),
+        ...(admin ? [["/audit", History, "Rekaman Jejak Aktivitas"]] : []),
         ...(admin ? [["/catalog", LibraryBig, t.catalog]] : []),
         ["/classes", BookOpen, admin ? t.manageClasses : t.myClasses],
         ["/agenda", CalendarDays, admin ? t.academicAgenda : t.agenda],
@@ -160,7 +162,9 @@ export function AuthShell({
         ? "Kuis"
         : pathname.startsWith("/assignments")
           ? "Tugas"
-          : t.learningSpace),
+          : pathname.startsWith("/audit")
+            ? "Rekaman Jejak Aktivitas"
+            : t.learningSpace),
   );
   const phoneLinks = rector
     ? [

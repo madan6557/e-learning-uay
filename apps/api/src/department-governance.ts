@@ -1839,4 +1839,222 @@ export function registerDepartmentGovernance(app: Express) {
       });
     },
   );
+
+  // =========================================================================
+  // REKAMAN JEJAK AKTIVITAS (AUDIT LOGS)
+  // =========================================================================
+
+  /**
+   * Mengambil rekaman jejak aktivitas tata kelola sistem & akademik.
+   * Super Admin dapat melihat riwayat seluruh universitas.
+   * Admin Prodi dapat melihat riwayat terlingkup program studi mereka.
+   */
+  app.get("/api/v1/system/audit-logs", authenticate, async (req, res) => {
+    const user = req.context.user;
+    ensure(
+      ["SUPER_ADMIN", "DEPARTMENT_ADMIN"].includes(user.role),
+      403,
+      "FORBIDDEN",
+    );
+
+    const isSuperAdmin = user.role === "SUPER_ADMIN";
+    const userScopes = (user.departmentScopes || []).map(normalizeDepartmentCode);
+
+    const page = Math.max(1, parseInt(String(req.query.page || "1"), 10) || 1);
+    const pageSize = Math.min(
+      100,
+      Math.max(1, parseInt(String(req.query.pageSize || "25"), 10) || 25),
+    );
+    const skip = (page - 1) * pageSize;
+
+    const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
+    const roleFilter = typeof req.query.role === "string" ? req.query.role.trim() : "";
+    const actionFilter = typeof req.query.action === "string" ? req.query.action.trim() : "";
+    const entityFilter = typeof req.query.entity === "string" ? req.query.entity.trim() : "";
+    const departmentFilter = typeof req.query.department === "string" ? req.query.department.trim() : "";
+    const dateFrom = typeof req.query.dateFrom === "string" ? req.query.dateFrom.trim() : "";
+    const dateTo = typeof req.query.dateTo === "string" ? req.query.dateTo.trim() : "";
+
+    const where: any = {};
+
+    // Filter lingkup otoritas (Scope restrictions)
+    if (!isSuperAdmin) {
+      if (userScopes.length === 0) {
+        where.actorId = user.id;
+      } else {
+        const [deptClasses, deptCourses, deptUsers] = await Promise.all([
+          db.courseClass.findMany({
+            where: { course: { departmentCode: { in: userScopes } } },
+            select: { id: true },
+          }),
+          db.course.findMany({
+            where: { departmentCode: { in: userScopes } },
+            select: { id: true },
+          }),
+          db.user.findMany({
+            where: { departmentScopes: { hasSome: userScopes } },
+            select: { id: true },
+          }),
+        ]);
+
+        const classIds = deptClasses.map((c) => c.id);
+        const courseIds = deptCourses.map((c) => c.id);
+        const actorIds = [...new Set([...deptUsers.map((u) => u.id), user.id])];
+
+        where.OR = [
+          { classId: { in: classIds } },
+          { entity: "COURSE", entityId: { in: courseIds } },
+          { entity: "DEPARTMENT", entityId: { in: userScopes } },
+          { actorId: { in: actorIds } },
+        ];
+      }
+    } else if (departmentFilter && departmentFilter !== "ALL") {
+      const normalizedDept = normalizeDepartmentCode(departmentFilter);
+      const [deptClasses, deptCourses] = await Promise.all([
+        db.courseClass.findMany({
+          where: { course: { departmentCode: normalizedDept } },
+          select: { id: true },
+        }),
+        db.course.findMany({
+          where: { departmentCode: normalizedDept },
+          select: { id: true },
+        }),
+      ]);
+      const classIds = deptClasses.map((c) => c.id);
+      const courseIds = deptCourses.map((c) => c.id);
+
+      where.OR = [
+        { classId: { in: classIds } },
+        { entity: "COURSE", entityId: { in: courseIds } },
+        { entity: "DEPARTMENT", entityId: normalizedDept },
+      ];
+    }
+
+    if (roleFilter && roleFilter !== "ALL") {
+      where.actorRole = roleFilter;
+    }
+
+    if (actionFilter && actionFilter !== "ALL") {
+      where.action = actionFilter;
+    }
+
+    if (entityFilter && entityFilter !== "ALL") {
+      where.entity = entityFilter;
+    }
+
+    if (dateFrom || dateTo) {
+      where.createdAt = {};
+      if (dateFrom) {
+        where.createdAt.gte = new Date(dateFrom);
+      }
+      if (dateTo) {
+        const to = new Date(dateTo);
+        to.setHours(23, 59, 59, 999);
+        where.createdAt.lte = to;
+      }
+    }
+
+    if (q) {
+      const searchConditions = [
+        { action: { contains: q, mode: "insensitive" } },
+        { entity: { contains: q, mode: "insensitive" } },
+        { reason: { contains: q, mode: "insensitive" } },
+        { user: { name: { contains: q, mode: "insensitive" } } },
+        { user: { identifierValue: { contains: q, mode: "insensitive" } } },
+        { user: { email: { contains: q, mode: "insensitive" } } },
+      ];
+      if (where.OR) {
+        where.AND = [{ OR: where.OR }, { OR: searchConditions }];
+        delete where.OR;
+      } else {
+        where.OR = searchConditions;
+      }
+    }
+
+    const [total, entries] = await Promise.all([
+      db.auditLog.count({ where }),
+      db.auditLog.findMany({
+        where,
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        skip,
+        take: pageSize,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              identifierValue: true,
+              email: true,
+              role: true,
+              departmentScopes: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    const record = (value: unknown): Record<string, unknown> =>
+      value && typeof value === "object" && !Array.isArray(value)
+        ? (value as Record<string, unknown>)
+        : {};
+
+    const formatted = entries.map((entry) => {
+      const before = record(entry.beforeState);
+      const after = record(entry.afterState);
+
+      const allKeys = Array.from(
+        new Set([...Object.keys(before), ...Object.keys(after)]),
+      ).filter(
+        (k) =>
+          ![
+            "password",
+            "passwordHash",
+            "token",
+            "secret",
+            "metadata",
+          ].includes(k),
+      );
+
+      const changes = allKeys.flatMap((field) => {
+        const oldValue = before[field];
+        const newValue = after[field];
+        if (JSON.stringify(oldValue) === JSON.stringify(newValue)) return [];
+        return [{ field, before: oldValue, after: newValue }];
+      });
+
+      const title =
+        after.title ??
+        after.name ??
+        after.code ??
+        before.title ??
+        before.name ??
+        before.code ??
+        entry.entityId;
+
+      return {
+        id: entry.id,
+        action: entry.action,
+        entity: entry.entity,
+        entityId: entry.entityId,
+        classId: entry.classId,
+        actorRole: entry.actorRole,
+        user: entry.user,
+        createdAt: entry.createdAt,
+        reason: entry.reason,
+        ipAddress: entry.ipAddress,
+        objectTitle: typeof title === "string" ? title : null,
+        changes,
+        beforeState: entry.beforeState,
+        afterState: entry.afterState,
+      };
+    });
+
+    res.json({
+      data: formatted,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize) || 1,
+    });
+  });
 }

@@ -19,6 +19,7 @@ import { Html } from "../../Content";
 import { questionSchema } from "../../../../../packages/shared/src/domain";
 import { QuestionEditor } from "../../Assessment";
 import { ImportPanel } from "../../Gradebook";
+import { AnswerKeyDisplay } from "../ui/AnswerKeyDisplay";
 
 export function QuestionBanks({
   classId,
@@ -100,13 +101,7 @@ export function QuestionBanks({
                   <div className="formatted-content" style={{ marginBottom: 12 }}>
                     <Html text={formatContentHtml(q.text)} />
                   </div>
-                  {q.options?.map((o: any) => (
-                    <p key={o.id}>
-                      {o.id.toUpperCase()}. {o.text}
-                    </p>
-                  ))}
-                  <strong>{t.answerKey}</strong>
-                  <pre>{JSON.stringify(q.answerKey, null, 2)}</pre>
+                  <AnswerKeyDisplay question={q} />
                 </div>
               </details>
             ))}

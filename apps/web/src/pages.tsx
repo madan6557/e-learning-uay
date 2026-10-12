@@ -37,6 +37,7 @@ import {
   Trash2,
   RotateCcw,
   ArrowUpDown,
+  History,
 } from "lucide-react";
 
 function getTimeGreeting(): string {
@@ -1224,6 +1225,12 @@ function AdminOverview({
             ClipboardCheck,
             t.gradeOverview,
             t.gradeOverviewDescription,
+          ],
+          [
+            "/audit",
+            History,
+            "Rekaman Jejak Aktivitas",
+            "Pantau rekam jejak aktivitas tata kelola sistem, perubahan wewenang, dan operasional akademik.",
           ],
         ].map(([href, Icon, title, description]: any) => (
           <a className="card" href={href} key={href}>
