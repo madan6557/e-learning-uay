@@ -438,3 +438,324 @@ export function advanceVideo(
     percent: round((100 * watchedSeconds) / duration),
   };
 }
+
+export interface GradeCategoryPresetItem {
+  name: string;
+  weightPercent: number;
+  kind?: "ASSESSMENT" | "PROGRESS";
+  sourceType?: GradeSourceType;
+  isMandatory?: boolean;
+}
+
+export interface GradeCategoryPreset {
+  id: string;
+  name: string;
+  description: string;
+  isDefault?: boolean;
+  categories: GradeCategoryPresetItem[];
+}
+
+export const GRADE_CATEGORY_PRESETS: Record<string, GradeCategoryPreset> = {
+  DEFAULT_UAY: {
+    id: "DEFAULT_UAY",
+    name: "Standar UAY (Default)",
+    description: "30% Tugas (semua tugas & kuis), 35% UTS, 35% UAS",
+    isDefault: true,
+    categories: [
+      {
+        name: "Tugas",
+        weightPercent: 30,
+        kind: "ASSESSMENT",
+        sourceType: "ASSIGNMENT_AND_QUIZ",
+        isMandatory: false,
+      },
+      {
+        name: "UTS",
+        weightPercent: 35,
+        kind: "ASSESSMENT",
+        sourceType: "MANUAL",
+        isMandatory: true,
+      },
+      {
+        name: "UAS",
+        weightPercent: 35,
+        kind: "ASSESSMENT",
+        sourceType: "MANUAL",
+        isMandatory: true,
+      },
+    ],
+  },
+  SEPARATE_QUIZ: {
+    id: "SEPARATE_QUIZ",
+    name: "Tugas & Kuis Terpisah",
+    description: "20% Tugas, 10% Kuis, 35% UTS, 35% UAS",
+    categories: [
+      {
+        name: "Tugas",
+        weightPercent: 20,
+        kind: "ASSESSMENT",
+        sourceType: "ASSIGNMENT",
+        isMandatory: false,
+      },
+      {
+        name: "Kuis",
+        weightPercent: 10,
+        kind: "ASSESSMENT",
+        sourceType: "QUIZ",
+        isMandatory: false,
+      },
+      {
+        name: "UTS",
+        weightPercent: 35,
+        kind: "ASSESSMENT",
+        sourceType: "MANUAL",
+        isMandatory: true,
+      },
+      {
+        name: "UAS",
+        weightPercent: 35,
+        kind: "ASSESSMENT",
+        sourceType: "MANUAL",
+        isMandatory: true,
+      },
+    ],
+  },
+  PROJECT_BASED: {
+    id: "PROJECT_BASED",
+    name: "Berbasis Proyek (PBL)",
+    description: "40% Proyek & Tugas (semua tugas & kuis), 30% UTS, 30% UAS",
+    categories: [
+      {
+        name: "Proyek & Tugas",
+        weightPercent: 40,
+        kind: "ASSESSMENT",
+        sourceType: "ASSIGNMENT_AND_QUIZ",
+        isMandatory: false,
+      },
+      {
+        name: "UTS",
+        weightPercent: 30,
+        kind: "ASSESSMENT",
+        sourceType: "MANUAL",
+        isMandatory: true,
+      },
+      {
+        name: "UAS",
+        weightPercent: 30,
+        kind: "ASSESSMENT",
+        sourceType: "MANUAL",
+        isMandatory: true,
+      },
+    ],
+  },
+  PRACTICUM_LAB: {
+    id: "PRACTICUM_LAB",
+    name: "Teori & Praktikum Lab",
+    description: "15% Tugas & Kuis, 25% Praktikum, 30% UTS, 30% UAS",
+    categories: [
+      {
+        name: "Tugas & Kuis",
+        weightPercent: 15,
+        kind: "ASSESSMENT",
+        sourceType: "ASSIGNMENT_AND_QUIZ",
+        isMandatory: false,
+      },
+      {
+        name: "Praktikum",
+        weightPercent: 25,
+        kind: "ASSESSMENT",
+        sourceType: "MANUAL",
+        isMandatory: false,
+      },
+      {
+        name: "UTS",
+        weightPercent: 30,
+        kind: "ASSESSMENT",
+        sourceType: "MANUAL",
+        isMandatory: true,
+      },
+      {
+        name: "UAS",
+        weightPercent: 30,
+        kind: "ASSESSMENT",
+        sourceType: "MANUAL",
+        isMandatory: true,
+      },
+    ],
+  },
+  PROGRESS_PARTICIPATION: {
+    id: "PROGRESS_PARTICIPATION",
+    name: "Partisipatif & Progres Mandiri",
+    description: "10% Progres Belajar Materi, 20% Tugas & Kuis, 35% UTS, 35% UAS",
+    categories: [
+      {
+        name: "Progres Belajar",
+        weightPercent: 10,
+        kind: "PROGRESS",
+        sourceType: "PROGRESS",
+        isMandatory: false,
+      },
+      {
+        name: "Tugas",
+        weightPercent: 20,
+        kind: "ASSESSMENT",
+        sourceType: "ASSIGNMENT_AND_QUIZ",
+        isMandatory: false,
+      },
+      {
+        name: "UTS",
+        weightPercent: 35,
+        kind: "ASSESSMENT",
+        sourceType: "MANUAL",
+        isMandatory: true,
+      },
+      {
+        name: "UAS",
+        weightPercent: 35,
+        kind: "ASSESSMENT",
+        sourceType: "MANUAL",
+        isMandatory: true,
+      },
+    ],
+  },
+  ATTENDANCE_ACTIVE: {
+    id: "ATTENDANCE_ACTIVE",
+    name: "Presensi & Keaktifan",
+    description: "10% Presensi Kehadiran, 20% Tugas & Kuis, 35% UTS, 35% UAS",
+    categories: [
+      {
+        name: "Presensi Kehadiran",
+        weightPercent: 10,
+        kind: "ASSESSMENT",
+        sourceType: "ATTENDANCE",
+        isMandatory: false,
+      },
+      {
+        name: "Tugas",
+        weightPercent: 20,
+        kind: "ASSESSMENT",
+        sourceType: "ASSIGNMENT_AND_QUIZ",
+        isMandatory: false,
+      },
+      {
+        name: "UTS",
+        weightPercent: 35,
+        kind: "ASSESSMENT",
+        sourceType: "MANUAL",
+        isMandatory: true,
+      },
+      {
+        name: "UAS",
+        weightPercent: 35,
+        kind: "ASSESSMENT",
+        sourceType: "MANUAL",
+        isMandatory: true,
+      },
+    ],
+  },
+};
+
+export const DEFAULT_GRADE_CATEGORIES_TEMPLATE =
+  GRADE_CATEGORY_PRESETS.DEFAULT_UAY.categories;
+
+export interface AutoAssignableItem {
+  id: string;
+  title: string;
+  gradeCategoryId?: string | null;
+}
+
+export interface CategoryCandidate {
+  id: string;
+  name: string;
+  kind?: string;
+  sourceType?: string;
+  isMandatory?: boolean;
+}
+
+export function autoAssignItems<T extends AutoAssignableItem>(
+  categories: CategoryCandidate[],
+  items: T[],
+  itemType: "ASSIGNMENT" | "QUIZ",
+): Array<T & { targetCategoryId: string | null; currentCategoryId: string | null }> {
+  const utsCategory = categories.find(
+    (c) =>
+      /\b(uts|mid|tengah)\b/i.test(c.name) ||
+      (Boolean(c.isMandatory) && c.name.toLowerCase().includes("uts")),
+  );
+  const uasCategory = categories.find(
+    (c) =>
+      /\b(uas|final|akhir)\b/i.test(c.name) ||
+      (Boolean(c.isMandatory) && c.name.toLowerCase().includes("uas")),
+  );
+  const quizCategory = categories.find(
+    (c) => c.sourceType === "QUIZ" || /\b(kuis|quiz)\b/i.test(c.name),
+  );
+  const practicumCategory = categories.find((c) =>
+    /\b(praktik|praktikum|lab|responsip)\b/i.test(c.name),
+  );
+  const assignmentCategory =
+    categories.find(
+      (c) =>
+        c.sourceType === "ASSIGNMENT_AND_QUIZ" ||
+        c.sourceType === "ASSIGNMENT" ||
+        /\b(tugas|proyek|project|tugas & kuis)\b/i.test(c.name),
+    ) ??
+    categories.find(
+      (c) =>
+        !c.isMandatory &&
+        c.kind !== "PROGRESS" &&
+        c.id !== utsCategory?.id &&
+        c.id !== uasCategory?.id,
+    ) ??
+    categories.find((c) => c.kind !== "PROGRESS");
+
+  return items.map((item) => {
+    let targetId: string | null = null;
+    const lowerTitle = item.title.toLowerCase();
+
+    // 1. Keyword UTS
+    if (
+      /\b(uts|mid\s*test|mid\s*term|ujian tengah)\b/i.test(lowerTitle) &&
+      utsCategory
+    ) {
+      targetId = utsCategory.id;
+    }
+    // 2. Keyword UAS
+    else if (
+      /\b(uas|final\s*test|final\s*term|ujian akhir)\b/i.test(lowerTitle) &&
+      uasCategory
+    ) {
+      targetId = uasCategory.id;
+    }
+    // 3. Jenis Komponen
+    else if (itemType === "QUIZ") {
+      if (quizCategory) {
+        targetId = quizCategory.id;
+      } else if (assignmentCategory) {
+        targetId = assignmentCategory.id;
+      } else {
+        targetId = categories.find((c) => c.kind !== "PROGRESS")?.id ?? null;
+      }
+    } else {
+      // ASSIGNMENT
+      if (
+        /\b(praktik|praktikum|lab|responsip)\b/i.test(lowerTitle) &&
+        practicumCategory
+      ) {
+        targetId = practicumCategory.id;
+      } else if (assignmentCategory) {
+        targetId = assignmentCategory.id;
+      } else if (quizCategory) {
+        targetId = quizCategory.id;
+      } else {
+        targetId = categories.find((c) => c.kind !== "PROGRESS")?.id ?? null;
+      }
+    }
+
+    return {
+      ...item,
+      currentCategoryId: item.gradeCategoryId ?? null,
+      targetCategoryId: targetId,
+    };
+  });
+}

@@ -929,6 +929,31 @@ export function ClassPage({
                   </section>
                 ))}
               </div>
+              {writable && cls.sections.length > 0 && (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    margin: "24px 0 16px",
+                  }}
+                >
+                  <button
+                    className="primary"
+                    onClick={() => setModal({ kind: "section" })}
+                    style={{
+                      padding: "10px 24px",
+                      borderRadius: 24,
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <Plus size={16} />
+                    {t.newSection}
+                  </button>
+                </div>
+              )}
             </>
           )}
           {tab === "attendance" && (

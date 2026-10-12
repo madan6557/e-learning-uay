@@ -20,9 +20,55 @@ export interface FieldProps {
   label: string;
   children: ReactNode;
   hint?: string;
+  required?: boolean;
 }
 
-export function Field({ label, children, hint }: FieldProps) {
+function renderLabelWithAsterisk(label: string, isRequired: boolean) {
+  if (label.includes("*")) {
+    const parts = label.split("*");
+    return (
+      <>
+        {parts.map((part, i) => (
+          <Fragment key={i}>
+            {part}
+            {i < parts.length - 1 && (
+              <span
+                style={{
+                  color: "var(--danger, #ef4444)",
+                  marginLeft: 2,
+                  fontWeight: 700,
+                }}
+                aria-hidden="true"
+              >
+                *
+              </span>
+            )}
+          </Fragment>
+        ))}
+      </>
+    );
+  }
+  if (isRequired) {
+    return (
+      <>
+        {label}
+        <span
+          style={{
+            color: "var(--danger, #ef4444)",
+            marginLeft: 3,
+            fontWeight: 700,
+          }}
+          aria-hidden="true"
+        >
+          *
+        </span>
+      </>
+    );
+  }
+  return label;
+}
+
+export function Field({ label, children, hint, required }: FieldProps) {
   const id = useId();
   const [validation, setValidation] = useState("");
   let controlId =
@@ -32,6 +78,8 @@ export function Field({ label, children, hint }: FieldProps) {
       .filter(Boolean)
       .join(" ") || undefined;
   let connected = false;
+  let detectedRequired = Boolean(required);
+
   const connect = (nodes: ReactNode): ReactNode =>
     Children.map(nodes, (child) => {
       if (!isValidElement(child)) return child;
@@ -43,6 +91,7 @@ export function Field({ label, children, hint }: FieldProps) {
       ) {
         connected = true;
         controlId = (child.props as any).id || controlId;
+        if ((child.props as any).required) detectedRequired = true;
         return cloneElement(child as ReactElement<any>, {
           id: controlId,
           "aria-labelledby": `${id}-label`,
@@ -71,7 +120,9 @@ export function Field({ label, children, hint }: FieldProps) {
 
   return (
     <label className="field" htmlFor={controlId}>
-      <span id={`${id}-label`}>{label}</span>
+      <span id={`${id}-label`}>
+        {renderLabelWithAsterisk(label, detectedRequired)}
+      </span>
       <FieldContext.Provider
         value={{ controlId, labelId: `${id}-label`, describedBy }}
       >

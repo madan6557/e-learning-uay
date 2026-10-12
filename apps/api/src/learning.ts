@@ -27,6 +27,7 @@ import {
   advanceVideo,
   webUrl,
   round,
+  DEFAULT_GRADE_CATEGORIES_TEMPLATE,
 } from "../../../packages/shared/src/domain.js";
 import { classPath, contentPath } from "../../../packages/shared/src/urls.js";
 import { normalizeDepartmentCode } from "../../../packages/shared/src/departments.js";
@@ -679,18 +680,16 @@ export function registerLearning(app: Express) {
               })),
             },
             gradeCategories: {
-              create: [
-                ["Tugas & praktikum", 25],
-                ["Kuis", 15],
-                ["UTS", 25],
-                ["UAS", 25],
-                ["Progres belajar", 10],
-              ].map(([name, weightPercent], order) => ({
-                name: String(name),
-                weightPercent: Number(weightPercent),
-                order,
-                kind: order === 4 ? "PROGRESS" : "ASSESSMENT",
-              })),
+              create: DEFAULT_GRADE_CATEGORIES_TEMPLATE.map(
+                (template, order) => ({
+                  name: template.name,
+                  weightPercent: template.weightPercent,
+                  order,
+                  kind: template.kind ?? "ASSESSMENT",
+                  sourceType: template.sourceType ?? "MANUAL",
+                  isMandatory: Boolean(template.isMandatory),
+                }),
+              ),
             },
           },
         });

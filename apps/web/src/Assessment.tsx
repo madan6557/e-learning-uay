@@ -12,6 +12,7 @@ import {
   Lock,
   Save,
   Send,
+  UploadCloud,
 } from "lucide-react";
 import {
   t,
@@ -2346,6 +2347,9 @@ export function AssignmentPage({
                       .filter((f: string) => !["TEXT", "LINK"].includes(f))
                       .map((f: string) => `.${f.toLowerCase()}`)
                       .join(",")}
+                    existingFile={
+                      file ? { id: file.id, name: file.name } : undefined
+                    }
                     onUploaded={(f) => {
                       setFile(f);
                     }}
@@ -2355,6 +2359,133 @@ export function AssignmentPage({
             </section>
           );
         })()}
+      {a.canManage && user.role === "INSTRUCTOR" && !a.isClassArchived && (
+        <section
+          className="card submission-form instructor-test-submission"
+          style={{
+            marginBottom: 24,
+            border: "1px dashed var(--primary, #0284c7)",
+          }}
+        >
+          <div style={{ marginBottom: 12 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 8,
+              }}
+            >
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: "1.15rem",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                <UploadCloud size={18} className="text-primary" />
+                Uji Coba Pengumpulan Tugas (Dosen Pengampu)
+              </h2>
+              <span
+                className="badge"
+                style={{
+                  background:
+                    "var(--adaptive-info-soft, rgba(2, 132, 199, 0.1))",
+                  color: "var(--primary, #0284c7)",
+                }}
+              >
+                Mode Pratinjau Dosen
+              </span>
+            </div>
+            <p
+              style={{
+                margin: "6px 0 0",
+                fontSize: "0.86rem",
+                color: "var(--muted, #64748b)",
+              }}
+            >
+              Sebagai dosen pengampu, Anda dapat mengunggah berkas atau
+              mengirim jawaban simulasi untuk memastikan instruksi dan format
+              berkas berfungsi dengan baik bagi mahasiswa.
+            </p>
+          </div>
+          {receipt && (
+            <Notice onClose={() => setReceipt(null)}>
+              {t.submissionSuccess} · {date(receipt.submittedAt)} · {t.version}{" "}
+              {receipt.version} ·{" "}
+              {receipt.status === "LATE" ? t.late : t.onTime}
+            </Notice>
+          )}
+          <Form
+            draftKey={`instructor-test-submission:${id}`}
+            draftValue={{ body, link, file }}
+            onRestoreDraft={(v) => {
+              setBody(v.body);
+              setLink(v.link);
+              setFile(v.file);
+            }}
+            submitLabel="Kirim Uji Coba Pengumpulan"
+            onSubmit={async () => {
+              const result = await api(
+                `/assignments/${id}/submissions`,
+                "POST",
+                {
+                  ...(body.trim() ? { textContent: body } : {}),
+                  ...(link.trim() ? { externalUrl: link } : {}),
+                  ...(file ? { fileObjectId: file.id } : {}),
+                },
+              );
+              setReceipt(result);
+              setShowSuccessModal(true);
+              notifyAction("Uji coba pengumpulan tugas berhasil disimpan.");
+              info.reload();
+            }}
+          >
+            {a.allowedFormats.includes("TEXT") && (
+              <Field label={`${t.submissionText} (Format Teks Rapi)`}>
+                <RichTextEditor
+                  value={body}
+                  onChange={setBody}
+                  placeholder="Ketik draf atau catatan tugas di sini..."
+                  minHeight={160}
+                />
+              </Field>
+            )}
+            {a.allowedFormats.includes("LINK") && (
+              <Field label={t.submissionLink}>
+                <input
+                  type="url"
+                  placeholder="https://..."
+                  value={link}
+                  onChange={(e) => setLink(e.target.value)}
+                />
+              </Field>
+            )}
+            {a.allowedFormats.some(
+              (f: string) => !["TEXT", "LINK"].includes(f),
+            ) && (
+              <FileUpload
+                classId={a.classId}
+                purpose="SUBMISSION"
+                contextId={id}
+                accept={a.allowedFormats
+                  .filter((f: string) => !["TEXT", "LINK"].includes(f))
+                  .map((f: string) => `.${f.toLowerCase()}`)
+                  .join(",")}
+                existingFile={
+                  file ? { id: file.id, name: file.name } : undefined
+                }
+                onUploaded={(f) => {
+                  setFile(f);
+                }}
+              />
+            )}
+          </Form>
+        </section>
+      )}
       <div className="section-heading" style={{ flexWrap: "wrap", gap: 12 }}>
         <h2>{t.submissionHistory}</h2>
         {canGrade && (

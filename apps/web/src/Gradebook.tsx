@@ -11,6 +11,7 @@ import {
   Trash2,
   Sparkles,
   Info,
+  Check,
 } from "lucide-react";
 import {
   t,
@@ -35,6 +36,8 @@ import {
   GRADE_SCALE_PRESETS,
   gradeScaleLabel,
   type GradeScalePolicy,
+  GRADE_CATEGORY_PRESETS,
+  type GradeCategoryPreset,
 } from "../../../packages/shared/src/domain";
 import { parseCsv } from "./csv";
 import type { FormProps } from "./components/ui/Form";
@@ -723,7 +726,9 @@ export function Gradebook({
     [weights, setWeights] = useState<any[]>([]),
     [acknowledge, setAcknowledge] = useState(false),
     [message, setMessage] = useState(""),
-    [gradeScaleVersion, setGradeScaleVersion] = useState("2026.1");
+    [gradeScaleVersion, setGradeScaleVersion] = useState("2026.1"),
+    [autoAssignEnabled, setAutoAssignEnabled] = useState(true),
+    [autoAssigning, setAutoAssigning] = useState(false);
   const [changes, setChanges] = useState<
     Record<string, { userId: string; categoryId: string; score: string }>
   >({});
@@ -1270,15 +1275,154 @@ export function Gradebook({
             draftKey="weights"
             draftValue={weights}
             onRestoreDraft={setWeights}
+            submitLabel={
+              autoAssignEnabled
+                ? "Simpan Bobot & Auto-Assign"
+                : "Simpan Bobot Penilaian"
+            }
             onSubmit={async () => {
               await api(`/course-classes/${classId}/grade-categories`, "PUT", {
                 categories: weights,
                 gradeScaleVersion,
+                autoAssign: autoAssignEnabled,
               });
               setModal(null);
+              const msg = autoAssignEnabled
+                ? "Bobot kategori disimpan dan seluruh tugas serta kuis di-assign otomatis."
+                : "Bobot kategori berhasil disimpan.";
+              setMessage(msg);
+              notifyAction(msg);
               info.reload();
             }}
           >
+            {/* Pilihan Preset Pembobotan */}
+            <div
+              style={{
+                marginBottom: 16,
+                padding: "12px 14px",
+                borderRadius: 8,
+                background: "var(--card-muted, #f8fafc)",
+                border: "1px solid var(--border, #e2e8f0)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: 8,
+                }}
+              >
+                <strong
+                  style={{
+                    fontSize: "0.85rem",
+                    color: "var(--foreground, #1e293b)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  <Sparkles size={15} color="var(--accent, #0284c7)" />
+                  Preset Pembobotan Penilaian:
+                </strong>
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {Object.values(GRADE_CATEGORY_PRESETS).map((preset) => {
+                  const active =
+                    weights.length === preset.categories.length &&
+                    preset.categories.every((pCat) =>
+                      weights.some(
+                        (w) =>
+                          w.name.trim().toLowerCase() ===
+                            pCat.name.trim().toLowerCase() &&
+                          Math.abs(w.weightPercent - pCat.weightPercent) < 0.01,
+                      ),
+                    );
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => {
+                        const mapped = preset.categories.map((pCat, idx) => {
+                          const existing =
+                            weights.find(
+                              (w) =>
+                                w.name.trim().toLowerCase() ===
+                                pCat.name.trim().toLowerCase(),
+                            ) ||
+                            (pCat.name === "Tugas"
+                              ? weights.find((w) =>
+                                  w.name.toLowerCase().includes("tugas"),
+                                )
+                              : undefined);
+                          return {
+                            id: existing?.id,
+                            name: pCat.name,
+                            weightPercent: pCat.weightPercent,
+                            kind: pCat.kind ?? "ASSESSMENT",
+                            sourceType: pCat.sourceType ?? "MANUAL",
+                            aggregationMethod: "SIMPLE_AVERAGE",
+                            dropLowest: 0,
+                            isMandatory: Boolean(pCat.isMandatory),
+                            order: idx,
+                          };
+                        });
+                        setWeights(mapped);
+                        notifyAction(`Preset "${preset.name}" diterapkan.`);
+                      }}
+                      className={active ? "primary" : "secondary"}
+                      style={{
+                        fontSize: "0.8rem",
+                        padding: "6px 12px",
+                        borderRadius: 6,
+                        border: active
+                          ? "1.5px solid var(--accent, #0284c7)"
+                          : "1px solid var(--border, #cbd5e1)",
+                        background: active
+                          ? "var(--adaptive-info-soft, rgba(2, 132, 199, 0.12))"
+                          : "transparent",
+                        color: active
+                          ? "var(--adaptive-info-fill, #0369a1)"
+                          : "inherit",
+                        cursor: "pointer",
+                        fontWeight: active ? 600 : 500,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                      }}
+                      title={preset.description}
+                    >
+                      {preset.isDefault && (
+                        <span
+                          style={{
+                            fontSize: "0.68rem",
+                            background: "#0284c7",
+                            color: "#fff",
+                            padding: "1px 5px",
+                            borderRadius: 4,
+                            fontWeight: 600,
+                          }}
+                        >
+                          Default
+                        </span>
+                      )}
+                      <span>{preset.name}</span>
+                      {active && <Check size={13} />}
+                    </button>
+                  );
+                })}
+              </div>
+              <p
+                style={{
+                  fontSize: "0.78rem",
+                  color: "var(--muted, #64748b)",
+                  margin: "8px 0 0",
+                }}
+              >
+                Pilih preset untuk menerapkan standar UAY (30% Tugas, 35% UTS, 35% UAS) atau skema akademik lainnya.
+              </p>
+            </div>
+
             <div style={{ marginBottom: 16 }}>
               <Field
                 label="Kebijakan Konversi Huruf Mutu (Grade Scale Policy)"
@@ -1296,6 +1440,7 @@ export function Gradebook({
                 </select>
               </Field>
             </div>
+
             <div className="weight-editor">
               {weights.map((c, i) => {
                 const isMandatory =
@@ -1445,34 +1590,108 @@ export function Gradebook({
                 );
               })}
             </div>
-            <div className="points-counter">
-              <strong>
-                {t.weight}:{" "}
-                {weights.reduce((s, c) => s + c.weightPercent, 0).toFixed(2)} /
-                100%
-              </strong>
-            </div>
-            <button
-              className="secondary"
-              type="button"
-              onClick={() =>
-                setWeights([
-                  ...weights,
-                  {
-                    name: "",
-                    weightPercent: 0,
-                    kind: "ASSESSMENT",
-                    aggregationMethod: "SIMPLE_AVERAGE",
-                    dropLowest: 0,
-                    isMandatory: false,
-                    sourceType: "MANUAL",
-                  },
-                ])
-              }
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginTop: 12,
+                marginBottom: 12,
+              }}
             >
-              <Plus size={15} />
-              {t.category}
-            </button>
+              <button
+                className="secondary"
+                type="button"
+                onClick={() =>
+                  setWeights([
+                    ...weights,
+                    {
+                      name: "",
+                      weightPercent: 0,
+                      kind: "ASSESSMENT",
+                      aggregationMethod: "SIMPLE_AVERAGE",
+                      dropLowest: 0,
+                      isMandatory: false,
+                      sourceType: "MANUAL",
+                    },
+                  ])
+                }
+              >
+                <Plus size={15} />
+                {t.category}
+              </button>
+              <div className="points-counter" style={{ margin: 0 }}>
+                <strong>
+                  {t.weight}:{" "}
+                  {weights.reduce((s, c) => s + c.weightPercent, 0).toFixed(2)} /{" "}
+                  100%
+                </strong>
+              </div>
+            </div>
+
+            {/* Kontrol Auto-Assign */}
+            <div
+              style={{
+                marginTop: 14,
+                marginBottom: 12,
+                padding: "10px 14px",
+                borderRadius: 8,
+                background: "var(--card-muted, rgba(2, 132, 199, 0.04))",
+                border: "1px solid var(--border, #e2e8f0)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 12,
+              }}
+            >
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  cursor: "pointer",
+                  fontSize: "0.84rem",
+                  fontWeight: 500,
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={autoAssignEnabled}
+                  onChange={(e) => setAutoAssignEnabled(e.target.checked)}
+                />
+                <span>
+                  Auto-assign seluruh tugas &amp; kuis ke kategori yang sesuai saat disimpan
+                </span>
+              </label>
+              <button
+                type="button"
+                className="secondary"
+                style={{ fontSize: "0.8rem", padding: "5px 12px" }}
+                disabled={autoAssigning}
+                onClick={async () => {
+                  setAutoAssigning(true);
+                  try {
+                    const res = await api(
+                      `/course-classes/${classId}/grade-categories/auto-assign`,
+                      "POST",
+                    );
+                    notifyAction(
+                      `Auto-assign berhasil: ${res.assignedAssignments ?? 0} tugas dan ${res.assignedQuizzes ?? 0} kuis dipetakan.`,
+                    );
+                    info.reload();
+                  } catch (e: any) {
+                    notifyAction(e?.message || "Gagal auto-assign.");
+                  } finally {
+                    setAutoAssigning(false);
+                  }
+                }}
+              >
+                <Sparkles size={14} style={{ marginRight: 5 }} />
+                {autoAssigning ? "Memetakan..." : "Jalankan Auto-Assign Sekarang"}
+              </button>
+            </div>
           </Form>
         </Modal>
       )}

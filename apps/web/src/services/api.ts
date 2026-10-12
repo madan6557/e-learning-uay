@@ -17,7 +17,14 @@ export class ApiError extends Error {
     const base =
       (t.errors as Record<string, string>)[code] ??
       "Tindakan belum berhasil. Coba lagi; jika tetap gagal, hubungi administrator dengan ID permintaan di bawah.";
-    super(details?.at ? `${base} ${formatDateTime(details.at)}.` : base);
+    let atSuffix = "";
+    if (details?.at) {
+      const formatted = formatDateTime(details.at);
+      if (formatted && formatted !== "Waktu tidak tersedia") {
+        atSuffix = ` (${formatted})`;
+      }
+    }
+    super(atSuffix ? `${base} ${atSuffix}.` : base);
   }
 }
 
@@ -199,19 +206,40 @@ export async function uploadFile(
   await new Promise<void>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", ticket.uploadUrl);
+    xhr.withCredentials = true;
     for (const [key, value] of Object.entries(ticket.headers ?? {}))
       xhr.setRequestHeader(key, String(value));
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable)
         onProgress(Math.round((e.loaded / e.total) * 100));
     };
-    xhr.onload = () =>
-      xhr.status >= 200 && xhr.status < 300
-        ? resolve()
-        : reject(new Error(t.connectionError));
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve();
+      } else {
+        let msg = t.connectionError;
+        try {
+          const parsed = JSON.parse(xhr.responseText);
+          if (parsed.message) msg = parsed.message;
+          else if (parsed.error?.message) msg = parsed.error.message;
+        } catch {
+          if (xhr.status === 413) {
+            msg = "Ukuran berkas terlalu besar untuk diunggah (melebihi batas server).";
+          } else if (xhr.status === 403 || xhr.status === 401) {
+            msg = "Sesi atau izin akses tidak valid untuk mengunggah berkas ini.";
+          }
+        }
+        reject(new Error(msg));
+      }
+    };
     xhr.onerror = () => reject(new Error(t.connectionError));
-    xhr.ontimeout = () => reject(new Error(t.connectionError));
-    xhr.timeout = 120000;
+    xhr.ontimeout = () =>
+      reject(
+        new Error(
+          "Unggahan berkas melebihi batas waktu (timeout). Periksa kestabilan koneksi internet Anda.",
+        ),
+      );
+    xhr.timeout = 180000;
     xhr.send(file);
   });
   return api(`/files/${ticket.fileObjectId}/confirm`, "POST", {});

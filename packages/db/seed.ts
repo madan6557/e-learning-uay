@@ -891,17 +891,15 @@ for (const [idx, cfg] of classConfigs.entries()) {
 
   // 1. Grade Categories
   const catNames = [
-    ["Tugas & praktikum", 25, false, "ASSIGNMENT"],
-    ["Kuis", 15, false, "QUIZ"],
-    ["UTS", 25, true, "MANUAL"],
-    ["UAS", 25, true, "MANUAL"],
-    ["Progres belajar", 10, false, "PROGRESS"],
+    ["Tugas", 30, false, "ASSIGNMENT_AND_QUIZ", "ASSESSMENT"],
+    ["UTS", 35, true, "MANUAL", "ASSESSMENT"],
+    ["UAS", 35, true, "MANUAL", "ASSESSMENT"],
   ] as const;
 
   const categories = [];
   for (const [
     order,
-    [name, weight, isMandatory, sourceType],
+    [name, weight, isMandatory, sourceType, kind],
   ] of catNames.entries()) {
     let cat = await db.gradeCategory.findFirst({
       where: { classId: cfg.id, name: String(name) },
@@ -913,7 +911,7 @@ for (const [idx, cfg] of classConfigs.entries()) {
           name: String(name),
           weightPercent: Number(weight),
           order,
-          kind: order === 4 ? "PROGRESS" : "ASSESSMENT",
+          kind: String(kind) as "ASSESSMENT" | "PROGRESS",
           isMandatory: Boolean(isMandatory),
           sourceType: String(sourceType),
         },
@@ -1427,7 +1425,7 @@ for (const [idx, cfg] of classConfigs.entries()) {
         ? "Kuis evaluasi mencakup seluruh 8 tipe soal: pilihan ganda, majemuk, benar/salah, isian, menjodohkan, mengurutkan, esai & unggah berkas."
         : "Evaluasi pemahaman konsep dasar perkuliahan.",
       status: "PUBLISHED",
-      gradeCategoryId: categories[1].id,
+      gradeCategoryId: categories[0].id,
       timeLimitMinutes: 45,
       attemptLimit: 3,
       randomizeQuestions: false,
@@ -1456,7 +1454,7 @@ for (const [idx, cfg] of classConfigs.entries()) {
         description:
           "Kuis terbuka untuk uji coba langsung semua tipe soal dengan rilis nilai instan.",
         status: "PUBLISHED",
-        gradeCategoryId: categories[1].id,
+        gradeCategoryId: categories[0].id,
         timeLimitMinutes: 60,
         attemptLimit: 10,
         randomizeQuestions: false,

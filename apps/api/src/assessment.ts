@@ -1137,13 +1137,13 @@ export function registerAssessment(app: Express) {
           true,
           true,
         );
-        ensure(!cls.canManage, 403, "STUDENT_REQUIRED");
-        available(assignment);
+        ensure(cls.canManage || req.context.user.role === "STUDENT", 403, "STUDENT_REQUIRED");
+        if (!cls.canManage) available(assignment);
         const now = new Date();
         const late = !!assignment.deadline && now > assignment.deadline;
-        ensure(!late || assignment.allowLate, 403, "DEADLINE_PASSED");
+        ensure(cls.canManage || !late || assignment.allowLate, 403, "DEADLINE_PASSED");
         ensure(
-          !assignment.cutoffDate || now <= assignment.cutoffDate,
+          cls.canManage || !assignment.cutoffDate || now <= assignment.cutoffDate,
           403,
           "CUTOFF_PASSED",
         );

@@ -89,6 +89,7 @@ export interface FormProps {
     published: boolean;
     onUnpublish?: () => Promise<unknown>;
   };
+  showInlineError?: boolean;
 }
 
 export function Form({
@@ -109,6 +110,7 @@ export function Form({
   captureFields = true,
   onDirtyChange,
   publication,
+  showInlineError = false,
 }: FormProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -195,7 +197,9 @@ export function Form({
     >
       {autosave && <SaveStatus draft={draft} busy={busy} />}
       <fieldset disabled={busy || disabled}>{children}</fieldset>
-      {error && <Notice error={error} onClose={() => setError(null)} />}
+      {showInlineError && error && (
+        <Notice error={error} onClose={() => setError(null)} />
+      )}
       {(disabled || submitDisabled) && disabledReason && (
         <p className="action-reason">{disabledReason}</p>
       )}

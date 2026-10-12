@@ -1246,7 +1246,7 @@ export function registerFiles(app: Express) {
           student,
         );
         if (student) {
-          ensure(!cls.canManage, 403, "STUDENT_REQUIRED");
+          ensure(cls.canManage || req.context.user.role === "STUDENT", 403, "STUDENT_REQUIRED");
           ensure(data.contextId, 400, "FILE_CONTEXT_REQUIRED");
           if (data.purpose === "SUBMISSION") {
             const item = await tx.assignment.findUnique({
@@ -1259,9 +1259,9 @@ export function registerFiles(app: Express) {
               "FILE_CONTEXT_REQUIRED",
             );
             await itemAccess(tx, req.context.user, item.sectionId, true, true);
-            available(item);
+            if (!cls.canManage) available(item);
             ensure(
-              !item.cutoffDate || new Date() <= item.cutoffDate,
+              cls.canManage || !item.cutoffDate || new Date() <= item.cutoffDate,
               403,
               "CUTOFF_PASSED",
             );

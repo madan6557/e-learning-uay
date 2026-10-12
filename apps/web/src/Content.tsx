@@ -442,6 +442,19 @@ export function BlockEditor({
                         ? "image/png,image/jpeg,image/webp"
                         : undefined
                     }
+                    existingFile={
+                      data.fileObjectId
+                        ? {
+                            id: data.fileObjectId,
+                            name:
+                              data.displayName ||
+                              data.altText ||
+                              (block.type === "image"
+                                ? "Gambar terunggah"
+                                : "Berkas lampiran tersimpan"),
+                          }
+                        : undefined
+                    }
                     onUploaded={(f) => {
                       update(index, {
                         fileObjectId: f.id,
@@ -597,30 +610,28 @@ export function ResourceEditor({
 
   const editorFields = (
     <>
-      <div className="resource-metadata-grid">
-        <Field label={t.title}>
-          <input
-            required
-            value={draft.title}
-            onChange={(e) => change({ ...draft, title: e.target.value })}
-          />
-        </Field>
-        <Field label={t.material}>
-          <select
-            disabled={!!resource}
-            value={draft.resourceType}
-            onChange={(e) =>
-              change({ ...draft, resourceType: e.target.value })
-            }
-          >
-            {Object.entries(t.resourceTypes).map(([value, label]) => (
-              <option value={value} key={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </Field>
-      </div>
+      <Field label={t.material}>
+        <select
+          disabled={!!resource}
+          value={draft.resourceType}
+          onChange={(e) =>
+            change({ ...draft, resourceType: e.target.value })
+          }
+        >
+          {Object.entries(t.resourceTypes).map(([value, label]) => (
+            <option value={value} key={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field label={t.title}>
+        <input
+          required
+          value={draft.title}
+          onChange={(e) => change({ ...draft, title: e.target.value })}
+        />
+      </Field>
       {["DOCUMENT", "LAB_PRACTICUM"].includes(draft.resourceType) && (
         <>
           <FileUpload
@@ -629,6 +640,18 @@ export function ResourceEditor({
             accept={
               draft.resourceType === "DOCUMENT"
                 ? "application/pdf"
+                : undefined
+            }
+            existingFile={
+              draft.dynamicPayload.fileObjectId
+                ? {
+                    id: draft.dynamicPayload.fileObjectId,
+                    name:
+                      draft.dynamicPayload.fileName ??
+                      (draft.resourceType === "DOCUMENT"
+                        ? "Dokumen PDF tersimpan"
+                        : "Berkas praktikum tersimpan"),
+                  }
                 : undefined
             }
             onUploaded={async (f) => {

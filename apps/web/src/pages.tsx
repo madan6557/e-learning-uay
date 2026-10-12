@@ -1415,6 +1415,15 @@ function JoinClassModal({
   );
 }
 
+function generateEnrollmentKey(length = 6): string {
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let result = "";
+  for (let i = 0; i < length; i++) {
+    result += letters.charAt(Math.floor(Math.random() * letters.length));
+  }
+  return result;
+}
+
 export function ClassForm({
   user,
   onClose,
@@ -1445,6 +1454,7 @@ export function ClassForm({
           ]
         : [],
     ),
+    [enrollmentKey, setEnrollmentKey] = useState(() => generateEnrollmentKey()),
     [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
@@ -1471,12 +1481,13 @@ export function ClassForm({
     <Modal title={t.newClass} onClose={onClose}>
       <Form
         draftKey="new-class"
-        draftValue={{ selected, selectedUsers, users, search }}
+        draftValue={{ selected, selectedUsers, users, search, enrollmentKey }}
         onRestoreDraft={(v) => {
           setSelected(v?.selected ?? []);
           setSelectedUsers(v?.selectedUsers ?? []);
           setUsers(v?.users ?? []);
           setSearch(v?.search ?? "");
+          if (v?.enrollmentKey) setEnrollmentKey(v.enrollmentKey);
         }}
         onCancel={onClose}
         onSubmit={async (f) => {
@@ -1530,19 +1541,50 @@ export function ClassForm({
           </select>
         </Field>
         <Field label={t.enrollmentKey}>
-          <input
-            name="key"
-            minLength={6}
-            placeholder="Minimal 6 karakter (opsional)"
-            onInvalid={(e) =>
-              (e.target as HTMLInputElement).setCustomValidity(
-                "Kunci pendaftaran mandiri minimal 6 karakter.",
-              )
-            }
-            onInput={(e) =>
-              (e.target as HTMLInputElement).setCustomValidity("")
-            }
-          />
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input
+              name="key"
+              value={enrollmentKey}
+              onChange={(e) => setEnrollmentKey(e.target.value.toUpperCase())}
+              minLength={6}
+              maxLength={20}
+              placeholder="6 karakter huruf kapital"
+              style={{
+                fontFamily: "monospace",
+                fontWeight: 600,
+                letterSpacing: "2px",
+                textTransform: "uppercase",
+                flex: 1,
+              }}
+              onInvalid={(e) =>
+                (e.target as HTMLInputElement).setCustomValidity(
+                  "Kunci pendaftaran mandiri minimal 6 karakter.",
+                )
+              }
+              onInput={(e) =>
+                (e.target as HTMLInputElement).setCustomValidity("")
+              }
+            />
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setEnrollmentKey(generateEnrollmentKey())}
+              title="Acak ulang kunci pendaftaran"
+              style={{ whiteSpace: "nowrap" }}
+            >
+              Acak Ulang
+            </button>
+          </div>
+          <small
+            style={{
+              color: "var(--muted, #64748b)",
+              marginTop: 4,
+              display: "block",
+              fontSize: "0.82rem",
+            }}
+          >
+            Kunci pendaftaran otomatis terisi 6 huruf kapital. Mahasiswa dapat menggunakan kunci ini untuk bergabung secara mandiri.
+          </small>
         </Field>
         <Field label={t.instructors}>
           <div className="instructor-picker">

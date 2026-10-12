@@ -154,7 +154,7 @@ export function createApp() {
   });
   app.use(
     express.json({
-      limit: "2mb",
+      limit: "50mb",
       verify: (req, _res, buffer) => {
         (req as express.Request).rawBody = buffer.toString("utf8");
       },

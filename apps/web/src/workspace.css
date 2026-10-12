@@ -943,13 +943,24 @@ td small {
   justify-content: space-between;
   gap: 16px;
 }
-.modal-scroll > form,
+.modal-scroll > form {
+  margin: 0;
+  padding: 12px var(--modal-gutter) 16px;
+}
 .modal-scroll > p,
 .modal-scroll > .resource-viewer,
 .modal-scroll > h3,
 .modal-scroll > .inline-form {
   margin: 0;
   padding: var(--space-6) var(--modal-gutter);
+}
+.modal-scroll > .announcement-viewmode-bar {
+  margin-top: 14px;
+  margin-bottom: 12px;
+}
+.modal form .form-actions {
+  margin-top: 18px;
+  padding-top: 14px;
 }
 .modal-scroll > .form-grid,
 .modal-scroll > .toolbar,

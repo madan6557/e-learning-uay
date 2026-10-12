@@ -41,6 +41,9 @@ import {
   DEFAULT_GRADE_SCALE,
   resolveGradeScalePolicy,
   getAllGradeScalePolicies,
+  autoAssignItems,
+  GRADE_CATEGORY_PRESETS,
+  DEFAULT_GRADE_CATEGORIES_TEMPLATE,
 } from "../../../packages/shared/src/domain.js";
 import { classPath } from "../../../packages/shared/src/urls.js";
 
@@ -247,7 +250,9 @@ export async function calculateGradebook(
           for (const quiz of quizzes.filter(
             (q) =>
               q.gradeCategoryId === category.id ||
-              (effectiveSource === "QUIZ" && !q.gradeCategoryId),
+              ((effectiveSource === "QUIZ" ||
+                effectiveSource === "ASSIGNMENT_AND_QUIZ") &&
+                !q.gradeCategoryId),
           )) {
             const attempts = quiz.attempts.filter((a) => a.userId === user.id);
             if (attempts.some((a) => a.status === "NEEDS_GRADING"))
@@ -277,7 +282,9 @@ export async function calculateGradebook(
           for (const assignment of assignments.filter(
             (a) =>
               a.gradeCategoryId === category.id ||
-              (effectiveSource === "ASSIGNMENT" && !a.gradeCategoryId),
+              ((effectiveSource === "ASSIGNMENT" ||
+                effectiveSource === "ASSIGNMENT_AND_QUIZ") &&
+                !a.gradeCategoryId),
           )) {
             const submission = assignment.submissions.find(
               (s) => s.userId === user.id,
@@ -439,6 +446,72 @@ export async function refreshPublishedFinal(
     "Nilai akhir hasil belajar Anda telah diperbarui oleh pengajar.",
   );
 }
+
+export async function executeAutoAssign(
+  tx: Prisma.TransactionClient,
+  classId: string,
+  categories: {
+    id: string;
+    name: string;
+    kind?: string;
+    sourceType?: string;
+    isMandatory?: boolean;
+  }[],
+) {
+  const [quizzes, assignments] = await Promise.all([
+    tx.quiz.findMany({
+      where: { section: { classId } },
+      select: { id: true, title: true, gradeCategoryId: true },
+    }),
+    tx.assignment.findMany({
+      where: { section: { classId } },
+      select: { id: true, title: true, gradeCategoryId: true },
+    }),
+  ]);
+
+  const assignmentsPlan = autoAssignItems(categories, assignments, "ASSIGNMENT");
+  const quizzesPlan = autoAssignItems(categories, quizzes, "QUIZ");
+
+  let updatedAssignments = 0;
+  for (const item of assignmentsPlan) {
+    if (item.targetCategoryId && item.targetCategoryId !== item.currentCategoryId) {
+      await tx.assignment.update({
+        where: { id: item.id },
+        data: { gradeCategoryId: item.targetCategoryId },
+      });
+      updatedAssignments++;
+    }
+  }
+
+  let updatedQuizzes = 0;
+  for (const item of quizzesPlan) {
+    if (item.targetCategoryId && item.targetCategoryId !== item.currentCategoryId) {
+      await tx.quiz.update({
+        where: { id: item.id },
+        data: { gradeCategoryId: item.targetCategoryId },
+      });
+      updatedQuizzes++;
+    }
+  }
+
+  return {
+    totalAssignments: assignments.length,
+    totalQuizzes: quizzes.length,
+    updatedAssignments,
+    updatedQuizzes,
+    assignments: assignmentsPlan.map((a) => ({
+      id: a.id,
+      title: a.title,
+      targetCategoryId: a.targetCategoryId,
+    })),
+    quizzes: quizzesPlan.map((q) => ({
+      id: q.id,
+      title: q.title,
+      targetCategoryId: q.targetCategoryId,
+    })),
+  };
+}
+
 export function registerGrades(app: Express) {
   app.get("/api/v1/course-classes/:id/gradebook", async (req, res) => {
     const cls = await classAccess(db, req.context.user, String(req.params.id));
@@ -533,7 +606,9 @@ export function registerGrades(app: Express) {
           const matchedQuizzes = quizzes.filter(
             (q) =>
               q.gradeCategoryId === cat.id ||
-              (effectiveSource === "QUIZ" && !q.gradeCategoryId),
+              ((effectiveSource === "QUIZ" ||
+                effectiveSource === "ASSIGNMENT_AND_QUIZ") &&
+                !q.gradeCategoryId),
           );
           for (const q of matchedQuizzes) {
             const bestAttempt = q.attempts[0];
@@ -567,7 +642,9 @@ export function registerGrades(app: Express) {
           const matchedAssignments = assignments.filter(
             (a) =>
               a.gradeCategoryId === cat.id ||
-              (effectiveSource === "ASSIGNMENT" && !a.gradeCategoryId),
+              ((effectiveSource === "ASSIGNMENT" ||
+                effectiveSource === "ASSIGNMENT_AND_QUIZ") &&
+                !a.gradeCategoryId),
           );
           for (const a of matchedAssignments) {
             const sub = a.submissions[0];
@@ -682,9 +759,10 @@ export function registerGrades(app: Express) {
           423,
           "GRADEBOOK_LOCKED",
         );
-        const { categories, gradeScaleVersion } = z
+        const { categories, gradeScaleVersion, autoAssign } = z
           .object({
             gradeScaleVersion: z.string().optional(),
+            autoAssign: z.boolean().optional().default(false),
             categories: z
               .array(
                 z.object({
@@ -792,6 +870,10 @@ export function registerGrades(app: Express) {
           where: { classId: cls.id },
           orderBy: { order: "asc" },
         });
+        let autoAssignResult = null;
+        if (autoAssign) {
+          autoAssignResult = await executeAutoAssign(tx, cls.id, after);
+        }
         await audit(
           tx,
           req.context,
@@ -800,11 +882,98 @@ export function registerGrades(app: Express) {
           cls.id,
           cls.id,
           before,
-          after,
+          { after, autoAssignResult },
         );
-        return after;
+        return autoAssign ? { categories: after, autoAssignResult } : after;
       }),
     ),
+  );
+
+  app.post(
+    "/api/v1/course-classes/:id/grade-categories/auto-assign",
+    async (req, res) =>
+      res.json(
+        await mutate(req, async (tx) => {
+          const cls = await classAccess(
+            tx,
+            req.context.user,
+            String(req.params.id),
+            true,
+          );
+          ensure(
+            req.context.user.role === "INSTRUCTOR",
+            403,
+            "ONLY_INSTRUCTOR_CAN_GRADE",
+          );
+          ensure(
+            (await tx.finalGradeRecord.count({
+              where: { classId: cls.id, isLocked: true },
+            })) === 0,
+            423,
+            "GRADEBOOK_LOCKED",
+          );
+          const { presetId } = z
+            .object({
+              presetId: z.string().optional(),
+            })
+            .parse(req.body || {});
+
+          if (presetId && GRADE_CATEGORY_PRESETS[presetId]) {
+            const preset = GRADE_CATEGORY_PRESETS[presetId];
+            const before = await tx.gradeCategory.findMany({
+              where: { classId: cls.id },
+            });
+            for (let order = 0; order < preset.categories.length; order++) {
+              const pCat = preset.categories[order];
+              const existing = before.find(
+                (b) => b.name.toLowerCase() === pCat.name.toLowerCase(),
+              );
+              if (existing) {
+                await tx.gradeCategory.update({
+                  where: { id: existing.id },
+                  data: {
+                    weightPercent: pCat.weightPercent,
+                    kind: pCat.kind ?? "ASSESSMENT",
+                    sourceType: pCat.sourceType ?? "MANUAL",
+                    isMandatory: Boolean(pCat.isMandatory),
+                    order,
+                  },
+                });
+              } else {
+                await tx.gradeCategory.create({
+                  data: {
+                    classId: cls.id,
+                    name: pCat.name,
+                    weightPercent: pCat.weightPercent,
+                    kind: pCat.kind ?? "ASSESSMENT",
+                    sourceType: pCat.sourceType ?? "MANUAL",
+                    isMandatory: Boolean(pCat.isMandatory),
+                    order,
+                  },
+                });
+              }
+            }
+          }
+
+          const categories = await tx.gradeCategory.findMany({
+            where: { classId: cls.id },
+            orderBy: { order: "asc" },
+          });
+          const result = await executeAutoAssign(tx, cls.id, categories);
+          await audit(
+            tx,
+            req.context,
+            "AUTO_ASSIGN_CATEGORIES",
+            "CLASS",
+            cls.id,
+            cls.id,
+            null,
+            result,
+            "Auto-assign komponen penilaian ke kategori bobot nilai.",
+          );
+          return { success: true, categories, ...result };
+        }),
+      ),
   );
   for (const action of ["calculate", "publish"] as const)
     app.post(

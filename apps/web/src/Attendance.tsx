@@ -220,7 +220,7 @@ export function Attendance({
   return (
     <div
       className="attendance-view"
-      style={{ maxWidth: 1040, margin: "0 auto", paddingBottom: 40 }}
+      style={{ paddingBottom: 40 }}
     >
       {message && (
         <Notice onClose={() => setMessage(null)}>
@@ -344,20 +344,9 @@ export function Attendance({
       )}
 
       {/* Header & Aksi */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 20,
-          flexWrap: "wrap",
-          gap: 12,
-        }}
-      >
+      <div className="section-heading" style={{ flexWrap: "wrap", gap: 12 }}>
         <div>
-          <h2 style={{ fontSize: "1.4rem", fontWeight: 700, margin: 0 }}>
-            Presensi Perkuliahan
-          </h2>
+          <h2>Presensi Perkuliahan</h2>
           <p
             style={{
               color: "var(--muted, #64748b)",
@@ -372,7 +361,7 @@ export function Attendance({
         </div>
 
         {canManage && (
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div className="toolbar" style={{ flexWrap: "wrap", gap: 8 }}>
             <div
               role="tablist"
               aria-label="Pilihan tampilan presensi"
