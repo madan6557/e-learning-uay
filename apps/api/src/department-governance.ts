@@ -1675,6 +1675,7 @@ export function registerDepartmentGovernance(app: Express) {
             action: existing ? "SYNC_PROFILE" : "CREATE",
             currentRole: existing?.role ?? null,
             proposedRole: targetRole,
+            roleMismatch: Boolean(existing && existing.role !== targetRole),
             departmentScopes: existing?.departmentScopes ?? [],
           });
         }
@@ -1738,7 +1739,7 @@ export function registerDepartmentGovernance(app: Express) {
           const targetRole = resolveSsoRole(ssoUser);
 
           if (existing) {
-            // Perbarui data profil dari SSO dan selaraskan peran jika berbeda
+            // SSO memperbarui profil, sedangkan E-Learning tetap menjadi sumber role.
             const updated = await tx.user.update({
               where: { id: existing.id },
               data: {
@@ -1746,11 +1747,6 @@ export function registerDepartmentGovernance(app: Express) {
                 email,
                 username: username || existing.username,
                 userType: ssoUser.user_type,
-                role: targetRole,
-                authoritySource:
-                  existing.departmentScopes?.length > 0
-                    ? existing.authoritySource
-                    : "SSO",
                 status: ssoUser.status === "ACTIVE" ? "ACTIVE" : existing.status,
               },
             });
@@ -1767,6 +1763,9 @@ export function registerDepartmentGovernance(app: Express) {
               status: "ALREADY_EXISTS",
               action: "SYNC_PROFILE",
               role: updated.role,
+              currentRole: updated.role,
+              proposedRole: targetRole,
+              roleMismatch: updated.role !== targetRole,
               departmentScopes: updated.departmentScopes,
             });
           } else {
@@ -1822,8 +1821,12 @@ export function registerDepartmentGovernance(app: Express) {
           "BATCH_SYNC",
           null,
           null,
-          { total: filteredUsers.length, count: results.length },
-          `Sinkronisasi akun pengguna dari SSO: ${results.filter((r) => r.status === "NEW").length} pengguna baru ditambahkan, ${results.filter((r) => r.status === "ALREADY_EXISTS").length} pengguna diselaraskan.`,
+          {
+            total: filteredUsers.length,
+            count: results.length,
+            roleMismatchCount: results.filter((r) => r.roleMismatch).length,
+          },
+          `Sinkronisasi akun pengguna dari SSO: ${results.filter((r) => r.status === "NEW").length} pengguna baru ditambahkan, ${results.filter((r) => r.status === "ALREADY_EXISTS").length} profil diperbarui, dan ${results.filter((r) => r.roleMismatch).length} role berbeda dengan SSO sehingga tetap memakai role E-Learning.`,
         );
 
         return results;

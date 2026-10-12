@@ -724,7 +724,7 @@ export function DepartmentGovernancePage({
       if (!dryRun) {
         if (
           !(await confirmAction(
-            `Sinkronkan ${ssoSyncResult?.total ?? ""} pengguna dari SSO ke E-Learning? Akun baru akan didaftarkan sebagai pra-registrasi dan profil akun yang sudah ada akan diselaraskan. Otoritas pengguna tetap aman.`,
+            `Sinkronkan ${ssoSyncResult?.total ?? ""} pengguna dari SSO ke E-Learning? Akun baru menggunakan role awal SSO. Profil akun yang sudah ada diperbarui tanpa mengubah role atau lingkup akses E-Learning.`,
           ))
         ) {
           return;
@@ -1533,7 +1533,7 @@ export function DepartmentGovernancePage({
         >
           <div className="sso-sync-container">
             <p>
-              Tarik daftar akun pengguna (Dosen, Staf, Administrator) yang terdaftar pada aplikasi E-Learning di UAY SSO. Akun baru akan didaftarkan sebagai pra-registrasi dan tersambung otomatis saat login SSO. Otoritas pengguna yang sudah diatur di E-Learning tidak akan terhapus.
+              Tarik daftar akun pengguna (Dosen, Staf, Administrator) yang terdaftar pada aplikasi E-Learning di UAY SSO. Akun baru akan didaftarkan sebagai pra-registrasi dengan role awal dari SSO. Profil akun yang sudah ada dapat diperbarui, tetapi role dan lingkup aksesnya tetap mengikuti pengaturan E-Learning.
             </p>
 
             <div className="governance-form-grid sso-sync-filters">
@@ -1615,7 +1615,7 @@ export function DepartmentGovernancePage({
                             <th>Nama &amp; Identitas</th>
                             <th>Tipe SSO</th>
                             <th>Status di E-Learning</th>
-                            <th>Peran E-Learning</th>
+                            <th>Peran</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1640,7 +1640,22 @@ export function DepartmentGovernancePage({
                                 )}
                               </td>
                               <td>
-                                <span>{roleNames[u.proposedRole] ?? u.proposedRole}</span>
+                                {u.status === "NEW" ? (
+                                  <>
+                                    <span>Awal: {roleNames[u.proposedRole] ?? u.proposedRole}</span>
+                                    <div className="governance-subtext">Role awal dari SSO</div>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span>E-Learning: {roleNames[u.currentRole] ?? u.currentRole}</span>
+                                    <div className="governance-subtext">
+                                      SSO: {roleNames[u.proposedRole] ?? u.proposedRole}
+                                    </div>
+                                    {u.roleMismatch && (
+                                      <span className="pill warning">Role E-Learning dipertahankan</span>
+                                    )}
+                                  </>
+                                )}
                                 {u.departmentScopes?.length > 0 && (
                                   <div className="governance-subtext">
                                     Lingkup: {u.departmentScopes.join(", ")}

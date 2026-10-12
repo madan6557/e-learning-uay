@@ -749,7 +749,19 @@ export async function uayGetRepositories(options?: {
   ensure(res.ok, 502, "FILE_SERVICE_REJECTED");
   const raw = await serviceJson(res);
   const data = raw?.data ?? raw;
-  return Array.isArray(data) ? data : [data];
+  const repositories = Array.isArray(data) ? data : [data];
+  ensure(
+    repositories.every(
+      (repository) =>
+        repository &&
+        typeof repository === "object" &&
+        typeof repository.id === "string" &&
+        typeof repository.name === "string",
+    ),
+    502,
+    "FILE_SERVICE_INVALID_RESPONSE",
+  );
+  return repositories;
 }
 
 export function createSignedDownloadToken(

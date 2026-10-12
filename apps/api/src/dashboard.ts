@@ -42,7 +42,7 @@ export async function dashboardClasses<T extends DashboardClass>(
       startDate: true,
       endDate: true,
       resources: {
-        orderBy: [{ contentOrder: "asc" }, { id: "asc" }],
+        orderBy: [{ contentOrder: "asc" }, { createdAt: "asc" }, { id: "asc" }],
         select: {
           id: true,
           resourceType: true,
@@ -52,7 +52,7 @@ export async function dashboardClasses<T extends DashboardClass>(
         },
       },
       assignments: {
-        orderBy: { contentOrder: "asc" },
+        orderBy: [{ contentOrder: "asc" }, { createdAt: "asc" }, { id: "asc" }],
         select: {
           id: true,
           slug: true,
@@ -62,6 +62,7 @@ export async function dashboardClasses<T extends DashboardClass>(
         },
       },
       quizzes: {
+        orderBy: [{ contentOrder: "asc" }, { createdAt: "asc" }, { id: "asc" }],
         select: {
           id: true,
           slug: true,

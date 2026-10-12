@@ -13,6 +13,7 @@ test("OIDC authorization code with PKCE, JWT validation, refresh, logout and rev
   let profileRole = "STUDENT",
     profileScopes: string[] = [];
   let profileIdentity: Record<string, string> = {};
+  let ssoSyncUsers: any[] = [];
   let issuer = "",
     nonce = "",
     challenge = "",
@@ -46,6 +47,14 @@ test("OIDC authorization code with PKCE, JWT validation, refresh, logout and rev
     }
     if (req.url === "/jwks") {
       res.end(JSON.stringify({ keys: [jwk] }));
+      return;
+    }
+    if (req.url?.startsWith("/api/applications/client/elearning-uay/users")) {
+      res.end(
+        JSON.stringify({
+          data: { data: ssoSyncUsers, meta: { total_pages: 1 } },
+        }),
+      );
       return;
     }
     if (req.url === "/token") {
@@ -105,6 +114,7 @@ test("OIDC authorization code with PKCE, JWT validation, refresh, logout and rev
   process.env.SSO_ISSUER = issuer;
   process.env.SSO_CLIENT_ID = "elearning-uay";
   process.env.SSO_AUDIENCE = "elearning-uay";
+  process.env.SSO_API_BASE_URL = `${issuer}/api`;
   process.env.SSO_WEBHOOK_SECRET = "test-signed-webhook-secret";
   const { createApp } = await import("../../apps/api/src/index.js");
   const { db, cache, hash } = await import("../../apps/api/src/core.js");
@@ -357,12 +367,76 @@ test("OIDC authorization code with PKCE, JWT validation, refresh, logout and rev
         current = await me();
         assert.equal(current.role, "INSTRUCTOR");
         assert.deepEqual(current.departmentScopes, []);
+        for (const ssoRole of ["SUPER_ADMIN", "RECTOR"]) {
+          profileRole = ssoRole;
+          sessionCookie = cookieFrom(await login());
+          current = await me();
+          assert.equal(current.role, "INSTRUCTOR");
+        }
+        profileRole = "DEPARTMENT_ADMIN";
+        await db.user.update({
+          where: { id: preprovisioned.id },
+          data: {
+            role: "SUPER_ADMIN",
+            authoritySource: "LOCAL",
+            departmentScopes: ["IF"],
+          },
+        });
+        ssoSyncUsers = [
+          {
+            user_id: "sso-profile-update",
+            name: "Updated from SSO",
+            email: `${subject}@example.test`,
+            user_type: "LECTURER",
+            status: "ACTIVE",
+            account: { username: subject },
+            application_access: [{ role: { name: "mahasiswa" } }],
+          },
+        ];
+        const syncSsoUsers = async (dryRun: boolean) => {
+          const response = await fetch(`${base}/system/sso/sync-users`, {
+            method: "POST",
+            headers: {
+              Origin: "http://127.0.0.1:5173",
+              "Content-Type": "application/json",
+              "Idempotency-Key": randomUUID(),
+              Cookie: sessionCookie,
+            },
+            body: JSON.stringify({ dryRun }),
+          });
+          assert.equal(response.status, 200);
+          return (await response.json()) as any;
+        };
+        const preview = await syncSsoUsers(true);
+        assert.equal(preview.results[0].currentRole, "SUPER_ADMIN");
+        assert.equal(preview.results[0].proposedRole, "STUDENT");
+        assert.equal(preview.results[0].roleMismatch, true);
+        const synced = await syncSsoUsers(false);
+        assert.equal(synced.results[0].role, "SUPER_ADMIN");
+        assert.equal(synced.results[0].proposedRole, "STUDENT");
+        assert.equal(synced.results[0].roleMismatch, true);
+        current = await me();
+        assert.equal(current.role, "SUPER_ADMIN");
+        assert.deepEqual(current.departmentScopes, ["IF"]);
+        const locallyManaged = await db.user.findUniqueOrThrow({
+          where: { id: preprovisioned.id },
+        });
+        assert.equal(locallyManaged.authoritySource, "LOCAL");
+        await db.user.update({
+          where: { id: preprovisioned.id },
+          data: {
+            role: "INSTRUCTOR",
+            authoritySource: "LOCAL",
+            departmentScopes: [],
+          },
+        });
         await db.user.update({
           where: { id: preprovisioned.id },
           data: { authoritySource: "SSO" },
         });
         profileScopes = ["Informatika", "MAN", "manajemen"];
         sessionCookie = cookieFrom(await login());
+        assert.equal((await me()).role, "INSTRUCTOR");
         assert.deepEqual((await me()).departmentScopes, ["IF", "MN"]);
         profileScopes = [];
         sessionCookie = cookieFrom(await login());

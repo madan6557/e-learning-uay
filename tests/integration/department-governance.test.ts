@@ -386,7 +386,7 @@ test("department governance protects authority, identity and reference integrity
       },
     );
     await suite.test(
-      "machine sync supports preview, audit and idempotent commit without a fictitious user FK",
+      "machine SIAKAD scope sync remains disabled until integration readiness is approved",
       async () => {
         process.env.SIAKAD_SYNC_SECRET = "scope-patrol-machine-secret";
         const assignments = [
@@ -396,50 +396,49 @@ test("department governance protects authority, identity and reference integrity
             role: "DEPARTMENT_ADMIN",
           },
         ];
-        const preview = await request(
+        const disabledPreview = await request(
           null,
           "/system/siakad/sync-scopes",
           "POST",
           { assignments, dryRun: true },
-          200,
+          503,
           randomUUID(),
           true,
         );
-        assert.equal(preview.ready, 1);
+        assert.equal(disabledPreview.error.code, "INTEGRATION_NOT_READY");
+        await request(
+          null,
+          "/system/siakad/sync-scopes",
+          "POST",
+          { assignments },
+          503,
+          randomUUID(),
+          true,
+        );
+        await request(
+          null,
+          "/system/siakad/sync-scopes",
+          "POST",
+          { assignments },
+          503,
+          randomUUID(),
+          true,
+        );
         assert.equal(
           (await db.user.findUniqueOrThrow({ where: { id: instructor.id } }))
             .role,
           "INSTRUCTOR",
         );
-        const key = randomUUID();
-        await request(
-          null,
-          "/system/siakad/sync-scopes",
-          "POST",
-          { assignments },
-          200,
-          key,
-          true,
-        );
-        await request(
-          null,
-          "/system/siakad/sync-scopes",
-          "POST",
-          { assignments },
-          200,
-          key,
-          true,
-        );
         assert.equal(
           await db.auditLog.count({
             where: { entityId: instructor.id, action: "SYNC_SIAKAD_SCOPES" },
           }),
-          1,
+          0,
         );
       },
     );
     await suite.test(
-      "SIAKAD rejects invalid scopes and protects unrelated student identities",
+      "disabled SIAKAD sync rejects malformed or unauthorized payloads before processing",
       async () => {
         await request(
           admin,
@@ -454,7 +453,7 @@ test("department governance protects authority, identity and reference integrity
             ],
             dryRun: true,
           },
-          400,
+          503,
         );
         await request(
           admin,
@@ -468,7 +467,7 @@ test("department governance protects authority, identity and reference integrity
               },
             ],
           },
-          403,
+          503,
         );
         assert.equal(
           (await db.user.findUniqueOrThrow({ where: { id: student.id } })).role,
@@ -477,24 +476,11 @@ test("department governance protects authority, identity and reference integrity
       },
     );
     await suite.test(
-      "stale edits and previews cannot overwrite new authority; SIAKAD can revoke all scopes",
+      "stale local edits are rejected and disabled SIAKAD sync cannot overwrite authority",
       async () => {
         const before = await db.user.findUniqueOrThrow({
           where: { id: instructor.id },
         });
-        const assignments = [
-          {
-            identifierValue: instructor.identifierValue,
-            departmentScopes: ["IF"],
-            role: "DEPARTMENT_ADMIN",
-          },
-        ];
-        const preview = await request(
-          admin,
-          "/system/siakad/sync-scopes",
-          "POST",
-          { assignments, dryRun: true },
-        );
         await request(
           admin,
           `/system/department-scopes/users/${instructor.id}`,
@@ -522,39 +508,19 @@ test("department governance protects authority, identity and reference integrity
           {
             assignments: [
               {
-                ...assignments[0],
-                expectedUpdatedAt: preview.results[0].updatedAt,
+                identifierValue: instructor.identifierValue,
+                departmentScopes: [],
+                role: "INSTRUCTOR",
               },
             ],
           },
-          409,
+          503,
         );
-        await request(admin, "/system/siakad/sync-scopes", "POST", {
-          assignments: [
-            {
-              identifierValue: instructor.identifierValue,
-              departmentScopes: [],
-              role: "INSTRUCTOR",
-            },
-          ],
-        });
-        const revoked = await db.user.findUniqueOrThrow({
+        const unchanged = await db.user.findUniqueOrThrow({
           where: { id: instructor.id },
         });
-        assert.equal(revoked.authoritySource, "SIAKAD");
-        assert.deepEqual(revoked.departmentScopes, []);
-        await request(
-          admin,
-          "/system/siakad/sync-scopes",
-          "POST",
-          {
-            assignments: [
-              { ...assignments[0] },
-              { ...assignments[0], identifierValue: instructor.email },
-            ],
-          },
-          400,
-        );
+        assert.equal(unchanged.authoritySource, "LOCAL");
+        assert.deepEqual(unchanged.departmentScopes, ["IF"]);
       },
     );
     await suite.test(

@@ -765,24 +765,10 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
         | "ASSISTANT"
         | "STUDENT"
         | "RECTOR";
-      if (isAdminIdentifier || validRoles.includes("SUPER_ADMIN")) {
+      // Once the account exists, E-Learning's stored role is authoritative.
+      // Only an explicit local break-glass identifier may enforce SUPER_ADMIN.
+      if (isAdminIdentifier) {
         finalRole = "SUPER_ADMIN";
-      } else if (validRoles.includes("RECTOR")) {
-        finalRole = "RECTOR";
-      } else if (
-        (detectedUserType === "STAFF" || validRoles.includes("DEPARTMENT_ADMIN")) &&
-        (currentUser.role === "INSTRUCTOR" || currentUser.role === "STUDENT")
-      ) {
-        finalRole = "DEPARTMENT_ADMIN";
-      } else if (
-        (detectedUserType === "LECTURER" || validRoles.includes("INSTRUCTOR")) &&
-        currentUser.role === "STUDENT"
-      ) {
-        finalRole = "INSTRUCTOR";
-      } else if (currentUser.authoritySource === "SSO" && validRoles.length > 0) {
-        finalRole = data.role as any;
-      } else if (validRoles.length > 0 && currentUser.departmentScopes.length === 0) {
-        finalRole = data.role as any;
       } else {
         finalRole = currentUser.role;
       }

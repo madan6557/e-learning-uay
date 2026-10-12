@@ -2035,7 +2035,11 @@ export function registerLearning(app: Express) {
           const effectiveTotalPages = Math.max(
             payload.totalPages ?? 1,
             totalPages ?? 1,
-            page ?? 1,
+          );
+          ensure(
+            page === undefined || page <= effectiveTotalPages,
+            400,
+            "PAGE_OUT_OF_RANGE",
           );
           if (effectiveTotalPages !== payload.totalPages) {
             await tx.resourceItem.update({

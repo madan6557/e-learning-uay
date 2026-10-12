@@ -1219,7 +1219,8 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
           student,
           `/course-classes/${cls.id}/gradebook`,
         );
-        assert.equal(published.record.finalScore, 32.2);
+        // The assignment is in Tugas (30%) and the quiz is explicitly in UTS (35%).
+        assert.equal(published.record.finalScore, 52);
         assert.equal(published.record.isLocked, true);
         await request(student, `/quizzes/${quiz.id}/attempts`, "POST", {}, 423);
         await request(teacher, `/submissions/${submission.id}/grade`, "POST", {
@@ -1230,7 +1231,7 @@ test("complete academic flow on PostgreSQL with isolation and integrity checks",
           student,
           `/course-classes/${cls.id}/gradebook`,
         );
-        assert.equal(corrected.record.finalScore, 34.7);
+        assert.equal(corrected.record.finalScore, 55);
         const audit = await request(teacher, `/course-classes/${cls.id}/audit`);
         const correction = audit.find(
           (a: any) => a.action === "CORRECT_FINAL_GRADE",
