@@ -168,8 +168,22 @@ export function ClassPage({
   if (info.error) return <Notice error={info.error} />;
   if (!cls) return null;
   const isDeptAdminForClass = user.role === "DEPARTMENT_ADMIN" && cls.canManage;
+  // Asisten yang ditetapkan khusus pada kelas bisa tetap memiliki role global
+  // STUDENT; hak mengelola konten mengikuti penugasan asisten di kelas ini.
+  const isAssignedClassAssistant = cls.instructors?.some(
+    (instructor: any) =>
+      (instructor.userId === user.id || instructor.user?.id === user.id) &&
+      !instructor.isPrimary &&
+      (instructor.role === "ASSISTANT" ||
+        instructor.user?.role === "ASSISTANT" ||
+        instructor.user?.role === "STUDENT"),
+  );
   const canEditClass =
-    (user.role === "INSTRUCTOR" || user.role === "ASSISTANT" || isDeptAdminForClass) && cls.canManage;
+    (user.role === "INSTRUCTOR" ||
+      user.role === "ASSISTANT" ||
+      isDeptAdminForClass ||
+      isAssignedClassAssistant) &&
+    cls.canManage;
   const canAdministerClass =
     cls.canManage &&
     (canEditClass || hasPermission(user.role, "MANAGE_ALL_CLASSES"));
