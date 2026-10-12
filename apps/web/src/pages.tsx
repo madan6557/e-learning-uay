@@ -196,7 +196,11 @@ export function Dashboard({
     [modal, setModal] = useState(false);
   const teacher = user.role === "INSTRUCTOR" || user.role === "ASSISTANT";
   if (classes.loading && !classes.data) return <Loading />;
-  const canCreateClass = ["DEPARTMENT_ADMIN", "INSTRUCTOR"].includes(
+  const canCreateClass = [
+    "DEPARTMENT_ADMIN",
+    "INSTRUCTOR",
+    "ASSISTANT",
+  ].includes(
     user.role,
   );
   const departments = [
@@ -541,22 +545,6 @@ export function Dashboard({
                 flexWrap: "wrap",
               }}
             >
-              <a
-                href="https://siakad.uay.ac.id"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="button secondary sm"
-                style={{
-                  fontSize: "0.82rem",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
-                <GraduationCap size={15} />
-                SIAKAD UAY
-                <ExternalLink size={12} />
-              </a>
               <a
                 href="https://uay.ac.id"
                 target="_blank"
@@ -1437,6 +1425,7 @@ export function ClassForm({
 }) {
   const courses = useApi<CourseOption[]>("/courses");
   const isInstructor = user?.role === "INSTRUCTOR";
+  const isAssistant = user?.role === "ASSISTANT";
   const [search, setSearch] = useState(""),
     [users, setUsers] = useState<UserSearchResult[]>([]),
     [selected, setSelected] = useState<string[]>(
@@ -1492,7 +1481,11 @@ export function ClassForm({
         onCancel={onClose}
         onSubmit={async (f) => {
           if (!selected.length) {
-            setError(Error("Pilih minimal satu dosen pengampu."));
+            setError(
+              Error(
+                "Pilih minimal satu dosen pengampu untuk kelas baru ini.",
+              ),
+            );
             return false;
           }
           await api("/course-classes", "POST", {
@@ -1587,6 +1580,13 @@ export function ClassForm({
           </small>
         </Field>
         <Field label={t.instructors}>
+          {isAssistant && (
+            <small className="form-hint">
+              Anda akan otomatis ditugaskan sebagai asisten dosen pada kelas
+              ini. Setelah kelas dibuat, Anda dapat menambahkan pertemuan
+              praktikum.
+            </small>
+          )}
           <div className="instructor-picker">
             <div className="inline-form">
               <input

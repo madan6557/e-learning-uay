@@ -311,6 +311,14 @@ export function registerLearning(app: Express) {
                   },
                 ],
               }
+            : user.role === "ASSISTANT"
+              ? {
+                  classes: {
+                    some: {
+                      instructors: { some: { userId: user.id } },
+                    },
+                  },
+                }
             : {
                 classes: {
                   some: {
@@ -638,15 +646,31 @@ export function registerLearning(app: Express) {
         ensure(course, 404, "NOT_FOUND");
         ensure(course.status !== "ARCHIVED", 423, "CLASS_ARCHIVED");
 
+        const isDepartmentManager = canManageDepartment(
+          user,
+          course.departmentCode,
+        );
+        const isAssistant = user.role === "ASSISTANT";
+        const assistantAssignment = isAssistant
+          ? await tx.classInstructor.findFirst({
+              where: {
+                userId: user.id,
+                class: { courseId: course.id },
+              },
+              select: { id: true },
+            })
+          : null;
         const isManager =
           user.role === "INSTRUCTOR" ||
-          canManageDepartment(user, course.departmentCode);
+          isDepartmentManager ||
+          Boolean(assistantAssignment);
         ensure(isManager, 403, "WRITE_ACCESS_DENIED");
 
         const effectiveInstructorIds =
           user.role === "INSTRUCTOR" && !data.instructorIds.includes(user.id)
             ? [user.id, ...data.instructorIds]
             : data.instructorIds;
+        const effectiveAssistantIds = isAssistant ? [user.id] : [];
 
         const users = await tx.user.findMany({
           where: {
@@ -660,6 +684,20 @@ export function registerLearning(app: Express) {
           400,
           "INVALID_INSTRUCTORS",
         );
+        const assistantUsers = effectiveAssistantIds.length
+          ? await tx.user.findMany({
+              where: {
+                id: { in: effectiveAssistantIds },
+                status: "ACTIVE",
+                role: "ASSISTANT",
+              },
+            })
+          : [];
+        ensure(
+          assistantUsers.length === effectiveAssistantIds.length,
+          400,
+          "INVALID_ASSISTANTS",
+        );
         const settings = await getAcademicSettings(tx);
         const after = await tx.courseClass.create({
           data: {
@@ -672,12 +710,20 @@ export function registerLearning(app: Express) {
               ? hash(data.enrollmentKey)
               : null,
             instructors: {
-              create: users.map((u, i) => ({
-                userId: u.id,
-                isPrimary:
-                  u.id === user.id ||
-                  (user.role !== "INSTRUCTOR" && i === 0),
-              })),
+              create: [
+                ...users.map((u, i) => ({
+                  userId: u.id,
+                  isPrimary:
+                    u.id === user.id ||
+                    (user.role !== "INSTRUCTOR" && i === 0),
+                  role: "INSTRUCTOR",
+                })),
+                ...assistantUsers.map((assistant) => ({
+                  userId: assistant.id,
+                  isPrimary: false,
+                  role: "ASSISTANT",
+                })),
+              ],
             },
             gradeCategories: {
               create: DEFAULT_GRADE_CATEGORIES_TEMPLATE.map(

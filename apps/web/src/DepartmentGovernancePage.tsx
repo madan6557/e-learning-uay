@@ -40,6 +40,7 @@ import {
   normalizeDepartmentCode,
 } from "../../../packages/shared/src/departments";
 import { AuditLogView } from "./components/admin/AuditLogView";
+import { SIAKAD_SCOPE_SYNC_READY } from "../../../packages/shared/src/feature-readiness";
 
 interface DepartmentRecord {
   id: string;
@@ -434,7 +435,7 @@ export function DepartmentGovernancePage({
       ? "AUDIT"
       : tabParam === "MANUAL"
         ? "MANUAL"
-        : tabParam === "SIAKAD"
+        : SIAKAD_SCOPE_SYNC_READY && tabParam === "SIAKAD"
           ? "SIAKAD"
           : "PRODI";
 
@@ -661,10 +662,12 @@ export function DepartmentGovernancePage({
     setSiakadError(null);
   };
   const canApply =
+    SIAKAD_SCOPE_SYNC_READY &&
     siakadResult?.dryRun &&
     siakadResult.ready > 0 &&
     siakadResult.notFound === 0;
   const runSiakadSync = async (dryRun: boolean) => {
+    if (!SIAKAD_SCOPE_SYNC_READY) return;
     if (pending.current.has("siakad") || (!dryRun && !canApply)) return;
     pending.current.add("siakad");
     setSiakadSyncing(true);
@@ -804,7 +807,9 @@ export function DepartmentGovernancePage({
       title: "Master Program Studi",
     },
     { id: "MANUAL" as const, icon: Users, title: "Pengguna" },
-    { id: "SIAKAD" as const, icon: Code, title: "Sinkronisasi SIAKAD" },
+    ...(SIAKAD_SCOPE_SYNC_READY
+      ? [{ id: "SIAKAD" as const, icon: Code, title: "Sinkronisasi SIAKAD" }]
+      : []),
     {
       id: "AUDIT" as const,
       icon: History,
@@ -829,6 +834,12 @@ export function DepartmentGovernancePage({
               ? "Kelola program studi, penugasan pengguna, serta pantau rekaman jejak aktivitas sistem."
               : "Pantau rekaman jejak aktivitas operasional akademik program studi Anda."}
           </p>
+          {user.role === "SUPER_ADMIN" && !SIAKAD_SCOPE_SYNC_READY && (
+            <small className="governance-subtext" role="status">
+              Integrasi SIAKAD belum siap. Sinkronisasi dinonaktifkan hingga
+              alurnya diverifikasi.
+            </small>
+          )}
         </div>
       </div>
       <div className="governance-tabs" aria-label="Bagian tata kelola">
@@ -1141,7 +1152,7 @@ export function DepartmentGovernancePage({
         </section>
       )}
 
-      {activeTab === "SIAKAD" && (
+      {SIAKAD_SCOPE_SYNC_READY && activeTab === "SIAKAD" && (
         <section
           aria-label="Sinkronisasi SIAKAD"
           className="governance-integration card"

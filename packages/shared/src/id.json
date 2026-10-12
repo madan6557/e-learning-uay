@@ -615,6 +615,7 @@
     "CLASS_ACCESS_DENIED": "Anda belum terdaftar atau ditugaskan pada kelas ini.",
     "PARTICIPATION_DISABLED": "Hak partisipasi Anda pada kelas ini telah dinonaktifkan oleh pengajar atau administrator.",
     "WRITE_ACCESS_DENIED": "Anda tidak memiliki wewenang untuk melakukan perubahan ini.",
+    "INTEGRATION_NOT_READY": "Integrasi SIAKAD belum siap. Sinkronisasi dinonaktifkan.",
     "CLASS_READ_ONLY": "Admin hanya dapat melihat kelas. Perubahan kelas dilakukan oleh dosen pengampu.",
     "CLASS_ARCHIVED": "Kelas diarsipkan dan hanya dapat dibaca.",
     "COURSE_ARCHIVED": "Mata kuliah diarsipkan. Aktifkan kembali melalui katalog sebelum membuka kelas.",

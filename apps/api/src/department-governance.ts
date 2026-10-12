@@ -25,6 +25,7 @@ import {
   siakadScopeSyncPayloadSchema,
 } from "../../../packages/shared/src/departments.js";
 import { normalizeRole } from "../../../packages/shared/src/sso.js";
+import { SIAKAD_SCOPE_SYNC_READY } from "../../../packages/shared/src/feature-readiness.js";
 
 const authorityRoles = [
   "SUPER_ADMIN",
@@ -1177,6 +1178,7 @@ export function registerDepartmentGovernance(app: Express) {
     "/api/v1/system/siakad/sync-scopes",
     authorizeMachineOrSuperAdmin,
     async (req, res) => {
+      ensure(SIAKAD_SCOPE_SYNC_READY, 503, "INTEGRATION_NOT_READY");
       const payload = siakadScopeSyncPayloadSchema.parse(req.body);
 
       if (payload.dryRun) {
