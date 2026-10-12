@@ -70,7 +70,7 @@ const CATEGORY_LABELS: Record<
   REGISTRASI: {
     label: "Registrasi & KRS",
     color: "var(--adaptive-violet-text, #7c3aed)",
-    bg: "var(--adaptive-info-soft, rgba(124, 58, 237, 0.08))",
+    bg: "var(--adaptive-violet-soft, rgba(124, 58, 237, 0.08))",
   },
   LIBUR: {
     label: "Libur & Cuti",
@@ -149,7 +149,7 @@ export function AnnouncementCard({
           ? "2px solid var(--adaptive-danger-border, rgba(220, 38, 38, 0.4))"
           : "1px solid var(--border, #e2e8f0)",
         background: item.isImportant
-          ? "rgba(254, 242, 242, 0.35)"
+          ? "var(--adaptive-danger-soft, rgba(254, 242, 242, 0.35))"
           : "var(--card-bg, #ffffff)",
         boxShadow: item.isImportant
           ? "0 2px 8px rgba(220, 38, 38, 0.06)"

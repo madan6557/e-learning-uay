@@ -23,6 +23,7 @@ const ROLE_LABELS: Record<string, string> = {
   SUPER_ADMIN: "Super Admin",
   DEPARTMENT_ADMIN: "Admin Program Studi",
   INSTRUCTOR: "Dosen Pengampu",
+  ASSISTANT: "Asisten Dosen",
   STUDENT: "Mahasiswa",
   RECTOR: "Rektor / Pimpinan",
 };
@@ -407,6 +408,7 @@ export function AuditLogView({
               <option value="SUPER_ADMIN">Super Admin</option>
               <option value="DEPARTMENT_ADMIN">Admin Program Studi</option>
               <option value="INSTRUCTOR">Dosen Pengampu</option>
+              <option value="ASSISTANT">Asisten Dosen</option>
               <option value="STUDENT">Mahasiswa</option>
             </select>
           </div>
@@ -462,7 +464,7 @@ export function AuditLogView({
             <label>&nbsp;</label>
             <button
               type="button"
-              className="ghost"
+              className="secondary"
               onClick={handleReset}
               title="Bersihkan semua filter pencarian"
             >

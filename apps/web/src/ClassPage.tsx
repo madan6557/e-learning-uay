@@ -596,7 +596,9 @@ export function ClassPage({
                             background: isActive
                               ? "var(--primary, #0284c7)"
                               : "var(--muted-soft, #f1f5f9)",
-                            color: isActive ? "#ffffff" : "var(--muted, #64748b)",
+                            color: isActive
+                              ? "var(--primary-foreground, #ffffff)"
+                              : "var(--muted, #64748b)",
                           }}
                         >
                           {opt.count}

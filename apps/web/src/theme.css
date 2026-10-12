@@ -105,6 +105,17 @@
     --adaptive-violet-soft: #302747;
     --adaptive-violet-border: #6b5697;
     --adaptive-violet-fill: #614896;
+
+    /* Tokens referenced by inline component styles that previously had no
+       dark value and fell back to light-palette hex colors. */
+    --primary-soft: var(--accent-surface);
+    --primary-light: #3d6a95;
+    --success-border: #387c60;
+    --adaptive-bg-subtle: var(--surface-muted);
+    --adaptive-primary-text: #c9b5ff;
+    --adaptive-primary-soft: #302747;
+    --adaptive-primary-border: #6b5697;
+    --adaptive-primary-fill: #614896;
   }
 
   :root[data-theme="dark"] :is(.public-shell, .standalone-guide, .rector-dashboard) {

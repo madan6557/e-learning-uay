@@ -722,21 +722,21 @@
 }
 
 .sso-stat-card.new {
-  border-color: rgba(234, 179, 8, 0.35);
-  background: rgba(254, 240, 138, 0.12);
+  border-color: var(--adaptive-warning-border, rgba(234, 179, 8, 0.35));
+  background: var(--adaptive-warning-soft, rgba(254, 240, 138, 0.12));
 }
 
 .sso-stat-card.new .stat-num {
-  color: #ca8a04;
+  color: var(--adaptive-warning-text, #ca8a04);
 }
 
 .sso-stat-card.existing {
-  border-color: rgba(34, 197, 94, 0.35);
-  background: rgba(220, 252, 231, 0.12);
+  border-color: var(--adaptive-success-border, rgba(34, 197, 94, 0.35));
+  background: var(--adaptive-success-soft, rgba(220, 252, 231, 0.12));
 }
 
 .sso-stat-card.existing .stat-num {
-  color: #16a34a;
+  color: var(--adaptive-success-text, #16a34a);
 }
 
 .sso-sync-preview-list {
@@ -950,7 +950,7 @@
   margin: 10px 0;
   padding: 8px 14px;
   border-radius: 6px;
-  background: rgba(2, 132, 199, 0.05);
+  background: var(--adaptive-info-soft, rgba(2, 132, 199, 0.05));
   border-left: 3px solid var(--primary, #0284c7);
   font-size: 0.85rem;
 }
@@ -988,12 +988,12 @@
   color: var(--muted-foreground);
 }
 .audit-diff-table .diff-before {
-  color: #dc2626;
-  background: rgba(220, 38, 38, 0.03);
+  color: var(--adaptive-danger-text, #dc2626);
+  background: var(--adaptive-danger-soft, rgba(220, 38, 38, 0.03));
 }
 .audit-diff-table .diff-after {
-  color: #059669;
-  background: rgba(5, 150, 105, 0.03);
+  color: var(--adaptive-success-text, #059669);
+  background: var(--adaptive-success-soft, rgba(5, 150, 105, 0.03));
 }
 .audit-details-toggle {
   margin-top: 10px;
