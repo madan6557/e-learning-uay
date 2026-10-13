@@ -394,7 +394,7 @@ export function advanceVideo(
   position: number,
   duration: number,
   now: Date,
-  allowSeeking = true,
+  allowSeeking = false,
 ) {
   const previousAt = previous.updatedAt ? new Date(previous.updatedAt) : now;
   const elapsed = Math.max(

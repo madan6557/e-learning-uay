@@ -802,7 +802,7 @@ export function ResourceEditor({
           <label className="check-row">
             <input
               type="checkbox"
-              checked={draft.dynamicPayload.allowSeeking !== false}
+              checked={draft.dynamicPayload.allowSeeking === true}
               onChange={(event) =>
                 payload({ allowSeeking: event.target.checked })
               }

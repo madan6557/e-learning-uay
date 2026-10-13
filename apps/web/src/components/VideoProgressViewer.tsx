@@ -116,7 +116,7 @@ export function VideoProgressViewer({
             watched.current,
           )}
           watchLimit={
-            writable && payload.allowSeeking === false ? watchLimit : undefined
+            writable && payload.allowSeeking !== true ? watchLimit : undefined
           }
           onDuration={(value) => {
             setDuration(value);

@@ -2028,7 +2028,7 @@ export function registerLearning(app: Express) {
             position,
             payload.durationSeconds,
             new Date(),
-            payload.allowSeeking !== false,
+            payload.allowSeeking === true,
           );
           return tx.videoProgress.upsert({
             where: { userId_resourceItemId: { userId, resourceItemId } },
