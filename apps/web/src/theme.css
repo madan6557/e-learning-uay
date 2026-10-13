@@ -58,6 +58,7 @@
 
     /* Legacy aliases used by inline forms, cards, and notification filters. */
     --card-bg: var(--card);
+    --card-muted: var(--surface-muted);
     --input-bg: var(--surface-muted);
     --surface-subtle: var(--surface-muted);
     --chip-bg: var(--secondary);
@@ -67,6 +68,7 @@
     --heading: var(--foreground);
     --fg: var(--foreground);
     --brand: var(--primary);
+    --accent: var(--primary);
     --brand-soft: var(--accent-surface);
     --neutral-subtle: var(--surface-muted);
     --action-background: #285f92;
@@ -195,6 +197,30 @@
 .theme-toggle:focus-visible {
   outline: 3px solid var(--ring);
   outline-offset: 3px;
+}
+
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+input[aria-invalid="true"] {
+  border-color: var(--destructive) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--destructive) 22%, transparent);
+}
+.question-editor input:user-invalid,
+.weight-category-grid input:user-invalid {
+  border-color: var(--destructive);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--destructive) 22%, transparent);
+}
+.field-error {
+  margin: 8px 0;
+  color: var(--destructive);
+  font-size: 0.875rem;
 }
 .public-header nav {
   display: flex;

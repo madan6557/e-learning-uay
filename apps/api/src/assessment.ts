@@ -97,7 +97,18 @@ export const assignmentSchema = z.object({
   allowLate: z.boolean().default(true),
   maxAttempts: z.number().int().min(1).max(20).default(3),
   isVisible: z.boolean().default(false),
-});
+}).superRefine((assignment, ctx) => {
+  if (assignment.allowLate && !assignment.cutoffDate) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["cutoffDate"],
+      message: "CUTOFF_REQUIRED_WHEN_ALLOW_LATE",
+    });
+  }
+}).transform((assignment) => ({
+  ...assignment,
+  cutoffDate: assignment.allowLate ? assignment.cutoffDate : null,
+}));
 const shuffle = <T>(items: T[]) => {
   const result = [...items];
   for (let i = result.length - 1; i > 0; i--) {

@@ -368,8 +368,7 @@ export function ClassPage({
   const isResourceDone = (r: any) => {
     if (!cls?.progress) return false;
     if (r.resourceType === "VIDEO_MEDIA") {
-      const minPercent = r.dynamicPayload?.minWatchPercent ?? 85;
-      return getResourceProgress(r) >= minPercent;
+      return getResourceProgress(r) >= 100;
     }
     if (r.resourceType === "DOCUMENT") {
       const minPercent = r.dynamicPayload?.minSlidePercent ?? 80;
@@ -393,7 +392,10 @@ export function ClassPage({
           <div className="eyebrow">
             {cls.course.code} · {cls.course.credits} {t.credits}
           </div>
-          <h1>{cls.course.title}</h1>
+          <h1>
+            {cls.course.title}
+            {cls.isPracticum && <Badge value="PRAKTIKUM" />}
+          </h1>
           <div className="class-submeta">
             <p>
               {cls.name} <span>·</span> {cls.academicYear}
@@ -846,9 +848,12 @@ export function ClassPage({
                               {allItems.map((item: any, itemIndex: number) => {
                                 if (item._kind === "resource") {
                                   const r = item;
-                                  const done = !canViewAll && isResourceDone(r);
+                                  const locked = !canViewAll && r.isAvailable === false;
+                                  const done = !canViewAll && !locked && isResourceDone(r);
                                   const progressPct = !canViewAll
-                                    ? Math.round(getResourceProgress(r))
+                                    ? locked
+                                      ? 0
+                                      : Math.floor(getResourceProgress(r))
                                     : 0;
                                   return (
                                     <div
@@ -876,6 +881,11 @@ export function ClassPage({
                                             }
                                           </small>
                                         </div>
+                                        {locked && (
+                                          <span className="status-pill in-progress">
+                                            Belum dibuka
+                                          </span>
+                                        )}
                                         {!canViewAll &&
                                           (done ? (
                                             <span className="status-pill completed">
@@ -1260,7 +1270,15 @@ export function ClassPage({
               )}
             </>
           )}
-          {resource && (
+          {resource && !canViewAll && resource.isAvailable === false ? (
+            <div className="card" role="status">
+              <h2>Materi belum dibuka</h2>
+              <p>
+                Materi ini sudah dijadwalkan untuk kelas, tetapi belum dapat
+                diakses.
+              </p>
+            </div>
+          ) : resource ? (
             <ResourceViewer
               resource={resource}
               cls={cls}
@@ -1268,7 +1286,7 @@ export function ClassPage({
               reload={info.reload}
               onClose={() => navigate(classUrl)}
             />
-          )}
+          ) : null}
         </>
       )}
       {modal?.kind === "resource" && (

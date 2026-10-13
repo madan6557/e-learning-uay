@@ -89,7 +89,8 @@ const payloadSchema = z.object({
   totalPages: z.number().int().min(1).max(10000).optional(),
   url: webUrl.optional(),
   durationSeconds: z.number().positive().max(36000).optional(),
-  minWatchPercent: z.number().min(1).max(100).default(85),
+  minWatchPercent: z.number().min(1).max(100).default(100),
+  allowSeeking: z.boolean().default(true),
   gitRepositoryUrl: webUrl.optional(),
   softwarePrerequisites: z.array(z.string().max(200)).max(30).default([]),
 });
@@ -126,6 +127,7 @@ export async function validateResource(raw: unknown, tx: any, classId: string) {
     ensure(p.fileObjectId && p.totalPages, 400, "DOCUMENT_REQUIRED");
   }
   if (data.resourceType === "VIDEO_MEDIA") {
+    p.minWatchPercent = 100;
     ensure(
       (p.fileObjectId || p.url) && p.durationSeconds,
       400,
@@ -1136,14 +1138,6 @@ export function registerLearning(app: Express) {
         },
       },
     });
-    const visible = (item: any) => {
-      try {
-        available(item);
-        return true;
-      } catch {
-        return false;
-      }
-    };
     const [
       announcements,
       video,
@@ -1250,14 +1244,31 @@ export function registerLearning(app: Express) {
     ]);
 
     const now = new Date();
+    const inDateWindow = (item: any) => {
+      const start = item.availableFrom ?? item.startDate;
+      const end = item.availableUntil ?? item.endDate;
+      return (!start || now >= start) && (!end || now <= end);
+    };
     const isGradeLocked = Boolean(myFinalGrade?.isLocked);
     const isClassArchived = cls.status === "ARCHIVED";
 
     const result = sections
-      .filter((s) => canViewAll || visible(s))
+      .filter((s) => canViewAll || s.isVisible)
       .map((s) => ({
         ...s,
-        resources: s.resources.filter((r) => canViewAll || visible(r)),
+        isAvailable: canViewAll || (s.isVisible && inDateWindow(s)),
+        resources: s.resources
+          .filter((r) => canViewAll || r.isVisible)
+          .map((r) => {
+            const isAvailable = canViewAll || (
+              s.isVisible && r.isVisible && inDateWindow(s) && inDateWindow(r)
+            );
+            return {
+              ...r,
+              isAvailable,
+              dynamicPayload: isAvailable ? r.dynamicPayload : undefined,
+            };
+          }),
         quizzes: s.quizzes
           .filter(
             (q) => canViewAll || (q.status === "PUBLISHED" && q.isVisible),
@@ -2017,6 +2028,7 @@ export function registerLearning(app: Express) {
             position,
             payload.durationSeconds,
             new Date(),
+            payload.allowSeeking !== false,
           );
           return tx.videoProgress.upsert({
             where: { userId_resourceItemId: { userId, resourceItemId } },

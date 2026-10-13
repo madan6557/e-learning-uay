@@ -376,13 +376,13 @@ export function validateTotal(values: number[]) {
 }
 export function distributePoints(values: number[]) {
   if (!values.length) return [];
-  const total = values.reduce((a, b) => a + b, 0);
-  const result = values.map(
-    (v) => Math.floor((total ? v / total : 1 / values.length) * 10000) / 100,
-  );
-  let cents = Math.round((100 - result.reduce((a, b) => a + b, 0)) * 100);
-  for (let i = 0; cents > 0; i++, cents--)
-    result[i % result.length] = round(result[i % result.length] + 0.01);
+  const centsPerQuestion = Math.floor(10000 / values.length);
+  let remainingCents = 10000 - centsPerQuestion * values.length;
+  const result = values.map(() => {
+    const points = (centsPerQuestion + (remainingCents > 0 ? 1 : 0)) / 100;
+    remainingCents -= remainingCents > 0 ? 1 : 0;
+    return points;
+  });
   return result;
 }
 export function advanceVideo(
@@ -394,6 +394,7 @@ export function advanceVideo(
   position: number,
   duration: number,
   now: Date,
+  allowSeeking = true,
 ) {
   const previousAt = previous.updatedAt ? new Date(previous.updatedAt) : now;
   const elapsed = Math.max(
@@ -408,7 +409,9 @@ export function advanceVideo(
     : 0;
 
   let watchedSeconds = previous.watchedSeconds;
-  if (
+  if (allowSeeking && position > previous.watchedSeconds) {
+    watchedSeconds = Math.min(duration, position);
+  } else if (
     previous.watchedSeconds === 0 &&
     previous.lastPositionSeconds === 0 &&
     position <= 10
@@ -430,6 +433,10 @@ export function advanceVideo(
       duration,
       Math.max(previous.watchedSeconds, previous.lastPositionSeconds + credit),
     );
+  }
+
+  if (position >= duration - 1 && (allowSeeking || credit > 0)) {
+    watchedSeconds = duration;
   }
 
   return {

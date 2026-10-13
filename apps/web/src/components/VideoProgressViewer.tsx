@@ -115,7 +115,9 @@ export function VideoProgressViewer({
             previous?.lastPositionSeconds ?? watched.current,
             watched.current,
           )}
-          watchLimit={writable ? watchLimit : undefined}
+          watchLimit={
+            writable && payload.allowSeeking === false ? watchLimit : undefined
+          }
           onDuration={(value) => {
             setDuration(value);
             setPlayerError(null);

@@ -156,6 +156,9 @@
     padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
     box-shadow: 0 -3px 20px rgb(15 23 42 / 5%);
   }
+  .app-shell .topbar .mobile-menu {
+    display: none;
+  }
   .phone-navigation > a,
   .phone-navigation > button {
     display: flex;

@@ -45,6 +45,7 @@ import {
   questionTypes,
   questionSchema,
   distributePoints,
+  gradeAnswer,
   type QuestionData,
 } from "../../../packages/shared/src/domain";
 import { saveDraft, getDraft, removeDraft } from "./drafts";
@@ -64,13 +65,16 @@ const freshQuestion = () => ({
 export function QuestionEditor({
   question: q,
   onChange,
+  invalidFields = [],
 }: {
   question: any;
   onChange: (q: any) => void;
+  invalidFields?: string[];
 }) {
   const change = (data: any) => onChange({ ...q, ...data });
   const key = (data: any) => change({ answerKey: { ...q.answerKey, ...data } });
   const type = q.type;
+  const invalid = (field: string) => invalidFields.includes(field);
   return (
     <div className="question-editor">
       <div className="form-grid">
@@ -78,25 +82,57 @@ export function QuestionEditor({
           <select
             value={type}
             onChange={(e) => {
-              const type = e.target.value;
+              const nextType = e.target.value;
+              const options =
+                nextType === "TRUE_FALSE"
+                  ? [
+                      { id: "true", text: "True" },
+                      { id: "false", text: "False" },
+                    ]
+                  : ["SHORT_ANSWER", "ESSAY", "FILE_UPLOAD"].includes(nextType)
+                    ? []
+                    : q.options?.length
+                      ? q.options
+                      : [
+                          { id: "a", text: "" },
+                          { id: "b", text: "" },
+                        ];
+              const ids = options.map((option: any) => option.id);
+              const previousCorrect = (q.answerKey?.correct ?? []).filter(
+                (id: string) => ids.includes(id),
+              );
+              const answerKey = {
+                ...q.answerKey,
+                correct:
+                  nextType === "TRUE_FALSE"
+                    ? ["true"]
+                    : nextType === "ORDERING"
+                      ? ids
+                      : nextType === "SINGLE_CHOICE"
+                        ? [previousCorrect[0] ?? ids[0]].filter(Boolean)
+                        : nextType === "MULTIPLE_SELECT"
+                          ? previousCorrect.length
+                            ? previousCorrect
+                            : ids.slice(0, 1)
+                          : [],
+                pairs:
+                  nextType === "MATCHING"
+                    ? Object.fromEntries(ids.map((id: string) => [id, id]))
+                    : undefined,
+                numericValue:
+                  nextType === "SHORT_ANSWER"
+                    ? q.answerKey?.numericValue
+                    : undefined,
+                tolerance:
+                  nextType === "SHORT_ANSWER"
+                    ? q.answerKey?.tolerance
+                    : undefined,
+              };
               change({
-                type,
-                options:
-                  type === "TRUE_FALSE"
-                    ? [
-                        { id: "true", text: "True" },
-                        { id: "false", text: "False" },
-                      ]
-                    : q.options,
-                answerKey: {
-                  correct: type === "TRUE_FALSE" ? ["true"] : [],
-                  pairs:
-                    type === "MATCHING"
-                      ? Object.fromEntries(
-                          q.options.map((o: any) => [o.id, o.id]),
-                        )
-                      : undefined,
-                },
+                type: nextType,
+                options,
+                answerKey,
+                rubric: [],
               });
             }}
           >
@@ -114,8 +150,13 @@ export function QuestionEditor({
             min="1"
             max={1000}
             required
-            value={q.points}
-            onChange={(e) => change({ points: Number(e.target.value) })}
+            value={q.points ?? ""}
+            aria-invalid={invalid("points") || undefined}
+            onChange={(e) =>
+              change({
+                points: e.target.value === "" ? "" : Number(e.target.value),
+              })
+            }
           />
         </Field>
       </div>
@@ -145,6 +186,11 @@ export function QuestionEditor({
               <input
                 required
                 aria-label={`${t.options} ${index + 1}`}
+                aria-invalid={
+                  invalid("options") && !String(option.text ?? "").trim()
+                    ? true
+                    : undefined
+                }
                 value={option.text}
                 onChange={(e) =>
                   change({
@@ -205,6 +251,7 @@ export function QuestionEditor({
         <Field label={t.correctAnswer}>
           <select
             required
+            aria-invalid={invalid("answerKey") || undefined}
             value={q.answerKey.correct?.[0] ?? ""}
             onChange={(e) => key({ correct: [e.target.value] })}
           >
@@ -251,6 +298,7 @@ export function QuestionEditor({
           <Field label={t.correctAnswer}>
             <input
               value={q.answerKey.correct?.join(" | ") ?? ""}
+              aria-invalid={invalid("answerKey") || undefined}
               onChange={(e) =>
                 key({ correct: e.target.value.split("|").map((v) => v.trim()) })
               }
@@ -415,7 +463,8 @@ export function QuizEditor({
     quiz?.resultReleaseMode ?? "MANUAL",
   );
   const [description, setDescription] = useState(quiz?.description ?? "");
-  const total = questions.reduce((s, q) => s + q.points, 0);
+  const [questionErrors, setQuestionErrors] = useState<string[][]>([]);
+  const total = questions.reduce((s, q) => s + (Number(q.points) || 0), 0);
   return (
     <Modal wide title={quiz ? t.edit : t.newQuiz} onClose={onClose}>
       <Form
@@ -457,7 +506,23 @@ export function QuizEditor({
             availableUntil: isoInput(f.get("closes")),
             status: intent === "publish" ? "PUBLISHED" : "DRAFT",
             isVisible: intent === "publish",
-            questions: questions.map((q) => questionSchema.parse(q)),
+            questions: (() => {
+              const parsed = questions.map((q) => questionSchema.safeParse(q));
+              const errors = parsed.map((result) =>
+                result.success
+                  ? []
+                  : [...new Set(result.error.issues.map((issue) => String(issue.path[0] ?? "question")))],
+              );
+              setQuestionErrors(errors);
+              if (parsed.some((result) => !result.success)) {
+                throw new Error(
+                  "Periksa kolom soal yang ditandai. Lengkapi pertanyaan, poin, pilihan, dan kunci jawaban sesuai jenis soal.",
+                );
+              }
+              return parsed.map((result) =>
+                result.success ? result.data : undefined,
+              );
+            })(),
           };
           await api(
             quiz ? `/quizzes/${quiz.id}` : `/sections/${sectionId}/quizzes`,
@@ -608,7 +673,9 @@ export function QuizEditor({
             type="button"
             className="secondary"
             onClick={() => {
-              const points = distributePoints(questions.map((q) => q.points));
+              const points = distributePoints(
+                questions.map((q) => Number(q.points) || 0),
+              );
               setQuestions(
                 questions.map((q, i) => ({
                   ...q,
@@ -635,18 +702,23 @@ export function QuizEditor({
             </summary>
             <QuestionEditor
               question={q}
-              onChange={(next) =>
+              invalidFields={questionErrors[index] ?? []}
+              onChange={(next) => {
                 setQuestions(
                   questions.map((old, i) => (i === index ? next : old)),
-                )
-              }
+                );
+                setQuestionErrors((current) =>
+                  current.map((errors, i) => (i === index ? [] : errors)),
+                );
+              }}
             />
             <button
               type="button"
               className="text-button danger-text"
-              onClick={() =>
+              onClick={() => {
                 setQuestions(questions.filter((_, i) => i !== index))
-              }
+                setQuestionErrors([]);
+              }}
             >
               <Trash2 size={15} />
               {t.delete}
@@ -657,7 +729,10 @@ export function QuizEditor({
           <button
             type="button"
             className="secondary"
-            onClick={() => setQuestions([...questions, freshQuestion()])}
+            onClick={() => {
+              setQuestions([...questions, freshQuestion()]);
+              setQuestionErrors([]);
+            }}
           >
             <Plus size={15} />
             {t.newQuestion}
@@ -669,7 +744,10 @@ export function QuizEditor({
               const q = banks.data
                 ?.flatMap((b) => b.questions)
                 .find((q) => q.id === e.target.value);
-              if (q) setQuestions([...questions, structuredClone(q)]);
+              if (q) {
+                setQuestions([...questions, structuredClone(q)]);
+                setQuestionErrors([]);
+              }
             }}
           >
             <option value="">{t.selectBankQuestion}</option>
@@ -1681,14 +1759,15 @@ function ManualQuizGrading({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const questions = attempt.questionSnapshot.filter((q: any) =>
+  const questions = attempt.questionSnapshot;
+  const manualQuestions = questions.filter((q: any) =>
     ["ESSAY", "FILE_UPLOAD"].includes(q.type),
   );
   const [values, setValues] = useState<
     Record<string, { score: string; feedback: string }>
   >(() =>
     Object.fromEntries(
-      questions.map((q: any) => {
+      manualQuestions.map((q: any) => {
         const existing = attempt.answerGrades?.find(
           (g: any) => g.questionId === q.id,
         );
@@ -1713,12 +1792,18 @@ function ManualQuizGrading({
         draftKey={"quiz-grading:" + attempt.id}
         draftValue={values}
         onRestoreDraft={setValues}
-        submitLabel="Simpan semua penilaian"
+        submitLabel={
+          manualQuestions.length ? "Simpan semua penilaian" : t.close
+        }
         onCancel={onClose}
         onSubmit={async (f) => {
+          if (!manualQuestions.length) {
+            onClose();
+            return;
+          }
           const reason = textValue(f, "reason");
           await api("/attempts/" + attempt.id + "/grades/batch", "POST", {
-            grades: questions.map((q: any) => {
+            grades: manualQuestions.map((q: any) => {
               const fb = values[q.id]?.feedback?.trim() ?? "";
               const itemReason = reason || (fb.length >= 5 ? fb : undefined);
               return {
@@ -1733,7 +1818,10 @@ function ManualQuizGrading({
           onSaved();
         }}
       >
-        <p>Nilai seluruh jawaban, lalu simpan penilaian dalam satu langkah.</p>
+        <p>
+          Jawaban yang dinilai otomatis tetap ditampilkan untuk ditinjau. Nilai
+          hanya perlu diisi untuk jawaban esai dan unggahan berkas.
+        </p>
         {questions.map((q: any, index: number) => (
           <section className="grading-question" key={q.id}>
             <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 8 }}>
@@ -1749,7 +1837,7 @@ function ManualQuizGrading({
                 ) : (
                   t.noSubmissions
                 )
-              ) : (
+              ) : q.type === "ESSAY" ? (
                 <div
                   style={{
                     padding: "12px 16px",
@@ -1760,6 +1848,45 @@ function ManualQuizGrading({
                   className="formatted-content"
                 >
                   <Html text={formatContentHtml(attempt.answersJson[q.id] ?? "—")} />
+                </div>
+              ) : (
+                <div className="formatted-content">
+                  {(() => {
+                    const answer = attempt.answersJson?.[q.id];
+                    const optionText = (value: unknown) => {
+                      const option = q.options?.find((o: any) => o.id === value);
+                      return option?.text ?? String(value ?? "—");
+                    };
+                    const answerText = Array.isArray(answer)
+                      ? answer.map(optionText).join(", ")
+                      : typeof answer === "string"
+                        ? optionText(answer)
+                        : answer && typeof answer === "object"
+                          ? Object.entries(answer)
+                              .map(
+                                ([key, value]) =>
+                                  `${optionText(key)} → ${optionText(value)}`,
+                              )
+                              .join("; ")
+                          : String(answer ?? "—");
+                    const correctText = q.answerKey?.correct
+                      ?.map(optionText)
+                      .join(", ");
+                    const score = gradeAnswer(q, answer);
+                    return (
+                      <>
+                        <p>
+                          <strong>Jawaban mahasiswa:</strong> {answerText}
+                        </p>
+                        <p>
+                          <strong>Kunci jawaban:</strong> {correctText || "—"}
+                        </p>
+                        <p>
+                          <strong>Nilai otomatis:</strong> {score ?? 0} / {q.points}
+                        </p>
+                      </>
+                    );
+                  })()}
                 </div>
               )}
             </div>
@@ -1773,7 +1900,8 @@ function ManualQuizGrading({
                 ))}
               </details>
             )}
-            <div className="form-grid" style={{ marginTop: 12 }}>
+            {["ESSAY", "FILE_UPLOAD"].includes(q.type) && (
+              <div className="form-grid" style={{ marginTop: 12 }}>
               <Field label={t.score + " (0–" + q.points + ")"}>
                 <input
                   type="number"
@@ -1805,7 +1933,8 @@ function ManualQuizGrading({
                   defaultAiTemplate="quiz"
                 />
               </Field>
-            </div>
+              </div>
+            )}
           </section>
         ))}
         {correction && (
@@ -1845,14 +1974,18 @@ export function AssignmentEditor({
   const [instructions, setInstructions] = useState(
     assignment?.instructions ?? "",
   );
+  const [allowLate, setAllowLate] = useState(assignment?.allowLate ?? true);
+  const [cutoff, setCutoff] = useState(localInput(assignment?.cutoffDate));
   return (
     <Modal title={assignment ? t.edit : t.newAssignment} wide onClose={onClose}>
       <Form
         draftKey={`assignment-editor:${assignment?.id ?? sectionId}`}
         draftVersion={assignment?.updatedAt}
-        draftValue={{ instructions }}
+        draftValue={{ instructions, allowLate, cutoff }}
         onRestoreDraft={(v) => {
           if (v.instructions !== undefined) setInstructions(v.instructions);
+          if (v.allowLate !== undefined) setAllowLate(v.allowLate);
+          if (v.cutoff !== undefined) setCutoff(v.cutoff);
         }}
         onCancel={onClose}
         publication={{
@@ -1882,8 +2015,8 @@ export function AssignmentEditor({
               allowedFormats: f.getAll("formats"),
               availableFrom: isoInput(f.get("opens")),
               deadline: isoInput(f.get("deadline")),
-              cutoffDate: isoInput(f.get("cutoff")),
-              allowLate: f.has("late"),
+              cutoffDate: allowLate ? isoInput(cutoff) : null,
+              allowLate,
               maxAttempts: numberValue(f, "maxAttempts"),
               isVisible: intent === "publish",
             },
@@ -1949,7 +2082,15 @@ export function AssignmentEditor({
             <input
               name="cutoff"
               type="datetime-local"
-              defaultValue={localInput(assignment?.cutoffDate)}
+              value={cutoff}
+              required={allowLate}
+              disabled={!allowLate}
+              onChange={(event) => setCutoff(event.target.value)}
+              placeholder={
+                allowLate
+                  ? "Wajib diisi jika pengumpulan terlambat diizinkan"
+                  : "Tidak digunakan"
+              }
             />
           </Field>
           <Field label={t.maxSubmissions}>
@@ -1994,7 +2135,12 @@ export function AssignmentEditor({
           <input
             name="late"
             type="checkbox"
-            defaultChecked={assignment?.allowLate ?? true}
+            checked={allowLate}
+            onChange={(event) => {
+              const checked = event.target.checked;
+              setAllowLate(checked);
+              if (!checked) setCutoff("");
+            }}
           />
           {t.allowLate}
         </label>
@@ -2310,6 +2456,9 @@ export function AssignmentPage({
                   );
                   setReceipt(result);
                   setShowSuccessModal(true);
+                  setBody("");
+                  setLink("");
+                  setFile(null);
                   notifyAction(t.submissionSuccess);
                   info.reload();
                 }}
@@ -2440,6 +2589,9 @@ export function AssignmentPage({
               );
               setReceipt(result);
               setShowSuccessModal(true);
+              setBody("");
+              setLink("");
+              setFile(null);
               notifyAction("Uji coba pengumpulan tugas berhasil disimpan.");
               info.reload();
             }}

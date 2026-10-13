@@ -629,7 +629,10 @@ export function registerAttendanceRoutes(app: Express) {
         if (session.checkInCode && session.checkInCode.trim().length > 0) {
           ensure(code && code.trim().length > 0, 400, "CODE_REQUIRED");
           ensure(
-            matchesAttendanceCode(session.checkInCode, code),
+            matchesAttendanceCode(
+              session.checkInCode,
+              code?.replace(/\s+/g, "").toUpperCase(),
+            ),
             400,
             "INVALID_CHECKIN_CODE",
           );

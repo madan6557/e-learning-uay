@@ -30,7 +30,8 @@ export function QuestionBanks({
 }) {
   const banks = useApi<any[]>(`/course-classes/${classId}/question-banks`);
   const [modal, setModal] = useState<any>(null),
-    [question, setQuestion] = useState<any>(null);
+    [question, setQuestion] = useState<any>(null),
+    [questionErrors, setQuestionErrors] = useState<string[]>([]);
 
   return (
     <>
@@ -81,6 +82,7 @@ export function QuestionBanks({
                       rubric: [],
                       maxWords: 1000,
                     });
+                    setQuestionErrors([]);
                     setModal({ kind: "question", bankId: bank.id });
                   }}
                 >
@@ -135,16 +137,41 @@ export function QuestionBanks({
             draftValue={question}
             onRestoreDraft={setQuestion}
             onSubmit={async () => {
+              const parsed = questionSchema.safeParse({
+                ...question,
+                points:
+                  question.points === "" ? Number.NaN : question.points,
+              });
+              if (!parsed.success) {
+                setQuestionErrors([
+                  ...new Set(
+                    parsed.error.issues.map((issue) =>
+                      String(issue.path[0] ?? "question"),
+                    ),
+                  ),
+                ]);
+                throw new Error(
+                  "Periksa kolom soal yang ditandai. Lengkapi pertanyaan, poin, pilihan, dan kunci jawaban sesuai jenis soal.",
+                );
+              }
+              setQuestionErrors([]);
               await api(
                 `/course-classes/${classId}/question-banks/${modal.bankId}/questions`,
                 "POST",
-                questionSchema.parse(question),
+                parsed.data,
               );
               setModal(null);
               banks.reload();
             }}
           >
-            <QuestionEditor question={question} onChange={setQuestion} />
+            <QuestionEditor
+              question={question}
+              invalidFields={questionErrors}
+              onChange={(next) => {
+                setQuestion(next);
+                if (questionErrors.length) setQuestionErrors([]);
+              }}
+            />
           </Form>
         </Modal>
       )}

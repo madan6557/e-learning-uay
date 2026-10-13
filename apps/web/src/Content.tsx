@@ -584,7 +584,8 @@ export function ResourceEditor({
     resourceType: resource?.resourceType ?? "RICH_TEXT",
     dynamicPayload: resource?.dynamicPayload ?? {
       blocks: [newBlock("paragraph")],
-      minWatchPercent: 85,
+      minWatchPercent: 100,
+      allowSeeking: true,
     },
     isVisible: resource?.isVisible ?? false,
     availableFrom: resource?.availableFrom ?? null,
@@ -794,18 +795,21 @@ export function ResourceEditor({
               setVideoMetadata({ source, duration })
             }
           />
-          <Field label={t.watchThreshold}>
+          <p className="muted">
+            Video ditandai selesai setelah progres mencapai 100%. Loncat timeline
+            tetap dihitung jika opsi di bawah ini aktif.
+          </p>
+          <label className="check-row">
             <input
-              type="number"
-              min={1}
-              max={100}
-              required
-              value={draft.dynamicPayload.minWatchPercent ?? 85}
-              onChange={(e) =>
-                payload({ minWatchPercent: Number(e.target.value) })
+              type="checkbox"
+              checked={draft.dynamicPayload.allowSeeking !== false}
+              onChange={(event) =>
+                payload({ allowSeeking: event.target.checked })
               }
             />
-          </Field>
+            Izinkan loncat atau geser timeline video; durasi yang dilewati
+            tetap dihitung sebagai progres
+          </label>
         </>
       )}
       {["EXTERNAL_LINK", "VIRTUAL_SIMULATOR", "TELECONFERENCE"].includes(
@@ -1413,8 +1417,7 @@ export function ResourceViewer({
       return (initialSlide?.percent ?? 0) >= minPercent || !!initialDownload;
     }
     if (resource.resourceType === "VIDEO_MEDIA") {
-      const minPercent = p?.minWatchPercent ?? 85;
-      return (initialVideo?.percent ?? 0) >= minPercent;
+      return (initialVideo?.percent ?? 0) >= 100;
     }
     return !!initialText || !!initialDownload;
   })();
@@ -1439,7 +1442,9 @@ export function ResourceViewer({
             </span>
           ) : percent > 0 ? (
             <span className="status-pill in-progress">
-              {Math.round(percent)}%
+          {resource.resourceType === "VIDEO_MEDIA"
+            ? Math.floor(percent)
+            : Math.round(percent)}%
             </span>
           ) : null}
         </div>

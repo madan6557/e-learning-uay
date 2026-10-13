@@ -740,7 +740,9 @@ export function Gradebook({
     [message, setMessage] = useState(""),
     [gradeScaleVersion, setGradeScaleVersion] = useState("2026.1"),
     [autoAssignEnabled, setAutoAssignEnabled] = useState(true),
-    [autoAssigning, setAutoAssigning] = useState(false);
+    [autoAssigning, setAutoAssigning] = useState(false),
+    [weightErrors, setWeightErrors] = useState<number[]>([]),
+    [weightError, setWeightError] = useState("");
   const [practicumCategoryId, setPracticumCategoryId] = useState("");
   const [savingPracticumMapping, setSavingPracticumMapping] = useState(false);
   const [changes, setChanges] = useState<
@@ -880,6 +882,8 @@ export function Gradebook({
                     disabled={locked || unsaved}
                     onClick={() => {
                       setWeights(structuredClone(data.categories));
+                      setWeightErrors([]);
+                      setWeightError("");
                       setModal({ kind: "weights" });
                     }}
                   >
@@ -1384,6 +1388,37 @@ export function Gradebook({
                 : "Simpan Bobot Penilaian"
             }
             onSubmit={async () => {
+              const invalidValues = weights
+                .map((category, index) =>
+                  !category.name.trim() ||
+                  category.weightPercent === "" ||
+                  !Number.isFinite(Number(category.weightPercent)) ||
+                  Number(category.weightPercent) < 0 ||
+                  Number(category.weightPercent) > 100
+                    ? index
+                    : -1,
+                )
+                .filter((index) => index >= 0);
+              const totalWeight = weights.reduce(
+                (sum, category) =>
+                  sum + (Number(category.weightPercent) || 0),
+                0,
+              );
+              const totalIsInvalid = Math.abs(totalWeight - 100) > 0.001;
+              setWeightErrors(
+                totalIsInvalid
+                  ? weights.map((_category, index) => index)
+                  : invalidValues,
+              );
+              if (invalidValues.length || totalIsInvalid) {
+                setWeightError(
+                  invalidValues.length
+                    ? "Isi nama kategori dan bobot antara 0 sampai 100% pada kolom yang ditandai."
+                    : `Jumlah bobot harus 100%. Saat ini ${totalWeight.toFixed(2)}%. Periksa kolom bobot yang ditandai.`,
+                );
+                return false;
+              }
+              setWeightError("");
               await api(`/course-classes/${classId}/grade-categories`, "PUT", {
                 categories: weights,
                 gradeScaleVersion,
@@ -1564,12 +1599,7 @@ export function Gradebook({
                     }}
                   >
                     <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "1.2fr 130px 1.5fr auto",
-                        gap: 12,
-                        alignItems: "end",
-                      }}
+                      className="weight-category-grid"
                     >
                       <Field label={t.category}>
                         <div
@@ -1582,14 +1612,21 @@ export function Gradebook({
                           <input
                             required
                             disabled={isMandatory}
+                            aria-invalid={
+                              weightErrors.includes(i) && !c.name.trim()
+                                ? true
+                                : undefined
+                            }
                             value={c.name}
-                            onChange={(e) =>
+                            onChange={(e) => {
+                              setWeightErrors([]);
+                              setWeightError("");
                               setWeights(
                                 weights.map((w, j) =>
                                   i === j ? { ...w, name: e.target.value } : w,
                                 ),
-                              )
-                            }
+                              );
+                            }}
                           />
                           {isMandatory && (
                             <span
@@ -1616,12 +1653,18 @@ export function Gradebook({
                           min={0}
                           max={100}
                           step="0.1"
-                          value={c.weightPercent}
+                          value={c.weightPercent ?? ""}
+                          aria-invalid={weightErrors.includes(i) || undefined}
                           onChange={(e) => {
-                            const val = Math.max(
-                              0,
-                              Math.min(100, Number(e.target.value) || 0),
-                            );
+                            const val =
+                              e.target.value === ""
+                                ? ""
+                                : Math.max(
+                                    0,
+                                    Math.min(100, Number(e.target.value)),
+                                  );
+                            setWeightErrors([]);
+                            setWeightError("");
                             setWeights(
                               weights.map((w, j) =>
                                 i === j ? { ...w, weightPercent: val } : w,
@@ -1729,11 +1772,12 @@ export function Gradebook({
               <div className="points-counter" style={{ margin: 0 }}>
                 <strong>
                   {t.weight}:{" "}
-                  {weights.reduce((s, c) => s + c.weightPercent, 0).toFixed(2)}{" "}
+                  {weights.reduce((s, c) => s + (Number(c.weightPercent) || 0), 0).toFixed(2)}{" "}
                   / 100%
                 </strong>
               </div>
             </div>
+            {weightError && <p className="field-error" role="alert">{weightError}</p>}
 
             {/* Kontrol Auto-Assign */}
             <div
