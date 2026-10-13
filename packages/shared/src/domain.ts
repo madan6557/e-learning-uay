@@ -130,6 +130,10 @@ export const questionSchema = z
       )
       .max(50)
       .default([]),
+    allowedFileTypes: z
+      .array(z.enum(["PDF", "DOCX", "PNG", "JPG", "JPEG", "ZIP", "CSV", "TXT"]))
+      .min(1)
+      .default(["PDF", "DOCX", "PNG", "JPG"]),
     answerKey: z.object({
       correct: z.array(z.string()).default([]),
       partialCredit: z.boolean().default(false),
@@ -184,12 +188,15 @@ export const questionSchema = z
       !q.answerKey.correct.some((v) => v.trim())
     )
       fail("ANSWER_REQUIRED");
-    if (
-      q.type === "MATCHING" &&
-      (Object.keys(q.answerKey.pairs ?? {}).length !== ids.length ||
-        ids.some((id) => !ids.includes(q.answerKey.pairs?.[id] ?? "")))
-    )
-      fail("INVALID_PAIRS");
+    if (q.type === "MATCHING") {
+      const pairs = q.answerKey.pairs ?? {};
+      if (
+        Object.keys(pairs).length !== ids.length ||
+        ids.some((id) => !ids.includes(pairs[id] ?? "")) ||
+        new Set(Object.values(pairs)).size !== ids.length
+      )
+        fail("INVALID_PAIRS");
+    }
     if (
       q.rubric.length &&
       Math.abs(q.rubric.reduce((sum, r) => sum + r.points, 0) - q.points) >

@@ -360,7 +360,9 @@
   "options": "Pilihan jawaban",
   "answerKey": "Kunci jawaban",
   "correctAnswer": "Jawaban benar",
-  "partialCredit": "Nilai parsial pilihan jamak",
+  "partialCredit": "Berikan nilai untuk jawaban sebagian",
+  "gradingSettings": "Pengaturan penilaian",
+  "acceptedFileTypes": "Jenis berkas yang diterima",
   "caseSensitive": "Perhatikan huruf besar/kecil",
   "numericValue": "Jawaban numerik (opsional)",
   "tolerance": "Toleransi numerik",
@@ -534,7 +536,7 @@
     "SHORT_ANSWER": "Isian singkat",
     "MATCHING": "Menjodohkan",
     "ORDERING": "Mengurutkan",
-    "ESSAY": "Uraian",
+    "ESSAY": "Esai",
     "FILE_UPLOAD": "Unggah berkas"
   },
   "roles": {

@@ -43,6 +43,15 @@ export function FileUpload({
 
   const handleFile = async (file: File) => {
     if (!file) return;
+    const acceptedExtensions = accept
+      ?.split(",")
+      .map((extension) => extension.trim().replace(/^\./, "").toLowerCase())
+      .filter(Boolean);
+    const extension = file.name.split(".").at(-1)?.toLowerCase();
+    if (acceptedExtensions?.length && !acceptedExtensions.includes(extension ?? "")) {
+      setError(new Error(`Jenis berkas tidak didukung. Gunakan: ${cleanAcceptText()}.`));
+      return;
+    }
     setError(null);
     setProgress(0);
     try {

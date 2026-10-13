@@ -1810,10 +1810,18 @@ progress::-moz-progress-bar {
   margin: 20px 0;
 }
 .option-editor {
-  display: flex;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   margin: 10px 0;
+}
+.option-editor.matching {
+  grid-template-columns: 34px minmax(0, 1fr) minmax(0, 1fr) auto;
+}
+.option-editor input {
+  width: 100%;
+  min-width: 0;
 }
 .option-editor > span {
   min-width: 24px;
@@ -2654,10 +2662,16 @@ hr {
     flex-direction: column;
   }
   .option-editor {
-    flex-wrap: wrap;
+    grid-template-columns: 30px minmax(0, 1fr) auto;
+  }
+  .option-editor.matching {
+    grid-template-columns: 30px minmax(0, 1fr) auto;
   }
   .option-editor input {
-    flex: 1;
+    min-width: 0;
+  }
+  .option-editor.matching input:nth-of-type(2) {
+    grid-column: 2 / 3;
   }
   .search-field input {
     min-width: 100px;

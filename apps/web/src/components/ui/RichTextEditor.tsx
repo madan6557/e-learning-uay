@@ -173,6 +173,7 @@ export interface RichTextEditorProps {
   id?: string;
   className?: string;
   defaultAiTemplate?: "assignment" | "quiz" | "announcement" | "article";
+  showAiPrompt?: boolean;
 }
 
 export function RichTextEditor({
@@ -188,6 +189,7 @@ export function RichTextEditor({
   id,
   className = "",
   defaultAiTemplate,
+  showAiPrompt = true,
 }: RichTextEditorProps) {
   const [mode, setMode] = useState<"edit" | "preview">("edit");
   const [showAiModal, setShowAiModal] = useState(false);
@@ -360,7 +362,7 @@ export function RichTextEditor({
 
         {/* Mode Toggle & AI Prompt */}
         <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-          <button
+          {showAiPrompt && <button
             type="button"
             style={{
               background:
@@ -375,7 +377,7 @@ export function RichTextEditor({
             title="Buka Template Prompt AI"
           >
             <Sparkles size={13} /> {!compact && "Prompt AI"}
-          </button>
+          </button>}
 
           <button
             type="button"
@@ -461,7 +463,7 @@ export function RichTextEditor({
         </div>
       )}
 
-      {showAiModal && (
+      {showAiPrompt && showAiModal && (
         <AiPromptModal
           templates={AI_PROMPT_TEMPLATES}
           initialTemplate={defaultAiTemplate ?? "assignment"}

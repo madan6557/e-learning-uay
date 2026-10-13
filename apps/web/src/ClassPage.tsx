@@ -393,12 +393,12 @@ export function ClassPage({
             {cls.course.code} · {cls.course.credits} {t.credits}
           </div>
           <h1>
-            {cls.course.title}
+            {cls.name}
             {cls.isPracticum && <Badge value="PRAKTIKUM" />}
           </h1>
           <div className="class-submeta">
             <p>
-              {cls.name} <span>·</span> {cls.academicYear}
+              {cls.course.title} <span>·</span> {cls.academicYear}
             </p>
             {cls.instructors?.length > 0 && (
               <span className="class-instructor-chip">

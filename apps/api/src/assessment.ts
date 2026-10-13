@@ -201,7 +201,9 @@ async function validateAnswers(
               options.includes(k) &&
               typeof v === "string" &&
               (v === "" || options.includes(v)),
-          ),
+          ) &&
+          new Set(Object.values(value as Record<string, unknown>).filter(Boolean))
+            .size === Object.values(value as Record<string, unknown>).filter(Boolean).length,
         400,
         "INVALID_ANSWER",
       );
@@ -216,13 +218,18 @@ async function validateAnswers(
       );
     if (q.type === "FILE_UPLOAD") {
       ensure(typeof value === "string", 400, "INVALID_ANSWER");
-      await ensureOwnedFile(
+      const file = await ensureOwnedFile(
         tx,
         value,
         attempt.userId,
         classId,
         "QUIZ_ANSWER",
         attempt.id,
+      );
+      ensure(
+        q.allowedFileTypes.includes(file.name.split(".").at(-1)?.toUpperCase() ?? ""),
+        400,
+        "FILE_TYPE_OR_SIZE",
       );
     }
   }
@@ -1070,15 +1077,29 @@ export function registerAssessment(app: Express) {
         validateWindow(data.availableFrom, data.deadline);
         validateWindow(data.deadline, data.cutoffDate);
         await checkCategory(tx, data.gradeCategoryId, cls.id);
-        if (
-          await tx.assignmentSubmission.count({
-            where: { assignmentId: before.id },
-          })
-        )
+        const latestSubmission = await tx.assignmentSubmission.findFirst({
+          where: { assignmentId: before.id },
+          orderBy: { version: "desc" },
+          select: { version: true },
+        });
+        const publishedSubmission = await tx.assignmentSubmission.findFirst({
+          where: { assignmentId: before.id, isPublished: true },
+          select: { id: true },
+        });
+        if (latestSubmission)
           ensure(
             data.maxScore === before.maxScore,
             409,
             "ASSIGNMENT_HAS_SUBMISSIONS",
+          );
+        if (data.maxAttempts !== before.maxAttempts && publishedSubmission)
+          ensure(false, 409, "ATTEMPTS_LOCKED_AFTER_GRADE_PUBLICATION");
+        if (latestSubmission)
+          ensure(
+            data.maxAttempts >= before.maxAttempts &&
+              data.maxAttempts >= latestSubmission.version,
+            409,
+            "ATTEMPTS_CAN_ONLY_INCREASE",
           );
         const after = await tx.assignment.update({
           where: { id: before.id },

@@ -113,10 +113,14 @@ export function Form({
   showInlineError = false,
 }: FormProps) {
   const [busy, setBusy] = useState(false);
+  const [isPublished, setIsPublished] = useState(publication?.published ?? false);
   const [error, setError] = useState<Error | null>(null);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const ref = useRef<HTMLFormElement>(null);
   const inFlight = useRef(false);
+  useEffect(() => {
+    setIsPublished(publication?.published ?? false);
+  }, [publication?.published]);
   const [fields, setFields] = useState<FormSnapshot>({});
   const draftRoute = useContext(DraftRouteContext);
   const draft = useLocalDraft(
@@ -244,14 +248,14 @@ export function Form({
         {publication && (
           <Button
             type={
-              publication.published && publication.onUnpublish
+              isPublished && publication.onUnpublish
                 ? "button"
                 : "submit"
             }
             value="draft"
             disabled={busy || disabled || submitDisabled}
             onClick={
-              publication.published && publication.onUnpublish
+              isPublished && publication.onUnpublish
                 ? async () => {
                     if (inFlight.current || busy || disabled || submitDisabled)
                       return;
@@ -261,6 +265,7 @@ export function Form({
                     setError(null);
                     try {
                       const result = await publication.onUnpublish!();
+                      setIsPublished(false);
                       if (result !== false)
                         notifyAction("Publikasi berhasil ditarik.");
                       window.dispatchEvent(new Event("notifications-changed"));
@@ -281,7 +286,7 @@ export function Form({
                 <LoaderCircle size={16} className="spin" />
                 {busyLabel ?? labels.saving}
               </>
-            ) : publication.published && publication.onUnpublish ? (
+            ) : isPublished && publication.onUnpublish ? (
               "Tarik Publikasi"
             ) : (
               "Simpan Sebagai Draf"

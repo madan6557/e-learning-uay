@@ -62,6 +62,8 @@ const freshQuestion = () => ({
   maxWords: 1000,
   explanation: "",
 });
+const optionLabel = (index: number) =>
+  index < 26 ? String.fromCharCode(65 + index) : `#${index + 1}`;
 export function QuestionEditor({
   question: q,
   onChange,
@@ -146,7 +148,7 @@ export function QuestionEditor({
         <Field label={t.points}>
           <input
             type="number"
-            step="1"
+            step="any"
             min="1"
             max={1000}
             required
@@ -181,8 +183,8 @@ export function QuestionEditor({
         <div className="question-options">
           <span className="field-title">{t.options}</span>
           {q.options.map((option: any, index: number) => (
-            <div className="option-editor" key={option.id}>
-              <span>{option.id.toUpperCase()}</span>
+            <div className={`option-editor${type === "MATCHING" ? " matching" : ""}`} key={option.id}>
+              <span>{optionLabel(index)}</span>
               <input
                 required
                 aria-label={`${t.options} ${index + 1}`}
@@ -218,13 +220,27 @@ export function QuestionEditor({
                 type="button"
                 className="icon-button"
                 aria-label={t.delete}
-                onClick={() =>
+                onClick={() => {
+                  const options = q.options.filter(
+                    (_: any, i: number) => i !== index,
+                  );
+                  const ids = new Set(options.map((o: any) => o.id));
                   change({
-                    options: q.options.filter(
-                      (_: any, i: number) => i !== index,
-                    ),
-                  })
-                }
+                    options,
+                    answerKey: {
+                      ...q.answerKey,
+                      correct: (q.answerKey.correct ?? []).filter((id: string) => ids.has(id)),
+                      pairs:
+                        type === "MATCHING"
+                          ? Object.fromEntries(
+                              Object.entries(q.answerKey.pairs ?? {}).filter(
+                                ([left, right]) => ids.has(left) && ids.has(right as string),
+                              ),
+                            )
+                          : q.answerKey.pairs,
+                    },
+                  });
+                }}
               >
                 <Trash2 size={15} />
               </button>
@@ -233,14 +249,23 @@ export function QuestionEditor({
           <button
             type="button"
             className="text-button"
-            onClick={() =>
+            onClick={() => {
+              const id = crypto.randomUUID();
               change({
-                options: [
-                  ...q.options,
-                  { id: crypto.randomUUID().slice(0, 6), text: "" },
-                ],
-              })
-            }
+                options: [...q.options, { id, text: "" }],
+                answerKey: {
+                  ...q.answerKey,
+                  correct:
+                    type === "ORDERING"
+                      ? [...(q.answerKey.correct ?? []), id]
+                      : q.answerKey.correct,
+                  pairs:
+                    type === "MATCHING"
+                      ? { ...q.answerKey.pairs, [id]: id }
+                      : q.answerKey.pairs,
+                },
+              });
+            }}
           >
             <Plus size={15} />
             {t.add}
@@ -256,9 +281,9 @@ export function QuestionEditor({
             onChange={(e) => key({ correct: [e.target.value] })}
           >
             <option value="">{t.choose}</option>
-            {q.options.map((o: any) => (
+            {q.options.map((o: any, index: number) => (
               <option value={o.id} key={o.id}>
-                {o.id.toUpperCase()}. {o.text}
+                {optionLabel(index)}. {o.text}
               </option>
             ))}
           </select>
@@ -267,7 +292,7 @@ export function QuestionEditor({
       {type === "MULTIPLE_SELECT" && (
         <>
           <span className="field-title">{t.correctAnswer}</span>
-          {q.options.map((o: any) => (
+          {q.options.map((o: any, index: number) => (
             <label key={o.id} className="check-row">
               <input
                 type="checkbox"
@@ -280,17 +305,19 @@ export function QuestionEditor({
                   })
                 }
               />
-              {o.text || o.id}
+              {o.text || optionLabel(index)}
             </label>
           ))}
-          <label className="check-row">
-            <input
-              type="checkbox"
-              checked={!!q.answerKey.partialCredit}
-              onChange={(e) => key({ partialCredit: e.target.checked })}
-            />
-            {t.partialCredit}
-          </label>
+          <Field label={t.gradingSettings}>
+            <label className="check-row">
+              <input
+                type="checkbox"
+                checked={!!q.answerKey.partialCredit}
+                onChange={(e) => key({ partialCredit: e.target.checked })}
+              />
+              {t.partialCredit}
+            </label>
+          </Field>
         </>
       )}
       {type === "SHORT_ANSWER" && (
@@ -343,8 +370,8 @@ export function QuestionEditor({
       {type === "MATCHING" && (
         <>
           <span className="field-title">{t.answerKey}</span>
-          {q.options.map((o: any) => (
-            <Field key={o.id} label={o.text || o.id}>
+          {q.options.map((o: any, index: number) => (
+            <Field key={o.id} label={o.text || optionLabel(index)}>
               <select
                 required
                 value={q.answerKey.pairs?.[o.id] ?? ""}
@@ -355,9 +382,15 @@ export function QuestionEditor({
                 }
               >
                 <option value="">{t.choose}</option>
-                {q.options.map((right: any) => (
-                  <option value={right.id} key={right.id}>
-                    {right.rightText || right.text || right.id}
+                {q.options.map((right: any, rightIndex: number) => (
+                  <option
+                    value={right.id}
+                    key={right.id}
+                    disabled={Object.entries(q.answerKey.pairs ?? {}).some(
+                      ([leftId, value]) => leftId !== o.id && value === right.id,
+                    )}
+                  >
+                    {right.rightText || right.text || optionLabel(rightIndex)}
                   </option>
                 ))}
               </select>
@@ -365,9 +398,30 @@ export function QuestionEditor({
           ))}
         </>
       )}
+      {type === "FILE_UPLOAD" && (
+        <Field label={t.acceptedFileTypes}>
+          <div className="format-list">
+            {["PDF", "DOCX", "PNG", "JPG", "JPEG", "ZIP", "CSV", "TXT"].map((format) => (
+              <label className="check-row" key={format}>
+                <input
+                  type="checkbox"
+                  checked={(q.allowedFileTypes ?? ["PDF", "DOCX", "PNG", "JPG"]).includes(format)}
+                  onChange={(event) => {
+                    const current = q.allowedFileTypes ?? ["PDF", "DOCX", "PNG", "JPG"];
+                    const next = event.target.checked
+                      ? [...current, format]
+                      : current.filter((item: string) => item !== format);
+                    change({ allowedFileTypes: next.length ? next : current });
+                  }}
+                />
+                {format}
+              </label>
+            ))}
+          </div>
+        </Field>
+      )}
       {type === "ORDERING" && (
         <Field label={t.answerKey}>
-          <select value="" onChange={() => {}} hidden />
           <div className="ordering-key">
             {q.options.map((_: any, index: number) => (
               <select
@@ -384,9 +438,16 @@ export function QuestionEditor({
                 <option value="">
                   {index + 1}. {t.choose}
                 </option>
-                {q.options.map((o: any) => (
-                  <option key={o.id} value={o.id}>
-                    {o.text}
+                {q.options.map((o: any, optionIndex: number) => (
+                  <option
+                    key={o.id}
+                    value={o.id}
+                    disabled={q.answerKey.correct?.some(
+                      (id: string, selectedIndex: number) =>
+                        selectedIndex !== index && id === o.id,
+                    )}
+                  >
+                    {optionLabel(optionIndex)}. {o.text}
                   </option>
                 ))}
               </select>
@@ -602,7 +663,7 @@ export function QuizEditor({
               type="number"
               min={0}
               max={100}
-              step="1"
+              step="any"
               required
               defaultValue={quiz?.passingScore ?? 60}
             />
@@ -1490,27 +1551,18 @@ function OrderingAnswer({
   const [currentOrder, setCurrentOrder] = useState<string[]>(
     Array.isArray(value) && value.length > 0 ? value : initialOrder,
   );
-  const [confirmed, setConfirmed] = useState(
-    Array.isArray(value) && value.length > 0,
-  );
 
   const handleReorder = (from: number, to: number) => {
     if (from === to) return;
     const next = [...currentOrder];
     next.splice(to, 0, next.splice(from, 1)[0]);
     setCurrentOrder(next);
-    setConfirmed(false);
+    onChange(next);
   };
-
-  const handleConfirm = () => {
-    onChange(currentOrder);
-    setConfirmed(true);
-  };
-
-  const isSaved = Array.isArray(value) && value.length > 0 && confirmed;
 
   return (
     <div className="order-answers">
+      <p className="muted">Atur posisi setiap jawaban. Perubahan tersimpan otomatis dan akan dikirim saat kuis dikumpulkan.</p>
       {currentOrder.map((id: string, index: number) => (
         <div
           key={id}
@@ -1528,7 +1580,7 @@ function OrderingAnswer({
           }}
         >
           <span>
-            {index + 1}. {q.options.find((o: any) => o.id === id)?.text}
+            <><strong>Posisi {index + 1}</strong> · {q.options.find((o: any) => o.id === id)?.text}</>
           </span>
           <select
             aria-label={`${t.questions} ${index + 1}`}
@@ -1545,55 +1597,6 @@ function OrderingAnswer({
           </select>
         </div>
       ))}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          marginTop: 10,
-          flexWrap: "wrap",
-        }}
-      >
-        <button
-          type="button"
-          className={isSaved ? "secondary" : "primary"}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            ...(isSaved ? { borderColor: "var(--adaptive-success-border, #16a34a)", color: "var(--adaptive-success-text, #16a34a)" } : {}),
-          }}
-          onClick={handleConfirm}
-        >
-          {isSaved ? (
-            <>
-              <CheckCircle2 size={16} />
-              Konfirmasi ulang urutan
-            </>
-          ) : (
-            t.confirm
-          )}
-        </button>
-        {isSaved ? (
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              color: "var(--adaptive-success-text, #16a34a)",
-              fontWeight: 500,
-              fontSize: "0.88rem",
-            }}
-          >
-            <CheckCircle2 size={16} />
-            Urutan sudah dikonfirmasi & tersimpan
-          </span>
-        ) : (
-          <span style={{ color: "var(--adaptive-warning-text, #d97706)", fontSize: "0.85rem" }}>
-            ⚠ Tekan tombol "Konfirmasi" untuk menyimpan urutan jawaban Anda.
-          </span>
-        )}
-      </div>
     </div>
   );
 }
@@ -1657,16 +1660,22 @@ function AnswerInput({
   if (type === "MATCHING")
     return (
       <div>
-        {q.options.map((o: any) => (
-          <Field key={o.id} label={o.text}>
+        {q.options.map((o: any, index: number) => (
+          <Field key={o.id} label={o.text || optionLabel(index)}>
             <select
               value={value?.[o.id] ?? ""}
               onChange={(e) => onChange({ ...value, [o.id]: e.target.value })}
             >
               <option value="">{t.choose}</option>
-              {q.options.map((r: any) => (
-                <option value={r.id} key={r.id}>
-                  {r.rightText || r.text}
+              {q.options.map((r: any, index: number) => (
+                <option
+                  value={r.id}
+                  key={r.id}
+                  disabled={Object.entries(value ?? {}).some(
+                    ([leftId, selected]) => leftId !== o.id && selected === r.id,
+                  )}
+                >
+                  {r.rightText || r.text || optionLabel(index)}
                 </option>
               ))}
             </select>
@@ -1683,6 +1692,9 @@ function AnswerInput({
           classId={classId}
           purpose="QUIZ_ANSWER"
           contextId={attemptId}
+          accept={(q.allowedFileTypes ?? ["PDF", "DOCX", "PNG", "JPG"])
+            .map((extension: string) => `.${extension.toLowerCase()}`)
+            .join(",")}
           onUploaded={(f) => onChange(f.id)}
         />
         {value && <span className="badge">{t.saved}</span>}
@@ -1736,6 +1748,7 @@ function AnswerInput({
             onChange={onChange}
             placeholder="Tuliskan jawaban esai Anda secara terstruktur di sini..."
             defaultAiTemplate="quiz"
+            showAiPrompt={false}
           />
         </Field>
       </div>
@@ -1908,7 +1921,7 @@ function ManualQuizGrading({
                   required
                   min={0}
                   max={q.points}
-                  step="1"
+                  step="any"
                   value={values[q.id]?.score ?? ""}
                   onChange={(e) =>
                     setValues((v) => ({
@@ -1976,8 +1989,10 @@ export function AssignmentEditor({
   );
   const [allowLate, setAllowLate] = useState(assignment?.allowLate ?? true);
   const [cutoff, setCutoff] = useState(localInput(assignment?.cutoffDate));
+  const [unpublished, setUnpublished] = useState(false);
+  const closeEditor = () => (unpublished ? onSaved() : onClose());
   return (
-    <Modal title={assignment ? t.edit : t.newAssignment} wide onClose={onClose}>
+    <Modal title={assignment ? t.edit : t.newAssignment} wide onClose={closeEditor}>
       <Form
         draftKey={`assignment-editor:${assignment?.id ?? sectionId}`}
         draftVersion={assignment?.updatedAt}
@@ -1987,7 +2002,7 @@ export function AssignmentEditor({
           if (v.allowLate !== undefined) setAllowLate(v.allowLate);
           if (v.cutoff !== undefined) setCutoff(v.cutoff);
         }}
-        onCancel={onClose}
+        onCancel={closeEditor}
         publication={{
           published: assignment?.isVisible ?? false,
           onUnpublish: assignment
@@ -1997,7 +2012,7 @@ export function AssignmentEditor({
                   "POST",
                   {},
                 );
-                onSaved();
+                setUnpublished(true);
               }
             : undefined,
         }}
@@ -2060,6 +2075,7 @@ export function AssignmentEditor({
               type="number"
               min={1}
               max={1000}
+              step="any"
               required
               defaultValue={assignment?.maxScore ?? 100}
             />
@@ -2800,7 +2816,7 @@ export function AssignmentPage({
                 type="number"
                 min={0}
                 max={a.maxScore}
-                step="1"
+                step="any"
                 name="score"
                 required
                 defaultValue={grading.score ?? ""}

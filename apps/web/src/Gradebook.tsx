@@ -75,7 +75,7 @@ export function GradeScoreInput({
       type="number"
       min={0}
       max={100}
-      step="1"
+      step="any"
       disabled={disabled}
       value={value}
       onKeyDown={(e) => {

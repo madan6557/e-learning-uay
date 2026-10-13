@@ -142,9 +142,9 @@ export function ClassCard({
             <Badge value={item.status} />
           )}
         </div>
-        <h3>{item.course.title}</h3>
+        <h3>{item.name}</h3>
         <p>
-          {item.name} · {item.academicYear}
+          {item.course.title} · {item.academicYear}
         </p>
         <div className="instructor-line">
           <span className="mini-avatar">
@@ -440,8 +440,8 @@ export function Dashboard({
           {items.map((c) => (
             <a key={c.id} href={`${classPath(c)}/gradebook`} className="card">
               <span className="eyebrow">{c.course.code}</span>
-              <h3>{c.course.title}</h3>
-              <p>{c.name}</p>
+              <h3>{c.name}</h3>
+              <p>{c.course.title}</p>
               <span className="text-link">
                 {t.gradebook}
                 <ChevronRight size={16} />
