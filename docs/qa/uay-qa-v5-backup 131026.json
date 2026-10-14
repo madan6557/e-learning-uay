@@ -1,0 +1,1345 @@
+{
+  "version": 1,
+  "active": "f497f928-d4fc-4d23-a4b0-a13bc6cef136",
+  "sessions": [
+    {
+      "id": "f497f928-d4fc-4d23-a4b0-a13bc6cef136",
+      "name": "Sesi pengujian 1",
+      "tester": "Ma&",
+      "environment": "Staging/UAT · target perlu diverifikasi",
+      "build": "https://github.com/UAY-System/e-learning/commit/65cdcf07e5277ec9ad9e6dbbe3f02f35fac83862",
+      "createdAt": "2026-10-13T01:16:41.972Z",
+      "records": {
+        "TC-ACC-001": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "updatedAt": "2026-10-13T01:58:03.735Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi",
+          "tutorialStep": 4
+        },
+        "TC-ACC-005": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "updatedAt": "2026-10-13T01:58:42.999Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi",
+          "tutorialStep": 4
+        },
+        "TC-ACC-006": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T02:09:16.638Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-ACC-007": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T02:09:37.095Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-ACC-009": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T02:09:58.902Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-ACC-ANON": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T02:22:09.597Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-ACC-OUTSIDER": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T02:23:52.021Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-ACC-STUDENT-ROSTER": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T02:24:55.062Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-CRS-DRAFT": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T02:25:07.709Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-CRS-ARCHIVE-READ": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T02:25:24.237Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-QZ-SINGLE-OK": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T02:25:43.173Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-QZ-SINGLE-WRONG": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T02:26:00.013Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-QZ-MULTI-ALL": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:12:19.796Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-QZ-MULTI-PARTIAL": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:15:09.196Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-QZ-MULTI-WRONG": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:15:18.740Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-QZ-MULTI-STRICT": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:17:28.820Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-QZ-TRUE": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T02:29:10.189Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-QZ-FALSE": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T02:29:20.397Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-QZ-SHORT-FOLD": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T02:39:56.412Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-QZ-SHORT-CASE": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T02:45:05.716Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-QZ-SHORT-NUMERIC": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T02:55:50.532Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-QZ-SHORT-OUTSIDE": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T02:56:58.140Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-BVA-PAGE-0": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T03:10:30.251Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-BVA-PAGE-1": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T03:11:24.251Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-BVA-PAGE-10": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T03:13:21.707Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-BVA-PAGE-11": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T03:13:45.195Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-BVA-PAGE-1_5": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T03:14:12.786Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-BVA-ASG-BEFORE": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T03:16:14.739Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-BVA-ASG-ONTIME": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T03:18:07.346Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-BVA-ASG-LATE": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T03:20:07.338Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-BVA-ASG-CUTOFF": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T03:21:02.162Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-BVA-ASG-LATE-DENIED": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T03:23:09.275Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-BVA-QZ-CUTOFF": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T03:25:20.914Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-BVA-QZ-NPLUS1": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T03:26:20.762Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-BVA-QZ-LIMIT": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T03:28:04.618Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-PRG-CONTINUOUS": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T03:32:53.234Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-PRG-SEEK": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T03:33:26.538Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-PRG-REPLAY": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T03:34:16.386Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-PRG-FAST": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T03:34:51.441Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-PRG-REORDER": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T03:36:16.218Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-PRG-CONCURRENT": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T03:37:46.113Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-PRG-PDF-UNIQUE": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T03:38:21.961Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-PRG-HIDDEN": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T03:40:06.418Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-PRG-001": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T03:41:52.401Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-FIL-004": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T03:44:09.913Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-ATT-001": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T03:51:16.393Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-QZ-MATCH-ALL": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T04:40:31.510Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-QZ-MATCH-PARTIAL": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T04:46:15.926Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-QZ-ORDER-OK": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T04:51:07.285Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-QZ-ORDER-WRONG": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T04:51:41.349Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-QZ-ESSAY-PENDING": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T04:57:12.550Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-QZ-FILE-PENDING": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:05:44.101Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-CE-03": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:18:03.708Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-CE-04": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:18:23.084Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-CE-05": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:27:00.835Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-SDH-001": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:27:26.036Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-SDH-002": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:28:05.275Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-SDH-003": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:28:45.107Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-SDH-004": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:29:30.475Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-SDH-005": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:29:47.299Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-ENR-002": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:33:07.931Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-ENR-003": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:33:25.780Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-RES-019": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:34:16.443Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-QZ-006": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:53:45.954Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-QZ-013": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:40:18.091Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-ASG-001": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            1,
+            2,
+            3,
+            0
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:43:47.267Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-ASG-002": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:46:54.211Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-ASG-003": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:48:03.378Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-ASG-004": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:48:15.890Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-ASG-006": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:48:27.082Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-ASG-007": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:48:39.450Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-ASG-008": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:48:51.059Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-NOT-001": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:49:05.458Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-NOT-002": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:49:18.874Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-NOT-003": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:49:28.989Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-NOT-004": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:49:44.547Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-AUD-006": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:52:28.642Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-FDB-001": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:52:43.498Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-FDB-003": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:52:57.754Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-FDB-015": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:53:31.394Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-QZ-007": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:53:57.642Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-NOT-005": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:54:13.346Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        },
+        "TC-CE-06": {
+          "status": "pass",
+          "actual": "",
+          "note": "",
+          "evidence": "",
+          "checks": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "tutorialStep": 4,
+          "updatedAt": "2026-10-13T05:54:30.834Z",
+          "tester": "Ma&",
+          "environment": "Staging/UAT · target perlu diverifikasi"
+        }
+      }
+    }
+  ],
+  "targetUrl": "https://e-learning.uay.ac.id/",
+  "exportedAt": "2026-10-13T06:32:55.856Z",
+  "documentSha256": "a9286f9e35b1923aebb85f2bd5833ad0dceabc15c1a170a4c112b805ba6c3231"
+}

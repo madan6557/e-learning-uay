@@ -1,11 +1,11 @@
 # Hasil otomatis QA v5
 
-Run: c393795a-c159-477a-8259-b66f3da0670c
-Tanggal: 2026-10-10T08:15:35.074Z
-Commit: 5e85fe599067e9ba9157a989a1d13ed73b5156b6 (working copy)
+Run: 0d5aa238-8000-4de6-9907-7fa627d1ccb7
+Tanggal: 2026-10-13T01:21:41.787Z
+Commit: 65cdcf07e5277ec9ad9e6dbbe3f02f35fac83862 (working copy)
 Lingkungan: Lokal · PostgreSQL _test · fixture SSO & File Service
 
-354 kasus: 163 lulus, 0 gagal, 0 terblokir, 191 belum diuji otomatis.
+373 kasus: 163 lulus, 0 gagal, 0 terblokir, 210 belum diuji otomatis.
 
 ## Temuan
 
@@ -13,7 +13,7 @@ Lingkungan: Lokal · PostgreSQL _test · fixture SSO & File Service
 
 ## Batas bukti
 
-- Tambahan REC-004 dan seterusnya serta HELP mengacu pada implementasi dan panduan 7 Oktober 2026, bukan penambahan butir RTM resmi. Peran Rektor memakai sesi e-learning yang sama; zona waktu mengikuti perangkat.
+- Tambahan implementasi dan panduan diverifikasi kembali pada 12 Oktober 2026; bukan penambahan butir RTM resmi. Katalog memisahkan fitur aktif, integrasi nonaktif, backlog, dan gerbang lingkungan eksternal.
 - RTM §3.1.1 menyebut 151 butir, tetapi 15 rentang kode yang ditampilkan berjumlah 117. Detail per butir pada PDF requirement tidak ada di workspace; keterlacakan memakai keluarga kode dan paragraf v5 yang tersedia.
 - RTM menyebut 4 tipe kuis, sedangkan §3.1 dan §3.3.2 menguraikan 8 tipe. Katalog mengikuti uraian lengkap 8 tipe.
 - Prioritas dan role tiap kasus diturunkan dari cakupan §3.1. CRS-007/008 disebut eksplisit. Pembagian prioritas per kode lain tidak dirinci oleh dokumen.

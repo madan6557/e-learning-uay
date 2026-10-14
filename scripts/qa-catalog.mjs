@@ -2,11 +2,14 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 
-const sourcePath = "docs/requirements/Technical Design - E-Learning UAY - v5.0.md";
+const sourcePath =
+  "docs/requirements/Technical Design - E-Learning UAY - v5.0.md";
 const source = readFileSync(sourcePath, "utf8");
 const roles = [
   "Mahasiswa",
   "Dosen",
+  "Asisten Dosen (Asdos)",
+  "Dosen Kolaborator",
   "Admin Prodi",
   "Super Admin",
   "Rektor",
@@ -52,6 +55,9 @@ const modules = {
   ATT: "Presensi & kehadiran",
   ISO: "Isolasi Program Studi",
   REC: "Pemantauan Akademik & integrasi rektor",
+  PRA: "Kelas praktikum terhubung",
+  UI: "Tampilan & interaksi bersama",
+  SYN: "Sinkronisasi pengguna & integrasi",
   HELP: "Bantuan & panduan sesuai peran",
   AUD: "Jejak audit",
   OPS: "Operasional",
@@ -75,35 +81,71 @@ function add(
     options.id ??
     `TC-${family}-${String((counters[family] = (counters[family] ?? 0) + 1)).padStart(3, "0")}`;
   const contexts = {
-    ACC: "Buka landing, profil atau menu akses yang disebut pada data uji.",
-    SDH: "Buka Dashboard mahasiswa dan siapkan kelas uji QA-V5 yang diikuti akun ini.",
-    TDH: "Buka Dashboard sesuai peran dan siapkan kelas uji QA-V5 dalam kewenangan akun ini.",
-    CRS: "Buka pengelolaan mata kuliah/kelas; gunakan kelas uji QA-V5 terpisah.",
-    ENR: "Buka kelas uji QA-V5 → Peserta.",
-    SEC: "Buka kelas uji QA-V5 → Pertemuan.",
-    RES: "Buka kelas uji QA-V5 → Materi; gunakan editor atau detail materi sesuai kasus.",
-    QZ: "Buka kelas uji QA-V5 → Kuis / Bank soal; gunakan kuis terpisah untuk kasus ini.",
-    ASG: "Buka kelas uji QA-V5 → Tugas; siapkan tugas dan jawaban sesuai data uji.",
-    GRD: "Buka kelas uji QA-V5 → Nilai; siapkan kategori dan jawaban sesuai data uji.",
-    ANN: "Buka kelas uji QA-V5 → Pengumuman.",
-    NOT: "Buka pusat notifikasi; siapkan aktivitas pada kelas uji QA-V5.",
-    ATT: "Buka kelas uji QA-V5 → Presensi; gunakan sesi presensi sesuai data uji.",
-    ISO: "Buka menu pencarian pengguna atau manajemen akademik pada prodi terkait.",
-    REC: "Buka endpoint bridging /api/v1/integrations/rector/snapshot dengan bearer token.",
-    AUD: "Buka kelas uji QA-V5 → Jejak audit dengan akun yang berwenang.",
-    OPS: "Buka runbook staging dan alat pemantauan untuk komponen yang diuji.",
-    FUT: "Pastikan fitur tersedia pada rilis yang diuji; jika belum tersedia, catat Terblokir.",
+    ACC: "Buka Beranda E-Learning setelah login, lalu periksa menu profil akun.",
+    SDH: "Di Beranda, buka Dashboard Mahasiswa. Pilih kelas uji yang tercantum di Data uji.",
+    TDH: "Di Beranda, buka Dashboard Dosen. Pilih kelas yang ditugaskan dan tercantum di Data uji.",
+    CRS: "Buka menu Kelola kelas/Mata kuliah; pilih kelas uji yang disediakan tim, bukan kelas pengguna nyata.",
+    ENR: "Di kelas uji pada sesi, buka Peserta; cari NIM atau email mahasiswa yang tercantum di Data uji.",
+    SEC: "Di kelas uji pada sesi, buka Pertemuan; pilih atau buat pertemuan terpisah sesuai Data uji.",
+    RES:
+      role === "Mahasiswa"
+        ? `Di kelas uji pada sesi, buka Materi dan pilih materi terbit “${title}” untuk akun mahasiswa uji.`
+        : `Di kelas uji pada sesi, buka Materi; pilih materi “${title}” atau buat draf uji baru dengan nama itu, lalu siapkan isinya sesuai Data uji.`,
+    QZ:
+      role === "Mahasiswa"
+        ? `Di kelas uji pada sesi, buka Kuis dan pilih kuis terbit “${title}” yang disediakan untuk akun uji.`
+        : `Di kelas uji pada sesi, buka Kuis/Bank soal; pilih atau buat kuis uji “${title}” dan atur butirnya sesuai Data uji.`,
+    ASG:
+      role === "Mahasiswa"
+        ? `Di kelas uji pada sesi, buka Tugas dan pilih tugas “${title}” yang ditetapkan pada Data uji.`
+        : `Di kelas uji pada sesi, buka Tugas; pilih atau buat tugas uji “${title}” dengan konfigurasi dari Data uji.`,
+    GRD: "Di kelas uji pada sesi, buka Nilai; pilih kategori atau tugas yang namanya dan kondisi awalnya tercantum di Data uji.",
+    ANN: "Di kelas uji yang ditetapkan tim, buka Pengumuman; pilih atau buat pengumuman uji terpisah dengan judul kasus.",
+    NOT: "Buka ikon lonceng/Notifikasi di navigasi atas; siapkan item yang dihasilkan aktivitas khusus pada Data uji.",
+    ATT: "Di kelas uji pada sesi, buka Presensi; pilih sesi yang tanggal dan statusnya tercantum di Data uji.",
+    ISO: "Buka Program Studi & Otoritas → Pengguna; cari akun uji dan prodi sumber/tujuan yang tertulis di Data uji.",
+    REC: "Masuk ke Pemantauan Akademik sebagai Rektor; untuk API, kirim GET ke /api/v1/integrations/rector/snapshot dengan bearer token uji.",
+    PRA: "Masuk dengan akun Asdos yang ditugaskan di kelas utama uji; dari kelas itu pilih Buat/Buka kelas praktikum.",
+    UI: `Buka halaman ${title} sesuai peran di Data uji; pastikan tema dan tabel pada halaman tersebut tersedia.`,
+    SYN: "Buka Program Studi & Otoritas → Pengguna → Sinkron Pengguna; gunakan akun uji SSO yang tercantum di Data uji.",
+    BVA: `Buka modul ${modules[family] ?? family} pada kelas uji; siapkan batas atau berkas yang tercantum di Data uji.`,
+    PRG: "Di kelas uji pada sesi, buka Materi; pilih video/PDF uji yang nama, durasi, atau jumlah halamannya tertulis di Data uji.",
+    FIL: /peserta lain|jawaban peserta/i.test(title)
+      ? "Masuk sebagai Mahasiswa A pada Data uji; buka kelas uji → Tugas → Pengumpulan dan coba akses jawaban milik Mahasiswa B."
+      : /tiket|trash|restore|storage|zero-binary/i.test(title)
+        ? "Buka File Service/Berkas pada kelas uji; pilih berkas privat atau entri Trash yang sesuai nama, status, dan umur pada Data uji."
+        : /cover publik/i.test(title)
+          ? "Buka pengaturan kelas uji; pilih cover publik dan PDF materi privat yang disediakan pada Data uji."
+          : "Di kelas uji pada sesi, buka Materi → Lampiran/Video; pilih berkas yang MIME dan ukurannya sama dengan Data uji.",
+    FDB: "Di kelas uji pada sesi, buka Tugas/Kuis/Materi sesuai judul kasus; siapkan draf dengan status dan isi awal pada Data uji.",
+    CE: `Di kelas uji pada sesi, buka Materi & aktivitas lalu pilih objek “${title}”; siapkan kondisi awal pada Data uji.`,
+    AUD: "Buka Jejak audit pada kelas uji yang ditetapkan tim; masuk dengan akun pengelola yang dapat membaca rekaman tersebut.",
+    OPS: "Buka runbook staging; pilih dashboard/terminal komponen dengan nama host atau layanan yang tercantum di Data uji.",
+    FUT: "Buka modul dan halaman yang tertulis di Data uji; jika kontrol rilis belum tersedia, jangan lanjut dan catat Terblokir.",
     PILOT:
-      "Buka checklist acceptance pilot dan kumpulkan bukti dari kasus terkait.",
+      "Buka Test case, atur filter Prioritas dan Modul sesuai Data uji, lalu siapkan bukti UAT untuk setiap kasus yang tampil.",
   };
   const navigation =
     options.navigation ??
     contexts[family] ??
-    "Buka kelas uji QA-V5 terpisah dan fitur yang disebut pada data uji.";
+    `Buka modul ${modules[family] ?? family} pada target uji; siapkan entitas dan kondisi awal yang tercantum di Data uji.`;
+  const loginExpected =
+    options.loginExpected ??
+    (role === "Asisten Dosen (Asdos)"
+      ? "Profil menunjukkan akun uji Asdos dan kelas utama tetap menampilkan batas aksesnya."
+      : role === "Dosen Kolaborator"
+        ? "Profil menunjukkan akun uji dosen dan kelas yang tampil sesuai penugasannya."
+        : role === "Operator / DevOps"
+          ? "Target, versi build, dan waktu pengujian tercatat sebelum langkah operasional."
+          : `Profil menunjukkan akun uji dengan peran ${role} yang diminta kasus.`);
   const login =
-    role === "Operator / DevOps"
-      ? "Gunakan lingkungan staging atau database terisolasi; catat versi aplikasi dan waktu mulai."
-      : `Masuk sebagai ${role} melalui SSO / pemilih akun demonstrasi; pastikan peran di profil benar.`;
+    role === "Asisten Dosen (Asdos)"
+      ? "Masuk dengan akun mahasiswa yang sudah ditugaskan sebagai Asdos pada kelas utama uji; pastikan kelas utama tetap menampilkan akses terbatas."
+      : role === "Dosen Kolaborator"
+        ? "Masuk dengan akun Dosen yang ditugaskan sebagai kolaborator pada kelas uji; pastikan identitas dan cakupan kelas benar."
+        : role === "Operator / DevOps"
+          ? "Gunakan lingkungan staging atau database terisolasi; catat versi aplikasi dan waktu mulai."
+          : `Masuk melalui SSO dengan akun uji resmi berperan ${role}; pastikan peran di profil sesuai.`;
   const sectionLine =
     source
       .split("\n")
@@ -120,7 +162,13 @@ function add(
     type: options.type ?? "Fungsional",
     section,
     sourceLine: options.sourceDocument ? 1 : sectionLine || 1,
-    ...(options.sourceDocument ? { sourceDocument: options.sourceDocument } : {}),
+    ...(options.sourceDocument
+      ? { sourceDocument: options.sourceDocument }
+      : {}),
+    featureKeys: options.featureKeys ?? [],
+    availability:
+      options.availability ??
+      (family === "FUT" || options.scope === "future" ? "backlog" : "active"),
     requirements:
       options.requirements ??
       (familyRanges[family]
@@ -130,7 +178,7 @@ function add(
       options.preconditions ??
       (options.scope === "external"
         ? [
-            "Lingkungan staging/layanan kampus untuk kasus ini tersedia; gunakan akun dan data uji terpisah.",
+            "Target staging/UAT atau lingkungan uji produksi yang disetujui tersedia; gunakan akun dan data uji terpisah.",
             "Siapkan akses komponen, runbook dan pemilik layanan yang terkait.",
           ]
         : options.scope === "future"
@@ -139,33 +187,33 @@ function add(
               "Gunakan kelas dan akun uji terpisah dalam kewenangan peran kasus.",
             ]
           : [
-              "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
-              "Gunakan kelas uji terpisah dan dua mahasiswa: peserta aktif A serta B untuk uji isolasi.",
+              "URL target pada pengaturan sesi mengarah ke staging/UAT atau lingkungan uji produksi yang disetujui; catat versi build yang diuji.",
+              "Gunakan hanya akun dan data uji yang disediakan pemilik lingkungan. Jangan mengubah atau menghapus data pengguna nyata.",
             ]),
     data,
     steps: options.steps ?? [
       {
         action: login,
-        expected: "Lingkungan dan identitas uji sesuai peran kasus.",
+        expected: loginExpected,
       },
       {
         action: navigation,
         expected:
           options.setupExpected ??
-          "Konteks kelas/fitur uji tersedia sesuai hak akses.",
+          `Halaman ${modules[family] ?? family} menampilkan akun, kelas, dan objek yang sama dengan Data uji. Pastikan status awalnya cocok sebelum melakukan perubahan; jika akun/objek/status tidak cocok, berhenti dan tandai Terblokir.`,
       },
       { action, expected },
       {
         action:
           options.verify ??
-          "Muat ulang halaman dan periksa data tersimpan, pesan, serta respons jaringan yang berkaitan.",
+          "Periksa tampilan atau respons setelah tindakan sebelumnya. Bandingkan nilainya, status, dan pesan dengan kriteria Hasil yang diharapkan; catat hasil aktual sebelum lanjut.",
         expected: options.verifyExpected ?? expected,
       },
     ],
     expected,
     cleanup:
       options.cleanup ??
-      "Catat hasil dan bukti; kembalikan konfigurasi kelas uji jika kasus mengubahnya.",
+      "Simpan hasil dan bukti. Pulihkan hanya data uji yang dibuat atau diubah sesuai prosedur tim; jangan menghapus data nyata.",
     automation: options.automation ?? null,
     manualReason:
       options.manualReason ??
@@ -198,6 +246,37 @@ const existing = (
   scope = "Assertion regresi terpilih; UI tetap perlu diverifikasi manual.",
 ) => ({ kind, file, title, scope });
 
+function roleLoginSteps(role) {
+  const loginAction =
+    role === "Asisten Dosen (Asdos)"
+      ? "Masuk dengan akun mahasiswa uji yang sudah ditugaskan sebagai Asdos di kelas utama; tunggu kembali ke E-Learning."
+      : role === "Dosen Kolaborator"
+        ? "Masuk dengan akun dosen uji yang sudah ditugaskan sebagai kolaborator pada kelas utama; tunggu kembali ke E-Learning."
+        : `Masuk dengan akun uji aktif untuk peran ${role} yang tercantum pada Data uji; tunggu callback kembali ke E-Learning.`;
+  const roleCheck =
+    role === "Asisten Dosen (Asdos)"
+      ? "Profil menunjukkan akun mahasiswa yang ditugaskan sebagai Asdos; kelas utama tetap membatasi haknya."
+      : role === "Dosen Kolaborator"
+        ? "Profil menunjukkan akun dosen yang ditugaskan sebagai kolaborator dan kelas sesuai penugasan."
+        : `Profil menunjukkan identitas akun uji dan peran ${role}.`;
+  return [
+    {
+      action:
+        "Buka URL target E-Learning dari Pengaturan sesi di jendela browser baru, lalu pilih Masuk dengan SSO.",
+      expected:
+        "Halaman login E-Learning terbuka dan memakai penyedia SSO kampus pada target sesi.",
+    },
+    { action: loginAction, expected: "SSO menerima akun uji dan mengembalikan browser ke E-Learning." },
+    { action: "Buka menu profil akun dan periksa nama/identitas serta peran yang ditampilkan.", expected: roleCheck },
+    {
+      action:
+        "Buka Beranda, lalu periksa dashboard dan menu utama yang tersedia untuk akun tersebut.",
+      expected:
+        "Dashboard dan menu cocok dengan hak akses peran/penugasan akun; tidak ada password lokal yang diminta.",
+    },
+  ];
+}
+
 // Document-derived scenarios. Requirement ranges are deliberately kept at family level.
 for (const role of roles.slice(0, 4))
   add(
@@ -205,20 +284,46 @@ for (const role of roles.slice(0, 4))
     role,
     "2.2",
     `Login SSO dan pemetaan peran ${role}`,
-    "Akun ACTIVE sesuai peran.",
+    `Akun uji SSO berstatus aktif untuk ${role}; penugasan kelas utama disiapkan jika role berupa Asdos atau kolaborator.`,
     "Klik Masuk dengan SSO, selesaikan login, lalu buka dashboard dan profil.",
     "Sesi terbentuk; dashboard dan menu sesuai peran tanpa password lokal.",
-    { navigation: "Buka landing E-Learning dalam sesi browser baru." },
+    { steps: roleLoginSteps(role) },
   );
 add(
   "ACC",
   "Mahasiswa",
   "2.2",
   "Authorization Code + PKCE dan sesi tanpa password",
-  "Akun fixture ACTIVE.",
+  "Satu akun mahasiswa uji berstatus aktif pada SSO staging/UAT dan diizinkan mengakses aplikasi E-Learning.",
   "Selesaikan login SSO; periksa callback dan /api/v1/me.",
   "JWT/nonce tervalidasi dan sesi HttpOnly terbentuk; data mahasiswa tidak berisi password.",
   {
+    steps: [
+      {
+        action:
+          "Buka URL target E-Learning dari Pengaturan sesi dan pilih Masuk dengan SSO.",
+        expected:
+          "Browser diarahkan ke halaman SSO kampus untuk client aplikasi pada target sesi.",
+      },
+      {
+        action:
+          "Autentikasi dengan akun mahasiswa aktif pada Data uji, lalu tunggu redirect ke URL callback E-Learning.",
+        expected:
+          "Callback membawa authorization code dan state; browser kembali ke E-Learning tanpa meminta password lokal.",
+      },
+      {
+        action:
+          "Di DevTools → Network, periksa callback OIDC dan GET /api/v1/me; jangan menyalin atau menyimpan token sensitif.",
+        expected:
+          "Code ditukar melalui PKCE, state/nonce valid, dan /api/v1/me menampilkan identitas mahasiswa tanpa password.",
+      },
+      {
+        action:
+          "Muat ulang Beranda lalu buka profil untuk memastikan sesi yang sama tetap aktif.",
+        expected:
+          "Profil tetap menampilkan akun uji yang sama dan sesi berbasis cookie HttpOnly masih berlaku.",
+      },
+    ],
     automation: existing(
       "tests/integration/oidc.test.ts",
       "PKCE + nonce creates a password-free session",
@@ -230,10 +335,36 @@ add(
   "Mahasiswa",
   "2.2",
   "State, nonce, audience dan akun nonaktif ditolak",
-  "State/nonce/audience salah; account_status DISABLED.",
+  "Akun aktif dan nonaktif khusus uji dari pemilik SSO; nilai callback uji dengan state, nonce, atau audience yang tidak cocok.",
   "Ulangi callback OIDC dengan data tidak sah pada lingkungan fixture.",
   "State/nonce/audience salah ditolak 401; akun nonaktif ditolak 403.",
   {
+    steps: [
+      {
+        action:
+          "Pastikan pemilik SSO staging/UAT menyediakan akun aktif, akun nonaktif, dan nilai callback negatif khusus pengujian.",
+        expected:
+          "Kedua akun dan nilai state/nonce/audience negatif tercatat di Data uji dan hanya berlaku pada target uji.",
+      },
+      {
+        action:
+          "Jalankan callback OIDC memakai state yang salah, lalu ulangi terpisah dengan nonce dan audience yang salah.",
+        expected:
+          "Setiap callback dengan state, nonce, atau audience yang tidak cocok ditolak dengan 401 dan tidak membuat sesi.",
+      },
+      {
+        action:
+          "Mulai login dengan akun nonaktif yang disiapkan pemilik SSO dan ikuti redirect kembali ke E-Learning.",
+        expected:
+          "Login akun nonaktif ditolak dengan 403 dan sesi E-Learning tidak terbentuk.",
+      },
+      {
+        action:
+          "Periksa respons GET /api/v1/me pada browser setelah setiap percobaan.",
+        expected:
+          "Tidak ada percobaan gagal yang meninggalkan sesi atau membuka data akun.",
+      },
+    ],
     type: "Keamanan",
     automation: existing(
       "tests/integration/oidc.test.ts",
@@ -246,10 +377,36 @@ add(
   "Mahasiswa",
   "2.2",
   "Refresh token memvalidasi identitas ulang",
-  "Access token sesi kedaluwarsa.",
+  "Akun mahasiswa uji aktif dengan sesi E-Learning yang access token-nya sudah kedaluwarsa sesuai jadwal uji.",
   "Paksa expiry pada fixture, lalu panggil /me memakai cookie sesi.",
   "SSO menerima refresh; token server berganti dan identitas tervalidasi.",
   {
+    steps: [
+      {
+        action:
+          "Masuk melalui SSO dengan akun mahasiswa pada Data uji dan pastikan Beranda E-Learning terbuka.",
+        expected:
+          "Profil menampilkan akun mahasiswa uji yang benar dan sesi aktif terbentuk.",
+      },
+      {
+        action:
+          "Gunakan sesi yang masa access token-nya telah berakhir sesuai jadwal uji; jangan mengubah token secara manual pada produksi.",
+        expected:
+          "Cookie sesi masih tersedia untuk menjalankan mekanisme refresh yang diuji.",
+      },
+      {
+        action:
+          "Muat ulang Beranda atau panggil GET /api/v1/me dengan cookie sesi yang sama.",
+        expected:
+          "Aplikasi meminta refresh ke SSO dan endpoint mengembalikan identitas akun yang masih aktif.",
+      },
+      {
+        action:
+          "Muat ulang profil sekali lagi dan pastikan sesi dapat digunakan tanpa login ulang.",
+        expected:
+          "Identitas tetap tervalidasi dan refresh token server-side telah diperbarui.",
+      },
+    ],
     automation: existing(
       "tests/integration/oidc.test.ts",
       "refresh rotates server-side tokens and revalidates identity",
@@ -261,10 +418,36 @@ add(
   "Super Admin",
   "2.2",
   "Webhook mencabut sesi pengguna seketika",
-  "Webhook HMAC sah untuk akun yang sudah login.",
+  "Akun Super Admin sintetis khusus uji yang aktif; pemilik SSO menyiapkan prosedur pencabutan akses dan webhook bertanda tangan.",
   "Nonaktifkan akun pada fixture SSO dan kirim webhook bertanda tangan; akses /me kembali.",
   "Akses akun menjadi 403 dan status cache identitas DISABLED.",
   {
+    steps: [
+      {
+        action:
+          "Masuk ke E-Learning menggunakan akun Super Admin uji pada Data uji dan biarkan sesi tetap aktif.",
+        expected:
+          "Profil menunjukkan akun uji yang benar dan GET /api/v1/me masih mengembalikan 200.",
+      },
+      {
+        action:
+          "Minta pemilik SSO staging/UAT menonaktifkan akun uji melalui prosedur resmi dan mengirim webhook revokasi yang sah.",
+        expected:
+          "Pemilik SSO mengonfirmasi webhook terkirim untuk identitas akun uji tersebut.",
+      },
+      {
+        action:
+          "Tanpa login ulang, panggil GET /api/v1/me menggunakan sesi browser yang tadi aktif.",
+        expected:
+          "Endpoint menolak sesi yang telah dicabut dengan status 403.",
+      },
+      {
+        action:
+          "Coba buka kembali Beranda atau halaman terlindungi menggunakan tab yang sama.",
+        expected:
+          "Akses tetap ditolak dan akun tersimpan sebagai nonaktif pada cache identitas.",
+      },
+    ],
     type: "Keamanan",
     automation: existing(
       "tests/integration/oidc.test.ts",
@@ -277,10 +460,36 @@ add(
   "Mahasiswa",
   "2.2",
   "Logout membersihkan sesi",
-  "Sesi SSO aktif.",
+  "Akun mahasiswa uji aktif dengan sesi SSO yang masih berjalan.",
   "Klik Keluar, selesaikan logout provider lalu coba akses /me dengan sesi lama.",
   "Cookie sesi dicabut dan akses /me menjadi 401.",
   {
+    steps: [
+      {
+        action:
+          "Masuk dengan akun mahasiswa pada Data uji dan pastikan Beranda E-Learning terbuka.",
+        expected:
+          "Profil menunjukkan akun yang benar dan sesi E-Learning aktif.",
+      },
+      {
+        action:
+          "Pilih Keluar dari menu profil, lalu selesaikan logout pada halaman SSO jika diminta.",
+        expected:
+          "Browser kembali ke halaman publik/login dan cookie sesi E-Learning dihapus.",
+      },
+      {
+        action:
+          "Coba buka halaman terlindungi lalu panggil GET /api/v1/me dengan sesi lama.",
+        expected:
+          "Halaman meminta login dan /api/v1/me menolak cookie lama dengan 401.",
+      },
+      {
+        action:
+          "Gunakan tombol kembali browser lalu muat ulang halaman E-Learning.",
+        expected:
+          "Konten privat tidak muncul kembali tanpa login baru.",
+      },
+    ],
     automation: existing(
       "tests/integration/oidc.test.ts",
       "logout clears session and provides the provider logout URL",
@@ -292,10 +501,36 @@ add(
   "Super Admin",
   "2.2",
   "Prioritas claim peran dari SSO",
-  "roles=[STUDENT], role=SUPER_ADMIN; roles kosong.",
+  "Payload OIDC pada provider uji pertama berisi roles=[STUDENT] dan role=SUPER_ADMIN; payload kedua berisi roles=[] dan role=SUPER_ADMIN.",
   "Validasikan payload claim campuran pada adapter SSO.",
   "roles resmi menang atas alias role; array roles kosong tidak menaikkan hak akses.",
   {
+    steps: [
+      {
+        action:
+          "Buka adapter SSO pada lingkungan uji terisolasi dan siapkan dua payload OIDC di bagian Data uji.",
+        expected:
+          "Payload hanya dikirim ke provider/adapter uji dan memuat kombinasi roles/role yang ditentukan.",
+      },
+      {
+        action:
+          "Kirim payload pertama melalui alur pemetaan claim yang sama dengan login aplikasi.",
+        expected:
+          "Hasil pemetaan menetapkan STUDENT dari array roles resmi, bukan SUPER_ADMIN dari alias role.",
+      },
+      {
+        action:
+          "Kirim payload kedua dengan array roles kosong dan alias role SUPER_ADMIN.",
+        expected:
+          "Akun tidak memperoleh hak Super Admin hanya dari alias role.",
+      },
+      {
+        action:
+          "Periksa role hasil pemetaan dan keputusan akses untuk kedua payload pada log uji.",
+        expected:
+          "Kombinasi claim tidak pernah menaikkan hak akses di atas aturan yang diharapkan.",
+      },
+    ],
     type: "Keamanan",
     automation: existing(
       "tests/sso.test.ts",
@@ -304,6 +539,53 @@ add(
     ),
   },
 );
+const accessScopeCases = {
+  "TC-ACC-ANON": {
+    data: "Browser tanpa cookie sesi; endpoint yang diuji adalah GET /api/v1/me.",
+    steps: [
+      { action: "Buka URL target E-Learning di jendela browser privat dan jangan login.", expected: "Halaman publik/login tampil tanpa identitas pengguna." },
+      { action: "Di DevTools → Network, kirim GET /api/v1/me tanpa header Authorization dan tanpa cookie.", expected: "Endpoint mengembalikan 401 Unauthorized." },
+      { action: "Muat ulang Beranda atau halaman terlindungi pada jendela yang sama.", expected: "Aplikasi tetap meminta autentikasi dan tidak menampilkan data privat." },
+      { action: "Periksa kembali cookie dan respons endpoint pada tab Network.", expected: "Tidak ada sesi yang dibuat dan tidak ada data pengguna yang dikembalikan." },
+    ],
+  },
+  "TC-ACC-OUTSIDER": {
+    data: "Akun mahasiswa uji aktif yang tidak terdaftar pada kelas sasaran; kode kelas disediakan pemilik staging.",
+    steps: [
+      { action: "Masuk dengan akun mahasiswa pada Data uji dan pastikan kelas sasaran tidak tercantum pada Beranda.", expected: "Akun terautentikasi tetapi tidak memiliki enrollment pada kelas sasaran." },
+      { action: "Buka URL kelas sasaran yang disediakan pemilik staging secara langsung.", expected: "Halaman menolak akses atau menampilkan status tidak ditemukan tanpa isi kelas." },
+      { action: "Pada DevTools → Network, periksa respons permintaan detail kelas dan materi.", expected: "API menolak permintaan dan tidak mengirim metadata atau isi kelas." },
+      { action: "Muat ulang URL yang sama setelah memastikan akun masih memakai sesi mahasiswa uji.", expected: "Akses tetap ditolak; tidak ada data peserta lain yang terlihat." },
+    ],
+  },
+  "TC-ACC-STUDENT-ROSTER": {
+    data: "Akun mahasiswa uji aktif yang terdaftar pada kelas sasaran; identitas kelas disediakan pemilik staging.",
+    steps: [
+      { action: "Masuk dengan akun mahasiswa pada Data uji dan buka kelas sasaran dari Beranda.", expected: "Mahasiswa dapat melihat materi kelas yang diizinkan." },
+      { action: "Periksa menu kelas dan pastikan tidak ada menu pengelolaan Peserta/roster.", expected: "Aksi pengelolaan daftar peserta tidak ditampilkan untuk mahasiswa." },
+      { action: "Buka DevTools → Network dan coba GET endpoint roster kelas sasaran dengan sesi mahasiswa yang sama.", expected: "API menolak permintaan roster tanpa mengirim data identitas peserta." },
+      { action: "Muat ulang kelas lalu periksa kembali menu dan tab Network.", expected: "Tidak ada roster atau kontrol pengelolaan yang terbuka bagi mahasiswa." },
+    ],
+  },
+  "TC-ACC-TEACHER-SCOPE": {
+    data: "Akun dosen uji aktif yang tidak ditugaskan pada kelas sasaran; kode kelas dan materi disediakan pemilik staging.",
+    steps: [
+      { action: "Masuk dengan akun dosen pada Data uji dan pastikan kelas sasaran tidak ada di daftar kelas yang diampu.", expected: "Profil menunjukkan dosen uji tanpa penugasan pada kelas sasaran." },
+      { action: "Buka URL kelas dan materi sasaran yang disediakan pemilik staging.", expected: "Kelas/materi tidak dapat dikelola oleh dosen yang tidak ditugaskan." },
+      { action: "Periksa permintaan edit materi pada DevTools → Network menggunakan sesi dosen tersebut.", expected: "API menolak perubahan dan isi materi yang dilindungi tidak bocor." },
+      { action: "Muat ulang materi dan pastikan judul, isi, serta status terbit tidak berubah.", expected: "Tidak ada perubahan tersimpan pada kelas atau materi." },
+    ],
+  },
+  "TC-ACC-DEPT-SCOPE": {
+    data: "Akun Admin Prodi untuk Prodi A dan kode kelas pada Prodi B; kedua prodi disiapkan di staging.",
+    steps: [
+      { action: "Masuk dengan akun Admin Prodi pada Data uji dan catat prodi yang tercantum pada profil.", expected: "Akun hanya memiliki lingkup administrasi Prodi A." },
+      { action: "Buka menu pengelolaan kelas/pengguna lalu pilih kode kelas milik Prodi B.", expected: "Data Prodi B tidak muncul dalam daftar yang dapat dikelola." },
+      { action: "Uji URL detail atau endpoint baca Prodi B menggunakan sesi Admin Prodi yang sama.", expected: "API menolak akses tanpa mengirim data Prodi B." },
+      { action: "Kembali ke daftar Prodi A dan pastikan fungsi administrasi yang berwenang tetap tersedia.", expected: "Akses Prodi A tetap normal dan tidak ada perubahan pada Prodi B." },
+    ],
+  },
+};
 for (const [id, role, title, path] of [
   ["TC-ACC-ANON", "Mahasiswa", "API tanpa sesi ditolak", "/me"],
   [
@@ -330,26 +612,54 @@ for (const [id, role, title, path] of [
     "Admin prodi tidak bisa mengelola prodi lain",
     "department",
   ],
-])
+]) {
+  const scenario = accessScopeCases[id];
   add(
     "ACC",
     role,
     "5.3",
     title,
-    `Konteks permintaan: ${path}.`,
+    scenario.data,
     "Akses alamat kelas/endpoint langsung memakai identitas tanpa izin.",
     "API menolak akses dan data kelas lain tidak bocor.",
-    { id, type: "Keamanan", automation: api(id) },
+    { id, type: "Keamanan", steps: scenario.steps, automation: api(id) },
   );
+}
 add(
   "ACC",
   "Super Admin",
   "1.3",
   "Administrasi identitas tetap di SSO",
-  "Akun kampus uji.",
+  "Akun kampus uji yang dapat membuka profil E-Learning dan mengakses halaman pengelolaan akun pada SSO.",
   "Buka profil E-Learning; ikuti tautan kelola akun ke SSO untuk reset password / perubahan akun.",
   "E-Learning menyimpan referensi identitas; administrasi password ada pada SSO.",
   {
+    steps: [
+      {
+        action:
+          "Masuk dengan akun Super Admin uji pada target staging/UAT, lalu buka menu profil E-Learning.",
+        expected:
+          "Profil menampilkan akun uji dan tautan pengelolaan identitas yang mengarah ke SSO kampus.",
+      },
+      {
+        action:
+          "Pilih Kelola akun dan pastikan browser membuka halaman administrasi akun SSO.",
+        expected:
+          "Perubahan identitas atau password hanya tersedia pada SSO, bukan formulir lokal E-Learning.",
+      },
+      {
+        action:
+          "Kembali ke E-Learning tanpa menyimpan perubahan akun, lalu buka profil lagi.",
+        expected:
+          "Profil E-Learning tetap memakai identitas SSO yang sama dan tidak menampilkan pengaturan password lokal.",
+      },
+      {
+        action:
+          "Catat alamat tujuan Kelola akun dan hasil pemeriksaan profil pada bukti kasus.",
+        expected:
+          "Bukti menunjukkan SSO menjadi tempat administrasi identitas dan E-Learning hanya memakai referensinya.",
+      },
+    ],
     scope: "external",
     manualReason: "Membutuhkan lingkungan dan pemilik SSO kampus.",
   },
@@ -406,7 +716,7 @@ for (const [family, role, section, rows] of [
       [
         "Antrean jawaban perlu dinilai",
         "Kuis essay dan tugas baru belum dinilai.",
-        "Buka dashboard; klik antrean penilaian.",
+        "Di Beranda Dosen, buka Dashboard; pada ringkasan penilaian klik Antrean penilaian.",
         "Jumlah antrean sesuai submission belum dinilai dan tautan menuju panel yang benar.",
       ],
       [
@@ -735,8 +1045,12 @@ for (const [type, data] of Object.entries(blockSamples)) {
     "Dosen",
     "3.2.1",
     `Blok ${type}: struktur data valid`,
-    JSON.stringify(data),
-    `Tambahkan blok ${type} dengan data uji, simpan materi lalu buka kembali.`,
+    type === "divider"
+      ? "Blok pemisah kosong tanpa teks atau berkas; konfigurasi blok berupa objek kosong {}."
+      : JSON.stringify(data),
+    type === "divider"
+      ? "Di editor materi, tambahkan blok Pemisah dari menu tambah blok, simpan, lalu buka kembali materi yang sama."
+      : `Tambahkan blok ${type} dengan data uji, simpan materi lalu buka kembali.`,
     `Struktur blok ${type} lolos validasi skema; tampilannya diverifikasi manual.`,
     { id, automation: unit(id), tags: ["Block engine"], type: "Validasi" },
   );
@@ -780,7 +1094,7 @@ for (const row of [
   ],
   [
     "Tabel dapat diubah",
-    "Tabel 2×2.",
+    "Satu materi draf dengan tabel 2 baris × 2 kolom; baris pertama berisi header Nama | Nilai, baris kedua Rina | 85.",
     "Tambah dan hapus baris/kolom; ubah perataan dan header.",
     "Tabel sesuai perubahan setelah disimpan.",
   ],
@@ -1199,7 +1513,7 @@ for (const [value, letter, gpa] of gradeBands) {
 for (const row of [
   [
     "Bobot default kelas",
-    "Kelas baru.",
+    "Kelas uji baru tanpa perubahan bobot; kategori Tugas, Kuis, UTS, UAS, dan Progres masih memakai bobot bawaan.",
     "Buka Bobot penilaian.",
     "Tugas25%, Kuis15%, UTS25%, UAS25%, Progres10%; total100%.",
   ],
@@ -2275,20 +2589,46 @@ for (const [role, title, data, expected] of [
     },
   );
 const pilotTitles = [
-  "Administrasi akun diSSO",
-  "Login terpadu lintasperan",
-  "Berkas privat dantrash",
-  "Kesiapan kelas danpeserta",
-  "Penyusunan pertemuan danmateri",
+  "Administrasi akun di SSO",
+  "Login terpadu lintas peran",
+  "Berkas privat dan trash",
+  "Kesiapan kelas dan peserta",
+  "Penyusunan pertemuan dan materi",
   "Aktivitas belajar mahasiswa",
-  "Penilaian otomatis danmanual",
-  "Isolasi nilaiterbit",
-  "Pengujian lintaslayanan kampus",
+  "Penilaian otomatis dan manual",
+  "Isolasi nilai terbit",
+  "Pengujian lintas layanan kampus",
   "Keterlacakan aksi kritis",
   "Nol blocker/critical terbuka",
-  "SOPbackup dan penanggungjawab",
+  "SOP backup dan penanggung jawab",
 ];
-pilotTitles.forEach((title, i) =>
+const pilotModules = [
+  ["SSO & akses"],
+  ["SSO & akses", "Mata kuliah & kelas", "Peserta"],
+  ["File Service"],
+  ["Mata kuliah & kelas", "Peserta"],
+  ["Pertemuan", "Materi & editor"],
+  ["Dashboard mahasiswa", "Progres belajar", "Tugas", "Kuis & bank soal"],
+  ["Kuis & bank soal", "Tugas", "Nilai & gradebook"],
+  ["Nilai & gradebook"],
+  ["Pemantauan Akademik & integrasi rektor", "Sinkronisasi pengguna & integrasi"],
+  ["Jejak audit"],
+  ["Semua modul P0"],
+  ["Operasional"],
+];
+pilotTitles.forEach((title, i) => {
+  const moduleTargets =
+    i === 10 ? ["Semua modul P0"] : pilotModules[i];
+  const filters =
+    i === 10
+      ? "Prioritas=P0 dan semua Modul"
+      : `Prioritas=P0; Modul=${moduleTargets.join(", ")}`;
+  const moduleAction =
+    i === 10
+      ? "Biarkan filter Modul pada Semua, sehingga seluruh kasus P0 tampil."
+      : moduleTargets.length === 1
+        ? `Pilih Modul “${moduleTargets[0]}” pada filter Modul.`
+        : `Pilih satu per satu modul berikut pada filter Modul dan ulangi langkah ini untuk tiap pilihan: ${moduleTargets.map((name) => `“${name}”`).join(", ")}.`;
   add(
     "PILOT",
     i === 11
@@ -2300,17 +2640,38 @@ pilotTitles.forEach((title, i) =>
           : "Admin Prodi",
     "3.1",
     `Pilot ${String(i + 1).padStart(2, "0")} · ${title}`,
-    "Checklist acceptance pilot; bukti UAT peralurmendasar.",
-    `Jalankan kasus terkait ${title}, kumpulkan bukti dan tinjau dengan penanggung jawab pilot.`,
+    `Checklist UAT “${title}”; filter Prioritas=P0; modul yang diuji: ${moduleTargets.join(", ")}; akun uji untuk tiap role dan bukti hasil tersedia.`,
+    `Di menu Test case, gunakan filter ${filters}. Jalankan setiap baris dengan akun yang diminta kasus, lalu lampirkan bukti ke checklist pilot “${title}”.`,
     `Kriteria ${i + 1} disetujui dengan bukti; kegagalan atau pekerjaan terbuka dicatat sebelum sign-off.`,
     {
       scope: "external",
       type: "Acceptance",
+      navigation: `Di portal QA, buka Test case; atur filter Prioritas=P0. ${moduleAction} Siapkan checklist pilot “${title}” untuk mencatat hasil dan bukti.`,
+      steps: [
+        {
+          action: "Buka Pengaturan sesi portal QA; pastikan URL target, lingkungan staging/UAT, versi build, dan nama checklist pilot sudah dicatat.",
+          expected: "Sesi menunjuk ke target uji yang disetujui dan checklist UAT pilot tersedia untuk menyimpan bukti.",
+        },
+        {
+          action: `Buka Test case dan atur filter Prioritas=P0. ${moduleAction} Catat jumlah kasus yang tampil untuk setiap pilihan modul.`,
+          expected: i === 10
+            ? "Daftar menampilkan semua kasus P0 dan tidak membatasi filter Modul."
+            : `Daftar menampilkan kasus P0 hanya dari modul yang dipilih; jumlah tiap modul dicatat di checklist “${title}”.`,
+        },
+        {
+          action: `Buka setiap kasus yang tampil; ikuti semua langkahnya dengan akun yang diminta kasus tersebut dan masukkan hasil aktual serta bukti ke checklist “${title}”.`,
+          expected: "Setiap kasus dalam cakupan memiliki hasil dan bukti; integrasi nonaktif/backlog dicatat Terblokir, tidak Lulus.",
+        },
+        {
+          action: "Tinjau checklist terhadap jumlah kasus yang dicatat; pastikan tidak ada kasus terlewat, lalu daftar semua Gagal, Terblokir, dan tindak lanjut sebelum sign-off.",
+          expected: `Seluruh cakupan “${title}” dapat ditelusuri ke hasil dan bukti; setiap blocker atau kegagalan memiliki penanggung jawab sebelum sign-off.`,
+        },
+      ],
       manualReason:
         "Penerimaan pilot memerlukan bukti lintas layanan dan persetujuan pihak terkait.",
     },
-  ),
-);
+  );
+});
 const futureActions = [
   [
     "Buka daftar sesi aktif pengguna; cocokkan dua sesi yang dibuat dari browser berbeda.",
@@ -2375,7 +2736,7 @@ cases
         action,
         expected:
           index === 0
-            ? "Data/fitur uji tersedia; respons awal tercatat untuk dibandingkan."
+          ? "Catat nilai/status awal yang disebut di Data uji sebelum menjalankan skenario kasus."
             : c.expected,
       })),
     );
@@ -2552,31 +2913,1264 @@ add(
 );
 
 // Tambahan sesuai implementasi Oktober 2026; bukan requirement RTM baru.
-add("REC", "Rektor", "Implementasi saat ini", "Masuk melalui satu akun kampus dan akses laporan hanya baca", "Akun Rektor, Super Admin, Dosen, Mahasiswa; sesi aktif dan tanpa sesi.", "Buka /rector dan panggil API laporan serta percobaan perubahan akademik.", "Rektor/Super Admin dapat membaca; dosen/mahasiswa ditolak; tanpa sesi 401; perubahan akademik rektor ditolak.", { requirements: [], sourceDocument: "current", navigation: "Buka Pemantauan Akademik melalui menu akun rektor.", priority: "P0", priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.", automation: existing("tests/integration/rector-access.test.ts", "same cookie works; no separate demo login or academic write", "api") });
-add("REC", "Rektor", "Implementasi saat ini", "Ringkasan cocok dengan dosen dan rekap program studi", "Fixture deterministik laporan akademik.", "Bandingkan ringkasan, tabel dosen, dan rekap prodi dengan periode sama.", "Total dan kegiatan pelaku cocok tanpa peringkat otomatis.", { requirements: [], sourceDocument: "current", navigation: "Buka Pemantauan Akademik melalui menu akun rektor.", priority: "P0", priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.", automation: existing("tests/rector-reporting.test.ts", "summary matches departmental totals, lecturer activity and daily evidence", "unit") });
-add("REC", "Rektor", "Implementasi saat ini", "Kelas bersama tidak menggandakan kegiatan dan antrean", "Kelas dengan dua pengampu.", "Buka kedua dosen dan kelas bersama, lalu bandingkan ringkasan.", "Kegiatan diberikan kepada pelakunya; antrean kelas dihitung sekali.", { requirements: [], sourceDocument: "current", navigation: "Buka Pemantauan Akademik melalui menu akun rektor.", priority: "P0", priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.", automation: existing("tests/rector-reporting.test.ts", "shared classes attribute evidence to actual actors; class backlog is not duplicated in university totals", "unit") });
-add("REC", "Rektor", "Implementasi saat ini", "Login saja, tanpa kegiatan, tanpa kelas dan tindakan per objek", "Dosen aktif, hanya login, tidak aktif dan tidak diampu kelas.", "Bandingkan jumlah tindakan dan objek pada rincian dosen.", "Login terpisah dari kegiatan akademik; lima perubahan satu materi tidak menjadi lima materi.", { requirements: [], sourceDocument: "current", navigation: "Buka Pemantauan Akademik melalui menu akun rektor.", priority: "P0", priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.", automation: existing("tests/rector-reporting.test.ts", "actions and unique objects, login-only, inactive and unassigned lecturers stay distinct", "unit") });
-add("REC", "Rektor", "Implementasi saat ini", "Filter konsisten dan kondisi data tidak menjadi aktivitas baru", "Semester, prodi, dosen, kelas dan periode berbeda.", "Ubah satu filter, periksa URL, ringkasan dan rincian; muat ulang.", "Filter membatasi cakupan konsisten; kondisi kelas bukan kegiatan baru pada tanggal muat ulang.", { requirements: [], sourceDocument: "current", navigation: "Buka Pemantauan Akademik melalui menu akun rektor.", priority: "P0", priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.", automation: existing("tests/rector-reporting.test.ts", "snapshot metrics ignore activity dates; semester, department, lecturer and class constrain scope", "unit") });
-add("REC", "Rektor", "Implementasi saat ini", "Kiriman pengganti dan penilaian otomatis dibedakan", "Tugas dikirim dua kali; kuis otomatis dan pekerjaan manual.", "Periksa pekerjaan belum dinilai pada kelas.", "Kiriman lama tidak masuk antrean; penilaian kuis otomatis memiliki jumlah tersendiri.", { requirements: [], sourceDocument: "current", navigation: "Buka Pemantauan Akademik melalui menu akun rektor.", priority: "P0", priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.", automation: existing("tests/rector-reporting.test.ts", "latest submissions exclude superseded work and automatic grading has its own total", "unit") });
-add("REC", "Rektor", "Implementasi saat ini", "Rentang login berakhir pada logout yang tercatat", "Sesi lengkap dan kegiatan dengan awal/akhir tercatat.", "Baca grafik sesi dan riwayat per dosen.", "Rentang menggunakan bukti masuk/keluar; logout bukan kegiatan akademik; bukan durasi kerja.", { requirements: [], sourceDocument: "current", navigation: "Buka Pemantauan Akademik melalui menu akun rektor.", priority: "P0", priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.", automation: existing("tests/rector-reporting.test.ts", "connection spans and action intervals use explicit recorded events, without crediting logout as academic work", "unit") });
-add("REC", "Rektor", "Implementasi saat ini", "Grafik harian meliputi akses selama 24 jam", "Sesi pagi, sore dan malam pada zona perangkat.", "Buka grafik harian dan periksa 00.00–24.00.", "Semua sesi hari tersebut tampil tanpa pembatasan jam kerja.", { requirements: [], sourceDocument: "current", navigation: "Buka Pemantauan Akademik melalui menu akun rektor.", priority: "P0", priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.", automation: existing("tests/rector-reporting.test.ts", "daily session chart covers the device's full day, including afternoon and evening connections", "unit") });
-add("REC", "Rektor", "Implementasi saat ini", "Sesi melewati tengah malam tetap dapat ditelusuri", "Sesi lintas hari dan beberapa hari.", "Pilih masing-masing tanggal dan periksa rentang.", "Grafik membagi sesi di batas hari tanpa mengubah waktu login/logout asli.", { requirements: [], sourceDocument: "current", navigation: "Buka Pemantauan Akademik melalui menu akun rektor.", priority: "P0", priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.", automation: existing("tests/rector-reporting.test.ts", "daily chart splits overnight and multi-day sessions without losing time or altering login/logout evidence", "unit") });
-add("REC", "Rektor", "Implementasi saat ini", "Logout belum tercatat dan data kosong tidak dikarang", "Sesi tanpa logout, kejadian tepat tengah malam, filter kosong.", "Lihat grafik dan rincian pada periode tersebut.", "Ada keterangan belum tercatat; tidak menggambar rentang sampai sekarang tanpa bukti.", { requirements: [], sourceDocument: "current", navigation: "Buka Pemantauan Akademik melalui menu akun rektor.", priority: "P0", priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.", automation: existing("tests/rector-reporting.test.ts", "daily chart handles exact midnight, unknown logout, and point events without invented continuation", "unit") });
-add("REC", "Rektor", "Implementasi saat ini", "Waktu lokal konsisten pada layar, tanggal dan unduhan", "Perangkat Asia/Makassar; tanggal dekat tengah malam.", "Pilih periode, buka ringkasan, detail dan unduh CSV/PDF.", "Tanggal dan zona sesuai perangkat; zona tidak selalu WIB.", { requirements: [], sourceDocument: "current", navigation: "Buka Pemantauan Akademik melalui menu akun rektor.", priority: "P0", priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.", automation: existing("tests/integration/rector-access.test.ts", "device timezone is consistent across filters, summary, details and exports", "api") });
-add("REC", "Rektor", "Implementasi saat ini", "CSV seluruh halaman cocok filter dan tidak memuat data mahasiswa", "Tabel beberapa halaman dan filter kronologi.", "Unduh tabel lalu hitung seluruh baris.", "Seluruh baris cocok termasuk halaman lain; tidak ada identitas, nilai individual atau jawaban mahasiswa.", { requirements: [], sourceDocument: "current", navigation: "Buka Pemantauan Akademik melalui menu akun rektor.", priority: "P0", priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.", automation: existing("tests/rector-reporting.test.ts", "exports contain all matching rows without student content; chronology filters also affect exports", "unit") });
-add("REC", "Rektor", "Implementasi saat ini", "PDF ringkasan dan rincian lengkap", "Halaman ringkasan, dosen dan kelas.", "Unduh laporan pada setiap halaman.", "PDF valid memuat filter, waktu data, definisi dan label demo saat fixture dipakai.", { requirements: [], sourceDocument: "current", navigation: "Buka Pemantauan Akademik melalui menu akun rektor.", priority: "P0", priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.", automation: existing("tests/rector-reporting.test.ts", "PDF reports generate complete valid files for overview, lecturer and class", "unit") });
-add("REC", "Rektor", "Implementasi saat ini", "Publikasi, nilai draf dan koreksi tidak tercampur", "Tugas belum dinilai, draf, publikasi dan koreksi.", "Periksa progres penilaian dan riwayat pada rincian kelas.", "Publikasi memakai status sebenarnya; laporan tidak membawa nilai mahasiswa.", { requirements: [], sourceDocument: "current", navigation: "Buka Pemantauan Akademik melalui menu akun rektor.", priority: "P0", priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.", automation: existing("tests/integration/rector-access.test.ts", "latest submissions, true publication and no student payload", "api") });
-add("REC", "Rektor", "Implementasi saat ini", "Keluar dan penonaktifan mengakhiri akses laporan", "Akun rektor aktif lalu dinonaktifkan atau keluar.", "Panggil ulang API laporan setelah status berubah.", "Sesi berakhir atau akun dinonaktifkan tidak dapat membaca laporan.", { requirements: [], sourceDocument: "current", navigation: "Buka Pemantauan Akademik melalui menu akun rektor.", priority: "P0", priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.", automation: existing("tests/integration/rector-access.test.ts", "deactivation and logout revoke report access", "api") });
-add("REC", "Rektor", "Implementasi saat ini", "Responsif dan teks terbaca", "Desktop 1440, tablet 820, ponsel 390 piksel.", "Buka Ringkasan, rincian dosen/kelas, filter dan riwayat pada tiap ukuran.", "Tidak ada konten terpotong; tabel dapat digeser; navigasi dan tombol terbaca.", { requirements: [], sourceDocument: "current", navigation: "Buka Pemantauan Akademik.", priority: "P1", priorityBasis: "Pemeriksaan antarmuka dan laporan rilis saat ini." });
-add("REC", "Rektor", "Implementasi saat ini", "Kesalahan pemuatan dan Coba lagi", "API sementara tidak tersedia; sesi kemudian kedaluwarsa.", "Buka laporan, pulihkan API, tekan Coba lagi; uji sesi berakhir.", "Pesan mudah dipahami; mencoba kembali memulihkan laporan; sesi berakhir meminta masuk dan tidak memicu 401 berulang.", { requirements: [], sourceDocument: "current", navigation: "Buka Pemantauan Akademik.", priority: "P1", priorityBasis: "Pemeriksaan antarmuka dan laporan rilis saat ini." });
-add("REC", "Rektor", "Implementasi saat ini", "Tidak ada pembagi dan sumber belum tersedia", "Filter tanpa pekerjaan; presensi, forum, telekonferensi.", "Baca persentase dan panduan membaca laporan.", "Belum ada data menggantikan rasio tanpa pembagi; sumber belum tersedia dinyatakan jelas.", { requirements: [], sourceDocument: "current", navigation: "Buka Pemantauan Akademik.", priority: "P1", priorityBasis: "Pemeriksaan antarmuka dan laporan rilis saat ini." });
-add("REC", "Rektor", "Implementasi saat ini", "PDF terbaca dan pergantian halaman rapi", "Laporan dengan tabel panjang dari kelas dan dosen.", "Buka seluruh halaman PDF dan bandingkan dengan filter layar.", "Teks dan tabel terbaca, tidak terpotong; waktu data dan label demo tercetak.", { requirements: [], sourceDocument: "current", navigation: "Buka Pemantauan Akademik.", priority: "P1", priorityBasis: "Pemeriksaan antarmuka dan laporan rilis saat ini." });
-add("HELP", "Mahasiswa", "Implementasi saat ini", "Bantuan membuka panduan HTML pada tab baru sesuai peran", "Akun Mahasiswa yang sedang masuk; URL tambahan ?role=SUPER_ADMIN.", "Buka Bantuan lalu klik Buka buku panduan (tab baru). Cari artikel, buka daftar isi, dan cetak pratinjau.", "Tab baru terbuka tanpa mengganti Bantuan. Hanya petunjuk untuk peran akun tampil; URL tidak mengganti peran. Langkah bernomor tanpa checklist atau kotak centang.", { requirements: [], sourceDocument: "current", navigation: "Buka Bantuan.", priority: "P1", priorityBasis: "Regresi panduan berdasarkan peran.", automation: existing("tests/standalone-guide.test.ts", "standalone HTML guide follows the session role, ignores role URL overrides and contains no checklist", "unit", "Filter konten dan DOM teruji; pembukaan tab, cetak dan tata letak tetap diperiksa manual.") });
-add("HELP", "Dosen", "Implementasi saat ini", "Bantuan membuka panduan HTML pada tab baru sesuai peran", "Akun Dosen yang sedang masuk; URL tambahan ?role=SUPER_ADMIN.", "Buka Bantuan lalu klik Buka buku panduan (tab baru). Cari artikel, buka daftar isi, dan cetak pratinjau.", "Tab baru terbuka tanpa mengganti Bantuan. Hanya petunjuk untuk peran akun tampil; URL tidak mengganti peran. Langkah bernomor tanpa checklist atau kotak centang.", { requirements: [], sourceDocument: "current", navigation: "Buka Bantuan.", priority: "P1", priorityBasis: "Regresi panduan berdasarkan peran.", automation: existing("tests/standalone-guide.test.ts", "standalone HTML guide follows the session role, ignores role URL overrides and contains no checklist", "unit", "Filter konten dan DOM teruji; pembukaan tab, cetak dan tata letak tetap diperiksa manual.") });
-add("HELP", "Admin Prodi", "Implementasi saat ini", "Bantuan membuka panduan HTML pada tab baru sesuai peran", "Akun Admin Prodi yang sedang masuk; URL tambahan ?role=SUPER_ADMIN.", "Buka Bantuan lalu klik Buka buku panduan (tab baru). Cari artikel, buka daftar isi, dan cetak pratinjau.", "Tab baru terbuka tanpa mengganti Bantuan. Hanya petunjuk untuk peran akun tampil; URL tidak mengganti peran. Langkah bernomor tanpa checklist atau kotak centang.", { requirements: [], sourceDocument: "current", navigation: "Buka Bantuan.", priority: "P1", priorityBasis: "Regresi panduan berdasarkan peran.", automation: existing("tests/standalone-guide.test.ts", "standalone HTML guide follows the session role, ignores role URL overrides and contains no checklist", "unit", "Filter konten dan DOM teruji; pembukaan tab, cetak dan tata letak tetap diperiksa manual.") });
-add("HELP", "Super Admin", "Implementasi saat ini", "Bantuan membuka panduan HTML pada tab baru sesuai peran", "Akun Super Admin yang sedang masuk; URL tambahan ?role=SUPER_ADMIN.", "Buka Bantuan lalu klik Buka buku panduan (tab baru). Cari artikel, buka daftar isi, dan cetak pratinjau.", "Tab baru terbuka tanpa mengganti Bantuan. Hanya petunjuk untuk peran akun tampil; URL tidak mengganti peran. Langkah bernomor tanpa checklist atau kotak centang.", { requirements: [], sourceDocument: "current", navigation: "Buka Bantuan.", priority: "P1", priorityBasis: "Regresi panduan berdasarkan peran.", automation: existing("tests/standalone-guide.test.ts", "standalone HTML guide follows the session role, ignores role URL overrides and contains no checklist", "unit", "Filter konten dan DOM teruji; pembukaan tab, cetak dan tata letak tetap diperiksa manual.") });
-add("HELP", "Rektor", "Implementasi saat ini", "Bantuan membuka panduan HTML pada tab baru sesuai peran", "Akun Rektor yang sedang masuk; URL tambahan ?role=SUPER_ADMIN.", "Buka Bantuan lalu klik Buka buku panduan (tab baru). Cari artikel, buka daftar isi, dan cetak pratinjau.", "Tab baru terbuka tanpa mengganti Bantuan. Hanya petunjuk untuk peran akun tampil; URL tidak mengganti peran. Langkah bernomor tanpa checklist atau kotak centang.", { requirements: [], sourceDocument: "current", navigation: "Buka Bantuan.", priority: "P1", priorityBasis: "Regresi panduan berdasarkan peran.", automation: existing("tests/standalone-guide.test.ts", "standalone HTML guide follows the session role, ignores role URL overrides and contains no checklist", "unit", "Filter konten dan DOM teruji; pembukaan tab, cetak dan tata letak tetap diperiksa manual.") });
-add("HELP", "Rektor", "Implementasi saat ini", "Panduan terlindungi saat belum masuk dan setelah keluar", "Tab panduan terbuka; sesi belum ada atau diakhiri pada tab aplikasi.", "Buka URL panduan tanpa sesi; masuk lalu keluar dari tab aplikasi, kembali ke tab panduan dan muat ulang.", "Tanpa sesi pengguna diminta masuk; setelah keluar akses mengikuti sesi aktual, tidak tetap menampilkan petunjuk peran sebelumnya.", { requirements: [], sourceDocument: "current", navigation: "Buka /Panduan/panduan.html.", priority: "P1", priorityBasis: "Perilaku autentikasi panduan lintas tab." });
+add(
+  "REC",
+  "Rektor",
+  "Implementasi saat ini",
+  "Masuk melalui satu akun kampus dan akses laporan hanya baca",
+  "Akun Rektor, Super Admin, Dosen, Mahasiswa; sesi aktif dan tanpa sesi.",
+  "Buka /rector dan panggil API laporan serta percobaan perubahan akademik.",
+  "Rektor/Super Admin dapat membaca; dosen/mahasiswa ditolak; tanpa sesi 401; perubahan akademik rektor ditolak.",
+  {
+    requirements: [],
+    sourceDocument: "current",
+    navigation: "Buka Pemantauan Akademik melalui menu akun rektor.",
+    priority: "P0",
+    priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.",
+    automation: existing(
+      "tests/integration/rector-access.test.ts",
+      "same cookie works; no separate demo login or academic write",
+      "api",
+    ),
+  },
+);
+add(
+  "REC",
+  "Rektor",
+  "Implementasi saat ini",
+  "Ringkasan cocok dengan dosen dan rekap program studi",
+  "Fixture deterministik laporan akademik.",
+  "Bandingkan ringkasan, tabel dosen, dan rekap prodi dengan periode sama.",
+  "Total dan kegiatan pelaku cocok tanpa peringkat otomatis.",
+  {
+    requirements: [],
+    sourceDocument: "current",
+    navigation: "Buka Pemantauan Akademik melalui menu akun rektor.",
+    priority: "P0",
+    priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.",
+    automation: existing(
+      "tests/rector-reporting.test.ts",
+      "summary matches departmental totals, lecturer activity and daily evidence",
+      "unit",
+    ),
+  },
+);
+add(
+  "REC",
+  "Rektor",
+  "Implementasi saat ini",
+  "Kelas bersama tidak menggandakan kegiatan dan antrean",
+  "Kelas dengan dua pengampu.",
+  "Buka kedua dosen dan kelas bersama, lalu bandingkan ringkasan.",
+  "Kegiatan diberikan kepada pelakunya; antrean kelas dihitung sekali.",
+  {
+    requirements: [],
+    sourceDocument: "current",
+    navigation: "Buka Pemantauan Akademik melalui menu akun rektor.",
+    priority: "P0",
+    priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.",
+    automation: existing(
+      "tests/rector-reporting.test.ts",
+      "shared classes attribute evidence to actual actors; class backlog is not duplicated in university totals",
+      "unit",
+    ),
+  },
+);
+add(
+  "REC",
+  "Rektor",
+  "Implementasi saat ini",
+  "Login saja, tanpa kegiatan, tanpa kelas dan tindakan per objek",
+  "Dosen aktif, hanya login, tidak aktif dan tidak diampu kelas.",
+  "Bandingkan jumlah tindakan dan objek pada rincian dosen.",
+  "Login terpisah dari kegiatan akademik; lima perubahan satu materi tidak menjadi lima materi.",
+  {
+    requirements: [],
+    sourceDocument: "current",
+    navigation: "Buka Pemantauan Akademik melalui menu akun rektor.",
+    priority: "P0",
+    priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.",
+    automation: existing(
+      "tests/rector-reporting.test.ts",
+      "actions and unique objects, login-only, inactive and unassigned lecturers stay distinct",
+      "unit",
+    ),
+  },
+);
+add(
+  "REC",
+  "Rektor",
+  "Implementasi saat ini",
+  "Filter konsisten dan kondisi data tidak menjadi aktivitas baru",
+  "Semester, prodi, dosen, kelas dan periode berbeda.",
+  "Ubah satu filter, periksa URL, ringkasan dan rincian; muat ulang.",
+  "Filter membatasi cakupan konsisten; kondisi kelas bukan kegiatan baru pada tanggal muat ulang.",
+  {
+    requirements: [],
+    sourceDocument: "current",
+    navigation: "Buka Pemantauan Akademik melalui menu akun rektor.",
+    priority: "P0",
+    priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.",
+    automation: existing(
+      "tests/rector-reporting.test.ts",
+      "snapshot metrics ignore activity dates; semester, department, lecturer and class constrain scope",
+      "unit",
+    ),
+  },
+);
+add(
+  "REC",
+  "Rektor",
+  "Implementasi saat ini",
+  "Kiriman pengganti dan penilaian otomatis dibedakan",
+  "Tugas dikirim dua kali; kuis otomatis dan pekerjaan manual.",
+  "Periksa pekerjaan belum dinilai pada kelas.",
+  "Kiriman lama tidak masuk antrean; penilaian kuis otomatis memiliki jumlah tersendiri.",
+  {
+    requirements: [],
+    sourceDocument: "current",
+    navigation: "Buka Pemantauan Akademik melalui menu akun rektor.",
+    priority: "P0",
+    priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.",
+    automation: existing(
+      "tests/rector-reporting.test.ts",
+      "latest submissions exclude superseded work and automatic grading has its own total",
+      "unit",
+    ),
+  },
+);
+add(
+  "REC",
+  "Rektor",
+  "Implementasi saat ini",
+  "Rentang login berakhir pada logout yang tercatat",
+  "Sesi lengkap dan kegiatan dengan awal/akhir tercatat.",
+  "Baca grafik sesi dan riwayat per dosen.",
+  "Rentang menggunakan bukti masuk/keluar; logout bukan kegiatan akademik; bukan durasi kerja.",
+  {
+    requirements: [],
+    sourceDocument: "current",
+    navigation: "Buka Pemantauan Akademik melalui menu akun rektor.",
+    priority: "P0",
+    priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.",
+    automation: existing(
+      "tests/rector-reporting.test.ts",
+      "connection spans and action intervals use explicit recorded events, without crediting logout as academic work",
+      "unit",
+    ),
+  },
+);
+add(
+  "REC",
+  "Rektor",
+  "Implementasi saat ini",
+  "Grafik harian meliputi akses selama 24 jam",
+  "Sesi pagi, sore dan malam pada zona perangkat.",
+  "Buka grafik harian dan periksa 00.00–24.00.",
+  "Semua sesi hari tersebut tampil tanpa pembatasan jam kerja.",
+  {
+    requirements: [],
+    sourceDocument: "current",
+    navigation: "Buka Pemantauan Akademik melalui menu akun rektor.",
+    priority: "P0",
+    priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.",
+    automation: existing(
+      "tests/rector-reporting.test.ts",
+      "daily session chart covers the device's full day, including afternoon and evening connections",
+      "unit",
+    ),
+  },
+);
+add(
+  "REC",
+  "Rektor",
+  "Implementasi saat ini",
+  "Sesi melewati tengah malam tetap dapat ditelusuri",
+  "Sesi lintas hari dan beberapa hari.",
+  "Pilih masing-masing tanggal dan periksa rentang.",
+  "Grafik membagi sesi di batas hari tanpa mengubah waktu login/logout asli.",
+  {
+    requirements: [],
+    sourceDocument: "current",
+    navigation: "Buka Pemantauan Akademik melalui menu akun rektor.",
+    priority: "P0",
+    priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.",
+    automation: existing(
+      "tests/rector-reporting.test.ts",
+      "daily chart splits overnight and multi-day sessions without losing time or altering login/logout evidence",
+      "unit",
+    ),
+  },
+);
+add(
+  "REC",
+  "Rektor",
+  "Implementasi saat ini",
+  "Logout belum tercatat dan data kosong tidak dikarang",
+  "Sesi tanpa logout, kejadian tepat tengah malam, filter kosong.",
+  "Lihat grafik dan rincian pada periode tersebut.",
+  "Ada keterangan belum tercatat; tidak menggambar rentang sampai sekarang tanpa bukti.",
+  {
+    requirements: [],
+    sourceDocument: "current",
+    navigation: "Buka Pemantauan Akademik melalui menu akun rektor.",
+    priority: "P0",
+    priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.",
+    automation: existing(
+      "tests/rector-reporting.test.ts",
+      "daily chart handles exact midnight, unknown logout, and point events without invented continuation",
+      "unit",
+    ),
+  },
+);
+add(
+  "REC",
+  "Rektor",
+  "Implementasi saat ini",
+  "Waktu lokal konsisten pada layar, tanggal dan unduhan",
+  "Perangkat Asia/Makassar; tanggal dekat tengah malam.",
+  "Pilih periode, buka ringkasan, detail dan unduh CSV/PDF.",
+  "Tanggal dan zona sesuai perangkat; zona tidak selalu WIB.",
+  {
+    requirements: [],
+    sourceDocument: "current",
+    navigation: "Buka Pemantauan Akademik melalui menu akun rektor.",
+    priority: "P0",
+    priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.",
+    automation: existing(
+      "tests/integration/rector-access.test.ts",
+      "device timezone is consistent across filters, summary, details and exports",
+      "api",
+    ),
+  },
+);
+add(
+  "REC",
+  "Rektor",
+  "Implementasi saat ini",
+  "CSV seluruh halaman cocok filter dan tidak memuat data mahasiswa",
+  "Tabel beberapa halaman dan filter kronologi.",
+  "Unduh tabel lalu hitung seluruh baris.",
+  "Seluruh baris cocok termasuk halaman lain; tidak ada identitas, nilai individual atau jawaban mahasiswa.",
+  {
+    requirements: [],
+    sourceDocument: "current",
+    navigation: "Buka Pemantauan Akademik melalui menu akun rektor.",
+    priority: "P0",
+    priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.",
+    automation: existing(
+      "tests/rector-reporting.test.ts",
+      "exports contain all matching rows without student content; chronology filters also affect exports",
+      "unit",
+    ),
+  },
+);
+add(
+  "REC",
+  "Rektor",
+  "Implementasi saat ini",
+  "PDF ringkasan dan rincian lengkap",
+  "Halaman ringkasan, dosen dan kelas.",
+  "Unduh laporan pada setiap halaman.",
+  "PDF valid memuat filter, waktu data, definisi dan label demo saat fixture dipakai.",
+  {
+    requirements: [],
+    sourceDocument: "current",
+    navigation: "Buka Pemantauan Akademik melalui menu akun rektor.",
+    priority: "P0",
+    priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.",
+    automation: existing(
+      "tests/rector-reporting.test.ts",
+      "PDF reports generate complete valid files for overview, lecturer and class",
+      "unit",
+    ),
+  },
+);
+add(
+  "REC",
+  "Rektor",
+  "Implementasi saat ini",
+  "Publikasi, nilai draf dan koreksi tidak tercampur",
+  "Tugas belum dinilai, draf, publikasi dan koreksi.",
+  "Periksa progres penilaian dan riwayat pada rincian kelas.",
+  "Publikasi memakai status sebenarnya; laporan tidak membawa nilai mahasiswa.",
+  {
+    requirements: [],
+    sourceDocument: "current",
+    navigation: "Buka Pemantauan Akademik melalui menu akun rektor.",
+    priority: "P0",
+    priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.",
+    automation: existing(
+      "tests/integration/rector-access.test.ts",
+      "latest submissions, true publication and no student payload",
+      "api",
+    ),
+  },
+);
+add(
+  "REC",
+  "Rektor",
+  "Implementasi saat ini",
+  "Keluar dan penonaktifan mengakhiri akses laporan",
+  "Akun rektor aktif lalu dinonaktifkan atau keluar.",
+  "Panggil ulang API laporan setelah status berubah.",
+  "Sesi berakhir atau akun dinonaktifkan tidak dapat membaca laporan.",
+  {
+    requirements: [],
+    sourceDocument: "current",
+    navigation: "Buka Pemantauan Akademik melalui menu akun rektor.",
+    priority: "P0",
+    priorityBasis: "Regresi laporan rektor yang sudah diimplementasikan.",
+    automation: existing(
+      "tests/integration/rector-access.test.ts",
+      "deactivation and logout revoke report access",
+      "api",
+    ),
+  },
+);
+add(
+  "REC",
+  "Rektor",
+  "Implementasi saat ini",
+  "Responsif dan teks terbaca",
+  "Desktop 1440, tablet 820, ponsel 390 piksel.",
+  "Buka Ringkasan, rincian dosen/kelas, filter dan riwayat pada tiap ukuran.",
+  "Tidak ada konten terpotong; tabel dapat digeser; navigasi dan tombol terbaca.",
+  {
+    requirements: [],
+    sourceDocument: "current",
+    navigation: "Buka Pemantauan Akademik.",
+    priority: "P1",
+    priorityBasis: "Pemeriksaan antarmuka dan laporan rilis saat ini.",
+  },
+);
+add(
+  "REC",
+  "Rektor",
+  "Implementasi saat ini",
+  "Kesalahan pemuatan dan Coba lagi",
+  "API sementara tidak tersedia; sesi kemudian kedaluwarsa.",
+  "Buka laporan, pulihkan API, tekan Coba lagi; uji sesi berakhir.",
+  "Pesan mudah dipahami; mencoba kembali memulihkan laporan; sesi berakhir meminta masuk dan tidak memicu 401 berulang.",
+  {
+    requirements: [],
+    sourceDocument: "current",
+    navigation: "Buka Pemantauan Akademik.",
+    priority: "P1",
+    priorityBasis: "Pemeriksaan antarmuka dan laporan rilis saat ini.",
+  },
+);
+add(
+  "REC",
+  "Rektor",
+  "Implementasi saat ini",
+  "Tidak ada pembagi dan sumber belum tersedia",
+  "Filter tanpa pekerjaan; presensi, forum, telekonferensi.",
+  "Baca persentase dan panduan membaca laporan.",
+  "Belum ada data menggantikan rasio tanpa pembagi; sumber belum tersedia dinyatakan jelas.",
+  {
+    requirements: [],
+    sourceDocument: "current",
+    navigation: "Buka Pemantauan Akademik.",
+    priority: "P1",
+    priorityBasis: "Pemeriksaan antarmuka dan laporan rilis saat ini.",
+  },
+);
+add(
+  "REC",
+  "Rektor",
+  "Implementasi saat ini",
+  "PDF terbaca dan pergantian halaman rapi",
+  "Laporan dengan tabel panjang dari kelas dan dosen.",
+  "Buka seluruh halaman PDF dan bandingkan dengan filter layar.",
+  "Teks dan tabel terbaca, tidak terpotong; waktu data dan label demo tercetak.",
+  {
+    requirements: [],
+    sourceDocument: "current",
+    navigation: "Buka Pemantauan Akademik.",
+    priority: "P1",
+    priorityBasis: "Pemeriksaan antarmuka dan laporan rilis saat ini.",
+  },
+);
+function helpGuideSteps(role) {
+  return [
+    {
+      action: `Masuk ke E-Learning dengan akun uji berperan ${role}; buka menu Profil untuk memastikan akun dan perannya benar.`,
+      expected: `Nama akun uji tampil di profil dengan peran ${role}.`,
+    },
+    {
+      action: "Dari navigasi E-Learning, klik Bantuan lalu pastikan halaman Bantuan tampil pada tab aplikasi.",
+      expected: "Halaman Bantuan terbuka dan tautan Buka buku panduan terlihat.",
+    },
+    {
+      action: "Klik Buka buku panduan (tab baru); cari judul panduan dan buka satu bagian melalui daftar isi.",
+      expected: `Tab baru menampilkan panduan ${role}; tab E-Learning tetap terbuka pada halaman Bantuan.`,
+    },
+    {
+      action: "Pada tab panduan, tambahkan ?role=SUPER_ADMIN pada akhir URL, muat ulang, lalu kembali ke tab E-Learning dan buka Profil.",
+      expected: `Panduan tetap menampilkan petunjuk untuk ${role}; query URL tidak mengubah peran pada profil E-Learning.`,
+    },
+  ];
+}
+add(
+  "HELP",
+  "Mahasiswa",
+  "Implementasi saat ini",
+  "Bantuan membuka panduan HTML pada tab baru sesuai peran",
+  "Akun Mahasiswa yang sedang masuk; URL tambahan ?role=SUPER_ADMIN.",
+  "Buka Bantuan lalu klik Buka buku panduan (tab baru). Cari artikel, buka daftar isi, dan cetak pratinjau.",
+  "Tab baru terbuka tanpa mengganti Bantuan. Hanya petunjuk untuk peran akun tampil; URL tidak mengganti peran. Langkah bernomor tanpa checklist atau kotak centang.",
+  {
+    requirements: [],
+    sourceDocument: "current",
+    navigation: "Buka Bantuan.",
+    steps: helpGuideSteps("Mahasiswa"),
+    priority: "P1",
+    priorityBasis: "Regresi panduan berdasarkan peran.",
+    automation: existing(
+      "tests/standalone-guide.test.ts",
+      "standalone HTML guide follows the session role, ignores role URL overrides and contains no checklist",
+      "unit",
+      "Filter konten dan DOM teruji; pembukaan tab, cetak dan tata letak tetap diperiksa manual.",
+    ),
+  },
+);
+add(
+  "HELP",
+  "Dosen",
+  "Implementasi saat ini",
+  "Bantuan membuka panduan HTML pada tab baru sesuai peran",
+  "Akun Dosen yang sedang masuk; URL tambahan ?role=SUPER_ADMIN.",
+  "Buka Bantuan lalu klik Buka buku panduan (tab baru). Cari artikel, buka daftar isi, dan cetak pratinjau.",
+  "Tab baru terbuka tanpa mengganti Bantuan. Hanya petunjuk untuk peran akun tampil; URL tidak mengganti peran. Langkah bernomor tanpa checklist atau kotak centang.",
+  {
+    requirements: [],
+    sourceDocument: "current",
+    navigation: "Buka Bantuan.",
+    steps: helpGuideSteps("Dosen"),
+    priority: "P1",
+    priorityBasis: "Regresi panduan berdasarkan peran.",
+    automation: existing(
+      "tests/standalone-guide.test.ts",
+      "standalone HTML guide follows the session role, ignores role URL overrides and contains no checklist",
+      "unit",
+      "Filter konten dan DOM teruji; pembukaan tab, cetak dan tata letak tetap diperiksa manual.",
+    ),
+  },
+);
+add(
+  "HELP",
+  "Admin Prodi",
+  "Implementasi saat ini",
+  "Bantuan membuka panduan HTML pada tab baru sesuai peran",
+  "Akun Admin Prodi yang sedang masuk; URL tambahan ?role=SUPER_ADMIN.",
+  "Buka Bantuan lalu klik Buka buku panduan (tab baru). Cari artikel, buka daftar isi, dan cetak pratinjau.",
+  "Tab baru terbuka tanpa mengganti Bantuan. Hanya petunjuk untuk peran akun tampil; URL tidak mengganti peran. Langkah bernomor tanpa checklist atau kotak centang.",
+  {
+    requirements: [],
+    sourceDocument: "current",
+    navigation: "Buka Bantuan.",
+    steps: helpGuideSteps("Admin Prodi"),
+    priority: "P1",
+    priorityBasis: "Regresi panduan berdasarkan peran.",
+    automation: existing(
+      "tests/standalone-guide.test.ts",
+      "standalone HTML guide follows the session role, ignores role URL overrides and contains no checklist",
+      "unit",
+      "Filter konten dan DOM teruji; pembukaan tab, cetak dan tata letak tetap diperiksa manual.",
+    ),
+  },
+);
+add(
+  "HELP",
+  "Super Admin",
+  "Implementasi saat ini",
+  "Bantuan membuka panduan HTML pada tab baru sesuai peran",
+  "Akun Super Admin yang sedang masuk; URL tambahan ?role=SUPER_ADMIN.",
+  "Buka Bantuan lalu klik Buka buku panduan (tab baru). Cari artikel, buka daftar isi, dan cetak pratinjau.",
+  "Tab baru terbuka tanpa mengganti Bantuan. Hanya petunjuk untuk peran akun tampil; URL tidak mengganti peran. Langkah bernomor tanpa checklist atau kotak centang.",
+  {
+    requirements: [],
+    sourceDocument: "current",
+    navigation: "Buka Bantuan.",
+    steps: helpGuideSteps("Super Admin"),
+    priority: "P1",
+    priorityBasis: "Regresi panduan berdasarkan peran.",
+    automation: existing(
+      "tests/standalone-guide.test.ts",
+      "standalone HTML guide follows the session role, ignores role URL overrides and contains no checklist",
+      "unit",
+      "Filter konten dan DOM teruji; pembukaan tab, cetak dan tata letak tetap diperiksa manual.",
+    ),
+  },
+);
+add(
+  "HELP",
+  "Rektor",
+  "Implementasi saat ini",
+  "Bantuan membuka panduan HTML pada tab baru sesuai peran",
+  "Akun Rektor yang sedang masuk; URL tambahan ?role=SUPER_ADMIN.",
+  "Buka Bantuan lalu klik Buka buku panduan (tab baru). Cari artikel, buka daftar isi, dan cetak pratinjau.",
+  "Tab baru terbuka tanpa mengganti Bantuan. Hanya petunjuk untuk peran akun tampil; URL tidak mengganti peran. Langkah bernomor tanpa checklist atau kotak centang.",
+  {
+    requirements: [],
+    sourceDocument: "current",
+    navigation: "Buka Bantuan.",
+    steps: helpGuideSteps("Rektor"),
+    priority: "P1",
+    priorityBasis: "Regresi panduan berdasarkan peran.",
+    automation: existing(
+      "tests/standalone-guide.test.ts",
+      "standalone HTML guide follows the session role, ignores role URL overrides and contains no checklist",
+      "unit",
+      "Filter konten dan DOM teruji; pembukaan tab, cetak dan tata letak tetap diperiksa manual.",
+    ),
+  },
+);
+add(
+  "HELP",
+  "Rektor",
+  "Implementasi saat ini",
+  "Panduan terlindungi saat belum masuk dan setelah keluar",
+  "Tab panduan terbuka; sesi belum ada atau diakhiri pada tab aplikasi.",
+  "Buka URL panduan tanpa sesi; masuk lalu keluar dari tab aplikasi, kembali ke tab panduan dan muat ulang.",
+  "Tanpa sesi pengguna diminta masuk; setelah keluar akses mengikuti sesi aktual, tidak tetap menampilkan petunjuk peran sebelumnya.",
+  {
+    requirements: [],
+    sourceDocument: "current",
+    navigation: "Buka /Panduan/panduan.html.",
+    steps: [
+      {
+        action: "Buka tab baru dan kunjungi [URL target]/Panduan/panduan.html tanpa lebih dulu masuk ke E-Learning.",
+        expected: "Panduan tidak menampilkan isi khusus peran dan meminta autentikasi atau menolak akses.",
+      },
+      {
+        action: "Pada tab E-Learning terpisah, masuk melalui SSO dengan akun Rektor uji dan pastikan peran di Profil benar.",
+        expected: "Profil E-Learning menunjukkan akun uji berperan Rektor.",
+      },
+      {
+        action: "Di E-Learning, buka Bantuan lalu klik Buka buku panduan untuk membuka panduan pada tab baru.",
+        expected: "Panduan menampilkan petunjuk sesuai peran Rektor pada sesi yang aktif.",
+      },
+      {
+        action: "Keluar dari E-Learning melalui Profil, kembali ke tab panduan, muat ulang halaman, lalu periksa isi yang tampil.",
+        expected: "Konten khusus Rektor tidak tetap terbuka setelah sesi berakhir; akses meminta autentikasi atau ditolak.",
+      },
+    ],
+    priority: "P1",
+    priorityBasis: "Perilaku autentikasi panduan lintas tab.",
+  },
+);
+
+// Current feature inventory and manual tutorials, audited against the live app,
+// API permissions, help guide and existing regression suites on 12 Oct 2026.
+const current = {
+  sourceDocument: "current",
+  requirements: [],
+  priorityBasis:
+    "Uji penerimaan fitur yang tersedia pada implementasi E-Learning saat ini.",
+};
+
+const practicumSteps = {
+  create: [
+    {
+      action:
+        "Masuk sebagai Asdos yang sudah ditugaskan di kelas utama uji, lalu buka Kelas saya dan pilih kelas tersebut.",
+      expected:
+        "Kelas utama terlihat dan akun Asdos terdaftar sebagai asisten pada kelas itu.",
+    },
+    {
+      action:
+        "Klik Buat kelas praktikum, lalu periksa nama, mata kuliah, tahun akademik, dan relasi kelas yang akan dibuat.",
+      expected:
+        "Pratinjau menyebut Praktikum {Nama Kelas Utama} dan menghubungkannya ke kelas utama yang benar.",
+    },
+    {
+      action: "Konfirmasi pembuatan kelas praktikum.",
+      expected:
+        "Kelas praktikum dibuat satu kali dengan Asdos sebagai pengelola dan peserta aktif kelas utama tersalin.",
+    },
+    {
+      action:
+        "Kembali ke kelas utama lalu klik Buka kelas praktikum. Ulangi permintaan pembuatan jika tombol tersedia lagi.",
+      expected: "Kelas yang sama dibuka; tidak ada kelas praktikum duplikat.",
+    },
+  ],
+  parentAccess: [
+    {
+      action:
+        "Sebagai Asdos, buka tab Materi & aktivitas pada kelas utama dan cari materi yang sudah terbit.",
+      expected:
+        "Materi terbit dapat dibaca; kontrol pengelolaan kelas utama tidak tersedia.",
+    },
+    {
+      action:
+        "Coba tambah Section atau materi, buka pengelolaan Peserta, lalu coba buka aksi presensi dan nilai kelas utama.",
+      expected:
+        "Aksi pengubahan kelas utama disembunyikan atau ditolak; data kelas utama tidak berubah.",
+    },
+    {
+      action:
+        "Dari sesi Dosen pengelola, rekam request tambah Section pada DevTools → Network; kirim ulang request yang sama memakai sesi Asdos kelas utama.",
+      expected:
+        "API mengembalikan penolakan akses; tidak ada perubahan konten, roster, presensi, atau nilai.",
+    },
+    {
+      action: "Buka kelas praktikum dari kartu kelas utama.",
+      expected:
+        "Asdos dapat masuk ke kelas praktikum terhubung untuk melakukan pengelolaan di ruang itu.",
+    },
+  ],
+  operations: [
+    {
+      action:
+        "Di kelas praktikum, buat Section uji dan terbitkan satu materi singkat.",
+      expected:
+        "Konten tersimpan dan tampil di kelas praktikum tanpa mengubah kelas utama.",
+    },
+    {
+      action:
+        "Buat sesi presensi praktikum, tandai kehadiran dua mahasiswa uji, lalu simpan.",
+      expected: "Presensi hanya tercatat pada kelas praktikum.",
+    },
+    {
+      action:
+        "Buat atau gunakan tugas praktikum, beri nilai satu mahasiswa, simpan sebagai draf, lalu terbitkan setelah diperiksa.",
+      expected:
+        "Nilai draf tetap di praktikum; nilai berubah menjadi terbit setelah Asdos menerbitkannya.",
+    },
+    {
+      action:
+        "Buka daftar Peserta dan coba menambah atau menghapus mahasiswa langsung dari kelas praktikum.",
+      expected:
+        "Roster dikelola melalui kelas utama dan tidak dapat diubah langsung oleh Asdos di praktikum.",
+    },
+  ],
+  monitor: [
+    {
+      action:
+        "Masuk sebagai dosen pengampu kelas utama, lalu buka Praktikum {Nama Kelas Utama}.",
+      expected:
+        "Dosen dapat membuka kelas praktikum melalui tautan pemantauan dari kelas utama.",
+    },
+    {
+      action:
+        "Periksa Peserta, materi draf/terbit, sesi dan rekap presensi, pengumpulan tugas, serta nilai draf dan terbit.",
+      expected:
+        "Dosen dapat membaca rincian seluruh data praktikum, termasuk data yang masih draf.",
+    },
+    {
+      action:
+        "Coba mengedit materi, mengubah presensi atau nilai, dan mengubah roster melalui UI; untuk satu aksi, kirim request perubahan langsung.",
+      expected:
+        "Semua perubahan ditolak oleh UI atau API; data praktikum tidak berubah.",
+    },
+    {
+      action:
+        "Buka rekap nilai kelas utama dan ikuti tautan rincian praktikum.",
+      expected:
+        "Tautan menuju rincian baca-saja dan tidak memberi wewenang mengelola praktikum.",
+    },
+  ],
+  roster: [
+    {
+      action:
+        "Siapkan satu mahasiswa aktif, satu mahasiswa yang akan dinonaktifkan, dan satu mahasiswa baru; catat riwayat presensi/nilai mahasiswa pertama.",
+      expected: "Data awal kelas utama dan praktikum dapat dibedakan.",
+    },
+    {
+      action:
+        "Di kelas utama, tambahkan mahasiswa baru, nonaktifkan mahasiswa kedua, lalu jalankan impor peserta yang menambah satu mahasiswa uji.",
+      expected:
+        "Perubahan kelas utama berhasil dan tercatat sesuai alur masing-masing.",
+    },
+    {
+      action: "Periksa Peserta di kelas praktikum setelah setiap perubahan.",
+      expected:
+        "Mahasiswa baru dan hasil impor tercermin; peserta nonaktif tidak lagi aktif di praktikum.",
+    },
+    {
+      action:
+        "Aktifkan kembali mahasiswa kedua, lalu periksa mahasiswa pertama yang memiliki riwayat.",
+      expected:
+        "Peserta yang diaktifkan kembali muncul lagi; riwayat presensi dan nilai lama tetap tersimpan.",
+    },
+  ],
+  grades: [
+    {
+      action:
+        "Sebagai dosen pengelola kelas utama, buka Rekap nilai dan petakan praktikum ke kategori nilai yang tersedia.",
+      expected:
+        "Pemetaan tersimpan pada kategori yang dipilih dan tidak dapat diubah oleh Asdos.",
+    },
+    {
+      action:
+        "Sebagai Asdos, masukkan nilai praktikum untuk dua mahasiswa; biarkan satu nilai sebagai draf dan terbitkan nilai mahasiswa lainnya.",
+      expected:
+        "Nilai draf belum menjadi komponen nilai utama; nilai terbit siap dimasukkan ke kategori terpetakan.",
+    },
+    {
+      action:
+        "Sebagai dosen, muat ulang Rekap nilai kelas utama dan periksa komponen praktikum pada dua mahasiswa.",
+      expected:
+        "Hanya nilai yang diterbitkan tampil; nilai dihitung memakai bobot dan metode agregasi kategori yang dipetakan.",
+    },
+    {
+      action:
+        "Buka tautan nilai praktikum dari rekap untuk melihat rincian mahasiswa.",
+      expected:
+        "Dosen dapat melihat rincian nilai di praktikum secara baca-saja.",
+    },
+    {
+      action:
+        "Ulangi dengan kategori tanpa pemetaan atau lepas pemetaan pada kelas uji.",
+      expected:
+        "Nilai praktikum tetap terlihat di kelas praktikum tetapi tidak memengaruhi rekap nilai utama.",
+    },
+  ],
+  clone: [
+    {
+      action:
+        "Siapkan kelas utama uji yang sudah memiliki kelas praktikum dan pemetaan kategori nilai.",
+      expected:
+        "Kelas sumber menampilkan relasi praktikum dan kategori pemetaan yang sah.",
+    },
+    {
+      action:
+        "Gunakan aksi Duplikasi kelas pada kelas utama dan isi identitas kelas baru.",
+      expected:
+        "Pratinjau duplikasi menunjukkan kelas utama dan relasi praktikum yang akan ikut disalin.",
+    },
+    {
+      action:
+        "Selesaikan duplikasi, lalu buka kelas utama dan praktikum hasil salinan.",
+      expected:
+        "Terdapat satu praktikum baru bernama Praktikum {Nama Kelas Salinan}, tertaut ke kelas salinan, bukan kelas sumber.",
+    },
+    {
+      action:
+        "Periksa isi kelas, kategori nilai, peserta, nilai, dan presensi pada salinan.",
+      expected:
+        "Konten serta pemetaan yang memang diduplikasi mengikuti aturan salin; nilai, presensi, dan riwayat mahasiswa sumber tidak ikut tersalin.",
+    },
+  ],
+};
+
+add(
+  "PRA",
+  "Asisten Dosen (Asdos)",
+  "Implementasi saat ini",
+  "Asdos membuat satu kelas praktikum yang tertaut ke kelas utama",
+  "Kelas utama aktif, Asdos yang ditugaskan, dua mahasiswa aktif, dan belum ada kelas praktikum.",
+  "Dari kelas utama, pilih Buat kelas praktikum; setelah berhasil, buka kembali dan uji permintaan berulang.",
+  "Nama kelas Praktikum {Nama Kelas Utama}; mata kuliah dan tahun akademik sama; roster awal tersalin; permintaan berulang membuka kelas yang sama tanpa duplikasi.",
+  {
+    ...current,
+    featureKeys: ["linked-practicum"],
+    navigation: "Kelas saya → pilih kelas utama → Buat kelas praktikum.",
+    priority: "P0",
+    preconditions: [
+      "Gunakan kelas uji aktif tanpa praktikum dan akun Mahasiswa yang telah ditugaskan sebagai Asdos pada kelas tersebut.",
+      "Siapkan minimal dua peserta aktif pada kelas utama; jangan memakai kelas produksi atau data mahasiswa nyata.",
+    ],
+    data: "Kelas utama QA dengan dua peserta aktif dan satu Asdos terdaftar.",
+    steps: practicumSteps.create,
+    cleanup:
+      "Arsipkan kelas utama/praktikum uji setelah menyimpan bukti; jangan menghapus kelas atau riwayat yang dipakai pengujian lain.",
+  },
+);
+add(
+  "PRA",
+  "Asisten Dosen (Asdos)",
+  "Implementasi saat ini",
+  "Asdos tidak memiliki wewenang perubahan pada kelas utama",
+  "Kelas utama berisi materi terbit dan tab peserta, presensi, serta nilai; akun Asdos ditugaskan di kelas itu.",
+  "Coba aksi pengelolaan di kelas utama melalui UI dan satu request API, lalu buka praktikum terhubung.",
+  "Asdos dapat membaca materi terbit dan membuka praktikum; perubahan konten, peserta, presensi, dan nilai di kelas utama ditolak oleh UI/API.",
+  {
+    ...current,
+    featureKeys: ["linked-practicum"],
+    navigation: "Buka kelas utama yang mencantumkan akun sebagai Asdos.",
+    priority: "P0",
+    preconditions: [
+      "Kelas utama QA memiliki minimal satu materi terbit serta kelas praktikum tertaut.",
+      "Siapkan sesi browser Asdos dan data awal yang dapat dibandingkan setelah percobaan.",
+    ],
+    data: "Asdos terdaftar pada kelas utama; satu Section, satu peserta, satu sesi presensi dan satu kategori nilai.",
+    steps: practicumSteps.parentAccess,
+    cleanup:
+      "Pastikan data utama tidak berubah; simpan status/response penolakan API sebagai bukti.",
+  },
+);
+add(
+  "PRA",
+  "Asisten Dosen (Asdos)",
+  "Implementasi saat ini",
+  "Asdos mengelola konten presensi dan nilai di kelas praktikum",
+  "Kelas praktikum tertaut dengan dua peserta aktif; akun Asdos menjadi pengelola.",
+  "Buat konten dan presensi praktikum, simpan nilai sebagai draf lalu terbitkan; coba mengubah roster.",
+  "Asdos berwenang mengelola konten, presensi dan nilai praktikum; roster mengikuti kelas utama dan tidak bisa diedit langsung.",
+  {
+    ...current,
+    featureKeys: ["linked-practicum"],
+    navigation:
+      "Kelas utama → Buka kelas praktikum → Materi & aktivitas / Presensi / Rekap nilai.",
+    priority: "P0",
+    preconditions: [
+      "Gunakan kelas praktikum QA tertaut dengan minimal dua peserta aktif dan tanpa data nilai penting.",
+      "Masuk dengan akun Asdos yang menjadi pengelola praktikum.",
+    ],
+    data: "Section, materi, sesi presensi, tugas praktikum, dua peserta dan nilai uji 60/80.",
+    steps: practicumSteps.operations,
+    cleanup:
+      "Hapus atau arsipkan konten uji sesuai kebijakan lingkungan; pertahankan bukti nilai draf dan terbit.",
+  },
+);
+add(
+  "PRA",
+  "Dosen",
+  "Implementasi saat ini",
+  "Dosen memantau seluruh isi praktikum secara baca-saja",
+  "Dosen pengampu kelas utama dan kelas praktikum dengan konten draf, peserta, presensi, pengumpulan, serta nilai draf.",
+  "Buka semua data praktikum melalui dosen utama, lalu coba perubahan dari UI dan API.",
+  "Dosen dapat membaca seluruh data termasuk draf; segala perubahan pada kelas praktikum ditolak.",
+  {
+    ...current,
+    featureKeys: ["linked-practicum"],
+    navigation: "Kelas saya → kelas utama → Praktikum {Nama Kelas Utama}.",
+    priority: "P0",
+    preconditions: [
+      "Kelas utama dan praktikum QA aktif; siapkan sesi dosen pengampu.",
+      "Praktikum memiliki materi draf, mahasiswa, riwayat presensi, pengumpulan tugas, dan nilai draf.",
+    ],
+    data: "Satu akun dosen pengampu; satu Asdos; dua peserta dengan data di beberapa status.",
+    steps: practicumSteps.monitor,
+    cleanup:
+      "Jangan mengubah data praktikum. Catat hasil baca dan response penolakan yang diterima.",
+  },
+);
+add(
+  "PRA",
+  "Dosen",
+  "Implementasi saat ini",
+  "Perubahan roster utama tersinkron ke praktikum tanpa menghapus riwayat",
+  "Kelas utama/praktikum tertaut dengan peserta aktif, nonaktif, dan peserta ber-riwayat.",
+  "Tambah, nonaktifkan, aktifkan kembali, dan impor peserta di kelas utama; periksa roster dan riwayat pada praktikum.",
+  "Status peserta praktikum mengikuti kelas utama; riwayat presensi dan nilai lama tetap dipertahankan.",
+  {
+    ...current,
+    featureKeys: ["linked-practicum", "enrollment"],
+    navigation:
+      "Kelas utama → Peserta atau Impor massal; verifikasi pada Praktikum → Peserta dan Riwayat.",
+    priority: "P0",
+    preconditions: [
+      "Kelas praktikum QA sudah memiliki roster tersinkron.",
+      "Sediakan tiga akun Mahasiswa uji dan satu peserta yang telah memiliki riwayat presensi/nilai.",
+    ],
+    data: "Peserta aktif baru, peserta untuk dinonaktifkan/diaktifkan kembali, file impor valid satu baris.",
+    steps: practicumSteps.roster,
+    cleanup:
+      "Pulihkan status peserta kelas utama sesuai kondisi awal setelah seluruh bukti diambil.",
+  },
+);
+add(
+  "PRA",
+  "Dosen",
+  "Implementasi saat ini",
+  "Nilai praktikum terbit masuk ke kategori utama yang dipetakan",
+  "Praktikum memiliki nilai draf dan terbit; kelas utama memiliki kategori dengan bobot dan metode agregasi.",
+  "Atur pemetaan sebagai dosen, terbitkan nilai sebagai Asdos, lalu bandingkan rekap utama dengan dan tanpa pemetaan.",
+  "Hanya nilai terbit pada kategori yang dipetakan menjadi komponen nilai utama; kalkulasi mengikuti bobot/metode kategori.",
+  {
+    ...current,
+    featureKeys: ["linked-practicum", "grades"],
+    navigation:
+      "Rekap nilai kelas utama → Pemetaan kategori praktikum; buka kelas praktikum untuk melihat nilai per mahasiswa.",
+    priority: "P0",
+    preconditions: [
+      "Gunakan kelas QA dengan kategori nilai berbobot valid dan kelas praktikum tertaut.",
+      "Siapkan dua peserta: satu dengan nilai draf, satu dengan nilai praktikum yang dapat diterbitkan.",
+    ],
+    data: "Kategori Praktikum 20%; nilai uji draf 70 dan nilai diterbitkan 80.",
+    steps: practicumSteps.grades,
+    cleanup:
+      "Kembalikan pemetaan kategori dan batalkan nilai uji dengan alasan yang sesuai prosedur QA.",
+  },
+);
+add(
+  "PRA",
+  "Dosen",
+  "Implementasi saat ini",
+  "Duplikasi kelas membawa relasi praktikum ke kelas salinan",
+  "Kelas utama memiliki praktikum tertaut, konten, dan pemetaan kategori; tersedia tahun akademik tujuan.",
+  "Duplikasi kelas utama, kemudian buka relasi kelas praktikum hasil salinan dan periksa data yang dibawa.",
+  "Kelas salinan memiliki satu praktikum baru tertaut dengan nama yang benar dan pemetaan ke kategori salinan; riwayat mahasiswa tidak ikut tersalin.",
+  {
+    ...current,
+    featureKeys: ["linked-practicum", "class-management"],
+    navigation:
+      "Kelola kelas atau Kelas saya → Duplikasi kelas utama → buka kelas hasil salinan.",
+    priority: "P1",
+    preconditions: [
+      "Gunakan kelas QA sumber yang sudah memiliki praktikum dan kategori pemetaan.",
+      "Pastikan ada ruang untuk membuat kelas salinan; jangan gunakan kelas sumber produksi.",
+    ],
+    data: "Kelas utama QA dengan satu Section praktikum, satu kategori nilai, dan peserta ber-riwayat.",
+    steps: practicumSteps.clone,
+    cleanup:
+      "Arsipkan kelas salinan setelah menyimpan bukti relasi, pemetaan, konten, dan riwayat.",
+  },
+);
+
+add(
+  "CRS",
+  "Dosen Kolaborator",
+  "Implementasi saat ini",
+  "Kolaborator hanya mendapat akses sesuai kelas yang ditugaskan",
+  "Dua kelas QA; dosen kolaborator ditugaskan ke satu kelas dan tidak ditugaskan ke kelas lain.",
+  "Buka kedua kelas, gunakan aksi pengajar pada kelas yang ditugaskan, lalu coba akses kelas lain.",
+  "Kolaborator dapat bekerja dalam cakupan penugasannya saja; kelas lain dan administrasi global tetap terlindungi.",
+  {
+    ...current,
+    featureKeys: ["class-collaborators"],
+    navigation:
+      "Kelas saya → kelas tempat akun ditambahkan sebagai Dosen Kolaborator.",
+    priority: "P0",
+    preconditions: [
+      "Siapkan dua kelas QA dan akun Dosen Kolaborator yang hanya ditugaskan ke kelas pertama.",
+      "Catat kondisi konten kedua kelas sebelum uji.",
+    ],
+    data: "Satu kolaborator, kelas A tempat ditugaskan, kelas B di luar penugasan.",
+    steps: [
+      {
+        action: "Masuk sebagai kolaborator dan buka kelas A.",
+        expected: "Kelas yang ditugaskan muncul dan identitas kelas sesuai.",
+      },
+      {
+        action: "Gunakan satu aksi pengelolaan yang diizinkan di kelas A.",
+        expected: "Aksi berlaku pada kelas A sesuai kapabilitas kolaborator.",
+      },
+      {
+        action: "Coba buka kelas B dari daftar dan melalui URL langsung.",
+        expected:
+          "Kelas di luar penugasan tidak dapat dikelola atau dibaca di luar kebijakan akses.",
+      },
+      {
+        action: "Buka menu administrasi kelas/prodi yang tidak ditugaskan.",
+        expected:
+          "Menu dan endpoint administratif tetap mengikuti role lokal akun.",
+      },
+    ],
+    cleanup:
+      "Pulihkan perubahan uji di kelas A; pastikan kelas B tidak berubah.",
+  },
+);
+
+const themeRoles = [
+  "Mahasiswa",
+  "Dosen",
+  "Admin Prodi",
+  "Super Admin",
+  "Rektor",
+  "Asisten Dosen (Asdos)",
+  "Dosen Kolaborator",
+];
+const themeTargets = {
+  Mahasiswa: {
+    route: "Beranda → kelas yang diikuti → Materi & aktivitas, Presensi, dan Rekap nilai",
+    controls: "daftar aktivitas, panel nilai, menu profil, dan dialog yang tersedia pada kelas",
+  },
+  Dosen: {
+    route: "Dashboard dosen → kelas yang diampu → Materi & aktivitas, Peserta, Presensi, dan Rekap nilai",
+    controls: "tabel Peserta, form editor materi, filter nilai, dan menu profil",
+  },
+  "Admin Prodi": {
+    route: "Program Studi & Otoritas → Master Program Studi dan Pengguna",
+    controls: "tabel prodi/pengguna, filter, dialog Edit, dan form Atur Lingkup",
+  },
+  "Super Admin": {
+    route: "Program Studi & Otoritas → Master Program Studi dan Pengguna",
+    controls: "tabel prodi/pengguna, tombol sortir, dialog Edit, dan form Atur Lingkup",
+  },
+  Rektor: {
+    route: "Pemantauan Akademik → ringkasan dan laporan kelas/prodi",
+    controls: "filter periode/prodi, tabel dosen, tabel kelas, dan dialog rincian",
+  },
+  "Asisten Dosen (Asdos)": {
+    route: "kelas utama (baca saja) → Praktikum {Nama Kelas} → Materi & aktivitas, Presensi, dan Nilai",
+    controls: "tabel praktikum, form editor, daftar peserta tersinkron, dan menu profil",
+  },
+  "Dosen Kolaborator": {
+    route: "kelas yang ditugaskan sebagai kolaborator → Materi & aktivitas, Peserta, dan Nilai",
+    controls: "tabel kelas, form editor yang diizinkan, filter, dan menu profil",
+  },
+};
+themeRoles.forEach((role, index) =>
+  add(
+    "UI",
+    role,
+    "Implementasi saat ini",
+    `Tema terang dan gelap pada tampilan ${role}`,
+    `Akun ${role} uji; halaman yang diperiksa: ${themeTargets[role].route}.`,
+    "Ganti tema terang/gelap, jelajahi halaman serta dialog, lalu muat ulang.",
+    "Latar, teks, border, tabel, badge, modal, fokus dan kontrol terbaca dalam kedua tema; preferensi tetap setelah muat ulang.",
+    {
+      ...current,
+      id: `TC-UI-THEME-${String(index + 1).padStart(2, "0")}`,
+      featureKeys: ["theme"],
+      navigation: `Masuk dengan akun ${role} uji dan buka ${themeTargets[role].route}.`,
+      priority: "P1",
+      preconditions: [
+        role === "Asisten Dosen (Asdos)"
+          ? "Akun mahasiswa ditugaskan sebagai Asdos dan memiliki praktikum uji."
+          : role === "Dosen Kolaborator"
+            ? "Akun dosen terdaftar sebagai kolaborator pada kelas QA."
+            : `Akun ${role} uji dapat masuk ke lingkungan yang diuji.`,
+        "Gunakan browser desktop dan ponsel atau emulator viewport; catat keadaan tema awal.",
+      ],
+      data: `Tema Terang/Gelap; ${themeTargets[role].route}; ${themeTargets[role].controls}.`,
+      steps: [
+        {
+          action: `Masuk sebagai ${role} memakai akun pada Data uji; buka ${themeTargets[role].route}.`,
+          expected: `Halaman dan kontrol yang tercantum di Data uji terbuka sesuai hak akses ${role}.`,
+        },
+        {
+          action: `Klik tombol tema di header, pilih Gelap, lalu periksa ${themeTargets[role].route}.`,
+          expected:
+            "Komponen beralih ke palet gelap dengan teks, border, tabel, status, modal dan kontrol tetap kontras.",
+        },
+        {
+          action: `Buka ${themeTargets[role].controls}; tab melalui kontrol keyboard lalu periksa fokus, hover, badge, dan isi tabel.`,
+          expected:
+            "Dialog, input, tombol, fokus, hover, status dan isi tabel tidak tertinggal dengan warna tema terang.",
+        },
+        {
+          action:
+            "Muat ulang halaman dengan tema Gelap, pastikan pilihan tetap tersimpan, lalu pilih Terang dan muat ulang sekali lagi.",
+          expected:
+            "Tema Gelap dan Terang tetap mengikuti pilihan terakhir setelah muat ulang; isi halaman tidak hilang.",
+        },
+        {
+          action:
+            "Kecilkan viewport ke 390 px dan ulangi pemeriksaan halaman utama.",
+          expected:
+            "Konten tetap terbaca dan tidak menimbulkan overflow horizontal halaman.",
+        },
+      ],
+      cleanup: "Kembalikan preferensi tema awal penguji.",
+    },
+  ),
+);
+
+add(
+  "UI",
+  "Dosen",
+  "Implementasi saat ini",
+  "Pengurutan naik-turun tersedia pada tabel di seluruh aplikasi",
+  "Tabel data dari halaman kelas, peserta/presensi/nilai, audit, administrasi, laporan, dan tabel hasil dinamis; desktop dan viewport ponsel.",
+  "Urutkan kolom data berbeda ke arah naik lalu turun pada setiap tabel, termasuk tabel yang baru dibuka dari dialog.",
+  "Setiap kolom data menyediakan kontrol sort yang dapat diakses; urutan dan indikator mengikuti nilai kolom, kontrol aksi tidak mengubah data, tabel dinamis dan layout ponsel tetap dapat diurutkan.",
+  {
+    ...current,
+    featureKeys: ["table-sorting"],
+    navigation:
+      "Gunakan akun sesuai role untuk membuka tabel data; pada ponsel gunakan kontrol sortir tabel.",
+    priority: "P1",
+    preconditions: [
+      "Siapkan data uji minimal tiga baris dengan nilai mudah dibandingkan, termasuk angka seperti 2 dan 10.",
+      "Siapkan akun Dosen, Admin Prodi, Super Admin, Rektor, serta sesi yang dapat membuka tabel hasil Sinkron Pengguna.",
+    ],
+    data: "Kolom nama, angka, tanggal/status dan kolom aksi; tabel halaman utama serta tabel yang muncul setelah modal dibuka.",
+    steps: [
+      {
+        action:
+          "Pada tabel peserta kelas, klik tombol sortir di header Nama satu kali dan periksa baris.",
+        expected:
+          "Baris terurut A–Z dan semua sel dalam baris tetap berpasangan dengan peserta yang sama.",
+      },
+      {
+        action: "Klik header Nama yang sama lagi.",
+        expected:
+          "Baris beralih Z–A; indikator aksesibel menyatakan arah menurun.",
+      },
+      {
+        action:
+          "Ulangi pada kolom angka dan tanggal di rekap nilai, presensi, atau laporan.",
+        expected:
+          "Angka diurutkan numerik (2 sebelum 10) dan tanggal kronologis, bukan hanya berdasarkan teks.",
+      },
+      {
+        action:
+          "Buka Program Studi & Otoritas → Pengguna → Sinkron Pengguna, jalankan pratinjau, lalu urutkan kolom di tabel hasil.",
+        expected:
+          "Tabel yang baru dibuat tetap mendapat kontrol sortir dan tombol mengurutkan isi pratinjau.",
+      },
+      {
+        action:
+          "Ulangi pada tabel audit atau laporan Rektor yang memiliki beberapa halaman; ganti filter/paginasi setelah sortir.",
+        expected:
+          "Tabel tetap dapat digunakan dan data/filter/aksi tidak rusak akibat sortir.",
+      },
+      {
+        action:
+          "Pada viewport ponsel, buka tabel dengan header disembunyikan lalu pilih kolom dari toolbar sortir.",
+        expected:
+          "Toolbar ponsel mengurutkan tabel yang sama tanpa overflow halaman.",
+      },
+    ],
+    cleanup:
+      "Pulihkan filter dan halaman tabel; sortir hanya mengubah urutan tampilan lokal.",
+  },
+);
+
+add(
+  "SYN",
+  "Super Admin",
+  "Implementasi saat ini",
+  "Sinkron Pengguna memfilter metrik dan pratinjau akun SSO",
+  "Pratinjau berisi minimal satu akun baru dan dua akun yang sudah terdaftar; tipe akun dan query pencarian tersedia.",
+  "Pilih filter jenis dan pencarian, pratinjau pengguna, lalu klik ketiga kartu metrik.",
+  "Kartu Total, Akun Baru, dan Akun Sudah Terdaftar menyaring isi tabel dengan jumlah yang tepat; label Sinkron Pengguna jelas dan sortir tabel tetap berfungsi.",
+  {
+    ...current,
+    featureKeys: ["user-sync"],
+    navigation: "Program Studi & Otoritas → Pengguna → Sinkron Pengguna.",
+    priority: "P0",
+    preconditions: [
+      "Gunakan SSO fixture atau lingkungan QA dengan akun baru dan akun yang sudah terdaftar.",
+      "Jangan konfirmasi perubahan akun sebelum isi pratinjau diperiksa.",
+    ],
+    data: "Satu akun pra-registrasi, dua akun terdaftar, pencarian nama/email/NIDN/NIP.",
+    steps: [
+      {
+        action:
+          "Buka Sinkron Pengguna, pilih tipe akun dan isi pencarian yang cocok dengan subset akun uji.",
+        expected:
+          "Filter tipe dan pencarian diterapkan tanpa mengubah data pengguna.",
+      },
+      {
+        action:
+          "Klik Pratinjau akun dari SSO dan periksa kartu jumlah serta rincian tabel.",
+        expected: "Jumlah total/new/existing konsisten dengan baris pratinjau.",
+      },
+      {
+        action:
+          "Klik kartu Akun Baru, lalu Akun Sudah Terdaftar, dan akhirnya Total Akun.",
+        expected:
+          "Setiap kartu menampilkan subset tepat; klik Total mengembalikan semua hasil pratinjau.",
+      },
+      {
+        action:
+          "Urutkan kolom Nama & Identitas, Tipe SSO, Status E-Learning, dan Peran.",
+        expected:
+          "Urutan naik/turun bekerja pada semua kolom data dan tidak mengubah status integrasi.",
+      },
+      {
+        action: "Periksa dialog sebelum menutup tanpa konfirmasi simpan.",
+        expected:
+          "Pratinjau tidak menulis akun sampai penguji secara eksplisit menyelesaikan konfirmasi.",
+      },
+    ],
+    cleanup:
+      "Tutup dialog pratinjau tanpa menyimpan jika lingkungan bukan data QA.",
+  },
+);
+add(
+  "SYN",
+  "Super Admin",
+  "Implementasi saat ini",
+  "Sinkronisasi SSO memperbarui profil tanpa mengambil alih role lokal",
+  "Pengguna sudah terdaftar dan role/cakupan lokalnya berbeda dari role akun aplikasi SSO.",
+  "Pratinjau dan konfirmasi sinkron pengguna; bandingkan role/cakupan sebelum dan sesudah serta jejak audit.",
+  "Profil yang disinkronkan mengikuti aturan lokal; role dan cakupan E-Learning tidak berubah hanya karena usulan role SSO berbeda.",
+  {
+    ...current,
+    featureKeys: ["access-sso", "user-sync"],
+    navigation:
+      "Program Studi & Otoritas → Pengguna → Sinkron Pengguna; gunakan akun uji terdaftar.",
+    priority: "P0",
+    preconditions: [
+      "Gunakan akun QA yang aman diubah; catat role, cakupan prodi, dan versi profil lokal sebelum sinkronisasi.",
+      "Sediakan data SSO dengan profil terbaru dan role aplikasi berbeda dari role lokal.",
+    ],
+    data: "Akun dosen/admin prodi QA dengan role lokal yang diketahui dan application_access role SSO yang berbeda.",
+    steps: [
+      {
+        action:
+          "Catat role dan cakupan pengguna di E-Learning sebelum membuka sinkronisasi.",
+        expected:
+          "Nilai awal role dan scope lokal tercatat sebagai pembanding.",
+      },
+      {
+        action:
+          "Pratinjau akun dari SSO dan baca status, role yang diajukan, serta perbedaan akun.",
+        expected:
+          "Perbedaan role terlihat sebagai informasi sinkronisasi, bukan perubahan role yang sudah diterapkan.",
+      },
+      {
+        action:
+          "Konfirmasi sinkronisasi untuk akun QA tersebut, lalu muat ulang halaman pengguna.",
+        expected:
+          "Profil non-otoritatif yang boleh disinkronkan diperbarui; role dan cakupan lokal tetap sama.",
+      },
+      {
+        action: "Periksa hak akses menu/API dan jejak audit setelah sinkron.",
+        expected:
+          "Hak akses mengikuti role lokal; tindakan sinkron tercatat tanpa mengubah penugasan lokal.",
+      },
+    ],
+    cleanup:
+      "Pulihkan profil dan role akun QA sesuai keadaan awal bila diperlukan; jangan sinkronkan akun pengguna nyata.",
+  },
+);
+add(
+  "SYN",
+  "Super Admin",
+  "Implementasi saat ini",
+  "Sinkronisasi SIAKAD ditandai belum siap dan tidak dapat dijalankan",
+  "Integrasi SIAKAD belum dinyatakan siap; sinkronisasi manual pengguna SSO tetap tersedia.",
+  "Buka Program Studi & Otoritas, periksa pesan kesiapan SIAKAD dan coba akses kontrol/endpoint sinkronisasinya.",
+  "SIAKAD jelas berstatus belum siap; aksi sinkronisasi tidak dapat dipicu dan tidak mengubah scope/otoritas lokal.",
+  {
+    ...current,
+    id: "TC-SYN-SIAKAD-001",
+    featureKeys: ["siakad-sync-disabled"],
+    availability: "disabled",
+    navigation: "Program Studi & Otoritas → Pengguna / Integrasi.",
+    priority: "P0",
+    preconditions: [
+      "Gunakan akun Super Admin pada lingkungan QA dengan Integrasi SIAKAD belum siap.",
+      "Catat scope/otoritas lokal sebelum pengujian dan jangan mengirim data sinkronisasi.",
+    ],
+    data: "Halaman governance serta endpoint integrasi SIAKAD yang dikonfigurasi nonaktif.",
+    steps: [
+      {
+        action:
+          "Buka halaman Program Studi & Otoritas dan baca keterangan integrasi.",
+        expected:
+          "Pesan menyebut integrasi SIAKAD belum siap dan sinkronisasi dinonaktifkan.",
+      },
+      {
+        action: "Periksa tab, tombol, menu, atau kontrol sinkron SIAKAD.",
+        expected:
+          "Kontrol aksi tidak ditampilkan atau terlihat nonaktif dan tidak dapat dikonfirmasi.",
+      },
+      {
+        action:
+          "Jika penguji memiliki akses API QA, kirim request uji ke endpoint sinkronisasi tanpa data nyata.",
+        expected:
+          "API menolak request karena integrasi belum siap; tidak ada scope/otoritas yang berubah.",
+      },
+      {
+        action:
+          "Muat ulang halaman dan periksa kembali status serta scope lokal.",
+        expected: "Integrasi tetap nonaktif dan nilai lokal tetap sama.",
+      },
+    ],
+    cleanup:
+      "Tidak ada pembersihan data; simpan tangkapan pesan dan response penolakan sebagai bukti.",
+  },
+);
 
 // Human-facing copy only; identifiers and assertion mappings remain stable.
 const copyCorrections = {
@@ -2775,8 +4369,326 @@ for (const c of cases)
     "manualReason",
   ])
     c[key] = readable(c[key]);
+const productionCopyCorrections = [
+  [
+    "Lingkungan lokal aktif: E-Learning 127.0.0.1:5173, SSO dan File Service fixture.",
+    "URL target pada pengaturan sesi harus mengarah ke staging/UAT atau lingkungan uji produksi yang disetujui; catat versi build yang diuji.",
+  ],
+  ["Akun fixture ACTIVE.", "Akun uji aktif pada SSO lingkungan target."],
+  [
+    "Ulangi callback OIDC dengan data tidak sah pada lingkungan fixture.",
+    "Ulangi callback OIDC pada staging/UAT menggunakan parameter uji tidak sah yang telah disiapkan.",
+  ],
+  [
+    "Paksa expiry pada fixture, lalu panggil /me memakai cookie sesi.",
+    "Gunakan akun uji dengan sesi kedaluwarsa, lalu periksa endpoint /me dengan sesi yang sama.",
+  ],
+  [
+    "Nonaktifkan akun pada fixture SSO dan kirim webhook bertanda tangan; akses /me kembali.",
+    "Pada akun uji yang disiapkan pemilik SSO staging, nonaktifkan akses melalui prosedur resmi lalu periksa endpoint /me.",
+  ],
+  [
+    "Course QA-V5, prodi IF, rombel A.",
+    "Mata kuliah uji pada prodi IF dengan rombel A yang disiapkan di staging.",
+  ],
+  [
+    "Fixture transaksi clone yang digagalkan sebelum semua entitas selesai.",
+    "Skenario kegagalan transaksi penyalinan kelas di staging sebelum semua entitas tersimpan.",
+  ],
+  [
+    "Berkas fixture INFECTED / checksum salah.",
+    "Berkas uji yang disetujui pemilik lingkungan untuk skenario antivirus terdeteksi atau checksum tidak sesuai.",
+  ],
+  [
+    "File TRASH berumur>7 hari di fixture.",
+    "Berkas uji yang masa retensinya sudah berakhir (lebih dari tujuh hari).",
+  ],
+  [
+    "Hasil antivirus nyata diverifikasi, bukan scan fixture.",
+    "Hasil pemindaian pada staging berasal dari layanan antivirus aktif yang disetujui, bukan simulasi.",
+  ],
+  [
+    "Buka profil/editor setelah memajukan waktu fixture.",
+    "Buka profil/editor setelah masa berlaku data uji berakhir sesuai jadwal staging.",
+  ],
+  [
+    "Kirim burst terkontrol pada staging fixture.",
+    "Kirim beban terukur pada staging setelah mendapat persetujuan pemilik layanan.",
+  ],
+  [
+    "SSO fixture lambat /503.",
+    "SSO staging/UAT dengan gangguan latensi atau 503 yang telah dijadwalkan.",
+  ],
+  [
+    "File Service fixture tidak tersedia.",
+    "File Service staging dalam window gangguan yang telah dikoordinasikan.",
+  ],
+  [
+    "150–250 pengguna staging; fixture load disetujui.",
+    "150–250 akun sintetik untuk load test staging yang disetujui; jangan kirim beban ke produksi.",
+  ],
+  [
+    "Fixture deterministik laporan akademik.",
+    "Dataset akademik terkontrol pada staging untuk periode laporan yang sama.",
+  ],
+  [
+    "Gunakan SSO fixture atau lingkungan QA dengan akun baru dan akun yang sudah terdaftar.",
+    "Gunakan SSO staging/UAT dengan satu akun uji baru dan satu akun uji yang sudah terdaftar.",
+  ],
+  [
+    "PDF valid memuat filter, waktu data, definisi dan label demo saat fixture dipakai.",
+    "PDF valid memuat filter, waktu data, definisi, dan label lingkungan uji.",
+  ],
+  [
+    "Teks dan tabel terbaca, tidak terpotong; waktu data dan label demo tercetak.",
+    "Teks dan tabel terbaca, tidak terpotong; waktu data dan label lingkungan uji tercetak.",
+  ],
+  [
+    "pemilih akun demonstrasi",
+    "akun uji resmi yang disediakan untuk lingkungan target",
+  ],
+];
+function productionLanguage(value) {
+  if (typeof value === "string") {
+    for (const [from, to] of productionCopyCorrections)
+      value = value.replaceAll(from, to);
+    return value
+      .replace(/QA-V5/gi, "lingkungan staging/UAT")
+      .replace(/\bfixture\b/gi, "data uji staging")
+      .replace(/\bdemonstrasi\b/gi, "uji")
+      .replace(/\bdemo\b/gi, "uji");
+  }
+  if (Array.isArray(value)) return value.map(productionLanguage);
+  if (value && typeof value === "object")
+    return Object.fromEntries(
+      Object.entries(value).map(([key, child]) => [
+        key,
+        productionLanguage(child),
+      ]),
+    );
+  return value;
+}
+for (const c of cases)
+  for (const key of [
+    "title",
+    "data",
+    "preconditions",
+    "steps",
+    "expected",
+    "cleanup",
+    "manualReason",
+    "navigation",
+  ])
+    c[key] = productionLanguage(c[key]);
+const familyFeatureKeys = {
+  ACC: ["access-sso"],
+  SDH: ["student-dashboard"],
+  TDH: ["instructor-dashboard"],
+  CRS: ["class-management"],
+  ENR: ["participants"],
+  SEC: ["sections"],
+  RES: ["learning-content"],
+  QZ: ["quizzes"],
+  ASG: ["assignments"],
+  GRD: ["grades"],
+  FDB: ["feedback-drafts"],
+  ANN: ["announcements"],
+  NOT: ["notifications"],
+  FIL: ["files"],
+  PRG: ["learning-progress"],
+  ATT: ["attendance"],
+  ISO: ["program-governance"],
+  REC: ["rector-monitoring"],
+  HELP: ["help-guide"],
+  AUD: ["audit-trail"],
+  OPS: ["operations"],
+  FUT: ["roadmap"],
+  PILOT: ["pilot-gates"],
+};
+for (const c of cases)
+  c.featureKeys = [
+    ...new Set([...(familyFeatureKeys[c.family] ?? []), ...c.featureKeys]),
+  ];
+const featureInventory = [
+  [
+    "access-sso",
+    "Login SSO & kewenangan lokal",
+    "Login, sesi, pemetaan role lokal, dan batas akses.",
+    "active",
+  ],
+  [
+    "student-dashboard",
+    "Dashboard mahasiswa",
+    "Beranda, agenda, kelas dan ringkasan mahasiswa.",
+    "active",
+  ],
+  [
+    "instructor-dashboard",
+    "Dashboard dosen",
+    "Beranda, aktivitas dan antrean kerja pengajar.",
+    "active",
+  ],
+  [
+    "class-management",
+    "Mata kuliah & kelas",
+    "Pengelolaan, duplikasi, penerbitan dan arsip kelas.",
+    "active",
+  ],
+  [
+    "participants",
+    "Peserta & kolaborator",
+    "Pendaftaran, impor, status peserta dan akses kolaborator.",
+    "active",
+  ],
+  [
+    "class-collaborators",
+    "Dosen kolaborator",
+    "Cakupan akses kolaborator pada kelas yang ditugaskan.",
+    "active",
+  ],
+  [
+    "sections",
+    "Section & pertemuan",
+    "Susunan, tipe, visibilitas dan jadwal section.",
+    "active",
+  ],
+  [
+    "learning-content",
+    "Materi & editor",
+    "Materi teks, PDF, video, tautan dan editor blok.",
+    "active",
+  ],
+  ["files", "Berkas", "Unggah, akses, unduh dan pengelolaan berkas.", "active"],
+  [
+    "quizzes",
+    "Kuis & bank soal",
+    "Penyusunan, pengerjaan, autosave dan penilaian kuis.",
+    "active",
+  ],
+  [
+    "assignments",
+    "Tugas",
+    "Penerbitan, pengumpulan, versi, tenggat dan penilaian.",
+    "active",
+  ],
+  [
+    "grades",
+    "Rekap nilai",
+    "Kategori, bobot, kalkulasi dan publikasi nilai.",
+    "active",
+  ],
+  [
+    "feedback-drafts",
+    "Umpan balik & draf",
+    "Komentar, draf lokal/server dan pemulihan perubahan.",
+    "active",
+  ],
+  [
+    "announcements",
+    "Pengumuman",
+    "Sasaran, jadwal, lampiran dan pengelolaan pengumuman.",
+    "active",
+  ],
+  [
+    "notifications",
+    "Notifikasi",
+    "Penerimaan, jumlah belum dibaca dan status baca.",
+    "active",
+  ],
+  [
+    "attendance",
+    "Presensi",
+    "Jadwal, kode, check-in, koreksi dan rekap.",
+    "active",
+  ],
+  [
+    "learning-progress",
+    "Progres belajar",
+    "Pencatatan dan tampilan kemajuan mahasiswa.",
+    "active",
+  ],
+  [
+    "program-governance",
+    "Administrasi & isolasi prodi",
+    "Role lokal, lingkup prodi, pengguna dan isolasi data.",
+    "active",
+  ],
+  [
+    "user-sync",
+    "Sinkron Pengguna dari SSO",
+    "Pratinjau, filter, penambahan akun dan sinkron profil.",
+    "active",
+  ],
+  [
+    "siakad-sync-disabled",
+    "Integrasi SIAKAD",
+    "Kontrol sinkronisasi ditandai belum siap dan harus tetap nonaktif.",
+    "disabled",
+  ],
+  [
+    "linked-practicum",
+    "Kelas praktikum terhubung",
+    "Akses Asdos, pemantauan dosen, roster, nilai dan duplikasi.",
+    "active",
+  ],
+  [
+    "theme",
+    "Tema terang & gelap",
+    "Keterbacaan komponen dan preferensi tema lintas peran.",
+    "active",
+  ],
+  [
+    "table-sorting",
+    "Pengurutan tabel global",
+    "Sort naik/turun pada tabel statis, dinamis dan tampilan ponsel.",
+    "active",
+  ],
+  [
+    "rector-monitoring",
+    "Pemantauan akademik Rektor",
+    "Ringkasan, filter, rincian, riwayat dan ekspor baca-saja.",
+    "active",
+  ],
+  [
+    "help-guide",
+    "Bantuan & panduan",
+    "Panduan pengguna sesuai role dan navigasi bantuan.",
+    "active",
+  ],
+  [
+    "audit-trail",
+    "Jejak audit",
+    "Rekaman aksi dan cakupan akses audit.",
+    "active",
+  ],
+  [
+    "operations",
+    "Operasional & konfigurasi",
+    "Kesiapan runtime, keamanan dan prosedur operasi.",
+    "active",
+  ],
+  [
+    "pilot-gates",
+    "Penerimaan lingkungan eksternal",
+    "Gerbang SSO/File Service kampus, VPS dan pilot terisolasi.",
+    "active",
+  ],
+  [
+    "roadmap",
+    "Backlog rilis mendatang",
+    "Fitur rencana yang belum tersedia pada implementasi saat ini.",
+    "backlog",
+  ],
+].map(([id, title, description, availability]) => {
+  const caseIds = cases
+    .filter((c) => c.featureKeys.includes(id))
+    .map((c) => c.id);
+  if (!caseIds.length)
+    throw new Error(`Feature inventory item has no tutorial: ${id}`);
+  return { id, title, description, availability, caseIds };
+});
 const documentNotes = [
-  "Tambahan REC-004 dan seterusnya serta HELP mengacu pada implementasi dan panduan 7 Oktober 2026, bukan penambahan butir RTM resmi. Peran Re ktor memakai sesi e-learning yang sama; zona waktu mengikuti perangkat.".replace("Re ktor", "Rektor"),
+  "Tambahan implementasi dan panduan diverifikasi kembali pada 12 Oktober 2026; bukan penambahan butir RTM resmi. Katalog memisahkan fitur aktif, integrasi nonaktif, backlog, dan gerbang lingkungan eksternal.",
   "RTM §3.1.1 menyebut 151 butir, tetapi 15 rentang kode yang ditampilkan berjumlah 117. Detail per butir pada PDF requirement tidak ada di workspace; keterlacakan memakai keluarga kode dan paragraf v5 yang tersedia.",
   "RTM menyebut 4 tipe kuis, sedangkan §3.1 dan §3.3.2 menguraikan 8 tipe. Katalog mengikuti uraian lengkap 8 tipe.",
   "Prioritas dan role tiap kasus diturunkan dari cakupan §3.1. CRS-007/008 disebut eksplisit. Pembagian prioritas per kode lain tidak dirinci oleh dokumen.",
@@ -2794,6 +4706,8 @@ const catalog = {
   roles,
   priorities: ["P0", "P1", "P2"],
   modules: Object.values(modules),
+  implementationReviewedAt: "2026-10-12",
+  featureInventory,
   families: Object.entries(familyRanges).map(([code, count]) => ({
     code,
     range: `${code}-001–${String(count).padStart(3, "0")}`,
@@ -2831,7 +4745,10 @@ writeGenerated(
     )
     .join("")}</pre></html>`,
 );
-writeGenerated("apps/qa/public/source/current.html", '<!doctype html><html lang="id"><meta charset="utf-8"><title>Cakupan implementasi terkini</title><body style="max-width:900px;margin:40px auto;font:18px/1.7 system-ui"><h1 id="L1">Cakupan implementasi 7 Oktober 2026</h1><p>Tambahan QA memverifikasi implementasi pemantauan akademik satu pintu, panduan sesuai lima peran, waktu lokal dan ekspor. Dasar isi: apps/web/src/data/helpGuide.json, tests/rector-reporting.test.ts, tests/integration/rector-access.test.ts dan tests/standalone-guide.test.ts. Bukan requirement RTM resmi baru.</p><p>Hasil otomatis hanya membuktikan lingkup assertion yang dipetakan. Tata letak, tab baru, cetak dan layanan kampus tetap memerlukan bukti manual.</p></body></html>');
+writeGenerated(
+  "apps/qa/public/source/current.html",
+  '<!doctype html><html lang="id"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cakupan implementasi terkini</title><body style="max-width:900px;margin:40px auto;padding:0 20px;font:18px/1.7 system-ui;color:#29465c"><h1 id="L1">Cakupan implementasi 12 Oktober 2026</h1><p>Inventaris portal QA ditinjau dari navigasi dan komponen E-Learning, panduan pengguna, kontrol akses API, dan regresi yang tersedia. Fitur aktif memiliki tutorial manual; integrasi SIAKAD ditampilkan nonaktif; roadmap tidak dapat dinyatakan lulus sampai rilis menyediakan fiturnya.</p><h2>Tambahan yang diuji</h2><ul><li>Praktikum terhubung: pembuatan Asdos, isolasi wewenang, pemantauan dosen baca-saja, sinkron peserta, pemetaan nilai, dan duplikasi.</li><li>Sinkron Pengguna SSO dengan role lokal tetap berwenang, filter metrik, dan tabel hasil.</li><li>Tema terang/gelap lintas persona dan pengurutan tabel global, termasuk tabel dinamis dan toolbar ponsel.</li><li>Integrasi SIAKAD yang diberi status belum siap dan tetap tidak dapat dijalankan.</li></ul><p>Hasil otomatis hanya membuktikan assertion yang dipetakan. Tampilan, alur lintas peran, layanan kampus, dan gerbang produksi tetap memerlukan bukti manual pada lingkungan yang sesuai.</p></body></html>',
+);
 console.log(
   `QA catalog: ${cases.length} scenarios, ${cases.filter((c) => c.automation).length} automated mappings, ${catalog.families.length} RTM families.`,
 );
