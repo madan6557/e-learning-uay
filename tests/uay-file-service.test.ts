@@ -3,8 +3,15 @@ import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { once } from "node:events";
 import { randomUUID, createHash } from "node:crypto";
-import { getUayEndpoint, getUayHeaders } from "../apps/api/src/files.js";
-import { config } from "../apps/api/src/core.js";
+import {
+  getUayEndpoint,
+  getUayHeaders,
+  sanitizeFolderSegment,
+  mapPurposeToFolderCategory,
+  resolveClassFolderPath,
+  uayUpload,
+} from "../apps/api/src/files.js";
+import { config, db } from "../apps/api/src/core.js";
 
 test("UAY File Service: endpoint formatting and header resolution", () => {
   // Test endpoint URL normalizer
@@ -357,6 +364,201 @@ test("production mode strictly requires file service and rejects local storage",
     (config as any).fileKey = origKey;
     (config as any).s3Bucket = origBucket;
     (config as any).s3Endpoint = origEndpoint;
+  }
+});
+
+test("UAY File Service: sanitizeFolderSegment cleans names for filesystem and File-Service limits", () => {
+  // Trimming and replacing illegal characters
+  assert.equal(
+    sanitizeFolderSegment("   TI/3A: Ganjil*?<>|   "),
+    "TI-3A- Ganjil-",
+  );
+  // Collapsing whitespace
+  assert.equal(
+    sanitizeFolderSegment("  [IF101]   Pemrograman   Web  "),
+    "[IF101] Pemrograman Web",
+  );
+  // Stripping leading/trailing dots
+  assert.equal(sanitizeFolderSegment("..folder.name.."), "folder.name");
+  // Empty or invalid returns fallback
+  assert.equal(sanitizeFolderSegment("   "), "Umum");
+  assert.equal(sanitizeFolderSegment("...", "FallbackFolder"), "FallbackFolder");
+  // Length truncation to max 150 chars
+  const longStr = "A".repeat(200);
+  const truncated = sanitizeFolderSegment(longStr);
+  assert.equal(truncated.length, 150);
+  assert.equal(truncated, "A".repeat(150));
+});
+
+test("UAY File Service: mapPurposeToFolderCategory groups file purposes systematically", () => {
+  assert.equal(mapPurposeToFolderCategory("COVER"), "00_Sampul");
+  assert.equal(mapPurposeToFolderCategory("RESOURCE"), "01_Materi");
+  assert.equal(mapPurposeToFolderCategory("VIDEO"), "01_Materi");
+  assert.equal(mapPurposeToFolderCategory("SUBMISSION"), "02_Tugas");
+  assert.equal(mapPurposeToFolderCategory("QUIZ_ANSWER"), "03_Kuis");
+  assert.equal(mapPurposeToFolderCategory("UNKNOWN_PURPOSE"), "04_Lainnya");
+});
+
+test("UAY File Service: resolveClassFolderPath produces academic year / course class / category structure", async () => {
+  // 1. Without classId -> Umum / category
+  const umumPath = await resolveClassFolderPath({
+    classId: null,
+    purpose: "RESOURCE",
+  });
+  assert.equal(umumPath, "Umum/01_Materi");
+
+  // 2. With classId stubbed in db.courseClass.findUnique
+  const origFindUnique = db.courseClass.findUnique;
+  try {
+    (db.courseClass as any).findUnique = async ({ where }: any) => {
+      if (where.id === "class-full") {
+        return {
+          name: "TI-3A",
+          academicYear: "2024/2025 Ganjil",
+          course: {
+            code: "IF101",
+            title: "Pemrograman Web",
+          },
+        };
+      }
+      if (where.id === "class-no-code") {
+        return {
+          name: "TI-1B",
+          academicYear: "2024-2025 Genap",
+          course: {
+            code: null,
+            title: "Algoritma Pemrograman",
+          },
+        };
+      }
+      if (where.id === "class-no-course") {
+        return {
+          name: "Kelas Percobaan",
+          academicYear: "2024-2025",
+          course: null,
+        };
+      }
+      return null;
+    };
+
+    const path1 = await resolveClassFolderPath({
+      classId: "class-full",
+      purpose: "RESOURCE",
+    });
+    assert.equal(
+      path1,
+      "2024-2025 Ganjil/[IF101] Pemrograman Web - TI-3A/01_Materi",
+    );
+
+    const path2 = await resolveClassFolderPath({
+      classId: "class-no-code",
+      purpose: "SUBMISSION",
+    });
+    assert.equal(
+      path2,
+      "2024-2025 Genap/Algoritma Pemrograman - TI-1B/02_Tugas",
+    );
+
+    const path3 = await resolveClassFolderPath({
+      classId: "class-no-course",
+      purpose: "QUIZ_ANSWER",
+    });
+    assert.equal(
+      path3,
+      "2024-2025/Kelas Percobaan/03_Kuis",
+    );
+
+    const pathNotFound = await resolveClassFolderPath({
+      classId: "non-existent-id",
+      purpose: "COVER",
+    });
+    assert.equal(pathNotFound, "Umum/00_Sampul");
+  } finally {
+    (db.courseClass as any).findUnique = origFindUnique;
+  }
+});
+
+test("UAY File Service: uayUpload sends folderPath multipart field and preserves field limit", async () => {
+  let receivedBody = "";
+
+  const server = createServer(async (req, res) => {
+    const chunks: Buffer[] = [];
+    for await (const chunk of req) chunks.push(chunk);
+    receivedBody = Buffer.concat(chunks).toString("utf-8");
+
+    res.setHeader("Content-Type", "application/json");
+    res.statusCode = 201;
+    res.end(
+      JSON.stringify({
+        statusCode: 201,
+        success: true,
+        data: {
+          id: "uploaded-file-uuid-1",
+          originalName: "silabus.pdf",
+          mimeType: "application/pdf",
+          sizeBytes: 1024,
+          status: "active",
+        },
+      }),
+    );
+  });
+
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const port = (server.address() as any).port;
+  const origUrl = config.fileUrl;
+  const origKey = config.fileKey;
+
+  try {
+    (config as any).fileUrl = `http://127.0.0.1:${port}/api/v1`;
+    (config as any).fileKey = "test-token-key";
+
+    // 1. Upload with folderPath
+    const result = await uayUpload({
+      fileBuffer: Buffer.from("PDF DUMMY DATA"),
+      fileName: "silabus.pdf",
+      mimeType: "application/pdf",
+      repositoryId: "00000000-0000-0000-0000-000000000001",
+      folderPath: "2024-2025 Ganjil/[IF101] Pemrograman Web - TI-3A/01_Materi",
+      resourceType: "RESOURCE",
+      resourceId: "item-xyz-123",
+      actorId: "lecturer-user-id",
+      token: "mock-jwt-token",
+    });
+
+    assert.equal(result.id, "uploaded-file-uuid-1");
+    // Verify folderPath was present in the multipart body
+    assert.ok(receivedBody.includes('name="folderPath"'));
+    assert.ok(
+      receivedBody.includes(
+        "2024-2025 Ganjil/[IF101] Pemrograman Web - TI-3A/01_Materi",
+      ),
+    );
+    assert.ok(receivedBody.includes('name="contextType"'));
+    assert.ok(receivedBody.includes("RESOURCE"));
+    assert.ok(receivedBody.includes('name="contextId"'));
+    assert.ok(receivedBody.includes("item-xyz-123"));
+    assert.ok(!receivedBody.includes('name="folderId"'));
+
+    // 2. Upload with folderId (folderId takes precedence, folderPath should NOT be sent)
+    await uayUpload({
+      fileBuffer: Buffer.from("PDF DUMMY DATA 2"),
+      fileName: "silabus2.pdf",
+      mimeType: "application/pdf",
+      repositoryId: "00000000-0000-0000-0000-000000000001",
+      folderId: "existing-folder-uuid",
+      folderPath: "should-not-be-sent",
+      actorId: "lecturer-user-id",
+      token: "mock-jwt-token",
+    });
+
+    assert.ok(receivedBody.includes('name="folderId"'));
+    assert.ok(receivedBody.includes("existing-folder-uuid"));
+    assert.ok(!receivedBody.includes("should-not-be-sent"));
+  } finally {
+    (config as any).fileUrl = origUrl;
+    (config as any).fileKey = origKey;
+    server.close();
   }
 });
 

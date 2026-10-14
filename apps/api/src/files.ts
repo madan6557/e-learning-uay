@@ -459,6 +459,103 @@ export function getUayHeaders(options?: {
   return headers;
 }
 
+/**
+ * Membersihkan nama segmen folder agar ramah filesystem, URL, dan validasi File-Service:
+ * - Menghilangkan \ dan karakter kontrol
+ * - Mengubah / menjadi - (agar tidak menjadi sub-segmen tidak sengaja)
+ * - Memastikan tidak ada leading/trailing whitespace
+ * - Menghindari . atau ..
+ * - Membatasi panjang maksimal 150 karakter
+ */
+export function sanitizeFolderSegment(value: string, fallback = "Umum"): string {
+  const sanitized = value
+    .replace(/[\\/\x00-\x1f\x7f:*?"<>|]+/g, "-")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^\.+|\.+$/g, "")
+    .trim();
+  return sanitized.slice(0, 150) || fallback;
+}
+
+/**
+ * Memetakan FileReference purpose ke nama kategori folder yang terstruktur.
+ */
+export function mapPurposeToFolderCategory(purpose: string): string {
+  switch (purpose) {
+    case "COVER":
+      return "00_Sampul";
+    case "RESOURCE":
+    case "VIDEO":
+      return "01_Materi";
+    case "SUBMISSION":
+      return "02_Tugas";
+    case "QUIZ_ANSWER":
+      return "03_Kuis";
+    default:
+      return "04_Lainnya";
+  }
+}
+
+/**
+ * Menghasilkan struktur hierarki folder otomatis untuk file di File Service:
+ * Level 1: Tahun Akademik (mis. "2024-2025 Ganjil")
+ * Level 2: [Kode MK] Nama MK - Kelas (mis. "[IF101] Pemrograman Web - TI-3A")
+ * Level 3: Kategori (mis. "01_Materi", "02_Tugas", "03_Kuis", "00_Sampul")
+ */
+export async function resolveClassFolderPath(fileRef: {
+  classId?: string | null;
+  purpose: string;
+  contextId?: string | null;
+  name?: string;
+}): Promise<string> {
+  const category = mapPurposeToFolderCategory(fileRef.purpose);
+
+  if (!fileRef.classId) {
+    return `Umum/${category}`;
+  }
+
+  try {
+    const cls = await db.courseClass.findUnique({
+      where: { id: fileRef.classId },
+      select: {
+        name: true,
+        academicYear: true,
+        course: {
+          select: {
+            code: true,
+            title: true,
+          },
+        },
+      },
+    });
+
+    if (!cls) {
+      return `Umum/${category}`;
+    }
+
+    const academicYearSegment = sanitizeFolderSegment(cls.academicYear, "2024-2025");
+
+    let classSegment: string;
+    if (cls.course?.code && cls.course?.title) {
+      classSegment = sanitizeFolderSegment(
+        `[${cls.course.code}] ${cls.course.title} - ${cls.name}`,
+        cls.name || "Kelas",
+      );
+    } else if (cls.course?.title) {
+      classSegment = sanitizeFolderSegment(
+        `${cls.course.title} - ${cls.name}`,
+        cls.name || "Kelas",
+      );
+    } else {
+      classSegment = sanitizeFolderSegment(cls.name, "Kelas");
+    }
+
+    return `${academicYearSegment}/${classSegment}/${category}`;
+  } catch {
+    return `Umum/${category}`;
+  }
+}
+
 export async function uayUpload(params: {
   fileBuffer: Buffer | Uint8Array;
   fileName: string;
@@ -468,6 +565,7 @@ export async function uayUpload(params: {
   resourceType?: string;
   resourceId?: string;
   folderId?: string;
+  folderPath?: string;
   actorId?: string;
   requestId?: string;
   token?: string;
@@ -486,10 +584,11 @@ export async function uayUpload(params: {
     params.fileName,
   );
 
-  // File-Service accepts at most 3 non-file fields (folderId, contextType, contextId)
-  // Multer rejects any request with > 3 non-file fields (LIMIT_FIELD_COUNT -> 400 Bad Request)
+  // File-Service accepts at most 3 non-file fields (folderId or folderPath, contextType, contextId)
   if (params.folderId) {
     formData.append("folderId", params.folderId);
+  } else if (params.folderPath) {
+    formData.append("folderPath", params.folderPath);
   }
   if (params.resourceType && params.resourceId) {
     formData.append("contextType", String(params.resourceType).slice(0, 100));
@@ -1169,6 +1268,7 @@ async function handleBinaryUpload(id: string, req: any, res: any) {
     }
   } else if (config.fileMode === "uay") {
     try {
+      const folderPath = await resolveClassFolderPath(fileRef);
       const uayRes = await uayUpload({
         fileBuffer: binaryBuffer,
         fileName: fileRef.name,
@@ -1176,6 +1276,7 @@ async function handleBinaryUpload(id: string, req: any, res: any) {
         visibility: "private",
         resourceType: fileRef.purpose,
         resourceId: fileRef.contextId || fileRef.classId,
+        folderPath,
         actorId: fileRef.ownerId,
         requestId: req.context?.requestId,
       });
@@ -1185,8 +1286,33 @@ async function handleBinaryUpload(id: string, req: any, res: any) {
       } else {
         ensure(false, 502, "FILE_SERVICE_INVALID_RESPONSE");
       }
-    } catch (err) {
-      throw err;
+    } catch (err: any) {
+      // Graceful fallback: Bila repositori File-Service belum di-grant izin FOLDER_CREATE,
+      // fallback otomatis ke upload root agar aktivitas akademik mahasiswa/dosen tidak pernah terblokir.
+      if (
+        (err?.status === 403 || err?.statusCode === 403) &&
+        String(err?.message || "").toLowerCase().includes("folder")
+      ) {
+        console.warn("[File Service Warning]: FOLDER_CREATE grant missing, falling back to root upload:", err.message);
+        const fallbackRes = await uayUpload({
+          fileBuffer: binaryBuffer,
+          fileName: fileRef.name,
+          mimeType: fileRef.mimeType,
+          visibility: "private",
+          resourceType: fileRef.purpose,
+          resourceId: fileRef.contextId || fileRef.classId,
+          actorId: fileRef.ownerId,
+          requestId: req.context?.requestId,
+        });
+        const remoteId = fallbackRes?.fileId || fallbackRes?.id;
+        if (remoteId) {
+          await setRemoteFileId(id, remoteId);
+        } else {
+          ensure(false, 502, "FILE_SERVICE_INVALID_RESPONSE");
+        }
+      } else {
+        throw err;
+      }
     }
   } else if (production && !isDemo && config.fileMode === "local") {
     res.status(503).json({ error: "FILE_SERVICE_REQUIRED" });
