@@ -11,6 +11,7 @@ import {
   resolveClassFolderPath,
   uayUpload,
   getCompatibleMimeTypes,
+  areMimeTypesCompatible,
 } from "../apps/api/src/files.js";
 import { config, db } from "../apps/api/src/core.js";
 import { getFileLimit } from "../packages/shared/src/files.js";
@@ -718,7 +719,17 @@ test("UAY File Service: getCompatibleMimeTypes and uayUpload tolerate policy MIM
 
   const webmCandidates = getCompatibleMimeTypes("video.webm", "video/webm");
   assert.ok(webmCandidates.includes("video/webm"));
+
+  // areMimeTypesCompatible cross-compatibility verification
+  assert.ok(areMimeTypesCompatible("foto.png", "application/png", "image/png"));
+  assert.ok(areMimeTypesCompatible("foto.png", "image/png", "application/png"));
+  assert.ok(areMimeTypesCompatible("foto.jpg", "application/jpeg", "image/jpeg"));
+  assert.ok(areMimeTypesCompatible("foto.jpeg", "image/jpeg", "application/jpg"));
+  assert.ok(areMimeTypesCompatible("doc.docx", "application/docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
+  assert.ok(!areMimeTypesCompatible("foto.png", "image/png", "application/pdf"));
+  assert.ok(!areMimeTypesCompatible("video.mp4", "video/mp4", "image/png"));
 });
+
 
 
 

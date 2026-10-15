@@ -557,62 +557,102 @@ export async function resolveClassFolderPath(fileRef: {
 }
 
 /**
+/**
+ * Mengembalikan daftar MIME type yang valid dan dikenal untuk ekstensi berkas tertentu.
+ */
+export function getMimeTypesForExtension(ext: string): string[] {
+  switch (ext.toLowerCase()) {
+    case "png":
+      return ["image/png", "application/png"];
+    case "jpg":
+    case "jpeg":
+      return ["image/jpeg", "image/jpg", "application/jpeg", "application/jpg"];
+    case "webp":
+      return ["image/webp", "application/webp"];
+    case "pdf":
+      return ["application/pdf"];
+    case "doc":
+      return ["application/msword"];
+    case "docx":
+      return [
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/docx",
+        "application/msword",
+      ];
+    case "xls":
+      return ["application/vnd.ms-excel", "application/xls"];
+    case "xlsx":
+      return [
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/xlsx",
+        "application/vnd.ms-excel",
+      ];
+    case "ppt":
+      return ["application/vnd.ms-powerpoint", "application/ppt"];
+    case "pptx":
+      return [
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "application/pptx",
+        "application/vnd.ms-powerpoint",
+      ];
+    case "txt":
+      return ["text/plain", "application/txt"];
+    case "csv":
+      return ["text/csv", "application/csv", "text/plain"];
+    case "zip":
+      return [
+        "application/zip",
+        "application/x-zip-compressed",
+        "application/octet-stream",
+      ];
+    case "py":
+      return ["text/x-python", "text/plain"];
+    case "mp4":
+      return ["video/mp4", "application/mp4"];
+    case "webm":
+      return ["video/webm"];
+    default:
+      return [];
+  }
+}
+
+/**
  * Menghasilkan daftar MIME type kandidat untuk toleransi konfigurasi policy File Service.
  * Contoh: ekstensi png sering didaftarkan sebagai application/png atau image/png.
  */
-export function getCompatibleMimeTypes(fileName: string, mimeType: string): string[] {
+export function getCompatibleMimeTypes(
+  fileName: string,
+  preferredMime?: string,
+): string[] {
   const ext = fileName.split(".").at(-1)?.toLowerCase() || "";
+  const extMimes = getMimeTypesForExtension(ext);
   const list: string[] = [];
 
-  if (mimeType) list.push(mimeType);
-
-  if (ext === "png") {
-    list.push("application/png", "image/png");
-  } else if (ext === "jpg" || ext === "jpeg") {
-    list.push("application/jpg", "application/jpeg", "image/jpeg", "image/jpg");
-  } else if (ext === "webp") {
-    list.push("image/webp", "application/webp");
-  } else if (ext === "txt") {
-    list.push("application/txt", "text/plain");
-  } else if (ext === "zip") {
-    list.push("application/zip", "application/x-zip-compressed", "application/octet-stream");
-  } else if (ext === "csv") {
-    list.push("text/csv", "application/csv", "text/plain");
-  } else if (ext === "pdf") {
-    list.push("application/pdf");
-  } else if (ext === "doc") {
-    list.push("application/msword");
-  } else if (ext === "docx") {
-    list.push(
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "application/docx",
-      "application/msword",
-    );
-  } else if (ext === "ppt") {
-    list.push("application/vnd.ms-powerpoint", "application/ppt");
-  } else if (ext === "pptx") {
-    list.push(
-      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-      "application/pptx",
-      "application/vnd.ms-powerpoint",
-    );
-  } else if (ext === "xls") {
-    list.push("application/vnd.ms-excel", "application/xls");
-  } else if (ext === "xlsx") {
-    list.push(
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "application/xlsx",
-      "application/vnd.ms-excel",
-    );
-  } else if (ext === "py") {
-    list.push("text/x-python", "text/plain");
-  } else if (ext === "mp4") {
-    list.push("video/mp4", "application/mp4");
-  } else if (ext === "webm") {
-    list.push("video/webm");
-  }
+  if (preferredMime) list.push(preferredMime.trim().toLowerCase());
+  list.push(...extMimes);
 
   return [...new Set(list.filter(Boolean))];
+}
+
+/**
+ * Memeriksa apakah dua MIME type kompatibel untuk berkas yang diberikan,
+ * mengakomodasi variasi konfigurasi policy File Service (misalnya application/png vs image/png).
+ */
+export function areMimeTypesCompatible(
+  fileName: string,
+  mimeA?: string,
+  mimeB?: string,
+): boolean {
+  if (!mimeA || !mimeB) return true;
+  const a = mimeA.trim().toLowerCase();
+  const b = mimeB.trim().toLowerCase();
+  if (a === b) return true;
+  const ext = fileName.split(".").at(-1)?.toLowerCase() || "";
+  const extMimes = getMimeTypesForExtension(ext);
+  if (extMimes.length > 0) {
+    return extMimes.includes(a) && extMimes.includes(b);
+  }
+  return false;
 }
 
 export async function uayUpload(params: {
@@ -1252,8 +1292,17 @@ async function serveFileStream(id: string, req: any, res: any) {
             res.setHeader(key, value);
           }
         }
-        if (!res.getHeader("Content-Type") && fileRef?.mimeType) {
-          res.setHeader("Content-Type", fileRef.mimeType);
+        const remoteContentType = res.getHeader("Content-Type") as string | undefined;
+        if (
+          !remoteContentType ||
+          remoteContentType.startsWith("application/octet-stream") ||
+          (fileRef?.mimeType &&
+            fileRef.mimeType.startsWith("image/") &&
+            !remoteContentType.startsWith("image/"))
+        ) {
+          if (fileRef?.mimeType) {
+            res.setHeader("Content-Type", fileRef.mimeType);
+          }
         }
         if (!res.getHeader("Content-Disposition") && fileRef?.name) {
           res.setHeader(
@@ -1611,6 +1660,7 @@ export function registerFiles(app: Express) {
           ["SUBMISSION", "QUIZ_ANSWER"].includes(file.purpose),
         );
 
+        let metadata: any = null;
         if (config.fileMode === "s3") {
           const head = await s3HeadObject(file.id);
           const localExists = existsSync(getLocalFilePath(file.id));
@@ -1621,28 +1671,65 @@ export function registerFiles(app: Express) {
           );
         } else if (config.fileMode === "uay") {
           const targetId = await getRemoteFileId(file.id);
-          const metadata = await uayGetMetadata(targetId, {
+          metadata = await uayGetMetadata(targetId, {
             actorId: req.context.user.id,
             requestId: req.context.requestId,
           });
+          const isStatusReady = ["active", "ready"].includes(
+            (metadata?.status || "active").toLowerCase(),
+          );
+          const isSizeMatch = Number(metadata?.sizeBytes) === Number(file.sizeBytes);
+          const isChecksumMatch =
+            !metadata?.checksum ||
+            !file.checksum ||
+            metadata.checksum.toLowerCase() === file.checksum.toLowerCase();
+          const isMimeMatch =
+            !metadata?.mimeType ||
+            !file.mimeType ||
+            metadata.mimeType.toLowerCase() === file.mimeType.toLowerCase() ||
+            areMimeTypesCompatible(file.name, metadata.mimeType, file.mimeType);
+
+          if (!isStatusReady || !isSizeMatch || !isChecksumMatch || !isMimeMatch) {
+            console.error("[UAY Confirm Verification Failed]", {
+              fileId: file.id,
+              targetId,
+              isStatusReady,
+              isSizeMatch,
+              isChecksumMatch,
+              isMimeMatch,
+              expected: {
+                status: "active/ready",
+                sizeBytes: file.sizeBytes,
+                checksum: file.checksum,
+                mimeType: file.mimeType,
+              },
+              actual: {
+                status: metadata?.status,
+                sizeBytes: metadata?.sizeBytes,
+                checksum: metadata?.checksum,
+                mimeType: metadata?.mimeType,
+              },
+            });
+          }
+
           ensure(
-            ["active", "ready"].includes(metadata.status.toLowerCase()) &&
-              metadata.checksum === file.checksum &&
-              metadata.sizeBytes === file.sizeBytes &&
-              metadata.mimeType === file.mimeType,
+            isStatusReady && isSizeMatch && isChecksumMatch && isMimeMatch,
             409,
             "FILE_NOT_READY",
           );
         } else if (config.fileMode === "legacy") {
-          const metadata = await fileRequest(
+          metadata = await fileRequest(
             `/v1/files/${encodeURIComponent(file.id)}`,
           );
+          const isMimeMatch =
+            metadata.mimeType === file.mimeType ||
+            areMimeTypesCompatible(file.name, metadata.mimeType, file.mimeType);
           ensure(
             metadata.status === "READY" &&
               metadata.scanStatus === "CLEAN" &&
               metadata.checksum === file.checksum &&
               metadata.sizeBytes === file.sizeBytes &&
-              metadata.mimeType === file.mimeType,
+              isMimeMatch,
             409,
             "FILE_NOT_READY",
           );
@@ -1652,9 +1739,17 @@ export function registerFiles(app: Express) {
           ensure(existsSync(filePath), 409, "FILE_NOT_READY");
         }
 
+        const normalizedMime =
+          file.mimeType && file.mimeType.startsWith("image/")
+            ? file.mimeType
+            : (metadata?.mimeType || file.mimeType);
+
         const after = await tx.fileReference.update({
           where: { id: file.id },
-          data: { status: "READY" },
+          data: {
+            status: "READY",
+            mimeType: normalizedMime,
+          },
         });
         await audit(
           tx,
