@@ -983,7 +983,7 @@
         },
         {
           "label": "Format yang diterima",
-          "value": "Centang minimal satu: TEXT, LINK, PDF, ZIP, PNG, JPG, PY, CPP, DOCX, CSV",
+          "value": "Centang minimal satu: TEXT, LINK, PDF, ZIP, PNG, JPG, PY, DOCX, CSV",
           "effect": "TEXT membuka jawaban teks, LINK membuka URL, lainnya mengizinkan jenis berkas terkait."
         },
         {

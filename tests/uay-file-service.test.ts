@@ -10,8 +10,14 @@ import {
   mapPurposeToFolderCategory,
   resolveClassFolderPath,
   uayUpload,
+  getCompatibleMimeTypes,
 } from "../apps/api/src/files.js";
 import { config, db } from "../apps/api/src/core.js";
+import { getFileLimit } from "../packages/shared/src/files.js";
+import {
+  cleanAcceptText,
+  isFileAccepted,
+} from "../apps/web/src/components/ui/FileUpload.js";
 
 test("UAY File Service: endpoint formatting and header resolution", () => {
   // Test endpoint URL normalizer
@@ -561,4 +567,158 @@ test("UAY File Service: uayUpload sends folderPath multipart field and preserves
     server.close();
   }
 });
+
+test("UAY File Service: cleanAcceptText and isFileAccepted handle MIME types and extensions robustly", () => {
+  // Test clean format labels
+  assert.equal(
+    cleanAcceptText(".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"),
+    "PNG, JPG, JPEG, WEBP",
+  );
+  assert.equal(
+    cleanAcceptText("image/png,image/jpeg,image/webp"),
+    "PNG, JPEG, WEBP",
+  );
+  assert.equal(
+    cleanAcceptText(".pdf,.ppt,.pptx,application/pdf"),
+    "PDF, PPT, PPTX",
+  );
+  assert.equal(cleanAcceptText(undefined), "Semua format berkas umum didukung");
+
+  // Test isFileAccepted with image block accept configuration
+  const imageAccept = "image/png,image/jpeg,image/webp";
+  const pngFile = { name: "diagram.png", type: "image/png" } as File;
+  const jpgFile = { name: "foto.jpg", type: "image/jpeg" } as File;
+  const webpFile = { name: "banner.webp", type: "image/webp" } as File;
+  const pdfFile = { name: "materi.pdf", type: "application/pdf" } as File;
+  const cppFile = { name: "program.cpp", type: "text/x-c++src" } as File;
+
+  // The critical bug reported by user: png/jpg must NOT be rejected when accept has image/png,image/jpeg
+  assert.equal(isFileAccepted(pngFile, imageAccept), true);
+  assert.equal(isFileAccepted(jpgFile, imageAccept), true);
+  assert.equal(isFileAccepted(webpFile, imageAccept), true);
+  assert.equal(isFileAccepted(pdfFile, imageAccept), false);
+  assert.equal(isFileAccepted(cppFile, imageAccept), false);
+
+  // Even if browser file.type is empty (common on drag-and-drop), extension matches
+  const untypedPng = { name: "foto.png", type: "" } as File;
+  assert.equal(isFileAccepted(untypedPng, imageAccept), true);
+
+  // Document attachment matching
+  const docAccept = ".pdf,.doc,.docx,.ppt,.pptx,.txt,.zip";
+  assert.equal(isFileAccepted(pdfFile, docAccept), true);
+  assert.equal(isFileAccepted(cppFile, docAccept), false);
+});
+
+test("UAY File Service: getFileLimit enforces per-extension caps aligned with File Service policies", () => {
+  // Images capped at 10 MB
+  assert.equal(getFileLimit("foto.png", "RESOURCE"), 10 * 1024 * 1024);
+  assert.equal(getFileLimit("foto.jpg", "RESOURCE"), 10 * 1024 * 1024);
+  assert.equal(getFileLimit("banner.webp", "RESOURCE"), 10 * 1024 * 1024);
+  // Text files capped at 10 MB
+  assert.equal(getFileLimit("catatan.txt", "RESOURCE"), 10 * 1024 * 1024);
+  // Documents and archives capped at 50 MB
+  assert.equal(getFileLimit("modul.pdf", "RESOURCE"), 50 * 1024 * 1024);
+  assert.equal(getFileLimit("tugas.docx", "SUBMISSION"), 50 * 1024 * 1024);
+  assert.equal(getFileLimit("arsip.zip", "RESOURCE"), 50 * 1024 * 1024);
+  // Cover capped at 5 MB
+  assert.equal(getFileLimit("cover.png", "COVER"), 5 * 1024 * 1024);
+});
+
+test("UAY File Service: getCompatibleMimeTypes and uayUpload tolerate policy MIME variations", async () => {
+  // Candidate MIME generation
+  const pngCandidates = getCompatibleMimeTypes("foto.png", "image/png");
+  assert.ok(pngCandidates.includes("application/png"));
+  assert.ok(pngCandidates.includes("image/png"));
+
+  const jpgCandidates = getCompatibleMimeTypes("foto.jpg", "image/jpeg");
+  assert.ok(jpgCandidates.includes("application/jpg"));
+  assert.ok(jpgCandidates.includes("image/jpeg"));
+
+  let attempts = 0;
+  const server = createServer(async (req, res) => {
+    attempts++;
+    const chunks: Buffer[] = [];
+    for await (const chunk of req) chunks.push(chunk);
+    const bodyStr = Buffer.concat(chunks).toString("utf-8");
+
+    res.setHeader("Content-Type", "application/json");
+
+    // First attempt rejects standard image/png because policy only allows application/png
+    if (bodyStr.includes('type="image/png"') || bodyStr.includes("image/png")) {
+      res.statusCode = 403;
+      res.end(
+        JSON.stringify({
+          statusCode: 403,
+          error: "This file extension and media type are not allowed in the repository",
+        }),
+      );
+      return;
+    }
+
+    // Second attempt with application/png succeeds
+    if (bodyStr.includes('type="application/png"') || bodyStr.includes("application/png")) {
+      res.statusCode = 201;
+      res.end(
+        JSON.stringify({
+          statusCode: 201,
+          success: true,
+          data: {
+            id: "retried-image-id",
+            originalName: "foto.png",
+            mimeType: "application/png",
+            sizeBytes: 1024,
+            status: "active",
+          },
+        }),
+      );
+      return;
+    }
+
+    res.statusCode = 400;
+    res.end(JSON.stringify({ error: "UNEXPECTED" }));
+  });
+
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const port = (server.address() as any).port;
+  const origUrl = config.fileUrl;
+  const origKey = config.fileKey;
+
+  try {
+    (config as any).fileUrl = `http://127.0.0.1:${port}/api/v1`;
+    (config as any).fileKey = "test-token-key";
+
+    const uploadRes = await uayUpload({
+      fileBuffer: Buffer.from("PNG FAKE BYTES"),
+      fileName: "foto.png",
+      mimeType: "image/png",
+      repositoryId: "00000000-0000-0000-0000-000000000001",
+      token: "mock-jwt-token",
+    });
+
+    assert.equal(uploadRes.id, "retried-image-id");
+    assert.equal(attempts, 2); // Retried automatically and succeeded!
+  } finally {
+    (config as any).fileUrl = origUrl;
+    (config as any).fileKey = origKey;
+    server.close();
+  }
+
+  // Office and media candidate verification
+  const docxCandidates = getCompatibleMimeTypes("tugas.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+  assert.ok(docxCandidates.includes("application/docx"));
+  assert.ok(docxCandidates.includes("application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
+
+  const pptxCandidates = getCompatibleMimeTypes("presentasi.pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation");
+  assert.ok(pptxCandidates.includes("application/pptx"));
+
+  const mp4Candidates = getCompatibleMimeTypes("kuliah.mp4", "video/mp4");
+  assert.ok(mp4Candidates.includes("video/mp4"));
+  assert.ok(mp4Candidates.includes("application/mp4"));
+
+  const webmCandidates = getCompatibleMimeTypes("video.webm", "video/webm");
+  assert.ok(webmCandidates.includes("video/webm"));
+});
+
+
 

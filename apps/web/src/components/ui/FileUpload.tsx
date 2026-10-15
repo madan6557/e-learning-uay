@@ -7,7 +7,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { uploadFile } from "../../services/api";
-import { uploadLimit } from "../../../../../packages/shared/src/files";
+import { uploadLimit, getFileLimit } from "../../../../../packages/shared/src/files";
 import { Notice } from "./Notice";
 import labels from "../../../../../packages/shared/src/id.json";
 
@@ -18,6 +18,112 @@ export interface FileUploadProps {
   onUploaded: (file: any) => void;
   accept?: string;
   existingFile?: { id: string; name: string };
+  maxSizeMb?: number;
+}
+
+const MIME_TO_EXT: Record<string, string> = {
+  "image/png": "PNG",
+  "image/jpeg": "JPEG",
+  "image/jpg": "JPG",
+  "image/webp": "WEBP",
+  "application/png": "PNG",
+  "application/jpeg": "JPEG",
+  "application/jpg": "JPG",
+  "application/webp": "WEBP",
+  "application/pdf": "PDF",
+  "application/zip": "ZIP",
+  "application/x-zip-compressed": "ZIP",
+  "application/msword": "DOC",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "DOCX",
+  "application/docx": "DOCX",
+  "application/vnd.ms-powerpoint": "PPT",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation": "PPTX",
+  "application/pptx": "PPTX",
+  "application/vnd.ms-excel": "XLS",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "XLSX",
+  "application/xlsx": "XLSX",
+  "text/plain": "TXT",
+  "application/txt": "TXT",
+  "text/csv": "CSV",
+  "application/csv": "CSV",
+  "text/x-python": "PY",
+  "video/mp4": "MP4",
+  "application/mp4": "MP4",
+  "video/webm": "WEBM",
+};
+
+export function cleanAcceptText(accept?: string): string {
+  if (!accept || !accept.trim()) return "Semua format berkas umum didukung";
+  const items = accept
+    .split(",")
+    .map((t) => t.trim().toLowerCase())
+    .filter(Boolean);
+
+  const seen = new Set<string>();
+  const labelsList: string[] = [];
+
+  for (const item of items) {
+    let label = "";
+    if (MIME_TO_EXT[item]) {
+      label = MIME_TO_EXT[item];
+    } else if (item.startsWith(".")) {
+      label = item.slice(1).toUpperCase();
+    } else if (!item.includes("/")) {
+      label = item.toUpperCase();
+    } else if (item.endsWith("/*")) {
+      label = item.replace("/*", "").toUpperCase();
+    }
+
+    if (label && !seen.has(label)) {
+      seen.add(label);
+      labelsList.push(label);
+    }
+  }
+
+  return labelsList.length > 0 ? labelsList.join(", ") : "Semua format berkas umum didukung";
+}
+
+export function isFileAccepted(file: File, accept?: string): boolean {
+  if (!accept || !accept.trim()) return true;
+  const extension = (file.name.split(".").at(-1) || "").toLowerCase();
+  const fileMime = (file.type || "").toLowerCase();
+
+  const tokens = accept
+    .split(",")
+    .map((t) => t.trim().toLowerCase())
+    .filter(Boolean);
+
+  if (tokens.length === 0) return true;
+
+  for (const token of tokens) {
+    // 1. Extension token: ".png" or "png"
+    if (!token.includes("/")) {
+      const ext = token.startsWith(".") ? token.slice(1) : token;
+      if (ext === extension) return true;
+    }
+
+    // 2. Wildcard MIME: "image/*", "video/*"
+    if (token.endsWith("/*")) {
+      const prefix = token.slice(0, token.indexOf("/*") + 1);
+      if (fileMime.startsWith(prefix)) return true;
+      if (prefix === "image/" && ["png", "jpg", "jpeg", "webp", "gif", "svg", "bmp"].includes(extension)) return true;
+      if (prefix === "video/" && ["mp4", "webm", "ogg", "mov"].includes(extension)) return true;
+      if (prefix === "audio/" && ["mp3", "wav", "ogg", "m4a"].includes(extension)) return true;
+    }
+
+    // 3. Exact MIME token
+    if (token.includes("/")) {
+      if (fileMime && fileMime === token) return true;
+      const extFromMime = MIME_TO_EXT[token]?.toLowerCase();
+      if (extFromMime) {
+        if (extFromMime === extension) return true;
+        if (extFromMime === "jpeg" && extension === "jpg") return true;
+        if (extFromMime === "jpg" && extension === "jpeg") return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 export function FileUpload({
@@ -27,6 +133,7 @@ export function FileUpload({
   onUploaded,
   accept,
   existingFile,
+  maxSizeMb,
 }: FileUploadProps) {
   const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState<Error | null>(null);
@@ -41,17 +148,51 @@ export function FileUpload({
   }, [existingFile?.id, existingFile?.name]);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const isImageUpload =
+    accept?.toLowerCase().includes("image") ||
+    purpose === "COVER" ||
+    (accept !== undefined &&
+      accept
+        .toLowerCase()
+        .split(",")
+        .every((t) =>
+          ["png", "jpg", "jpeg", "webp", ".png", ".jpg", ".jpeg", ".webp"].includes(t.trim()),
+        ));
+
+  const isVideoUpload = purpose === "VIDEO" || accept?.toLowerCase().includes("video");
+
+  const effectiveMaxMb =
+    maxSizeMb ?? (isImageUpload ? 10 : uploadLimit(purpose) / (1024 * 1024));
+
   const handleFile = async (file: File) => {
     if (!file) return;
-    const acceptedExtensions = accept
-      ?.split(",")
-      .map((extension) => extension.trim().replace(/^\./, "").toLowerCase())
-      .filter(Boolean);
-    const extension = file.name.split(".").at(-1)?.toLowerCase();
-    if (acceptedExtensions?.length && !acceptedExtensions.includes(extension ?? "")) {
-      setError(new Error(`Jenis berkas tidak didukung. Gunakan: ${cleanAcceptText()}.`));
+
+    if (!isFileAccepted(file, accept)) {
+      setError(
+        new Error(`Jenis berkas tidak didukung. Gunakan: ${cleanAcceptText(accept)}.`),
+      );
       return;
     }
+
+    const fileSpecificLimit = maxSizeMb ? maxSizeMb * 1024 * 1024 : getFileLimit(file.name, purpose);
+    if (file.size > fileSpecificLimit) {
+      const fileMaxMb = Math.round(fileSpecificLimit / (1024 * 1024));
+      const isImage = /\.(png|jpe?g|webp)$/i.test(file.name) || file.type.startsWith("image/");
+      const isVideo = /\.(mp4|webm)$/i.test(file.name) || file.type.startsWith("video/");
+      setError(
+        new Error(
+          `Ukuran berkas ${file.name} (${formatFileSize(file.size)}) melebihi batas maksimal ${fileMaxMb} MB untuk jenis berkas ini. ${
+            isImage
+              ? "Silakan kompres atau perkecil resolusi gambar terlebih dahulu."
+              : isVideo
+                ? "Silakan kompres atau turunkan resolusi video terlebih dahulu."
+                : "Silakan gunakan kompresi dokumen atau arsipkan dalam format ZIP terlebih dahulu."
+          }`,
+        ),
+      );
+      return;
+    }
+
     setError(null);
     setProgress(0);
     try {
@@ -98,14 +239,6 @@ export function FileUpload({
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
-  const cleanAcceptText = () => {
-    if (!accept) return "Semua format berkas umum didukung";
-    return accept
-      .split(",")
-      .map((ext) => ext.trim().replace(/^\./, "").toUpperCase())
-      .join(", ");
   };
 
   return (
@@ -197,8 +330,7 @@ export function FileUpload({
                   <strong>Pilih berkas</strong> atau seret dan lepas ke sini
                 </p>
                 <p className="dropzone-hint">
-                  Format: {cleanAcceptText()} (Maks.{" "}
-                  {uploadLimit(purpose) / 1024 / 1024} MB)
+                  Format: {cleanAcceptText(accept)} (Maks. {effectiveMaxMb} MB)
                 </p>
                 <p
                   className="dropzone-compression-tip"
@@ -208,9 +340,11 @@ export function FileUpload({
                     margin: "4px 0 0",
                   }}
                 >
-                  {purpose === "VIDEO"
-                    ? `Maksimal ${uploadLimit(purpose) / 1024 / 1024} MB. Jika video terlalu besar, kompres atau turunkan resolusinya; tetap gunakan format MP4/WebM.`
-                    : `Maksimal ukuran berkas ${uploadLimit(purpose) / 1024 / 1024} MB. Jika ukuran berkas terlalu besar, gunakan kompresi PDF/dokumen atau arsipkan dalam format ZIP terlebih dahulu.`}
+                  {isVideoUpload
+                    ? `Maksimal ${effectiveMaxMb} MB. Jika video terlalu besar, kompres atau turunkan resolusinya; tetap gunakan format MP4/WebM.`
+                    : isImageUpload
+                      ? `Maksimal ukuran gambar ${effectiveMaxMb} MB. Jika ukuran gambar terlalu besar, kompres atau perkecil resolusi gambar terlebih dahulu.`
+                      : `Maksimal ukuran berkas ${effectiveMaxMb} MB. Jika ukuran berkas terlalu besar, gunakan kompresi PDF/dokumen atau arsipkan dalam format ZIP terlebih dahulu.`}
                 </p>
               </div>
               <button

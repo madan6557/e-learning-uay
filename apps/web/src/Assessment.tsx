@@ -401,7 +401,7 @@ export function QuestionEditor({
       {type === "FILE_UPLOAD" && (
         <Field label={t.acceptedFileTypes}>
           <div className="format-list">
-            {["PDF", "DOCX", "PNG", "JPG", "JPEG", "ZIP", "CSV", "TXT"].map((format) => (
+            {["PDF", "DOCX", "PNG", "JPG", "JPEG", "WEBP", "ZIP", "CSV", "TXT"].map((format) => (
               <label className="check-row" key={format}>
                 <input
                   type="checkbox"
@@ -1693,6 +1693,7 @@ function AnswerInput({
           purpose="QUIZ_ANSWER"
           contextId={attemptId}
           accept={(q.allowedFileTypes ?? ["PDF", "DOCX", "PNG", "JPG"])
+            .filter((ext: string) => ext.toUpperCase() !== "CPP")
             .map((extension: string) => `.${extension.toLowerCase()}`)
             .join(",")}
           onUploaded={(f) => onChange(f.id)}
@@ -2129,8 +2130,8 @@ export function AssignmentEditor({
             "ZIP",
             "PNG",
             "JPG",
+            "WEBP",
             "PY",
-            "CPP",
             "DOCX",
             "CSV",
           ].map((format) => (

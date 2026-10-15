@@ -170,6 +170,33 @@ async function requestApi<T>(
   }
 }
 
+export function inferMimeType(filename: string, browserMime?: string): string {
+  if (browserMime && browserMime.includes("/") && browserMime !== "application/octet-stream") {
+    return browserMime;
+  }
+  const ext = filename.split(".").at(-1)?.toLowerCase() || "";
+  const map: Record<string, string> = {
+    png: "image/png",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    webp: "image/webp",
+    pdf: "application/pdf",
+    doc: "application/msword",
+    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ppt: "application/vnd.ms-powerpoint",
+    pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    xls: "application/vnd.ms-excel",
+    xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    csv: "text/csv",
+    txt: "text/plain",
+    py: "text/x-python",
+    zip: "application/zip",
+    mp4: "video/mp4",
+    webm: "video/webm",
+  };
+  return map[ext] || browserMime || "application/octet-stream";
+}
+
 export async function uploadFile(
   file: File,
   classId: string,
@@ -177,8 +204,33 @@ export async function uploadFile(
   contextId: string | undefined,
   onProgress: (value: number) => void,
 ) {
+  const rawName = file.name || "";
+  const fileType = (file.type || "").toLowerCase();
+  let uploadName = rawName;
+  if (!/\.[a-zA-Z0-9]{1,10}$/.test(rawName)) {
+    const mimeToExt: Record<string, string> = {
+      "image/png": ".png",
+      "image/jpeg": ".jpg",
+      "image/jpg": ".jpg",
+      "image/webp": ".webp",
+      "application/pdf": ".pdf",
+      "text/plain": ".txt",
+      "text/csv": ".csv",
+      "application/zip": ".zip",
+      "video/mp4": ".mp4",
+      "video/webm": ".webm",
+    };
+    const ext =
+      mimeToExt[fileType] ||
+      (purpose === "VIDEO" ? ".mp4" : purpose === "COVER" ? ".png" : "");
+    if (ext) {
+      const cleanBase = rawName.replace(/\.+$/, "") || "berkas";
+      uploadName = `${cleanBase}${ext}`;
+    }
+  }
+
   try {
-    validateUploadSize(file.size, purpose);
+    validateUploadSize(file.size, purpose, uploadName);
   } catch {
     throw new ApiError("FILE_TYPE_OR_SIZE");
   }
@@ -187,18 +239,12 @@ export async function uploadFile(
   const checksum = [...new Uint8Array(digest)]
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
-  const mimeType =
-    file.type ||
-    (/\.py$/i.test(file.name)
-      ? "text/x-python"
-      : /\.cpp$/i.test(file.name)
-        ? "text/x-c++src"
-        : "application/octet-stream");
+  const mimeType = inferMimeType(uploadName || file.name, file.type);
   const ticket = await api("/files/upload-ticket", "POST", {
     classId,
     purpose,
     contextId,
-    name: file.name,
+    name: uploadName || file.name || "berkas",
     mimeType,
     sizeBytes: file.size,
     checksum,
@@ -240,7 +286,7 @@ export async function uploadFile(
         ),
       );
     xhr.timeout = 180000;
-    xhr.send(file);
+    xhr.send(safeFile);
   });
   return api(`/files/${ticket.fileObjectId}/confirm`, "POST", {});
 }

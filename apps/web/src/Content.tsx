@@ -439,9 +439,10 @@ export function BlockEditor({
                     classId={classId}
                     accept={
                       block.type === "image"
-                        ? "image/png,image/jpeg,image/webp"
-                        : undefined
+                        ? ".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+                        : ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.zip,.jpg,.jpeg,.png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/csv,text/plain,application/zip"
                     }
+                    maxSizeMb={block.type === "image" ? 10 : 50}
                     existingFile={
                       data.fileObjectId
                         ? {
@@ -475,8 +476,12 @@ export function BlockEditor({
                   )}
                   {block.type === "file_attachment" && (
                     <small className="editor-upload-hint">
-                      Maksimal 50 MB. Peserta dapat mengunduh lampiran dari
-                      artikel.
+                      Maksimal 50 MB (Dokumen, PDF, Arsip ZIP, Data, atau Gambar). Peserta dapat mengunduh lampiran dari artikel.
+                    </small>
+                  )}
+                  {block.type === "image" && (
+                    <small className="editor-upload-hint">
+                      Maksimal 10 MB (PNG, JPG, WEBP). Gambar akan ditampilkan langsung pada artikel materi.
                     </small>
                   )}
                 </div>

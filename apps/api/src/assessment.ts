@@ -81,8 +81,9 @@ export const assignmentSchema = z.object({
         "ZIP",
         "PNG",
         "JPG",
+        "JPEG",
+        "WEBP",
         "PY",
-        "CPP",
         "DOCX",
         "CSV",
         "TEXT",
@@ -1243,11 +1244,12 @@ export function registerAssessment(app: Express) {
             "SUBMISSION",
             assignment.id,
           );
-          ensure(
-            formats.includes(file.name.split(".").at(-1)!.toUpperCase()),
-            400,
-            "FILE_TYPE_OR_SIZE",
-          );
+          const ext = file.name.split(".").at(-1)!.toUpperCase();
+          const allowed =
+            formats.includes(ext) ||
+            (ext === "JPEG" && formats.includes("JPG")) ||
+            (ext === "JPG" && formats.includes("JPEG"));
+          ensure(allowed, 400, "FILE_TYPE_OR_SIZE");
         }
         const previous = await tx.assignmentSubmission.findFirst({
           where: { assignmentId: assignment.id, userId: req.context.user.id },

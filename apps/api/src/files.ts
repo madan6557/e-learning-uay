@@ -1,6 +1,6 @@
 import type { Express, Request } from "express";
 import type { FileReference } from "@prisma/client";
-import { UPLOAD_LIMITS } from "../../../packages/shared/src/files.js";
+import { UPLOAD_LIMITS, getFileLimit } from "../../../packages/shared/src/files.js";
 import { z } from "zod";
 import {
   existsSync,
@@ -556,6 +556,65 @@ export async function resolveClassFolderPath(fileRef: {
   }
 }
 
+/**
+ * Menghasilkan daftar MIME type kandidat untuk toleransi konfigurasi policy File Service.
+ * Contoh: ekstensi png sering didaftarkan sebagai application/png atau image/png.
+ */
+export function getCompatibleMimeTypes(fileName: string, mimeType: string): string[] {
+  const ext = fileName.split(".").at(-1)?.toLowerCase() || "";
+  const list: string[] = [];
+
+  if (mimeType) list.push(mimeType);
+
+  if (ext === "png") {
+    list.push("application/png", "image/png");
+  } else if (ext === "jpg" || ext === "jpeg") {
+    list.push("application/jpg", "application/jpeg", "image/jpeg", "image/jpg");
+  } else if (ext === "webp") {
+    list.push("image/webp", "application/webp");
+  } else if (ext === "txt") {
+    list.push("application/txt", "text/plain");
+  } else if (ext === "zip") {
+    list.push("application/zip", "application/x-zip-compressed", "application/octet-stream");
+  } else if (ext === "csv") {
+    list.push("text/csv", "application/csv", "text/plain");
+  } else if (ext === "pdf") {
+    list.push("application/pdf");
+  } else if (ext === "doc") {
+    list.push("application/msword");
+  } else if (ext === "docx") {
+    list.push(
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/docx",
+      "application/msword",
+    );
+  } else if (ext === "ppt") {
+    list.push("application/vnd.ms-powerpoint", "application/ppt");
+  } else if (ext === "pptx") {
+    list.push(
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "application/pptx",
+      "application/vnd.ms-powerpoint",
+    );
+  } else if (ext === "xls") {
+    list.push("application/vnd.ms-excel", "application/xls");
+  } else if (ext === "xlsx") {
+    list.push(
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/xlsx",
+      "application/vnd.ms-excel",
+    );
+  } else if (ext === "py") {
+    list.push("text/x-python", "text/plain");
+  } else if (ext === "mp4") {
+    list.push("video/mp4", "application/mp4");
+  } else if (ext === "webm") {
+    list.push("video/webm");
+  }
+
+  return [...new Set(list.filter(Boolean))];
+}
+
 export async function uayUpload(params: {
   fileBuffer: Buffer | Uint8Array;
   fileName: string;
@@ -577,71 +636,93 @@ export async function uayUpload(params: {
     process.env.UAY_FILE_SERVICE_REPOSITORY_ID ||
     "00000000-0000-0000-0000-000000000001";
 
-  const formData = new FormData();
-  formData.append(
-    "file",
-    new Blob([params.fileBuffer as any], { type: params.mimeType }),
-    params.fileName,
-  );
-
-  // File-Service accepts at most 3 non-file fields (folderId or folderPath, contextType, contextId)
-  if (params.folderId) {
-    formData.append("folderId", params.folderId);
-  } else if (params.folderPath) {
-    formData.append("folderPath", params.folderPath);
-  }
-  if (params.resourceType && params.resourceId) {
-    formData.append("contextType", String(params.resourceType).slice(0, 100));
-    formData.append("contextId", String(params.resourceId).slice(0, 255));
-  }
-
   const token = params.token || (await getUayServiceToken());
   const endpoint = getUayEndpoint(`/v1/repositories/${repoId}/files`);
-  const res = await serviceFetch("file_service", endpoint, {
-    method: "POST",
-    headers: getUayHeaders({
-      actorId: params.actorId,
-      requestId: params.requestId,
-      token,
-    }),
-    body: formData,
-  });
+  const mimeCandidates = getCompatibleMimeTypes(params.fileName, params.mimeType);
 
-  if (!res.ok) {
-    let errBody: any;
-    try {
-      errBody = await res.json();
-    } catch {
-      // ignore
+  let lastError: any = null;
+
+  for (const candidateMime of mimeCandidates) {
+    const formData = new FormData();
+    formData.append(
+      "file",
+      new Blob([params.fileBuffer as any], { type: candidateMime }),
+      params.fileName,
+    );
+
+    // File-Service accepts at most 3 non-file fields (folderId or folderPath, contextType, contextId)
+    if (params.folderId) {
+      formData.append("folderId", params.folderId);
+    } else if (params.folderPath) {
+      formData.append("folderPath", params.folderPath);
     }
-    const errMsg =
-      errBody?.error?.message ||
-      errBody?.message ||
-      errBody?.error ||
-      `FILE_SERVICE_REJECTED (${res.status})`;
-    console.error(
-      `[UAY File Service Upload Error] ${res.status} on ${endpoint}:`,
-      errMsg,
-      errBody ? JSON.stringify(errBody) : "",
-    );
-    throw new HttpError(
-      res.status === 404
-        ? 404
-        : res.status === 403
-          ? 403
-          : res.status === 400
-            ? 400
-            : 502,
-      "FILE_SERVICE_REJECTED",
-      { status: res.status, message: errMsg, endpoint },
-    );
+    if (params.resourceType && params.resourceId) {
+      formData.append("contextType", String(params.resourceType).slice(0, 100));
+      formData.append("contextId", String(params.resourceId).slice(0, 255));
+    }
+
+    const res = await serviceFetch("file_service", endpoint, {
+      method: "POST",
+      headers: getUayHeaders({
+        actorId: params.actorId,
+        requestId: params.requestId,
+        token,
+      }),
+      body: formData,
+    });
+
+    if (!res.ok) {
+      let errBody: any;
+      try {
+        errBody = await res.json();
+      } catch {
+        // ignore
+      }
+      const errMsg =
+        errBody?.error?.message ||
+        errBody?.message ||
+        errBody?.error ||
+        `FILE_SERVICE_REJECTED (${res.status})`;
+
+      // If rejected due to media type / policy mismatch, retry with next candidate MIME type
+      if (
+        (res.status === 403 || res.status === 400) &&
+        String(errMsg).toLowerCase().includes("not allowed in the repository")
+      ) {
+        lastError = new HttpError(res.status, "FILE_SERVICE_REJECTED", {
+          status: res.status,
+          message: errMsg,
+          endpoint,
+        });
+        continue;
+      }
+
+      console.error(
+        `[UAY File Service Upload Error] ${res.status} on ${endpoint}:`,
+        errMsg,
+        errBody ? JSON.stringify(errBody) : "",
+      );
+      throw new HttpError(
+        res.status === 404
+          ? 404
+          : res.status === 403
+            ? 403
+            : res.status === 400
+              ? 400
+              : 502,
+        "FILE_SERVICE_REJECTED",
+        { status: res.status, message: errMsg, endpoint },
+      );
+    }
+
+    const raw = await serviceJson(res);
+    const data = raw?.data ?? raw;
+    const fileId = data?.fileId || data?.id;
+    ensure(typeof fileId === "string", 502, "FILE_SERVICE_INVALID_RESPONSE");
+    return { ...data, id: fileId, fileId };
   }
 
-  const raw = await serviceJson(res);
-  const data = raw?.data ?? raw;
-  const fileId = data?.fileId || data?.id;
-  ensure(typeof fileId === "string", 502, "FILE_SERVICE_INVALID_RESPONSE");
-  return { ...data, id: fileId, fileId };
+  if (lastError) throw lastError;
 }
 
 export async function uayGetMetadata(
@@ -962,18 +1043,27 @@ const allowedTypes = new Set([
   "image/png",
   "image/jpeg",
   "image/webp",
+  "application/png",
+  "application/jpg",
+  "application/jpeg",
+  "application/webp",
+  "application/txt",
   "application/zip",
   "application/x-zip-compressed",
   "text/csv",
+  "application/csv",
   "text/plain",
   "text/x-python",
-  "text/x-c++src",
   "application/octet-stream",
   "video/mp4",
+  "application/mp4",
   "video/webm",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/docx",
   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/pptx",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/xlsx",
   "application/msword",
   "application/vnd.ms-excel",
   "application/vnd.ms-powerpoint",
@@ -1236,7 +1326,7 @@ async function handleBinaryUpload(id: string, req: any, res: any) {
   const fileRef = await db.fileReference.findUnique({ where: { id } });
   ensure(fileRef, 404, "NOT_FOUND");
   ensure(fileRef.ownerId === req.context.user.id, 403, "FILE_ACCESS_DENIED");
-  const limit = UPLOAD_LIMITS[fileRef.purpose as keyof typeof UPLOAD_LIMITS];
+  const limit = getFileLimit(fileRef.name, fileRef.purpose);
   ensure(limit && fileRef.sizeBytes <= limit, 400, "FILE_TYPE_OR_SIZE");
   const filePath = getLocalFilePath(id);
   const chunks: Buffer[] = [];
@@ -1358,15 +1448,21 @@ export function registerFiles(app: Express) {
             checksum: z.string().regex(/^[a-f0-9]{64}$/),
           })
           .parse(req.body);
+        const limit = getFileLimit(data.name, data.purpose);
         ensure(
-          data.sizeBytes <= UPLOAD_LIMITS[data.purpose] &&
+          data.sizeBytes <= limit &&
             allowedTypes.has(data.mimeType) &&
             !blockedExtensions.test(data.name),
           400,
           "FILE_TYPE_OR_SIZE",
         );
         if (data.purpose === "COVER")
-          ensure(data.mimeType.startsWith("image/"), 400, "FILE_TYPE_OR_SIZE");
+          ensure(
+            data.mimeType.startsWith("image/") ||
+              ["application/png", "application/jpeg", "application/jpg"].includes(data.mimeType),
+            400,
+            "FILE_TYPE_OR_SIZE",
+          );
         if (data.purpose === "VIDEO")
           ensure(data.mimeType.startsWith("video/"), 400, "FILE_TYPE_OR_SIZE");
         const student = ["SUBMISSION", "QUIZ_ANSWER"].includes(data.purpose);
