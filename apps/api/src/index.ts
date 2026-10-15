@@ -308,12 +308,23 @@ export function createApp() {
   app.use("/api", (_req, res) =>
     res.status(404).json({ error: { code: "NOT_FOUND" } }),
   );
-  const webDist = resolve(process.env.WEB_DIST_DIR ?? "apps/web/dist");
-  if (production && existsSync(join(webDist, "index.html"))) {
+  const candidateDirs = [
+    process.env.WEB_DIST_DIR,
+    resolve(process.cwd(), "apps/web/dist"),
+    resolve(process.cwd(), "dist"),
+  ].filter(Boolean) as string[];
+  const webDist = candidateDirs.find((dir) =>
+    existsSync(join(dir, "index.html")),
+  );
+  if (webDist) {
     app.use(express.static(webDist, { index: false, maxAge: "1h" }));
-    app.get("/{*path}", (_req, res) =>
-      res.sendFile(join(webDist, "index.html")),
-    );
+    app.use((req, res, next) => {
+      if (req.method === "GET" && !req.path.startsWith("/api")) {
+        res.sendFile(join(webDist, "index.html"));
+      } else {
+        next();
+      }
+    });
   }
   app.use(
     (

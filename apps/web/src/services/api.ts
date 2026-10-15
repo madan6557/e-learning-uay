@@ -286,7 +286,7 @@ export async function uploadFile(
         ),
       );
     xhr.timeout = 180000;
-    xhr.send(safeFile);
+    xhr.send(file);
   });
   return api(`/files/${ticket.fileObjectId}/confirm`, "POST", {});
 }

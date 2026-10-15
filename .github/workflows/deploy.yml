@@ -147,6 +147,7 @@ jobs:
             -o StrictHostKeyChecking=yes \
             uay-deploy@${{ secrets.UAY_VPS_HOST }} \
             '
+            set -e
             cd /opt/uay/e-learning/application && npm run build
 
             echo "=== Pre-flight: checking core config on VPS ==="
