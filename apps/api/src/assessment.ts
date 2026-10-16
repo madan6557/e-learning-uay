@@ -36,6 +36,30 @@ const date = z
   .nullable()
   .optional()
   .transform((v) => (v ? new Date(v) : null));
+
+export function mapQuestionToDb(
+  { id, allowedFileTypes, ...q }: QuestionData,
+  order?: number,
+) {
+  return {
+    ...q,
+    options: json(q.options),
+    answerKey: json({ ...(q.answerKey as any), allowedFileTypes }),
+    rubric: json(q.rubric),
+    ...(order !== undefined ? { order } : {}),
+  };
+}
+
+export function presentQuestion(q: any) {
+  return {
+    ...q,
+    allowedFileTypes:
+      (q.answerKey as any)?.allowedFileTypes ??
+      q.allowedFileTypes ??
+      ["PDF", "DOCX", "PNG", "JPG"],
+  };
+}
+
 export const quizSchema = z
   .object({
     title,
@@ -336,13 +360,9 @@ export function registerAssessment(app: Express) {
             courseId: cls.courseId,
             title: data.title,
             questions: {
-              create: data.questions.map(({ id, ...q }, order) => ({
-                ...q,
-                options: json(q.options),
-                answerKey: json(q.answerKey),
-                rubric: json(q.rubric),
-                order,
-              })),
+              create: data.questions.map((q, order) =>
+                mapQuestionToDb(q, order),
+              ),
             },
           },
         });
@@ -376,14 +396,11 @@ export function registerAssessment(app: Express) {
             where: { id: String(req.params.bankId) },
           });
           ensure(bank?.courseId === cls.courseId, 403, "WRITE_ACCESS_DENIED");
-          const { id, ...q } = questionSchema.parse(req.body);
+          const q = questionSchema.parse(req.body);
           const after = await tx.question.create({
             data: {
-              ...q,
+              ...mapQuestionToDb(q),
               questionBankId: bank.id,
-              options: json(q.options),
-              answerKey: json(q.answerKey),
-              rubric: json(q.rubric),
             },
           });
           await audit(
@@ -434,13 +451,9 @@ export function registerAssessment(app: Express) {
             sectionId: String(req.params.id),
             contentOrder,
             questions: {
-              create: questions.map(({ id, ...q }, order) => ({
-                ...q,
-                options: json(q.options),
-                answerKey: json(q.answerKey),
-                rubric: json(q.rubric),
-                order,
-              })),
+              create: questions.map((q, order) =>
+                mapQuestionToDb(q, order),
+              ),
             },
           },
           include: { questions: true },
@@ -499,13 +512,9 @@ export function registerAssessment(app: Express) {
           data: {
             ...data,
             questions: {
-              create: questions.map(({ id, ...q }, order) => ({
-                ...q,
-                options: json(q.options),
-                answerKey: json(q.answerKey),
-                rubric: json(q.rubric),
-                order,
-              })),
+              create: questions.map((q, order) =>
+                mapQuestionToDb(q, order),
+              ),
             },
           },
           include: { questions: true },
@@ -569,7 +578,7 @@ export function registerAssessment(app: Express) {
 
     res.json({
       ...quiz,
-      questions: canViewAll ? quiz.questions : undefined,
+      questions: canViewAll ? quiz.questions.map(presentQuestion) : undefined,
       attempts: attempts.map((a) => presentAttempt(a, canViewAll)),
       canManage: cls.canManage,
       canMonitor: cls.canMonitor,
@@ -617,7 +626,9 @@ export function registerAssessment(app: Express) {
           return presentAttempt(active);
         if (active) await finalizeAttempt(tx, active, req.context, true);
         ensure(existing.length < quiz.attemptLimit, 403, "ATTEMPT_LIMIT");
-        let questions = quiz.questions.map((q) => questionSchema.parse(q));
+        let questions = quiz.questions.map((q) =>
+          questionSchema.parse(presentQuestion(q)),
+        );
         if (quiz.randomizeQuestions) questions = shuffle(questions);
         questions = questions.map((q) => ({
           ...q,

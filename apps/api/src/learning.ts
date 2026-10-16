@@ -185,16 +185,49 @@ export async function validateResource(raw: unknown, tx: any, classId: string) {
       400,
       "FILE_NOT_READY",
     );
-    if (id === p.fileObjectId && data.resourceType === "DOCUMENT")
-      ensure(file.mimeType === "application/pdf", 400, "FILE_TYPE_OR_SIZE");
-    if (id === p.fileObjectId && data.resourceType === "VIDEO_MEDIA")
+    if (id === p.fileObjectId && data.resourceType === "DOCUMENT") {
+      const allowedDocMimes = [
+        "application/pdf",
+        "application/vnd.ms-powerpoint",
+        "application/ppt",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "application/pptx",
+      ];
+      const isExtMatch = /\.(pdf|ppt|pptx)$/i.test(file.name);
       ensure(
-        ["video/mp4", "video/webm"].includes(file.mimeType),
+        allowedDocMimes.includes(file.mimeType) || isExtMatch,
         400,
         "FILE_TYPE_OR_SIZE",
       );
-    if (p.blocks.some((b) => b.type === "image" && b.data.fileObjectId === id))
-      ensure(file.mimeType.startsWith("image/"), 400, "FILE_TYPE_OR_SIZE");
+    }
+    if (id === p.fileObjectId && data.resourceType === "VIDEO_MEDIA") {
+      const allowedVideoMimes = ["video/mp4", "video/webm", "application/mp4"];
+      const isExtMatch = /\.(mp4|webm)$/i.test(file.name);
+      ensure(
+        allowedVideoMimes.includes(file.mimeType) || isExtMatch,
+        400,
+        "FILE_TYPE_OR_SIZE",
+      );
+    }
+    if (p.blocks.some((b) => b.type === "image" && b.data.fileObjectId === id)) {
+      const allowedImageMimes = [
+        "image/png",
+        "image/jpeg",
+        "image/webp",
+        "application/png",
+        "application/jpeg",
+        "application/jpg",
+        "application/webp",
+      ];
+      const isExtMatch = /\.(png|jpe?g|webp)$/i.test(file.name);
+      ensure(
+        file.mimeType.startsWith("image/") ||
+          allowedImageMimes.includes(file.mimeType) ||
+          isExtMatch,
+        400,
+        "FILE_TYPE_OR_SIZE",
+      );
+    }
   }
   return { ...data, dynamicPayload: json(p) };
 }

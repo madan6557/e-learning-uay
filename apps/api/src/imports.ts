@@ -237,11 +237,11 @@ export function registerImports(app: Express) {
               batch.reason,
             );
           } else {
-            const { id, ...q } = row.parsed;
+            const { id, allowedFileTypes, ...q } = row.parsed;
             const data = {
               ...q,
               options: json(q.options),
-              answerKey: json(q.answerKey),
+              answerKey: json({ ...(q.answerKey as any), allowedFileTypes }),
               rubric: json(q.rubric),
             };
             after = row.existing

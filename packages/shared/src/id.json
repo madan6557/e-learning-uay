@@ -519,7 +519,7 @@
   "noQuestions": "Belum ada soal.",
   "resourceTypes": {
     "RICH_TEXT": "Materi teks",
-    "DOCUMENT": "Modul PDF",
+    "DOCUMENT": "Modul Dokumen / Presentasi (PDF/PPT)",
     "VIDEO_MEDIA": "Video pembelajaran",
     "LAB_PRACTICUM": "Praktikum & dataset",
     "VIRTUAL_SIMULATOR": "Simulator virtual",
@@ -666,7 +666,7 @@
     "SSO_AUTHENTICATION_REQUIRED": "Sesi SSO tidak valid atau token akses belum tersedia.",
     "SSO_ACCESS_DENIED": "Akun SSO Anda tidak memiliki izin untuk mengelola pengguna pada aplikasi ini.",
     "EMBED_NOT_ALLOWED": "Domain sematan belum diizinkan oleh administrator.",
-    "DOCUMENT_REQUIRED": "Unggah dokumen PDF dan isi jumlah halamannya.",
+    "DOCUMENT_REQUIRED": "Unggah dokumen PDF atau berkas presentasi PPT/PPTX dan isi jumlah halamannya.",
     "VIDEO_REQUIRED": "Pilih sumber video dan tunggu sampai durasi otomatis berhasil dibaca.",
     "VIDEO_SOURCE_UNSUPPORTED": "Sumber ini belum mendukung durasi dan progres otomatis. Gunakan YouTube atau video MP4/WebM; untuk halaman lain, pilih Tautan referensi.",
     "VIDEO_DURATION_REQUIRED": "Durasi video belum tersedia. Minta dosen membuka editor dan menyimpan ulang agar durasi dibaca otomatis.",

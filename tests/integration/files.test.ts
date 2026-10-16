@@ -409,6 +409,43 @@ test("File Service tickets, scan verification, ownership and trash lifecycle", a
         await request(teacher, `/files/${file.fileObjectId}/restore`, {}, 409);
       },
     );
+    await suite.test(
+      "DOCUMENT resource supports PowerPoint (PPTX/PPT) files in addition to PDF",
+      async () => {
+        const pptBytes = Buffer.from("POWERPOINT DUMMY DATA");
+        const pptMetadata = {
+          classId: section.classId,
+          purpose: "RESOURCE",
+          name: "materi_kuliah.pptx",
+          mimeType:
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+          sizeBytes: pptBytes.length,
+          checksum: createHash("sha256").update(pptBytes).digest("hex"),
+        };
+        const pptUpload = await request(teacher, "/files/upload-ticket", pptMetadata);
+        await fetch(pptUpload.uploadUrl, { method: "PUT", body: pptBytes });
+        objects.get(pptUpload.fileObjectId).scanStatus = "CLEAN";
+        await request(teacher, `/files/${pptUpload.fileObjectId}/confirm`, {});
+
+        const pptResource = await request(
+          teacher,
+          `/sections/${section.id}/resources`,
+          {
+            title: "Slide Presentasi Kuliah",
+            resourceType: "DOCUMENT",
+            isVisible: true,
+            dynamicPayload: {
+              fileObjectId: pptUpload.fileObjectId,
+              fileName: "materi_kuliah.pptx",
+              totalPages: 15,
+            },
+          },
+          201,
+        );
+        assert.equal(pptResource.resourceType, "DOCUMENT");
+        assert.equal(pptResource.dynamicPayload.totalPages, 15);
+      },
+    );
   } finally {
     await new Promise<void>((resolve) => app.close(() => resolve()));
     await new Promise<void>((resolve) => service.close(() => resolve()));
