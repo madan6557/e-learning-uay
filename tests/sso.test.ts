@@ -439,4 +439,123 @@ test("syncUser allows SSO login when user has explicit E-Learning role in client
   }
 });
 
+test("normalizeRole recognizes Spring and client prefixes like ROLE_ and ELEARNING_", () => {
+  assert.equal(normalizeRole("ROLE_STUDENT"), "STUDENT");
+  assert.equal(normalizeRole("ROLE_INSTRUCTOR"), "INSTRUCTOR");
+  assert.equal(normalizeRole("ROLE_ADMIN"), "SUPER_ADMIN");
+  assert.equal(normalizeRole("elearning_student"), "STUDENT");
+  assert.equal(normalizeRole("elearning-student"), "STUDENT");
+  assert.equal(normalizeRole("elearning_instructor"), "INSTRUCTOR");
+  assert.equal(normalizeRole("elearning_dosen"), "INSTRUCTOR");
+  assert.equal(normalizeRole("LMS_DOSEN"), "INSTRUCTOR");
+  assert.equal(normalizeRole("LMS_MAHASISWA"), "STUDENT");
+});
+
+test("syncUser allows SSO login when user has explicit E-Learning role in application_access", async () => {
+  const { syncUser } = await import("../apps/api/src/auth.js");
+  const { db } = await import("../apps/api/src/core.js");
+  const originalFindMany = db.user.findMany;
+  const originalTransaction = db.$transaction;
+
+  const appAccessSub = "app-access-sub-" + Date.now();
+  let createdUser: any = null;
+
+  db.user.findMany = (async () => []) as any;
+  db.$transaction = (async (run: any) => {
+    const txMock: any = {
+      user: {
+        create: async ({ data }: any) => {
+          createdUser = { id: "test-user-id", ...data };
+          return createdUser;
+        },
+      },
+      auditLog: {
+        create: async () => {},
+      },
+    };
+    return run(txMock);
+  }) as any;
+
+  try {
+    const appAccessClaims = {
+      sub: appAccessSub,
+      preferred_username: "dosen_sso_" + Date.now(),
+      email: `dosen_sso_${Date.now()}@dosen.uay.ac.id`,
+      name: "Dosen SSO Berizin",
+      application_access: [
+        {
+          client_id: "elearning-uay",
+          role: { name: "DOSEN" },
+          is_active: true,
+        },
+      ],
+    };
+
+    const user = await syncUser(appAccessClaims as any, true);
+    assert.ok(user);
+    assert.equal(user.ssoUserId, appAccessSub);
+    assert.equal(user.role, "INSTRUCTOR");
+  } finally {
+    db.user.findMany = originalFindMany;
+    db.$transaction = originalTransaction;
+  }
+});
+
+test("syncUser preserves existing active users without false rejection even if token omits role", async () => {
+  const { syncUser } = await import("../apps/api/src/auth.js");
+  const { db } = await import("../apps/api/src/core.js");
+  const originalFindMany = db.user.findMany;
+  const originalTransaction = db.$transaction;
+
+  const existingSub = "existing-active-user-" + Date.now();
+  const mockExistingUser = {
+    id: "existing-user-uuid",
+    ssoUserId: existingSub,
+    name: "Mahasiswa Terdaftar",
+    username: "mhs_lama",
+    email: "mhs_lama@mhs.uay.ac.id",
+    identifierValue: "20240001",
+    identifierType: "NIM",
+    userType: "STUDENT",
+    role: "STUDENT",
+    authoritySource: "SSO",
+    status: "ACTIVE",
+    departmentScopes: [],
+    lastLoginAt: new Date(),
+    lastActiveAt: new Date(),
+  };
+
+  db.user.findMany = (async () => [mockExistingUser]) as any;
+  db.$transaction = (async (run: any) => {
+    const txMock: any = {
+      user: {
+        findUniqueOrThrow: async () => mockExistingUser,
+        update: async ({ data }: any) => ({ ...mockExistingUser, ...data }),
+      },
+      auditLog: {
+        create: async () => {},
+      },
+    };
+    return run(txMock);
+  }) as any;
+
+  try {
+    // Minimal token without explicit roles (e.g. only standard OIDC profile)
+    const minimalTokenClaims = {
+      sub: existingSub,
+      preferred_username: "mhs_lama",
+      email: "mhs_lama@mhs.uay.ac.id",
+      name: "Mahasiswa Terdaftar",
+    };
+
+    const user = await syncUser(minimalTokenClaims as any, true);
+    assert.ok(user);
+    assert.equal(user.id, "existing-user-uuid");
+    assert.equal(user.role, "STUDENT");
+  } finally {
+    db.user.findMany = originalFindMany;
+    db.$transaction = originalTransaction;
+  }
+});
+
 

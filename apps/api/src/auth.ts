@@ -378,40 +378,81 @@ export async function fetchSsoMeProfile(
   if (candidateBases.length === 0) return null;
 
   for (const base of candidateBases) {
-    try {
-      const url = `${base}/auth/me`;
-      const res = await serviceFetch(
-        "sso-api",
-        url,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
+    for (const path of [
+      "/auth/me",
+      "/v1/auth/me",
+      "/auth/context",
+      "/v1/auth/context",
+      "/users/me/access",
+    ]) {
+      try {
+        const url = `${base}${path}`;
+        const res = await serviceFetch(
+          "sso-api",
+          url,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "X-Client-ID": config.clientId || "elearning-uay",
+              Accept: "application/json",
+            },
           },
-        },
-        { idempotent: true, attempts: 2, timeoutMs: 3500 },
-      );
-      if (!res.ok) continue;
-      const body: any = await res.json();
-      const data = body?.data ?? body;
-      if (!data || typeof data !== "object") continue;
-      return {
-        ...(Array.isArray(data.roles) && data.roles.length > 0
-          ? { roles: data.roles }
-          : {}),
-        ...(data.user_type ? { user_type: data.user_type } : {}),
-        ...(data.status ? { account_status: data.status } : {}),
-        ...(data.username ? { preferred_username: data.username } : {}),
-        ...(data.official_identifier
-          ? { official_identifier: data.official_identifier }
-          : {}),
-        ...(data.identifier_type
-          ? { identifier_type: data.identifier_type }
-          : {}),
-        ...(data.identifier_value
-          ? { identifier_value: data.identifier_value }
-          : {}),
-      };
-    } catch {}
+          { idempotent: true, attempts: 2, timeoutMs: 3500 },
+        );
+        if (!res.ok) continue;
+        const body: any = await res.json();
+        const data = body?.data ?? body;
+        if (!data || typeof data !== "object") continue;
+
+        const appRoles: string[] = [];
+        if (Array.isArray(data.application_access)) {
+          for (const item of data.application_access) {
+            const r = item?.role?.name || item?.role || item?.name;
+            if (r) appRoles.push(String(r));
+            if (Array.isArray(item?.roles)) {
+              appRoles.push(...item.roles.map(String));
+            }
+          }
+        } else if (
+          data.application_access &&
+          typeof data.application_access === "object"
+        ) {
+          if (Array.isArray(data.application_access.roles)) {
+            appRoles.push(...data.application_access.roles.map(String));
+          }
+          if (typeof data.application_access.role === "string") {
+            appRoles.push(data.application_access.role);
+          } else if (data.application_access.role?.name) {
+            appRoles.push(data.application_access.role.name);
+          }
+        }
+
+        const directRoles = Array.isArray(data.roles) ? data.roles : [];
+        const combinedRoles = [...directRoles, ...appRoles];
+
+        return {
+          ...(combinedRoles.length > 0 ? { roles: combinedRoles } : {}),
+          ...(data.user_type ? { user_type: data.user_type } : {}),
+          ...(data.status ? { account_status: data.status } : {}),
+          ...(data.username ? { preferred_username: data.username } : {}),
+          ...(data.official_identifier
+            ? { official_identifier: data.official_identifier }
+            : {}),
+          ...(data.identifier_type
+            ? { identifier_type: data.identifier_type }
+            : {}),
+          ...(data.identifier_value
+            ? { identifier_value: data.identifier_value }
+            : {}),
+          ...(data.department_scopes
+            ? { department_scopes: data.department_scopes }
+            : {}),
+          ...(data.application_access
+            ? { application_access: data.application_access }
+            : {}),
+        };
+      } catch {}
+    }
   }
   return null;
 }
@@ -526,6 +567,26 @@ export async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
   }
 
   // 1. Gather all possible role strings from token
+  // 1. Gather all possible role strings from token & SSO context
+  const extractAppAccessRoles = (acc: any): string[] => {
+    if (!acc) return [];
+    if (Array.isArray(acc)) {
+      return acc.flatMap((item: any) => {
+        if (!item) return [];
+        const r = item.role?.name || item.role || item.name;
+        const subRoles = Array.isArray(item.roles) ? item.roles : [];
+        return [...(r ? [String(r)] : []), ...subRoles.map(String)];
+      });
+    }
+    if (typeof acc === "object") {
+      const r = acc.role?.name || acc.role;
+      const subRoles = Array.isArray(acc.roles) ? acc.roles : [];
+      return [...(r ? [String(r)] : []), ...subRoles.map(String)];
+    }
+    if (typeof acc === "string") return [acc];
+    return [];
+  };
+
   const explicitRoles: string[] = [
     ...(Array.isArray(claims.roles) ? claims.roles : []),
     ...(typeof claims.roles === "string" ? claims.roles.split(/[,\s]+/) : []),
@@ -548,6 +609,15 @@ export async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
     ...(Array.isArray((rawClaims as any).attributes?.role)
       ? (rawClaims as any).attributes.role
       : []),
+    ...(Array.isArray((rawClaims as any).client_roles)
+      ? (rawClaims as any).client_roles
+      : []),
+    ...(Array.isArray((rawClaims as any).authorities)
+      ? (rawClaims as any).authorities
+      : []),
+    ...extractAppAccessRoles((rawClaims as any).application_access),
+    ...extractAppAccessRoles(claims.application_access),
+    ...extractAppAccessRoles((rawClaims as any).attributes?.application_access),
   ];
 
   const hasExplicitRole = explicitRoles.some(
@@ -648,14 +718,12 @@ export async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
     ensure(existingUser.ssoUserId === ssoUserId, 403, "INVALID_IDENTITY");
   }
 
-  const hasPreprovisionedAccess = Boolean(
-    existingUser &&
-      (existingUser.authoritySource !== "SSO" ||
-        existingUser.ssoUserId.startsWith("preprovision:")),
+  const isExistingActiveUser = Boolean(
+    existingUser && existingUser.status === "ACTIVE",
   );
 
   ensure(
-    hasExplicitRole || isAdminIdentifier || hasPreprovisionedAccess,
+    hasExplicitRole || isAdminIdentifier || isExistingActiveUser,
     403,
     "NO_APPLICATION_ACCESS",
   );

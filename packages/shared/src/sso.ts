@@ -50,11 +50,15 @@ const ROLE_PRECEDENCE: readonly ApplicationRole[] = APPLICATION_ROLES;
 
 export function normalizeRole(raw: string): ApplicationRole | null {
   if (typeof raw !== "string") return null;
-  const clean = raw
+  const normalizedStr = raw
     .trim()
     .toUpperCase()
     .replace(/^\/+/, "") // strip leading / from Keycloak group paths like /Super Admin
     .replace(/[-_\s]+/g, "_"); // normalize hyphens, underscores, spaces to single underscore
+
+  const clean = normalizedStr
+    .replace(/^ROLE_/, "") // strip Spring / Keycloak ROLE_ prefix
+    .replace(/^(ELEARNING_UAY_|ELEARNING_|LMS_|APP_)/, ""); // strip client/app prefix
 
   if (clean === "RECTOR" || clean === "REKTOR") return "RECTOR";
 
