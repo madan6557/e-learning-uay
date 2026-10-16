@@ -23,6 +23,7 @@ import {
   UAY_DEPARTMENTS,
   normalizeDepartmentCode,
   siakadScopeSyncPayloadSchema,
+} from "../../../packages/shared/src/departments.js";
 import { normalizeRole, extractSsoUserData } from "../../../packages/shared/src/sso.js";
 import { SIAKAD_SCOPE_SYNC_READY } from "../../../packages/shared/src/feature-readiness.js";
 
