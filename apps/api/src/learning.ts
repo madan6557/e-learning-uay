@@ -32,7 +32,7 @@ import {
   DEFAULT_GRADE_CATEGORIES_TEMPLATE,
 } from "../../../packages/shared/src/domain.js";
 import { classPath, contentPath } from "../../../packages/shared/src/urls.js";
-import { normalizeDepartmentCode } from "../../../packages/shared/src/departments.js";
+import { normalizeDepartmentCode, UAY_DEPARTMENTS } from "../../../packages/shared/src/departments.js";
 import { resourceFileIds, resourcesUsingFile } from "./files.js";
 import {
   validVideoDuration,
@@ -1081,38 +1081,85 @@ export function registerLearning(app: Express) {
       }),
     ),
   );
+function expandDepartmentScopes(scopes: string[]): string[] {
+  const result = new Set<string>();
+  for (const s of scopes) {
+    if (!s) continue;
+    result.add(s);
+    const norm = normalizeDepartmentCode(s);
+    if (norm) result.add(norm);
+    const dept = UAY_DEPARTMENTS.find(
+      (d) => d.code === norm || d.name.toLowerCase() === s.toLowerCase(),
+    );
+    if (dept) {
+      result.add(dept.code);
+      result.add(dept.name);
+    }
+  }
+  return [...result];
+}
+
   app.get("/api/v1/users", async (req, res) => {
     const u = req.context.user;
     ensure(u.role !== "STUDENT", 403, "WRITE_ACCESS_DENIED");
-    const search = String(req.query.q ?? "").slice(0, 100);
+    const rawSearch = String(req.query.q ?? "").trim();
+    const search = rawSearch.slice(0, 100);
     ensure(search.length >= 2, 400, "SEARCH_TOO_SHORT");
     if (u.role === "DEPARTMENT_ADMIN" && !u.departmentScopes.length) {
       res.json([]);
       return;
     }
+
+    const requestedRole =
+      typeof req.query.role === "string" ? req.query.role.trim().toUpperCase() : "";
+    const roleFilter =
+      requestedRole &&
+      ["SUPER_ADMIN", "DEPARTMENT_ADMIN", "INSTRUCTOR", "ASSISTANT", "STUDENT", "RECTOR"].includes(
+        requestedRole,
+      )
+        ? { role: requestedRole as any }
+        : {};
+
+    const expandedCallerScopes = expandDepartmentScopes(u.departmentScopes || []);
     const scopeFilter =
       u.role === "SUPER_ADMIN"
         ? {}
-        : u.departmentScopes.length > 0
-          ? { departmentScopes: { hasSome: u.departmentScopes } }
+        : expandedCallerScopes.length > 0
+          ? {
+              OR: [
+                { departmentScopes: { hasSome: expandedCallerScopes } },
+                {
+                  role: { in: ["STUDENT", "INSTRUCTOR", "ASSISTANT"] },
+                  departmentScopes: { equals: [] },
+                },
+              ],
+            }
           : {};
+
     res.json(
       await db.user.findMany({
         where: {
           status: "ACTIVE",
+          ...roleFilter,
           ...scopeFilter,
           OR: [
             { name: { contains: search, mode: "insensitive" } },
-            { identifierValue: { contains: search } },
+            { identifierValue: { contains: search, mode: "insensitive" } },
+            { email: { contains: search, mode: "insensitive" } },
+            { username: { contains: search, mode: "insensitive" } },
           ],
         },
+        orderBy: [{ name: "asc" }],
         select: {
           id: true,
           name: true,
           identifierValue: true,
+          email: true,
+          username: true,
           role: true,
+          departmentScopes: true,
         },
-        take: 30,
+        take: 50,
       }),
     );
   });

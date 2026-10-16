@@ -133,7 +133,7 @@ export function Participants({
     const timer = setTimeout(async () => {
       setSearching(true);
       try {
-        const results = await api(`/users?q=${encodeURIComponent(trimmed)}`);
+        const results = await api(`/users?q=${encodeURIComponent(trimmed)}&role=STUDENT`);
         if (active) setUsers(results);
       } catch (error) {
         if (active) {
@@ -578,16 +578,56 @@ export function Participants({
                 aria-label={t.searchUsers}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const trimmed = query.trim();
+                    if (trimmed.length >= 2) {
+                      setSearching(true);
+                      api(`/users?q=${encodeURIComponent(trimmed)}&role=STUDENT`)
+                        .then((res: any) => {
+                          setUsers(res);
+                          setSearchError(null);
+                        })
+                        .catch((err: any) => setSearchError(err as Error))
+                        .finally(() => setSearching(false));
+                    }
+                  }
+                }}
                 placeholder={t.searchUsers}
               />
               <Action
-                run={async () =>
-                  setUsers(await api(`/users?q=${encodeURIComponent(query)}`))
-                }
+                disabled={query.trim().length < 2 || searching}
+                run={async () => {
+                  const trimmed = query.trim();
+                  if (trimmed.length < 2) return;
+                  setSearching(true);
+                  try {
+                    const results = await api(`/users?q=${encodeURIComponent(trimmed)}&role=STUDENT`);
+                    setUsers(results);
+                    setSearchError(null);
+                  } catch (err) {
+                    setSearchError(err as Error);
+                  } finally {
+                    setSearching(false);
+                  }
+                }}
               >
                 {t.searchLabel}
               </Action>
             </div>
+            {query.trim().length > 0 && query.trim().length < 2 && (
+              <small
+                style={{
+                  display: "block",
+                  margin: "4px 0 8px",
+                  color: "var(--muted)",
+                  fontSize: "0.82rem",
+                }}
+              >
+                Ketik minimal 2 karakter untuk mencari mahasiswa…
+              </small>
+            )}
             {users
               .filter(
                 (u) =>
@@ -598,7 +638,10 @@ export function Participants({
                 <div className="user-result" key={u.id}>
                   <span>
                     {u.name}
-                    <small className="block">{u.identifierValue}</small>
+                    <small className="block">
+                      {u.identifierValue}
+                      {u.email ? ` · ${u.email}` : ""}
+                    </small>
                   </span>
                   <label className="check-row">
                     <input
@@ -617,13 +660,36 @@ export function Participants({
                   </label>
                 </div>
               ))}
-            {!users.length && !searching && !searchError && (
-              <p>
-                {query.trim().length >= 2
-                  ? "Tidak ada mahasiswa yang cocok dengan pencarian ini."
-                  : "Cari mahasiswa melalui nama, nomor mahasiswa, atau email, lalu pilih peserta yang akan ditambahkan."}
-              </p>
-            )}
+            {(() => {
+              const eligible = users.filter(
+                (u) =>
+                  u.role === "STUDENT" &&
+                  !members.data?.some((m) => m.userId === u.id && m.isActive),
+              );
+              const alreadyEnrolled = users.filter(
+                (u) =>
+                  u.role === "STUDENT" &&
+                  members.data?.some((m) => m.userId === u.id && m.isActive),
+              );
+              if (eligible.length > 0) return null;
+              if (alreadyEnrolled.length > 0 && !searching) {
+                return (
+                  <p style={{ fontSize: "0.88rem", color: "var(--muted)", marginTop: 8 }}>
+                    Semua mahasiswa yang cocok ({alreadyEnrolled.length}) sudah terdaftar sebagai peserta aktif di kelas ini.
+                  </p>
+                );
+              }
+              if (!searching && !searchError) {
+                return (
+                  <p style={{ fontSize: "0.88rem", color: "var(--muted)", marginTop: 8 }}>
+                    {query.trim().length >= 2
+                      ? `Tidak ada mahasiswa yang cocok dengan pencarian "${query.trim()}".`
+                      : "Cari mahasiswa melalui nama, nomor mahasiswa, atau email, lalu pilih peserta yang akan ditambahkan."}
+                  </p>
+                );
+              }
+              return null;
+            })()}
             {selected.length > 0 && <p>{selected.length} mahasiswa dipilih.</p>}
           </Form>
         </Modal>
@@ -660,6 +726,38 @@ export function Participants({
                 }
                 value={collabQuery}
                 onChange={(e) => setCollabQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const trimmed = collabQuery.trim();
+                    if (trimmed.length >= 2 && !collabSearching) {
+                      setCollabSearching(true);
+                      setCollabError(null);
+                      const roleParam = collabModal === "INSTRUCTOR" ? "&role=INSTRUCTOR" : "";
+                      api<any[]>(`/users?q=${encodeURIComponent(trimmed)}${roleParam}`)
+                        .then((res) => {
+                          const currentIds = (instructors ?? []).map((i: any) => i.userId || i.user?.id);
+                          if (collabModal === "ASSISTANT") {
+                            setCollabResults(
+                              res.filter(
+                                (u) =>
+                                  (u.role === "STUDENT" || u.role === "ASSISTANT") &&
+                                  !currentIds.includes(u.id),
+                              ),
+                            );
+                          } else {
+                            setCollabResults(
+                              res.filter(
+                                (u) => u.role === "INSTRUCTOR" && !currentIds.includes(u.id),
+                              ),
+                            );
+                          }
+                        })
+                        .catch((err) => setCollabError(err as Error))
+                        .finally(() => setCollabSearching(false));
+                    }
+                  }
+                }}
                 style={{ flex: 1 }}
               />
               <button
@@ -667,12 +765,14 @@ export function Participants({
                 className="secondary"
                 disabled={collabQuery.trim().length < 2 || collabSearching}
                 onClick={async () => {
-                  if (collabQuery.trim().length < 2) return;
+                  const trimmed = collabQuery.trim();
+                  if (trimmed.length < 2) return;
                   setCollabSearching(true);
                   setCollabError(null);
                   try {
+                    const roleParam = collabModal === "INSTRUCTOR" ? "&role=INSTRUCTOR" : "";
                     const res = await api<any[]>(
-                      `/users?q=${encodeURIComponent(collabQuery.trim())}`,
+                      `/users?q=${encodeURIComponent(trimmed)}${roleParam}`,
                     );
                     const currentIds = (instructors ?? []).map(
                       (i: any) => i.userId || i.user?.id,

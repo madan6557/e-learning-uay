@@ -1467,7 +1467,7 @@ export function ClassForm({
     const timer = setTimeout(async () => {
       try {
         const results = await api<UserSearchResult[]>(
-          `/users?q=${encodeURIComponent(trimmed)}`,
+          `/users?q=${encodeURIComponent(trimmed)}&role=INSTRUCTOR`,
         );
         setUsers(results);
         setError(null);
@@ -1604,6 +1604,22 @@ export function ClassForm({
                 value={search}
                 aria-label={t.instructors}
                 onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const trimmed = search.trim();
+                    if (trimmed.length >= 2) {
+                      api<UserSearchResult[]>(
+                        `/users?q=${encodeURIComponent(trimmed)}&role=INSTRUCTOR`,
+                      )
+                        .then((res) => {
+                          setUsers(res);
+                          setError(null);
+                        })
+                        .catch((err) => setError(err as Error));
+                    }
+                  }
+                }}
                 placeholder="Ketik nama atau NIDN dosen..."
               />
               <button
@@ -1611,11 +1627,12 @@ export function ClassForm({
                 className="secondary"
                 disabled={search.trim().length < 2}
                 onClick={async () => {
-                  if (search.trim().length < 2) return;
+                  const trimmed = search.trim();
+                  if (trimmed.length < 2) return;
                   try {
                     setUsers(
                       await api(
-                        `/users?q=${encodeURIComponent(search.trim())}`,
+                        `/users?q=${encodeURIComponent(trimmed)}&role=INSTRUCTOR`,
                       ),
                     );
                     setError(null);
@@ -1638,6 +1655,18 @@ export function ClassForm({
                 Ketik minimal 2 karakter untuk mencari dosen...
               </small>
             )}
+            {search.trim().length >= 2 &&
+              users.filter((u) => u.role === "INSTRUCTOR").length === 0 && (
+                <small
+                  style={{
+                    display: "block",
+                    marginTop: 6,
+                    color: "var(--adaptive-text-muted, #64748b)",
+                  }}
+                >
+                  Tidak ada dosen yang cocok dengan pencarian "{search.trim()}".
+                </small>
+              )}
             {search.trim().length >= 2 &&
               users.filter((u) => u.role === "INSTRUCTOR").length > 0 && (
                 <div

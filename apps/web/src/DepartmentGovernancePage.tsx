@@ -520,7 +520,7 @@ export function DepartmentGovernancePage({
     setUserError(null);
     const params = new URLSearchParams();
     if (userSearch.trim()) params.set("q", userSearch.trim());
-    if (roleFilter !== "ALL") params.set("role", roleFilter);
+    if (roleFilter) params.set("role", roleFilter);
     try {
       const data = await api<UserRecord[]>(
         `/system/department-scopes/users?${params}`,

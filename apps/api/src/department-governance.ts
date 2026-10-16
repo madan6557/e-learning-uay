@@ -23,8 +23,7 @@ import {
   UAY_DEPARTMENTS,
   normalizeDepartmentCode,
   siakadScopeSyncPayloadSchema,
-} from "../../../packages/shared/src/departments.js";
-import { normalizeRole } from "../../../packages/shared/src/sso.js";
+import { normalizeRole, extractSsoUserData } from "../../../packages/shared/src/sso.js";
 import { SIAKAD_SCOPE_SYNC_READY } from "../../../packages/shared/src/feature-readiness.js";
 
 const authorityRoles = [
@@ -511,7 +510,9 @@ export function registerDepartmentGovernance(app: Express) {
         "SUPER_ADMIN",
         "DEPARTMENT_ADMIN",
         "INSTRUCTOR",
+        "ASSISTANT",
         "STUDENT",
+        "RECTOR",
       ] as const;
       if (roleFilter && roleFilter !== "ALL") {
         z.enum(manageableRoles).parse(roleFilter);
@@ -524,7 +525,9 @@ export function registerDepartmentGovernance(app: Express) {
             ? roleFilter === "ALL"
               ? { in: [...manageableRoles] }
               : (roleFilter as any)
-            : { in: [...authorityRoles] },
+            : q
+              ? { in: [...manageableRoles] }
+              : { in: [...authorityRoles] },
           ...(departmentFilter
             ? { departmentScopes: { has: departmentFilter } }
             : {}),
@@ -532,7 +535,7 @@ export function registerDepartmentGovernance(app: Express) {
             ? {
                 OR: [
                   { name: { contains: q, mode: "insensitive" } },
-                  { identifierValue: { contains: q } },
+                  { identifierValue: { contains: q, mode: "insensitive" } },
                   { username: { contains: q, mode: "insensitive" } },
                   { email: { contains: q, mode: "insensitive" } },
                 ],
@@ -1624,21 +1627,24 @@ export function registerDepartmentGovernance(app: Express) {
 
       if (payload.dryRun) {
         for (const ssoUser of filteredUsers) {
-          const username = ssoUser.account?.username?.trim() || null;
-          const email = (
-            ssoUser.email?.trim() ||
-            `${(username || ssoUser.user_id).toLowerCase()}@uay.ac.id`
-          ).toLowerCase();
-          const identifierVal =
-            username || email.split("@")[0] || ssoUser.user_id;
-          const ssoSub = ssoUser.account?.keycloak_user_id?.trim() || null;
+          const {
+            username,
+            email,
+            identifierValue,
+            identifierType,
+            userType,
+            ssoSub,
+            ssoUserId,
+            name,
+          } = extractSsoUserData(ssoUser);
 
           const matches = await db.user.findMany({
             where: {
               OR: [
-                { identifierValue: identifierVal },
-                { email: { equals: email, mode: "insensitive" as const } },
+                { identifierValue: { equals: identifierValue, mode: "insensitive" } },
+                { email: { equals: email, mode: "insensitive" } },
                 ...(ssoSub ? [{ ssoUserId: ssoSub }] : []),
+                ...(ssoUserId ? [{ ssoUserId }] : []),
                 ...(username
                   ? [
                       {
@@ -1657,20 +1663,13 @@ export function registerDepartmentGovernance(app: Express) {
           const targetRole = resolveSsoRole(ssoUser);
 
           processedResults.push({
-            ssoUserId: ssoSub || ssoUser.user_id,
-            name: ssoUser.name,
+            ssoUserId: ssoUserId || ssoSub || ssoUser.user_id,
+            name,
             email,
-            username: username || identifierVal,
-            identifierValue: identifierVal,
-            identifierType:
-              ssoUser.user_type === "LECTURER"
-                ? "NIDN"
-                : ssoUser.user_type === "STAFF"
-                  ? "NIP"
-                  : ssoUser.user_type === "STUDENT"
-                    ? "NIM"
-                    : "OTHER",
-            userType: ssoUser.user_type,
+            username: username || identifierValue,
+            identifierValue,
+            identifierType,
+            userType,
             status: existing ? "ALREADY_EXISTS" : "NEW",
             action: existing ? "SYNC_PROFILE" : "CREATE",
             currentRole: existing?.role ?? null,
@@ -1697,119 +1696,165 @@ export function registerDepartmentGovernance(app: Express) {
       const executionResults = await mutate(req, async (tx) => {
         const results = [];
         for (const ssoUser of filteredUsers) {
-          const username = ssoUser.account?.username?.trim() || null;
-          const email = (
-            ssoUser.email?.trim() ||
-            `${(username || ssoUser.user_id).toLowerCase()}@uay.ac.id`
-          ).toLowerCase();
-          const identifierVal =
-            username || email.split("@")[0] || ssoUser.user_id;
-          const ssoSub = ssoUser.account?.keycloak_user_id?.trim() || null;
-          const identifierType =
-            ssoUser.user_type === "LECTURER"
-              ? "NIDN"
-              : ssoUser.user_type === "STAFF"
-                ? "NIP"
-                : ssoUser.user_type === "STUDENT"
-                  ? "NIM"
-                  : "OTHER";
+          try {
+            const {
+              username,
+              email,
+              identifierValue,
+              identifierType,
+              userType,
+              ssoSub,
+              ssoUserId,
+              name,
+            } = extractSsoUserData(ssoUser);
 
-          const matches = await tx.user.findMany({
-            where: {
-              OR: [
-                { identifierValue: identifierVal },
-                { email: { equals: email, mode: "insensitive" as const } },
-                ...(ssoSub ? [{ ssoUserId: ssoSub }] : []),
-                ...(username
-                  ? [
-                      {
-                        username: {
-                          equals: username,
-                          mode: "insensitive" as const,
+            const matches = await tx.user.findMany({
+              where: {
+                OR: [
+                  { identifierValue: { equals: identifierValue, mode: "insensitive" } },
+                  { email: { equals: email, mode: "insensitive" } },
+                  ...(ssoSub ? [{ ssoUserId: ssoSub }] : []),
+                  ...(ssoUserId ? [{ ssoUserId }] : []),
+                  ...(username
+                    ? [
+                        {
+                          username: {
+                            equals: username,
+                            mode: "insensitive" as const,
+                          },
                         },
-                      },
-                    ]
-                  : []),
-              ],
-            },
-          });
-
-          const existing = matches[0];
-
-          const targetRole = resolveSsoRole(ssoUser);
-
-          if (existing) {
-            // SSO memperbarui profil, sedangkan E-Learning tetap menjadi sumber role.
-            const updated = await tx.user.update({
-              where: { id: existing.id },
-              data: {
-                name: ssoUser.name || existing.name,
-                email,
-                username: username || existing.username,
-                userType: ssoUser.user_type,
-                status: ssoUser.status === "ACTIVE" ? "ACTIVE" : existing.status,
+                      ]
+                    : []),
+                ],
               },
             });
 
-            results.push({
-              id: updated.id,
-              ssoUserId: updated.ssoUserId,
-              name: updated.name,
-              email: updated.email,
-              username: updated.username,
-              identifierValue: updated.identifierValue,
-              identifierType: updated.identifierType,
-              userType: updated.userType,
-              status: "ALREADY_EXISTS",
-              action: "SYNC_PROFILE",
-              role: updated.role,
-              currentRole: updated.role,
-              proposedRole: targetRole,
-              roleMismatch: updated.role !== targetRole,
-              departmentScopes: updated.departmentScopes,
-            });
-          } else {
-            // Buat pengguna baru dengan penanda pra-registrasi atau sub Keycloak asli
-            const targetSsoUserId = ssoSub || `preprovision:${randomUUID()}`;
+            const existing = matches[0];
+            const targetRole = resolveSsoRole(ssoUser);
 
-            const finalUsername = username || identifierVal;
-            const existingUsername = await tx.user.findUnique({
-              where: { username: finalUsername },
-            });
-            const resolvedUsername = existingUsername
-              ? `${finalUsername}-${randomBytes(2).toString("hex")}`
-              : finalUsername;
+            if (existing) {
+              const updated = await tx.user.update({
+                where: { id: existing.id },
+                data: {
+                  name: name || existing.name,
+                  email,
+                  username: username || existing.username,
+                  userType,
+                  identifierType,
+                  identifierValue,
+                  ...(ssoUserId && existing.ssoUserId.startsWith("preprovision:")
+                    ? { ssoUserId }
+                    : {}),
+                  status: "ACTIVE",
+                },
+              });
 
-            const created = await tx.user.create({
-              data: {
-                ssoUserId: targetSsoUserId,
-                identifierValue: identifierVal,
-                identifierType,
-                name: ssoUser.name,
-                email,
-                username: resolvedUsername,
-                role: targetRole,
-                userType: ssoUser.user_type,
-                departmentScopes: [],
-                authoritySource: "SSO",
-                status: "ACTIVE",
-              },
-            });
+              results.push({
+                id: updated.id,
+                ssoUserId: updated.ssoUserId,
+                name: updated.name,
+                email: updated.email,
+                username: updated.username,
+                identifierValue: updated.identifierValue,
+                identifierType: updated.identifierType,
+                userType: updated.userType,
+                status: "ALREADY_EXISTS",
+                action: "SYNC_PROFILE",
+                role: updated.role,
+                currentRole: updated.role,
+                proposedRole: targetRole,
+                roleMismatch: updated.role !== targetRole,
+                departmentScopes: updated.departmentScopes,
+              });
+            } else {
+              const targetSsoUserId = ssoUserId || ssoSub || `preprovision:${randomUUID()}`;
+              const finalUsername = username || identifierValue;
 
-            results.push({
-              id: created.id,
-              ssoUserId: created.ssoUserId,
-              name: created.name,
-              email: created.email,
-              username: created.username,
-              identifierValue: created.identifierValue,
-              identifierType: created.identifierType,
-              userType: created.userType,
-              status: "NEW",
-              action: "CREATE",
-              role: created.role,
-              departmentScopes: created.departmentScopes,
-            });
+              const existingUsername = await tx.user.findFirst({
+                where: { username: { equals: finalUsername, mode: "insensitive" } },
+              });
+              const resolvedUsername = existingUsername
+                ? `${finalUsername}-${randomBytes(2).toString("hex")}`
+                : finalUsername;
+
+              const collision = await tx.user.findFirst({
+                where: {
+                  OR: [
+                    { ssoUserId: targetSsoUserId },
+                    { identifierValue: { equals: identifierValue, mode: "insensitive" } },
+                    { email: { equals: email, mode: "insensitive" } },
+                  ],
+                },
+              });
+
+              if (collision) {
+                const updated = await tx.user.update({
+                  where: { id: collision.id },
+                  data: {
+                    name,
+                    email,
+                    username: resolvedUsername,
+                    userType,
+                    identifierType,
+                    identifierValue,
+                    status: "ACTIVE",
+                  },
+                });
+                results.push({
+                  id: updated.id,
+                  ssoUserId: updated.ssoUserId,
+                  name: updated.name,
+                  email: updated.email,
+                  username: updated.username,
+                  identifierValue: updated.identifierValue,
+                  identifierType: updated.identifierType,
+                  userType: updated.userType,
+                  status: "ALREADY_EXISTS",
+                  action: "SYNC_PROFILE",
+                  role: updated.role,
+                  currentRole: updated.role,
+                  proposedRole: targetRole,
+                  roleMismatch: updated.role !== targetRole,
+                  departmentScopes: updated.departmentScopes,
+                });
+              } else {
+                const created = await tx.user.create({
+                  data: {
+                    ssoUserId: targetSsoUserId,
+                    identifierValue,
+                    identifierType,
+                    name,
+                    email,
+                    username: resolvedUsername,
+                    role: targetRole,
+                    userType,
+                    departmentScopes: [],
+                    authoritySource: "SSO",
+                    status: "ACTIVE",
+                  },
+                });
+
+                results.push({
+                  id: created.id,
+                  ssoUserId: created.ssoUserId,
+                  name: created.name,
+                  email: created.email,
+                  username: created.username,
+                  identifierValue: created.identifierValue,
+                  identifierType: created.identifierType,
+                  userType: created.userType,
+                  status: "NEW",
+                  action: "CREATE",
+                  role: created.role,
+                  currentRole: created.role,
+                  proposedRole: targetRole,
+                  roleMismatch: false,
+                  departmentScopes: created.departmentScopes,
+                });
+              }
+            }
+          } catch (itemErr: any) {
+            console.error(`[SSO Sync] Error processing user:`, itemErr?.message || itemErr);
           }
         }
 

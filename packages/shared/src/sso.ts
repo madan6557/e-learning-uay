@@ -270,3 +270,101 @@ export const identityClaims = z
   });
 
 export type Identity = z.infer<typeof identityClaims>;
+
+/**
+ * Normalizes user data received from SSO API during administrative user sync.
+ * Extracts official identifier (NIM/NIDN/NIP), maps localized user types,
+ * and handles fallbacks gracefully.
+ */
+export function extractSsoUserData(ssoUser: any) {
+  const email = (ssoUser.email || "").trim();
+  const username = (
+    ssoUser.username ||
+    ssoUser.preferred_username ||
+    ssoUser.account?.username ||
+    ""
+  ).trim();
+
+  const primaryId =
+    ssoUser.primary_identifier?.identifier_value ||
+    ssoUser.identifier_value ||
+    ssoUser.official_identifier ||
+    ssoUser.student_staff_number ||
+    (Array.isArray(ssoUser.user_identifiers)
+      ? ssoUser.user_identifiers[0]?.identifier_value
+      : null) ||
+    (Array.isArray(ssoUser.identifiers)
+      ? ssoUser.identifiers[0]?.identifier_value
+      : null) ||
+    username ||
+    email.split("@")[0] ||
+    String(ssoUser.user_id || ssoUser.id || "");
+
+  const cleanIdentifierValue = String(primaryId).trim();
+
+  const rawUserType = String(
+    ssoUser.user_type || ssoUser.userType || "",
+  ).toUpperCase();
+  let userType: UserType = "STUDENT";
+  if (
+    rawUserType === "LECTURER" ||
+    rawUserType === "DOSEN" ||
+    rawUserType === "PENGAJAR"
+  ) {
+    userType = "LECTURER";
+  } else if (
+    rawUserType === "STAFF" ||
+    rawUserType === "TENDIK" ||
+    rawUserType === "KARYAWAN"
+  ) {
+    userType = "STAFF";
+  } else if (
+    rawUserType === "ADMIN" ||
+    rawUserType === "SUPER_ADMIN" ||
+    rawUserType === "ADMINISTRATOR"
+  ) {
+    userType = "ADMIN";
+  }
+
+  const rawIdType = String(
+    ssoUser.primary_identifier?.identifier_type ||
+      ssoUser.identifier_type ||
+      (Array.isArray(ssoUser.user_identifiers)
+        ? ssoUser.user_identifiers[0]?.identifier_type
+        : null) ||
+      "",
+  ).toUpperCase();
+  let identifierType: IdentifierType = defaultIdentifierType(userType);
+  if (["NIM", "NIDN", "NIP", "OTHER"].includes(rawIdType)) {
+    identifierType = rawIdType as any;
+  }
+
+  const ssoSub =
+    ssoUser.account?.keycloak_user_id?.trim() ||
+    ssoUser.keycloak_user_id?.trim() ||
+    ssoUser.sub?.trim() ||
+    null;
+
+  const ssoUserId =
+    ssoSub ||
+    (ssoUser.user_id ? String(ssoUser.user_id).trim() : null) ||
+    (ssoUser.id ? String(ssoUser.id).trim() : null);
+
+  const name =
+    ssoUser.name?.trim() ||
+    ssoUser.full_name?.trim() ||
+    [ssoUser.first_name, ssoUser.last_name].filter(Boolean).join(" ").trim() ||
+    username ||
+    cleanIdentifierValue;
+
+  return {
+    username,
+    email,
+    identifierValue: cleanIdentifierValue,
+    identifierType,
+    userType,
+    ssoSub,
+    ssoUserId,
+    name,
+  };
+}

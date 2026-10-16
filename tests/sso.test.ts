@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { identityClaims, normalizeRole } from "../packages/shared/src/sso.js";
+import {
+  identityClaims,
+  normalizeRole,
+  extractSsoUserData,
+} from "../packages/shared/src/sso.js";
 
 const base = {
   sub: "00000000-0000-4000-8000-000000000001",
@@ -272,5 +276,66 @@ test("normalizeRole and permissions recognize ASSISTANT role and aliases", async
     canGradeClassWork({ role: "ASSISTANT", id: "user-123" }, false),
     false,
   );
+});
+
+test("extractSsoUserData extracts official identifiers and maps user types correctly", () => {
+  // Case 1: Student with official_identifier from SIAKAD/SSO
+  const studentRaw = {
+    user_id: 105,
+    name: "Ahmad Dahlan",
+    email: "ahmad.dahlan@uay.ac.id",
+    username: "ahmad.dahlan",
+    official_identifier: "231011001",
+    user_type: "MAHASISWA",
+  };
+  const parsedStudent = extractSsoUserData(studentRaw);
+  assert.equal(parsedStudent.identifierValue, "231011001");
+  assert.equal(parsedStudent.identifierType, "NIM");
+  assert.equal(parsedStudent.userType, "STUDENT");
+  assert.equal(parsedStudent.name, "Ahmad Dahlan");
+  assert.equal(parsedStudent.email, "ahmad.dahlan@uay.ac.id");
+
+  // Case 2: Lecturer with NIDN in primary_identifier object
+  const lecturerRaw = {
+    id: "usr-lecturer-42",
+    full_name: "Dr. Budi Santoso, M.Kom.",
+    email: "budi.santoso@uay.ac.id",
+    preferred_username: "budi.santoso",
+    primary_identifier: {
+      identifier_value: "0912058501",
+      identifier_type: "NIDN",
+    },
+    user_type: "DOSEN",
+  };
+  const parsedLecturer = extractSsoUserData(lecturerRaw);
+  assert.equal(parsedLecturer.identifierValue, "0912058501");
+  assert.equal(parsedLecturer.identifierType, "NIDN");
+  assert.equal(parsedLecturer.userType, "LECTURER");
+  assert.equal(parsedLecturer.name, "Dr. Budi Santoso, M.Kom.");
+
+  // Case 3: Staff with student_staff_number and tendik type
+  const staffRaw = {
+    user_id: "staff-99",
+    name: "Siti Rahma",
+    email: "siti.rahma@uay.ac.id",
+    student_staff_number: "198501012010122001",
+    user_type: "TENDIK",
+  };
+  const parsedStaff = extractSsoUserData(staffRaw);
+  assert.equal(parsedStaff.identifierValue, "198501012010122001");
+  assert.equal(parsedStaff.identifierType, "NIP");
+  assert.equal(parsedStaff.userType, "STAFF");
+
+  // Case 4: Fallback to username / email prefix when no explicit identifier is provided
+  const fallbackRaw = {
+    user_id: "usr-fallback",
+    username: "mhs_baru",
+    email: "mhs_baru@uay.ac.id",
+    user_type: "STUDENT",
+  };
+  const parsedFallback = extractSsoUserData(fallbackRaw);
+  assert.equal(parsedFallback.identifierValue, "mhs_baru");
+  assert.equal(parsedFallback.identifierType, "NIM");
+  assert.equal(parsedFallback.userType, "STUDENT");
 });
 
