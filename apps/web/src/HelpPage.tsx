@@ -38,13 +38,13 @@ const quickFaqs = [
   {
     id: "scores-released",
     q: "Kapan nilai dan umpan balik tugas atau kuis saya dapat dilihat?",
-    a: "Untuk kuis pilihan ganda otomatis, nilai akan langsung muncul pada kartu 'HASIL & NILAI KUIS' di bagian atas halaman kuis setelah pengerjaan berakhir atau hasil dipublikasikan dosen. Untuk tugas, nilai beserta catatan feedback dosen akan tampil di kartu 'HASIL PENILAIAN TUGAS' setelah dosen selesai memeriksa kiriman Anda.",
+    a: "Nilai kuis pilihan ganda otomatis langsung tampil setelah selesai atau dipublikasikan dosen. Untuk tugas dan esai, nilai tampil setelah dinilai oleh dosen.",
     icon: BookOpen,
   },
   {
     id: "attendance-progress",
     q: "Bagaimana agar kehadiran (presensi) perkuliahan saya tercatat?",
-    a: "Presensi tercatat secara otomatis saat Anda menuntaskan aktivitas sesi perkuliahan. Buka dan baca dokumen modul hingga selesai, atau tonton video pembelajaran minimal mencapai persentase batas (85%) yang ditentukan dosen.",
+    a: "Presensi dapat diisi secara mandiri melalui tab Presensi pada kelas, baik dengan mengonfirmasi kehadiran langsung maupun memasukkan kode dari dosen.",
     icon: ShieldCheck,
   },
   {
@@ -164,7 +164,7 @@ export function HelpPage({ user }: { user: { role?: unknown } | null }) {
           </h1>
         </div>
         <p style={{ color: "var(--muted, #64748b)", marginTop: 6, fontSize: "0.95rem" }}>
-          Temukan panduan lengkap pengoperasian fitur E-Learning UAY, tutorial langkah demi langkah, dan solusi kendala belajar.
+          Panduan penggunaan dan solusi pertanyaan umum seputar E-Learning UAY.
         </p>
         {userRole && <a className="button secondary" href="/Panduan/panduan.html" target="_blank" rel="noopener noreferrer"><ExternalLink size={18} /> Buka buku panduan</a>}
       </div>

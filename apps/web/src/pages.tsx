@@ -1578,8 +1578,7 @@ export function ClassForm({
               fontSize: "0.82rem",
             }}
           >
-            Kunci pendaftaran otomatis terisi 6 huruf kapital. Mahasiswa dapat
-            menggunakan kunci ini untuk bergabung secara mandiri.
+            Kode pendaftaran bagi mahasiswa untuk bergabung mandiri.
           </small>
         </Field>
         <Field label={t.instructors}>

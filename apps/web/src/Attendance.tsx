@@ -246,8 +246,8 @@ export function Attendance({
             </h3>
             <p>
               {activeOpenSession.requiresCode
-                ? "Dosen telah membuka sesi presensi dengan verifikasi kode. Masukkan kode 6 karakter dari layar proyektor kelas."
-                : "Dosen telah membuka Konfirmasi Kehadiran Mandiri. Anda dapat mengonfirmasi kehadiran dengan 1 klik."}
+                ? "Sesi presensi telah dibuka. Masukkan kode kehadiran dari dosen."
+                : "Sesi presensi telah dibuka. Silakan konfirmasi kehadiran Anda."}
             </p>
           </div>
           <button
@@ -264,8 +264,8 @@ export function Attendance({
             )}
             <span>
               {activeOpenSession.requiresCode
-                ? "Isi Presensi (Kode)"
-                : "Konfirmasi Hadir (1-Klik)"}
+                ? "Masukkan Kode"
+                : "Konfirmasi Hadir"}
             </span>
           </button>
         </div>
@@ -497,7 +497,7 @@ export function Attendance({
                             gap: 4,
                           }}
                         >
-                          <CheckCircle2 size={11} /> Presensi Mandiri (1-Klik)
+                          <CheckCircle2 size={11} /> Presensi Terbuka
                         </span>
                       )}
 
@@ -854,8 +854,8 @@ export function Attendance({
                           )}
                           <span>
                             {s.requiresCode
-                              ? "Isi Presensi (Kode)"
-                              : "Konfirmasi Hadir (1-Klik)"}
+                              ? "Masukkan Kode"
+                              : "Konfirmasi Hadir"}
                           </span>
                         </button>
                       )
@@ -938,10 +938,10 @@ export function Attendance({
         />
       )}
 
-      {/* ================= MODAL KODE PROYEKTOR / QR ================= */}
+      {/* ================= MODAL KODE PRESENSI ================= */}
       {modal?.kind === "code" && (
         <Modal
-          title="Kode Presensi Layar Proyektor"
+          title="Kode Presensi Mahasiswa"
           onClose={() => setModal(null)}
           wide
         >
@@ -962,8 +962,7 @@ export function Attendance({
                 marginBottom: 24,
               }}
             >
-              Tampilkan kode ini di layar proyektor kelas agar mahasiswa dapat
-              melakukan presensi mandiri.
+              Bagikan kode ini kepada mahasiswa untuk mengisi presensi.
             </p>
 
             <div
@@ -987,7 +986,7 @@ export function Attendance({
                   marginBottom: 4,
                 }}
               >
-                Kode Presensi 6 Karakter
+                Kode Presensi
               </div>
               <div
                 className="attendance-code-value"
@@ -1082,7 +1081,7 @@ export function Attendance({
       {/* ================= MODAL SELF CHECK-IN MAHASISWA ================= */}
       {modal?.kind === "checkin" && (
         <Modal
-          title="Presensi Mandiri Mahasiswa"
+          title="Isi Presensi"
           onClose={() => setModal(null)}
         >
           {modal.session.requiresCode ? (
@@ -1121,12 +1120,11 @@ export function Attendance({
                     color: "var(--muted, #64748b)",
                   }}
                 >
-                  Masukkan kode akses 6 karakter yang ditampilkan oleh dosen di
-                  ruang kelas.
+                  Masukkan kode presensi yang diberikan dosen.
                 </p>
               </div>
 
-              <Field label="Kode Presensi (6 Karakter)">
+              <Field label="Kode Presensi">
                 <input
                   name="code"
                   required
@@ -1166,7 +1164,7 @@ export function Attendance({
                   fontWeight: 700,
                 }}
               >
-                Konfirmasi Kehadiran Mandiri
+                Konfirmasi Kehadiran
               </h3>
               <p
                 style={{
@@ -1176,9 +1174,8 @@ export function Attendance({
                   lineHeight: 1.5,
                 }}
               >
-                Sesi perkuliahan <strong>{modal.session.title}</strong>{" "}
-                menggunakan presensi mandiri 1-klik.
-                Pastikan Anda telah hadir di ruang perkuliahan.
+                Konfirmasi kehadiran Anda pada sesi perkuliahan{" "}
+                <strong>{modal.session.title}</strong>.
               </p>
               <div
                 style={{
@@ -1219,7 +1216,7 @@ export function Attendance({
                   }}
                 >
                   <CheckCircle2 size={16} />
-                  <span>Konfirmasi Hadir Saya (1-Klik)</span>
+                  <span>Konfirmasi Hadir</span>
                 </Action>
               </div>
             </div>
@@ -1450,7 +1447,7 @@ export function CreateSessionModal({
                 checked={requireCode}
                 onChange={(e) => setRequireCode(e.target.checked)}
               />
-              <span>Wajibkan Kode 6 Karakter (Proyektor)</span>
+              <span>Wajibkan kode presensi</span>
             </label>
             <p
               style={{
@@ -1459,10 +1456,7 @@ export function CreateSessionModal({
                 color: "var(--muted, #64748b)",
               }}
             >
-              <strong>Default tidak dicentang (Presensi Mandiri / 1-Klik)</strong>.
-              Mahasiswa cukup klik tombol Hadir. Centang opsi ini jika Anda
-              ingin mahasiswa wajib memasukkan kode acak 6 karakter yang
-              diproyeksikan di ruang kelas.
+              Mahasiswa harus memasukkan kode yang Anda bagikan saat sesi berlangsung.
             </p>
           </div>
 
@@ -1874,7 +1868,7 @@ export function ScheduleSessionModal({
                 checked={requireCode}
                 onChange={(e) => setRequireCode(e.target.checked)}
               />
-              <span>Wajibkan Kode 6 Karakter (Proyektor)</span>
+              <span>Wajibkan kode presensi</span>
             </label>
             <p
               style={{
@@ -1884,8 +1878,8 @@ export function ScheduleSessionModal({
               }}
             >
               {requireCode
-                ? "Mahasiswa wajib memasukkan kode acak 6 karakter yang ditampilkan oleh dosen."
-                : "Default aktif: Presensi mandiri (1-klik). Mahasiswa cukup klik konfirmasi kehadiran."}
+                ? "Mahasiswa harus memasukkan kode yang Anda bagikan saat sesi berlangsung."
+                : "Mahasiswa dapat langsung mengonfirmasi kehadiran tanpa memasukkan kode."}
             </p>
 
             {requireCode && (
@@ -2044,7 +2038,7 @@ function ManualAttendanceModal({
     <Modal
       title={
         readOnly
-          ? `Detail Presensi Pertemuan (Hanya-Baca): ${session.title}`
+          ? `Detail Presensi Pertemuan: ${session.title}`
           : `Lembar Presensi: ${session.title}`
       }
       onClose={onClose}

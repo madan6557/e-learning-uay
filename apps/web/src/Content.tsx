@@ -1022,22 +1022,6 @@ export function ResourceEditor({
               Berdampingan
             </button>}
           </div>
-
-          <div style={{ fontSize: "0.8rem", color: "var(--muted, #64748b)" }}>
-            {viewMode === "split" ? (
-              <span>
-                Mode <strong>Berdampingan</strong>: Formulir blok materi di kiri, pratinjau di kanan.
-              </span>
-            ) : viewMode === "preview" ? (
-              <span>
-                Mode <strong>Pratinjau</strong>: Tampilan membaca materi sebagaimana dilihat mahasiswa.
-              </span>
-            ) : (
-              <span>
-                Mode <strong>Tulis</strong>: Fokus penyusunan blok materi pembelajaran.
-              </span>
-            )}
-          </div>
         </div>
       )}
 

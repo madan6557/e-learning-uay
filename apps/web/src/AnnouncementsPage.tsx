@@ -831,7 +831,7 @@ function AnnouncementEditorModal({
       </div>
 
       <div className="form-grid">
-        <Field label="Tautan Unduh Berkas / Dokumen PDF (Opsional)">
+        <Field label="Tautan Lampiran (opsional)">
           <input
             name="attachmentUrl"
             type="url"
@@ -840,7 +840,7 @@ function AnnouncementEditorModal({
             onChange={(e) => setAttachmentUrl(e.target.value)}
           />
         </Field>
-        <Field label="Keterangan Nama Berkas Lampiran">
+        <Field label="Nama Berkas Lampiran">
           <input
             name="attachmentName"
             placeholder="Contoh: Lampiran-Jadwal-UAS.pdf"

@@ -243,7 +243,7 @@ export function ClassSettingsModal({
               maxLength={20}
               placeholder={
                 cls.hasEnrollmentKey && !cls.enrollmentKey
-                  ? "Kunci aktif (terenkripsi) - buat baru untuk melihat"
+                  ? "Kunci aktif — buat baru untuk melihat"
                   : "Kosongkan jika pendaftaran mandiri ditutup"
               }
               style={{
@@ -301,8 +301,8 @@ export function ClassSettingsModal({
             {key
               ? "Mahasiswa dapat bergabung mandiri ke kelas menggunakan kode 6 karakter ini."
               : cls.hasEnrollmentKey && !cls.enrollmentKey
-                ? "Kelas memiliki kunci pendaftaran dari versi sebelumnya (terenkripsi). Klik 'Acak Kode Baru' untuk membuat kode yang dapat dilihat dan disalin."
-                : "Saat kunci kosong, pendaftaran mandiri dinonaktifkan (mahasiswa hanya bisa didaftarkan oleh dosen)."}
+                ? "Kunci pendaftaran aktif. Klik 'Acak Kode Baru' untuk melihat dan menyalin kode baru."
+                : "Kosongkan jika mahasiswa hanya didaftarkan langsung oleh dosen."}
           </small>
         </Field>
       </Form>
@@ -327,8 +327,8 @@ export function ClassCloneModal({
       {cls.practicumClass && (
         <p className="callout note">
           Kelas praktikum tertaut juga akan disalin ke kelas semester baru,
-          termasuk materi, kategori, dan pemetaan nilainya. Peserta serta
-          riwayat nilai dan presensi tetap dimulai dari kosong.
+          termasuk materi, kategori, dan pemetaan nilainya. Peserta, riwayat
+          nilai, dan presensi tidak ikut disalin.
         </p>
       )}
       <div

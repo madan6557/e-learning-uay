@@ -12,7 +12,7 @@ Langkah disajikan sebagai daftar bernomor tanpa checklist. Tanggal dan jam mengi
 - [U2 — Navigasi menu dan pemulihan draf](#tutorial-u2)
 - [U3 — Profil notifikasi bantuan dan keluar](#tutorial-u3)
 - [M1 — Menemukan dan bergabung ke kelas](#tutorial-m1)
-- [M2 — Mengisi presensi satu klik atau kode](#tutorial-m2)
+- [M2 — Mengisi presensi kehadiran](#tutorial-m2)
 - [M3 — Mempelajari materi teks PDF dan video](#tutorial-m3)
 - [M4 — Mengumpulkan tugas dan memeriksa versi](#tutorial-m4)
 - [M5 — Mengerjakan kuis sampai terkumpul](#tutorial-m5)
@@ -221,7 +221,7 @@ Kelas yang tidak menerima pendaftaran mandiri perlu didaftarkan oleh dosen/admin
 
 <a id="tutorial-m2"></a>
 
-## M2 — Mengisi presensi satu klik atau kode
+## M2 — Mengisi presensi kehadiran
 
 **Peran:** Mahasiswa.
 
@@ -234,8 +234,8 @@ Kelas yang tidak menerima pendaftaran mandiri perlu didaftarkan oleh dosen/admin
 ### Langkah
 
 1. Buka tab Presensi. Cocokkan judul sesi dan tanggal perkuliahan dengan kelas yang sedang diikuti.
-2. Untuk sesi tanpa kode, klik Konfirmasi Hadir (1-Klik). Pada dialog, periksa sesi lalu klik Konfirmasi Hadir Saya (1-Klik).
-3. Untuk sesi dengan kode, klik Isi Presensi (Kode). Masukkan enam karakter kode dari layar pengajar, misalnya AB7K92. Kode 6 karakter dapat berisi huruf dan angka.
+2. Untuk sesi tanpa kode, klik Konfirmasi Hadir. Pada dialog, periksa sesi lalu klik Konfirmasi Hadir.
+3. Untuk sesi dengan kode, klik Masukkan Kode. Masukkan enam karakter kode dari pengajar, misalnya AB7K92. Kode 6 karakter dapat berisi huruf dan angka.
 4. Pada dialog kode, klik Simpan semua perubahan untuk mengirim presensi. Tunggu respons sebelum menutup dialog.
 5. Periksa status sesi berubah menjadi Hadir dan waktu pengisian tercatat. Jika sesi tertutup atau kode salah, hubungi pengajar.
 
@@ -249,19 +249,19 @@ Penanda gambar: 1 Kode; 2 Kirim
 
 | Kontrol di layar | Nilai atau contoh | Fungsi dan akibat |
 | --- | --- | --- |
-| Kode Presensi (6 Karakter) | Enam karakter tanpa spasi, contoh AB7K92 | Diisi hanya jika sesi memerlukan kode. Gunakan kode yang sedang berlaku, bukan kunci pendaftaran kelas. |
-| Konfirmasi Hadir (1-Klik) | Tombol pada sesi tanpa kode | Membuka konfirmasi presensi tanpa memasukkan kode. |
-| Isi Presensi (Kode) | Tombol pada sesi dengan kode | Membuka isian kode untuk sesi aktif. |
+| Kode Presensi | Enam karakter tanpa spasi, contoh AB7K92 | Diisi hanya jika sesi memerlukan kode. Gunakan kode yang sedang berlaku, bukan kunci pendaftaran kelas. |
+| Konfirmasi Hadir | Tombol pada sesi tanpa kode | Membuka konfirmasi presensi tanpa memasukkan kode. |
+| Masukkan Kode | Tombol pada sesi dengan kode | Membuka isian kode untuk sesi aktif. |
 | Simpan semua perubahan pada dialog kode | Tombol setelah kode/konfirmasi valid | Mencatat kehadiran di server. Periksa status sesudah respons diterima. |
 | Belum Presensi | Status ketika sesi masih terbuka | Pengisian Anda belum tercatat Hadir untuk sesi ini. |
 | Hadir / Izin / Sakit / Tidak Hadir (Alpa) / Terlambat | Status kehadiran | Izin, sakit, atau koreksi manual ditetapkan pengajar melalui lembar presensi. |
-| Konfirmasi Hadir Saya (1-Klik) | Tombol dialog sesi tanpa kode | Mengirim konfirmasi kehadiran langsung tanpa isian kode. |
+| Konfirmasi Hadir | Tombol dialog sesi tanpa kode | Mengirim konfirmasi kehadiran langsung tanpa isian kode. |
 
 ### Catatan penggunaan
 
 Sesi dapat dibuka sepanjang hari sampai ditutup pengajar atau dibatasi jam mulai/selesai. Tidak semua sesi memiliki durasi 15 menit.
 
-Gunakan isian kode yang tersedia. Tampilan Kode Proyektor pada versi ini tidak menyediakan alur pemindaian QR bagi mahasiswa.
+Gunakan isian kode yang tersedia. Tampilan Kode Presensi pada versi ini tidak menyediakan alur pemindaian QR bagi mahasiswa.
 
 <a id="tutorial-m3"></a>
 
@@ -645,7 +645,7 @@ Penanda gambar: 1 Instruksi; 2 Tenggat; 3 Batas toleransi; 4 Versi
 | Tenggat | Tanggal-jam opsional | Batas tepat waktu. Pengumpulan sesudahnya mengikuti izin keterlambatan. |
 | Batas akhir toleransi | Tanggal-jam sesudah tenggat atau kosong | Batas terakhir menerima tugas, termasuk tugas terlambat. |
 | Batas versi pengumpulan | Bilangan 1 sampai 20, default 3 | Jumlah versi yang boleh dikirim tiap mahasiswa. |
-| Format yang diterima | Centang minimal satu: TEXT, LINK, PDF, ZIP, PNG, JPG, PY, CPP, DOCX, CSV | TEXT membuka jawaban teks, LINK membuka URL, lainnya mengizinkan jenis berkas terkait. |
+| Format yang diterima | Centang minimal satu: TEXT, LINK, PDF, ZIP, PNG, JPG, PY, DOCX, CSV | TEXT membuka jawaban teks, LINK membuka URL, lainnya mengizinkan jenis berkas terkait. |
 | Izinkan pengumpulan terlambat | ON = diizinkan setelah tenggat sampai batas toleransi. OFF = ditutup saat tenggat. Default ON | Menentukan apakah versi terlambat masih diterima. Tidak menghapus batas akhir toleransi. |
 
 ### Catatan penggunaan
@@ -891,9 +891,9 @@ Bank soal tersimpan per kelas. Saat menggunakan soal bank, tinjau kembali poin d
 
 1. Klik Buat Sesi Presensi. Isi Judul Sesi Presensi, Keterangan / Topik, dan Tanggal Perkuliahan.
 2. Jika presensi akan dibuka sampai ditutup manual, biarkan Jadwalkan Waktu Presensi tidak dicentang. Untuk jendela waktu, centang dan isi Waktu Mulai serta Waktu Selesai, masing-masing berupa tanggal-jam perangkat. Untuk sesi melewati tengah malam, pilih tanggal selesai pada hari berikutnya.
-3. Untuk presensi satu klik, biarkan Wajibkan Kode 6 Karakter (Proyektor) OFF. Untuk verifikasi kode, ubah menjadi ON.
+3. Untuk presensi terbuka, biarkan Wajibkan kode presensi OFF. Untuk verifikasi kode, ubah menjadi ON.
 4. Klik Buat & Buka Sesi. Periksa apakah sesi berstatus Sesi Dibuka atau Terjadwal sesuai waktunya.
-5. Jika menggunakan kode, klik Kode Proyektor pada sesi dan tampilkan enam karakter kepada mahasiswa. Pantau jumlah Hadir, lalu tutup sesi setelah selesai.
+5. Jika menggunakan kode, klik Kode Presensi pada sesi dan tampilkan enam karakter kepada mahasiswa. Pantau jumlah Hadir, lalu tutup sesi setelah selesai.
 
 **Periksa hasil:** Sesi benar tersedia dan menerima presensi sesuai mode/jadwal yang dipilih.
 
@@ -910,9 +910,9 @@ Penanda gambar: 1 Judul sesi; 2 Jadwal ON; 3 kode ON
 | Tanggal Perkuliahan | Tanggal kegiatan, contoh 12 Oktober 2026 | Mengaitkan sesi dengan hari perkuliahan. |
 | Jadwalkan Waktu Presensi (Mulai & Selesai) | OFF default = buka manual sampai ditutup. ON = gunakan jam mulai/selesai | Menampilkan isian jam dan menerapkan jendela presensi. |
 | Waktu Mulai / Waktu Selesai | Tanggal-jam lokal masing-masing; akhir tidak sebelum awal | Mengatur kapan mahasiswa dapat mengisi. Periksa zona waktu perangkat. |
-| Wajibkan Kode 6 Karakter (Proyektor) | OFF default = satu klik. ON = wajib kode | Sistem menghasilkan kode acak enam karakter huruf/angka. |
+| Wajibkan kode presensi | OFF default = presensi terbuka. ON = wajib kode | Sistem menghasilkan kode acak enam karakter huruf/angka. |
 | Buat & Buka Sesi | Tombol | Membuat sesi. Jadwal masa depan akan tampil terjadwal, bukan menerima pengisian segera. |
-| Kode Proyektor | Tombol pada sesi | Menampilkan kode dan informasi sesi untuk dibagikan di kelas. |
+| Kode Presensi | Tombol pada sesi | Menampilkan kode dan informasi sesi untuk dibagikan di kelas. |
 
 ### Catatan penggunaan
 
@@ -953,7 +953,7 @@ Penanda gambar: 1 Buka atau tutup sesi; 2 Perpanjang 15 menit; 3 Kebijakan kode;
 | Buka Sesi / Tutup Sesi pada kartu | Tombol aksi langsung | Mengubah status sesi melalui aksi pada kartu. Periksa jendela jadwalnya. |
 | +15 Menit / +30 Menit | Tombol aksi langsung | Menambah dari waktu akhir atau waktu sekarang yang lebih akhir dan langsung membuka sesi. |
 | Terapkan Jadwal Otomatis (Mulai & Selesai) | ON = jam otomatis. OFF = hapus batas jam | Sesi terjadwal dapat dibuka kembali saat jadwal masih berjalan. Untuk menutup permanen, tinjau juga jadwal akhirnya. |
-| Wajibkan Kode 6 Karakter (Proyektor) | ON = kode diperlukan. OFF = bebas kode | Mengubah metode presensi untuk mahasiswa. |
+| Wajibkan kode presensi | ON = kode diperlukan. OFF = bebas kode | Mengubah metode presensi untuk mahasiswa. |
 | Kode | Maksimal 6 karakter pada isian, contoh AB7K92, kosong untuk kode otomatis | Gunakan enam karakter agar sesuai petunjuk mahasiswa. |
 | Acak Ulang Kode | Tombol | Menghasilkan kode baru pada draf dialog. Simpan sebelum membagikannya. |
 | Simpan Pengaturan | Tombol | Menyimpan isian form jadwal, status, dan kode. |

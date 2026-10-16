@@ -342,7 +342,7 @@ export function AuditLogView({
           </h2>
           <p className="subtext">
             {isSuperAdmin
-              ? "Transparansi dan jejak audit menyeluruh terhadap seluruh aktivitas tata kelola sistem, perubahan wewenang, dan operasional akademik."
+              ? "Riwayat aktivitas sistem, perubahan wewenang, dan administrasi akademik."
               : `Jejak audit operasional akademik terlingkup program studi: ${
                   user.departmentScopes && user.departmentScopes.length > 0
                     ? user.departmentScopes

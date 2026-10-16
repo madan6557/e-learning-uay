@@ -177,14 +177,14 @@ export function Participants({
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, fontSize: "0.95rem" }}>
               <Key size={18} color="var(--adaptive-accent-text, #4f46e5)" />
-              <span>Kunci Masuk Pendaftaran Mandiri Mahasiswa</span>
+              <span>Kunci Pendaftaran Mandiri</span>
             </div>
             <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "var(--muted)" }}>
               {cls?.enrollmentKey
                 ? "Bagikan kode di bawah kepada mahasiswa untuk mendaftar mandiri ke kelas ini:"
                 : cls?.hasEnrollmentKey
-                  ? "Kunci pendaftaran aktif dari versi sebelumnya (terenkripsi). Acak kode baru untuk melihat dan membagikannya."
-                  : "Pendaftaran mandiri dinonaktifkan. Mahasiswa hanya dapat didaftarkan secara manual oleh dosen."}
+                  ? "Kunci pendaftaran aktif. Buat kode baru untuk melihat dan membagikannya."
+                  : "Pendaftaran mandiri dinonaktifkan. Mahasiswa hanya dapat didaftarkan langsung oleh dosen."}
             </p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>

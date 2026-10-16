@@ -11,9 +11,9 @@ import { Notice } from "../components/ui";
 export function getAuthErrorMessage(code: string): string {
   switch (code) {
     case "SESSION_EXPIRED":
-      return "Sesi login Anda telah berakhir atau kode otentikasi kedaluwarsa. Data login telah dibersihkan otomatis. Silakan klik tombol Masuk untuk memulai sesi baru.";
+      return "Sesi login Anda telah berakhir. Silakan masuk kembali.";
     case "INVALID_STATE":
-      return "Verifikasi keamanan sesi tidak valid atau telah kedaluwarsa. Data login lama telah dibersihkan, silakan masuk kembali.";
+      return "Sesi tidak valid atau telah kedaluwarsa. Silakan masuk kembali.";
     case "ACCOUNT_DISABLED":
       return "Akun akademik Anda sedang berstatus non-aktif. Silakan hubungi bagian akademik atau administrator prodi.";
     case "INVALID_IDENTITY":
@@ -23,7 +23,7 @@ export function getAuthErrorMessage(code: string): string {
     case "access_denied":
       return "Proses masuk SSO dibatalkan atau izin ditolak.";
     default:
-      return "Terjadi kendala saat autentikasi SSO. Sesi login telah dibersihkan otomatis, silakan coba masuk kembali.";
+      return "Terjadi kendala saat autentikasi SSO. Silakan coba masuk kembali.";
   }
 }
 

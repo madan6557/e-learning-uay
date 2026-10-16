@@ -137,7 +137,7 @@ function ScopePicker({
       <div className="governance-scope-admin-note" role="note">
         <ShieldCheck size={20} />
         <div>
-          <strong>Akses Menyeluruh (Super Admin)</strong>
+          <strong>Akses Penuh (Super Admin)</strong>
           <p>
             Super Admin otomatis memiliki wewenang penuh di seluruh program studi tanpa perlu memilih cakupan individual.
           </p>
@@ -848,7 +848,7 @@ export function DepartmentGovernancePage({
           </h1>
           <p>
             {user.role === "SUPER_ADMIN"
-              ? "Kelola program studi, penugasan pengguna, serta pantau rekaman jejak aktivitas sistem."
+              ? "Kelola program studi, penugasan pengguna, dan aktivitas sistem."
               : "Pantau rekaman jejak aktivitas operasional akademik program studi Anda."}
           </p>
           {user.role === "SUPER_ADMIN" && !SIAKAD_SCOPE_SYNC_READY && (

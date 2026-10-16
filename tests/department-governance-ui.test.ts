@@ -327,7 +327,7 @@ test("authority modal supports prodi search, batch selection, and super admin ac
     );
     assert.match(
       modal.querySelector(".governance-scope-admin-note")!.textContent!,
-      /Akses Menyeluruh \(Super Admin\)/,
+      /Akses Penuh \(Super Admin\)/,
     );
   } finally {
     await act(async () => root.unmount());

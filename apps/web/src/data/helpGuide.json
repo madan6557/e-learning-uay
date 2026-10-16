@@ -289,7 +289,7 @@
     },
     {
       "id": "M2",
-      "title": "Mengisi presensi satu klik atau kode",
+      "title": "Mengisi presensi kehadiran",
       "summary": "Mencatat kehadiran pada sesi kuliah yang benar.",
       "category": "Panduan Mahasiswa",
       "roles": [
@@ -302,25 +302,25 @@
       "preparation": "Terdaftar aktif pada kelas terbit dan sesi presensi sudah dibuka pengajar.",
       "steps": [
         "Buka tab Presensi. Cocokkan judul sesi dan tanggal perkuliahan dengan kelas yang sedang diikuti.",
-        "Untuk sesi tanpa kode, klik Konfirmasi Hadir (1-Klik). Pada dialog, periksa sesi lalu klik Konfirmasi Hadir Saya (1-Klik).",
-        "Untuk sesi dengan kode, klik Isi Presensi (Kode). Masukkan enam karakter kode dari layar pengajar, misalnya AB7K92. Kode 6 karakter dapat berisi huruf dan angka.",
+        "Untuk sesi tanpa kode, klik Konfirmasi Hadir. Pada dialog, periksa sesi lalu klik Konfirmasi Hadir.",
+        "Untuk sesi dengan kode, klik Masukkan Kode. Masukkan enam karakter kode dari pengajar, misalnya AB7K92. Kode 6 karakter dapat berisi huruf dan angka.",
         "Pada dialog kode, klik Simpan semua perubahan untuk mengirim presensi. Tunggu respons sebelum menutup dialog.",
         "Periksa status sesi berubah menjadi Hadir dan waktu pengisian tercatat. Jika sesi tertutup atau kode salah, hubungi pengajar."
       ],
       "result": "Status Hadir tampil pada sesi yang dipilih.",
       "controls": [
         {
-          "label": "Kode Presensi (6 Karakter)",
+          "label": "Kode Presensi",
           "value": "Enam karakter tanpa spasi, contoh AB7K92",
           "effect": "Diisi hanya jika sesi memerlukan kode. Gunakan kode yang sedang berlaku, bukan kunci pendaftaran kelas."
         },
         {
-          "label": "Konfirmasi Hadir (1-Klik)",
+          "label": "Konfirmasi Hadir",
           "value": "Tombol pada sesi tanpa kode",
           "effect": "Membuka konfirmasi presensi tanpa memasukkan kode."
         },
         {
-          "label": "Isi Presensi (Kode)",
+          "label": "Masukkan Kode",
           "value": "Tombol pada sesi dengan kode",
           "effect": "Membuka isian kode untuk sesi aktif."
         },
@@ -340,14 +340,14 @@
           "effect": "Izin, sakit, atau koreksi manual ditetapkan pengajar melalui lembar presensi."
         },
         {
-          "label": "Konfirmasi Hadir Saya (1-Klik)",
+          "label": "Konfirmasi Hadir",
           "value": "Tombol dialog sesi tanpa kode",
           "effect": "Mengirim konfirmasi kehadiran langsung tanpa isian kode."
         }
       ],
       "notes": [
         "Sesi dapat dibuka sepanjang hari sampai ditutup pengajar atau dibatasi jam mulai/selesai. Tidak semua sesi memiliki durasi 15 menit.",
-        "Gunakan isian kode yang tersedia. Tampilan Kode Proyektor pada versi ini tidak menyediakan alur pemindaian QR bagi mahasiswa."
+        "Gunakan isian kode yang tersedia. Tampilan Kode Presensi pada versi ini tidak menyediakan alur pemindaian QR bagi mahasiswa."
       ],
       "content": "",
       "figure": {
@@ -1421,9 +1421,9 @@
       "steps": [
         "Klik Buat Sesi Presensi. Isi Judul Sesi Presensi, Keterangan / Topik, dan Tanggal Perkuliahan.",
         "Jika presensi akan dibuka sampai ditutup manual, biarkan Jadwalkan Waktu Presensi tidak dicentang. Untuk jendela waktu, centang dan isi Waktu Mulai serta Waktu Selesai, masing-masing berupa tanggal-jam perangkat. Untuk sesi melewati tengah malam, pilih tanggal selesai pada hari berikutnya.",
-        "Untuk presensi satu klik, biarkan Wajibkan Kode 6 Karakter (Proyektor) OFF. Untuk verifikasi kode, ubah menjadi ON.",
+        "Untuk presensi terbuka, biarkan Wajibkan kode presensi OFF. Untuk verifikasi kode, ubah menjadi ON.",
         "Klik Buat & Buka Sesi. Periksa apakah sesi berstatus Sesi Dibuka atau Terjadwal sesuai waktunya.",
-        "Jika menggunakan kode, klik Kode Proyektor pada sesi dan tampilkan enam karakter kepada mahasiswa. Pantau jumlah Hadir, lalu tutup sesi setelah selesai."
+        "Jika menggunakan kode, klik Kode Presensi pada sesi dan tampilkan enam karakter kepada mahasiswa. Pantau jumlah Hadir, lalu tutup sesi setelah selesai."
       ],
       "result": "Sesi benar tersedia dan menerima presensi sesuai mode/jadwal yang dipilih.",
       "controls": [
@@ -1453,8 +1453,8 @@
           "effect": "Mengatur kapan mahasiswa dapat mengisi. Periksa zona waktu perangkat."
         },
         {
-          "label": "Wajibkan Kode 6 Karakter (Proyektor)",
-          "value": "OFF default = satu klik. ON = wajib kode",
+          "label": "Wajibkan kode presensi",
+          "value": "OFF default = presensi terbuka. ON = wajib kode",
           "effect": "Sistem menghasilkan kode acak enam karakter huruf/angka."
         },
         {
@@ -1463,7 +1463,7 @@
           "effect": "Membuat sesi. Jadwal masa depan akan tampil terjadwal, bukan menerima pengisian segera."
         },
         {
-          "label": "Kode Proyektor",
+          "label": "Kode Presensi",
           "value": "Tombol pada sesi",
           "effect": "Menampilkan kode dan informasi sesi untuk dibagikan di kelas."
         }
@@ -1523,7 +1523,7 @@
           "effect": "Sesi terjadwal dapat dibuka kembali saat jadwal masih berjalan. Untuk menutup permanen, tinjau juga jadwal akhirnya."
         },
         {
-          "label": "Wajibkan Kode 6 Karakter (Proyektor)",
+          "label": "Wajibkan kode presensi",
           "value": "ON = kode diperlukan. OFF = bebas kode",
           "effect": "Mengubah metode presensi untuk mahasiswa."
         },

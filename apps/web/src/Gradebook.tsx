@@ -304,7 +304,7 @@ function StudentGradeReviewModal({
               mengoreksi nilai sebelum menyimpan draf.
             </>
           ) : (
-            "Tampilan ini hanya-baca untuk pemantauan dosen."
+            "Mode pantau (hanya baca)."
           )}
         </p>
 
@@ -515,7 +515,7 @@ function StudentGradeReviewModal({
                     }}
                   >
                     {cat.sourceType === "MANUAL"
-                      ? "Kategori manual murni — nilai diinput langsung oleh dosen tanpa kalkulasi otomatis."
+                      ? "Nilai diinput langsung oleh dosen."
                       : "Belum ada aktivitas yang dikerjakan mahasiswa untuk kategori ini."}
                   </div>
                 )}
@@ -895,7 +895,7 @@ export function Gradebook({
                     run={async () => {
                       if (
                         !(await confirmAction(
-                          "Terapkan nilai saran kalkulasi otomatis ke seluruh mahasiswa sebagai draf? Nilai saran dari aktivitas riil mahasiswa akan disimpan ke draf untuk dapat ditinjau lebih lanjut.",
+                          "Terapkan nilai kalkulasi ke draf seluruh mahasiswa? Nilai dapat ditinjau kembali sebelum diterbitkan.",
                         ))
                       )
                         return false;
@@ -937,7 +937,7 @@ export function Gradebook({
                     }}
                   >
                     <Calculator size={16} />
-                    Terapkan Kalkulasi Otomatis ke Draf
+                    Terapkan Nilai ke Draf
                   </Action>
                 </div>
               </details>
@@ -1564,8 +1564,8 @@ export function Gradebook({
 
             <div style={{ marginBottom: 16 }}>
               <Field
-                label="Kebijakan Konversi Huruf Mutu (Grade Scale Policy)"
-                hint="Versi skala nilai mengontrol pemetaan skor ke huruf mutu (A, B, C, D, E). Nilai semester lampau yang telah dikunci/diterbitkan tidak akan terpengaruh jika versi baru dipilih."
+                label="Kebijakan Konversi Huruf Mutu"
+                hint="Menentukan konversi skor angka ke huruf mutu. Nilai yang sudah diterbitkan tidak berubah."
               >
                 <select
                   value={gradeScaleVersion}
