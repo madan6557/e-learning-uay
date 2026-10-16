@@ -12,6 +12,7 @@ import { z } from "zod";
 import {
   identityClaims,
   normalizeRole,
+  highestRole,
 } from "../../../packages/shared/src/sso.js";
 import {
   db,
@@ -473,7 +474,7 @@ function extractUserType(
   return null;
 }
 
-async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
+export async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
   const claims: any = { ...rawClaims };
 
   // Extract official_identifier and user_type attributes upfront
@@ -544,26 +545,16 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
     ...(typeof (rawClaims as any).attributes?.role === "string"
       ? [(rawClaims as any).attributes.role]
       : []),
+    ...(Array.isArray((rawClaims as any).attributes?.role)
+      ? (rawClaims as any).attributes.role
+      : []),
   ];
 
   const hasExplicitRole = explicitRoles.some(
     (r) => normalizeRole(String(r)) !== null,
   );
 
-  const candidateRoles: string[] = [
-    ...explicitRoles,
-    ...(!hasExplicitRole
-      ? detectedUserType === "ADMIN"
-        ? ["SUPER_ADMIN"]
-        : detectedUserType === "LECTURER"
-          ? ["INSTRUCTOR"]
-          : detectedUserType === "STAFF"
-            ? ["DEPARTMENT_ADMIN"]
-            : detectedUserType === "STUDENT"
-              ? ["STUDENT"]
-              : []
-      : []),
-  ];
+  const candidateRoles: string[] = [...explicitRoles];
 
   // 2. Identify candidate keys for finding the user in db.user
   const ssoUserId = String(rawClaims.sub || "");
@@ -657,10 +648,23 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
     ensure(existingUser.ssoUserId === ssoUserId, 403, "INVALID_IDENTITY");
   }
 
+  const hasPreprovisionedAccess = Boolean(
+    existingUser &&
+      (existingUser.authoritySource !== "SSO" ||
+        existingUser.ssoUserId.startsWith("preprovision:")),
+  );
+
+  ensure(
+    hasExplicitRole || isAdminIdentifier || hasPreprovisionedAccess,
+    403,
+    "NO_APPLICATION_ACCESS",
+  );
+
   // 3. Populate missing/fallback claims
   if (validRoles.length > 0) {
-    claims.roles = validRoles;
-    claims.role = validRoles[0];
+    const topRole = highestRole(validRoles) || validRoles[0];
+    claims.roles = [topRole, ...validRoles.filter((r) => r !== topRole)];
+    claims.role = topRole;
   } else if (existingUser) {
     const upgradedRole =
       (existingUser.role === "STUDENT" || existingUser.role === "INSTRUCTOR") &&
@@ -679,17 +683,6 @@ async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
       claims.identifier_value = existingUser.identifierValue;
     if (!claims.department_scopes)
       claims.department_scopes = existingUser.departmentScopes;
-  } else {
-    const fallbackRole =
-      detectedUserType === "LECTURER"
-        ? "INSTRUCTOR"
-        : detectedUserType === "ADMIN"
-          ? "SUPER_ADMIN"
-          : detectedUserType === "STAFF"
-            ? "DEPARTMENT_ADMIN"
-            : "STUDENT";
-    claims.roles = [fallbackRole];
-    claims.role = fallbackRole;
   }
 
   if (

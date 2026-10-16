@@ -339,3 +339,104 @@ test("extractSsoUserData extracts official identifiers and maps user types corre
   assert.equal(parsedFallback.userType, "STUDENT");
 });
 
+test("getAuthErrorMessage and id.json provide clear notice for NO_APPLICATION_ACCESS", async () => {
+  const { getAuthErrorMessage } = await import(
+    "../apps/web/src/pages/Landing.js"
+  );
+  const idLabels = await import("../packages/shared/src/id.json", {
+    with: { type: "json" },
+  });
+
+  const expectedMsg =
+    "Akun SSO Anda belum memiliki izin akses ke layanan E-Learning UAY. Silakan hubungi Administrator atau Helpdesk IT UAY untuk aktivasi akses akun Anda.";
+  assert.equal(getAuthErrorMessage("NO_APPLICATION_ACCESS"), expectedMsg);
+  assert.equal(idLabels.default.errors.NO_APPLICATION_ACCESS, expectedMsg);
+});
+
+test("syncUser denies SSO login when user has no explicit E-Learning role or pre-provisioned grant", async () => {
+  const { syncUser } = await import("../apps/api/src/auth.js");
+  const { db } = await import("../apps/api/src/core.js");
+  const originalFindMany = db.user.findMany;
+  db.user.findMany = (async () => []) as any;
+
+  try {
+    const randomSub = "unauthorized-sso-" + Date.now();
+    const unauthorizedClaims = {
+      sub: randomSub,
+      preferred_username: "user_tanpa_izin",
+      email: "user_tanpa_izin@mhs.uay.ac.id",
+      name: "User Tanpa Izin",
+      realm_access: {
+        roles: ["default-roles-uay", "offline_access", "uma_authorization"],
+      },
+      resource_access: {
+        account: {
+          roles: ["manage-account", "view-profile"],
+        },
+      },
+    };
+
+    await assert.rejects(
+      async () => {
+        await syncUser(unauthorizedClaims as any, true);
+      },
+      (err: any) => {
+        assert.equal(err.status, 403);
+        assert.equal(err.code, "NO_APPLICATION_ACCESS");
+        return true;
+      },
+    );
+  } finally {
+    db.user.findMany = originalFindMany;
+  }
+});
+
+test("syncUser allows SSO login when user has explicit E-Learning role in client resource_access or realm_access", async () => {
+  const { syncUser } = await import("../apps/api/src/auth.js");
+  const { db } = await import("../apps/api/src/core.js");
+  const originalFindMany = db.user.findMany;
+  const originalTransaction = db.$transaction;
+
+  const authorizedSub = "authorized-sso-" + Date.now();
+  let createdUser: any = null;
+
+  db.user.findMany = (async () => []) as any;
+  db.$transaction = (async (run: any) => {
+    const txMock: any = {
+      user: {
+        create: async ({ data }: any) => {
+          createdUser = { id: "test-user-id", ...data };
+          return createdUser;
+        },
+      },
+      auditLog: {
+        create: async () => {},
+      },
+    };
+    return run(txMock);
+  }) as any;
+
+  try {
+    const authorizedClaims = {
+      sub: authorizedSub,
+      preferred_username: "mhs_berizin_" + Date.now(),
+      email: `mhs_berizin_${Date.now()}@mhs.uay.ac.id`,
+      name: "Mahasiswa Berizin",
+      resource_access: {
+        "elearning-uay": {
+          roles: ["student"],
+        },
+      },
+    };
+
+    const user = await syncUser(authorizedClaims as any, true);
+    assert.ok(user);
+    assert.equal(user.ssoUserId, authorizedSub);
+    assert.equal(user.role, "STUDENT");
+  } finally {
+    db.user.findMany = originalFindMany;
+    db.$transaction = originalTransaction;
+  }
+});
+
+

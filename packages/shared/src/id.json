@@ -597,6 +597,7 @@
     "OPEN": "Tersedia"
   },
   "errors": {
+    "NO_APPLICATION_ACCESS": "Akun SSO Anda belum memiliki izin akses ke layanan E-Learning UAY. Silakan hubungi Administrator atau Helpdesk IT UAY untuk aktivasi akses akun Anda.",
     "DEPARTMENT_NOT_FOUND": "Program studi tidak ditemukan. Segarkan daftar dan coba lagi.",
     "DUPLICATE_DEPARTMENT_CODE": "Kode program studi sudah digunakan. Gunakan kode lain atau edit prodi yang sudah terdaftar.",
     "DEPARTMENT_CODE_IN_USE": "Kode prodi sudah dirujuk kelas, pengguna, atau pengumuman sehingga tidak dapat diubah. Nama dan fakultas tetap dapat diperbarui.",

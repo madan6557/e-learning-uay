@@ -18,6 +18,8 @@ export function getAuthErrorMessage(code: string): string {
       return "Akun akademik Anda sedang berstatus non-aktif. Silakan hubungi bagian akademik atau administrator prodi.";
     case "INVALID_IDENTITY":
       return "Identitas akun tidak ditemukan pada sistem SSO. Pastikan Anda menggunakan akun UAY yang terdaftar.";
+    case "NO_APPLICATION_ACCESS":
+      return "Akun SSO Anda belum memiliki izin akses ke layanan E-Learning UAY. Silakan hubungi Administrator atau Helpdesk IT UAY untuk aktivasi akses akun Anda.";
     case "access_denied":
       return "Proses masuk SSO dibatalkan atau izin ditolak.";
     default:
