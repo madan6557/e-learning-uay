@@ -47,6 +47,9 @@ import {
   Archive,
   ArchiveRestore,
   Copy,
+  Key,
+  RefreshCw,
+  Check,
 } from "lucide-react";
 import {
   t,
@@ -259,6 +262,7 @@ export function ClassPage({
     notifyAction(msg);
   };
   const isArchived = cls.status === "ARCHIVED";
+  const [keyCopied, setKeyCopied] = useState(false);
   const tabs = [
     ["content", t.content],
     ...(!isParentAssistant
@@ -417,6 +421,61 @@ export function ClassPage({
                   .join(", ")}
               </span>
             )}
+            {canAdministerClass && (
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  background: "var(--adaptive-accent-soft, rgba(99, 102, 241, 0.08))",
+                  border: "1px solid var(--adaptive-accent-border, rgba(99, 102, 241, 0.25))",
+                  borderRadius: 14,
+                  padding: "2px 8px",
+                  fontSize: "0.80rem",
+                  color: "var(--adaptive-accent-text, #4f46e5)",
+                }}
+              >
+                <Key size={13} />
+                {cls.enrollmentKey ? (
+                  <>
+                    <span>
+                      Kode: <strong style={{ fontFamily: "monospace", letterSpacing: "1px" }}>{cls.enrollmentKey}</strong>
+                    </span>
+                    <button
+                      type="button"
+                      className="text-button"
+                      style={{ padding: "0 4px", fontSize: "0.78rem", color: "var(--adaptive-accent-text, #4f46e5)", fontWeight: 600 }}
+                      onClick={() => {
+                        navigator.clipboard.writeText(cls.enrollmentKey);
+                        setKeyCopied(true);
+                        setTimeout(() => setKeyCopied(false), 2000);
+                      }}
+                      title="Salin Kode Pendaftaran"
+                    >
+                      {keyCopied ? "Tersalin!" : "Salin"}
+                    </button>
+                  </>
+                ) : cls.hasEnrollmentKey ? (
+                  <button
+                    type="button"
+                    className="text-button"
+                    style={{ padding: "0 2px", fontSize: "0.78rem", color: "inherit" }}
+                    onClick={() => setModal({ kind: "settings" })}
+                  >
+                    Kunci Aktif (Acak Baru)
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="text-button"
+                    style={{ padding: "0 2px", fontSize: "0.78rem", color: "inherit" }}
+                    onClick={() => setModal({ kind: "settings" })}
+                  >
+                    + Kunci Masuk
+                  </button>
+                )}
+              </span>
+            )}
           </div>
         </div>
         <div className="class-heading-actions">
@@ -450,6 +509,37 @@ export function ClassPage({
                   >
                     <Settings2 size={16} />
                     {t.settings}
+                  </button>
+                )}
+                {administrativeWritable && (
+                  <button
+                    className="secondary"
+                    onClick={async () => {
+                      const confirmed = await confirmAction(
+                        cls.enrollmentKey
+                          ? `Acak kode pendaftaran baru untuk kelas ini? Kode saat ini (${cls.enrollmentKey}) akan digantikan.`
+                          : "Buat kode pendaftaran acak baru untuk kelas ini?",
+                      );
+                      if (!confirmed) return;
+                      try {
+                        const res = await api<any>(
+                          `/course-classes/${cls.id}/regenerate-key`,
+                          "POST",
+                          {},
+                        );
+                        await info.reload();
+                        if (res?.enrollmentKey) {
+                          navigator.clipboard.writeText(res.enrollmentKey);
+                          alert(`Kode pendaftaran baru: ${res.enrollmentKey} (Telah disalin ke clipboard)`);
+                        }
+                      } catch (err: any) {
+                        alert(err?.message || "Gagal mengacak kode pendaftaran.");
+                      }
+                    }}
+                    title="Acak Kode Pendaftaran Baru"
+                  >
+                    <RefreshCw size={15} />
+                    Acak Kode Baru
                   </button>
                 )}
                 {canAdministerClass &&
@@ -1206,6 +1296,8 @@ export function ClassPage({
               instructors={cls.instructors}
               user={user}
               onInstructorsUpdated={() => info.reload()}
+              cls={cls}
+              onKeyUpdated={() => info.reload()}
             />
           )}
           {tab === "banks" && canViewAll && (

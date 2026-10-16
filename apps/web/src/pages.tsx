@@ -4,6 +4,7 @@ import {
   getAllGradeScalePolicies,
   type GradeScalePolicy,
   type GradeBand,
+  generateEnrollmentKey,
 } from "../../../packages/shared/src/domain";
 import { confirmAction } from "./confirm";
 import { ThemePreferenceControl } from "./components/layout/ThemeToggle";
@@ -1413,15 +1414,6 @@ function JoinClassModal({
       </Form>
     </Modal>
   );
-}
-
-function generateEnrollmentKey(length = 6): string {
-  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  let result = "";
-  for (let i = 0; i < length; i++) {
-    result += letters.charAt(Math.floor(Math.random() * letters.length));
-  }
-  return result;
 }
 
 export function ClassForm({

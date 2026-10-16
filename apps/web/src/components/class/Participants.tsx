@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Key, RefreshCw, Copy, Check } from "lucide-react";
 import {
   t,
   api,
@@ -91,12 +91,16 @@ export function Participants({
   instructors,
   user,
   onInstructorsUpdated,
+  cls,
+  onKeyUpdated,
 }: {
   classId: string;
   writable: boolean;
   instructors?: any[];
   user?: any;
   onInstructorsUpdated?: () => void;
+  cls?: any;
+  onKeyUpdated?: () => void;
 }) {
   const members = useApi<any[]>(`/course-classes/${classId}/participants`);
   const [modal, setModal] = useState(""),
@@ -105,6 +109,8 @@ export function Participants({
     [selected, setSelected] = useState<any[]>([]);
   const [searchError, setSearchError] = useState<Error | null>(null);
   const [searching, setSearching] = useState(false);
+  const [keyCopied, setKeyCopied] = useState(false);
+  const [regeneratingKey, setRegeneratingKey] = useState(false);
 
   const [collabModal, setCollabModal] = useState<"INSTRUCTOR" | "ASSISTANT" | false>(false);
   const [collabQuery, setCollabQuery] = useState("");
@@ -152,6 +158,106 @@ export function Participants({
 
   return (
     <>
+      {writable && (
+        <div
+          className="card"
+          style={{
+            padding: "14px 18px",
+            marginBottom: "20px",
+            background: "var(--adaptive-accent-soft, rgba(99, 102, 241, 0.04))",
+            border: "1px solid var(--adaptive-accent-border, rgba(99, 102, 241, 0.2))",
+            borderRadius: "10px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: "12px",
+          }}
+        >
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, fontSize: "0.95rem" }}>
+              <Key size={18} color="var(--adaptive-accent-text, #4f46e5)" />
+              <span>Kunci Masuk Pendaftaran Mandiri Mahasiswa</span>
+            </div>
+            <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "var(--muted)" }}>
+              {cls?.enrollmentKey
+                ? "Bagikan kode di bawah kepada mahasiswa untuk mendaftar mandiri ke kelas ini:"
+                : cls?.hasEnrollmentKey
+                  ? "Kunci pendaftaran aktif dari versi sebelumnya (terenkripsi). Acak kode baru untuk melihat dan membagikannya."
+                  : "Pendaftaran mandiri dinonaktifkan. Mahasiswa hanya dapat didaftarkan secara manual oleh dosen."}
+            </p>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            {cls?.enrollmentKey && (
+              <span
+                style={{
+                  fontFamily: "monospace",
+                  fontSize: "1.15rem",
+                  fontWeight: 700,
+                  letterSpacing: "2.5px",
+                  padding: "5px 12px",
+                  background: "var(--surface)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "8px",
+                  color: "var(--text)",
+                }}
+              >
+                {cls.enrollmentKey}
+              </span>
+            )}
+            {cls?.enrollmentKey && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  navigator.clipboard.writeText(cls.enrollmentKey);
+                  setKeyCopied(true);
+                  setTimeout(() => setKeyCopied(false), 2000);
+                }}
+                style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+              >
+                {keyCopied ? <Check size={16} color="var(--adaptive-success-fill, #22c55e)" /> : <Copy size={16} />}
+                {keyCopied ? "Tersalin!" : "Salin Kode"}
+              </button>
+            )}
+            <button
+              type="button"
+              className="btn btn-secondary"
+              disabled={regeneratingKey}
+              onClick={async () => {
+                const confirmed = await confirmAction(
+                  cls?.enrollmentKey
+                    ? `Acak kode pendaftaran baru untuk kelas ini? Kode lama (${cls.enrollmentKey}) tidak akan berlaku lagi.`
+                    : "Generate kode pendaftaran mandiri baru untuk kelas ini?",
+                );
+                if (!confirmed) return;
+                setRegeneratingKey(true);
+                try {
+                  const res = await api<any>(
+                    `/course-classes/${classId}/regenerate-key`,
+                    "POST",
+                    {},
+                  );
+                  onKeyUpdated?.();
+                  if (res?.enrollmentKey) {
+                    navigator.clipboard.writeText(res.enrollmentKey);
+                    setKeyCopied(true);
+                    setTimeout(() => setKeyCopied(false), 2000);
+                  }
+                } catch (e: any) {
+                  alert(e?.message || "Gagal mengacak kode pendaftaran.");
+                } finally {
+                  setRegeneratingKey(false);
+                }
+              }}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+            >
+              <RefreshCw size={15} />
+              {cls?.enrollmentKey ? "Acak Kode Baru" : "Buat Kode Masuk"}
+            </button>
+          </div>
+        </div>
+      )}
       <div className="section-heading">
         <div>
           <h2>Dosen Pengampu &amp; Tim Pengajar</h2>

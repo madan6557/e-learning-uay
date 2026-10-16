@@ -30,6 +30,7 @@ import {
   webUrl,
   round,
   DEFAULT_GRADE_CATEGORIES_TEMPLATE,
+  generateEnrollmentKey,
 } from "../../../packages/shared/src/domain.js";
 import { classPath, contentPath } from "../../../packages/shared/src/urls.js";
 import { normalizeDepartmentCode, UAY_DEPARTMENTS } from "../../../packages/shared/src/departments.js";
@@ -692,7 +693,10 @@ export function registerLearning(app: Express) {
       ? {
           status: "PUBLISHED" as const,
           course: { status: "PUBLISHED" as const },
-          enrollmentKeyHash: { not: null },
+          OR: [
+            { enrollmentKey: { not: null } },
+            { enrollmentKeyHash: { not: null } },
+          ],
           ...(req.query.q
             ? {
                 OR: [
@@ -1032,6 +1036,8 @@ export function registerLearning(app: Express) {
           400,
           "INVALID_INSTRUCTORS",
         );
+        const rawKey = data.enrollmentKey?.trim().toUpperCase();
+        const cleanKey = rawKey && rawKey.length >= 6 ? rawKey : null;
         const settings = await getAcademicSettings(tx);
         const after = await tx.courseClass.create({
           data: {
@@ -1040,9 +1046,8 @@ export function registerLearning(app: Express) {
             name: data.name,
             academicYear: data.academicYear,
             status: data.status,
-            enrollmentKeyHash: data.enrollmentKey
-              ? hash(data.enrollmentKey)
-              : null,
+            enrollmentKey: cleanKey,
+            enrollmentKeyHash: cleanKey ? hash(cleanKey) : null,
             instructors: {
               create: [
                 ...users.map((u, i) => ({
@@ -1412,6 +1417,8 @@ function expandDepartmentScopes(scopes: string[]): string[] {
     const progress = { video, slides, downloads, text };
     res.json({
       ...cls,
+      enrollmentKey: canViewAll ? cls.enrollmentKey : undefined,
+      hasEnrollmentKey: Boolean(cls.enrollmentKey || cls.enrollmentKeyHash),
       enrollmentKeyHash: undefined,
       enrollments: undefined,
       sections: result,
@@ -1443,7 +1450,12 @@ function expandDepartmentScopes(scopes: string[]): string[] {
             name: title,
             academicYear: title,
             status,
-            enrollmentKey: z.string().min(6).nullable().optional(),
+            enrollmentKey: z
+              .string()
+              .min(6)
+              .nullable()
+              .optional()
+              .or(z.literal("")),
           })
           .parse(req.body);
         ensure(
@@ -1458,11 +1470,18 @@ function expandDepartmentScopes(scopes: string[]): string[] {
             academicYear: data.academicYear,
             status: data.status,
             ...(data.enrollmentKey !== undefined
-              ? {
-                  enrollmentKeyHash: data.enrollmentKey
-                    ? hash(data.enrollmentKey)
-                    : null,
-                }
+              ? (() => {
+                  const rawKey =
+                    typeof data.enrollmentKey === "string"
+                      ? data.enrollmentKey.trim().toUpperCase()
+                      : null;
+                  const cleanKey =
+                    rawKey && rawKey.length >= 6 ? rawKey : null;
+                  return {
+                    enrollmentKey: cleanKey,
+                    enrollmentKeyHash: cleanKey ? hash(cleanKey) : null,
+                  };
+                })()
               : {}),
           },
         });
@@ -1493,6 +1512,36 @@ function expandDepartmentScopes(scopes: string[]): string[] {
       }),
     ),
   );
+  app.post("/api/v1/course-classes/:id/regenerate-key", async (req, res) => {
+    const cls = await classAccess(db, req.context.user, String(req.params.id));
+    ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
+    ensure(cls.course.status !== "ARCHIVED", 423, "COURSE_ARCHIVED");
+    ensure(cls.status !== "ARCHIVED", 423, "CLASS_ARCHIVED");
+
+    const newKey = generateEnrollmentKey(6);
+    await mutate(req, async (tx) => {
+      await tx.courseClass.update({
+        where: { id: cls.id },
+        data: {
+          enrollmentKey: newKey,
+          enrollmentKeyHash: hash(newKey),
+        },
+      });
+      await audit(
+        tx,
+        req.context,
+        "UPDATE",
+        "CLASS",
+        cls.id,
+        cls.id,
+        { hasEnrollmentKey: Boolean(cls.enrollmentKey) },
+        { hasEnrollmentKey: true },
+        "Acak ulang kunci pendaftaran mandiri kelas",
+      );
+    });
+
+    res.json({ ok: true, enrollmentKey: newKey });
+  });
   app.post("/api/v1/course-classes/:id/enroll", async (req, res) =>
     res.json(
       await mutate(req, async (tx) => {
@@ -1511,18 +1560,24 @@ function expandDepartmentScopes(scopes: string[]): string[] {
                 status: "PUBLISHED",
               },
               status: "PUBLISHED",
-              enrollmentKeyHash: { not: null },
+              OR: [
+                { enrollmentKey: { not: null } },
+                { enrollmentKeyHash: { not: null } },
+              ],
             },
             include: { course: true },
           }));
         const { enrollmentKey } = z
           .object({ enrollmentKey: z.string().min(1) })
           .parse(req.body);
+        const cleanInput = enrollmentKey.trim();
         ensure(
           cls &&
             cls.status === "PUBLISHED" &&
             cls.course.status === "PUBLISHED" &&
-            cls.enrollmentKeyHash === hash(enrollmentKey),
+            (cls.enrollmentKeyHash === hash(cleanInput) ||
+              (cls.enrollmentKey &&
+                cls.enrollmentKey.toUpperCase() === cleanInput.toUpperCase())),
           403,
           "INVALID_ENROLLMENT_KEY",
         );

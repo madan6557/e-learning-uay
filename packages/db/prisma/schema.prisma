@@ -200,6 +200,7 @@ model CourseClass {
   parentGradeCategory    GradeCategory?  @relation("PracticumGradeCategory", fields: [parentGradeCategoryId], references: [id], onDelete: SetNull)
   name              String       @map("name")
   academicYear      String       @map("academic_year")
+  enrollmentKey     String?      @map("enrollment_key")
   enrollmentKeyHash String?      @map("enrollment_key_hash")
   status            CourseStatus @default(PUBLISHED) @map("status")
   gradeScaleVersion String?      @default("2026.1") @map("grade_scale_version")

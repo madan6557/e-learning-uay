@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Eye, EyeOff, RefreshCw, Copy, Check } from "lucide-react";
 import {
   t,
   api,
@@ -12,6 +13,7 @@ import {
 } from "../../lib";
 import { RichTextEditor } from "../ui/RichTextEditor";
 import { confirmAction } from "../../confirm";
+import { generateEnrollmentKey } from "../../../../../packages/shared/src/domain";
 
 export interface SectionModalProps {
   cls: any;
@@ -180,6 +182,23 @@ export function ClassSettingsModal({
   onClose,
   onSaved,
 }: ClassSettingsModalProps) {
+  const [key, setKey] = useState<string>(cls.enrollmentKey ?? "");
+  const [showKey, setShowKey] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (!key) return;
+    navigator.clipboard.writeText(key);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleRegenerate = () => {
+    const fresh = generateEnrollmentKey(6);
+    setKey(fresh);
+    setShowKey(true);
+  };
+
   return (
     <Modal title={t.settings} onClose={onClose}>
       <Form
@@ -193,9 +212,7 @@ export function ClassSettingsModal({
             name: textValue(f, "name"),
             academicYear: textValue(f, "academicYear"),
             status,
-            ...(textValue(f, "key")
-              ? { enrollmentKey: textValue(f, "key") }
-              : {}),
+            enrollmentKey: key.trim(),
           });
           onSaved();
         }}
@@ -216,7 +233,77 @@ export function ClassSettingsModal({
           </select>
         </Field>
         <Field label={t.enrollmentKey}>
-          <input name="key" minLength={6} />
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input
+              name="key"
+              type={showKey ? "text" : "password"}
+              value={key}
+              onChange={(e) => setKey(e.target.value.toUpperCase())}
+              minLength={6}
+              maxLength={20}
+              placeholder={
+                cls.hasEnrollmentKey && !cls.enrollmentKey
+                  ? "Kunci aktif (terenkripsi) - buat baru untuk melihat"
+                  : "Kosongkan jika pendaftaran mandiri ditutup"
+              }
+              style={{
+                fontFamily: "monospace",
+                fontWeight: 600,
+                letterSpacing: "2px",
+                textTransform: "uppercase",
+                flex: 1,
+              }}
+            />
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setShowKey(!showKey)}
+              title={showKey ? "Sembunyikan kode" : "Tampilkan kode"}
+              style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "0 10px" }}
+            >
+              {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleRegenerate}
+              title="Acak ulang kunci pendaftaran baru"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}
+            >
+              <RefreshCw size={15} />
+              Acak Kode Baru
+            </button>
+            {key && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleCopy}
+                title="Salin kunci pendaftaran"
+                style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap" }}
+              >
+                {copied ? <Check size={16} color="var(--adaptive-success-fill, #22c55e)" /> : <Copy size={16} />}
+                {copied ? "Disalin!" : "Salin"}
+              </button>
+            )}
+            {key && (
+              <button
+                type="button"
+                className="text-button"
+                style={{ color: "var(--destructive, #ef4444)", fontSize: "0.82rem" }}
+                onClick={() => setKey("")}
+                title="Tutup pendaftaran mandiri"
+              >
+                Hapus
+              </button>
+            )}
+          </div>
+          <small style={{ display: "block", marginTop: 6, color: "var(--muted)" }}>
+            {key
+              ? "Mahasiswa dapat bergabung mandiri ke kelas menggunakan kode 6 karakter ini."
+              : cls.hasEnrollmentKey && !cls.enrollmentKey
+                ? "Kelas memiliki kunci pendaftaran dari versi sebelumnya (terenkripsi). Klik 'Acak Kode Baru' untuk membuat kode yang dapat dilihat dan disalin."
+                : "Saat kunci kosong, pendaftaran mandiri dinonaktifkan (mahasiswa hanya bisa didaftarkan oleh dosen)."}
+          </small>
         </Field>
       </Form>
     </Modal>

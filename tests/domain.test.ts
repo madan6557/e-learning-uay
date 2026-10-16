@@ -8,6 +8,7 @@ import {
   advanceVideo,
   validateTotal,
   blockSchema,
+  generateEnrollmentKey,
 } from "../packages/shared/src/domain.js";
 const question = (
   type: string,
@@ -238,5 +239,26 @@ test("fresh video start and background tab latency record progress accurately wi
   assert.equal(fourth.watchedSeconds, 27);
   assert.equal(fourth.lastPositionSeconds, 27);
   assert.equal(fourth.percent, 27);
+});
+
+test("generateEnrollmentKey generates clean, unambiguous uppercase alphanumeric keys", () => {
+  const key = generateEnrollmentKey();
+  assert.equal(typeof key, "string");
+  assert.equal(key.length, 6);
+  assert.match(key, /^[A-Z0-9]{6}$/);
+
+  // Generates different random keys
+  const keys = new Set<string>();
+  for (let i = 0; i < 20; i++) {
+    const k = generateEnrollmentKey();
+    assert.equal(k.length, 6);
+    // Should avoid ambiguous characters 0, O, 1, I
+    assert(!k.includes("0"));
+    assert(!k.includes("O"));
+    assert(!k.includes("1"));
+    assert(!k.includes("I"));
+    keys.add(k);
+  }
+  assert.ok(keys.size > 15);
 });
 

@@ -773,3 +773,16 @@ export function autoAssignItems<T extends AutoAssignableItem>(
     };
   });
 }
+
+/**
+ * Generates a clean, unambiguous uppercase alphanumeric enrollment key for self-enrolling students.
+ * Avoids ambiguous characters (like 0, O, 1, I). Defaults to 6 characters.
+ */
+export function generateEnrollmentKey(length = 6): string {
+  const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let result = "";
+  for (let i = 0; i < length; i++) {
+    result += letters.charAt(Math.floor(Math.random() * letters.length));
+  }
+  return result;
+}
