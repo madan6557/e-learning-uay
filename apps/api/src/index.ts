@@ -550,6 +550,13 @@ if (
   process.argv[1] &&
   import.meta.url === pathToFileURL(process.argv[1]).href
 ) {
+  process.on("unhandledRejection", (reason) => {
+    console.error("[CRITICAL] Unhandled Rejection:", reason);
+  });
+  process.on("uncaughtException", (error) => {
+    console.error("[CRITICAL] Uncaught Exception:", error);
+  });
+
   const host =
     process.env.API_HOST ??
     (process.env.PORT || production || isDemo ? "0.0.0.0" : "127.0.0.1");
@@ -580,10 +587,15 @@ if (
   const shutdown = () => {
     clearInterval(timer);
     server.close(async () => {
-      await db.$disconnect();
-      await redis?.quit();
-      process.exit();
+      try {
+        await db.$disconnect();
+      } catch {}
+      try {
+        await redis?.quit();
+      } catch {}
+      process.exit(0);
     });
+    setTimeout(() => process.exit(0), 10000).unref();
   };
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);

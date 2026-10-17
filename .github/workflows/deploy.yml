@@ -85,6 +85,33 @@ jobs:
             uay-deploy@${{ secrets.UAY_VPS_HOST }} \
             'whoami && hostname'
 
+      - name: Pre-deploy VPS Diagnostics
+        run: |
+          ssh \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            uay-deploy@${{ secrets.UAY_VPS_HOST }} \
+            '
+            echo "=== SYSTEM UPTIME & MEMORY ==="
+            uptime
+            free -m
+            echo "=== CURRENT LISTENING PORTS ==="
+            ss -tlnp || ss -tln || true
+            echo "=== SERVICE STATUS BEFORE DEPLOY ==="
+            systemctl status uay-elearning-api.service --no-pager -l || true
+            echo "=== RECENT SERVICE LOGS (LAST 80 LINES) ==="
+            journalctl -u uay-elearning-api.service -n 80 --no-pager || sudo -n journalctl -u uay-elearning-api.service -n 80 --no-pager || true
+            echo "=== SYSTEMD SERVICE UNIT CONFIG ==="
+            cat /etc/systemd/system/uay-elearning-api.service || true
+            echo "=== NGINX SITES CONFIG ==="
+            cat /etc/nginx/sites-enabled/* || true
+            echo "=== RECENT NGINX ERROR LOGS ==="
+            tail -n 60 /var/log/nginx/error.log || sudo -n tail -n 60 /var/log/nginx/error.log || true
+            echo "=== LOCAL PORTS PROBE ==="
+            curl -I http://127.0.0.1:3000/api/health || true
+            curl -I http://127.0.0.1:3001/api/health || true
+            '
+
       - name: Prepare deployment directory
         run: |
           ssh \
@@ -175,7 +202,10 @@ jobs:
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
             uay-deploy@${{ secrets.UAY_VPS_HOST }} \
-            'sudo /usr/bin/systemctl restart uay-elearning-api.service'
+            '
+            sudo /usr/bin/systemctl restart uay-elearning-api.service
+            sudo -n /usr/bin/systemctl reload nginx || true
+            '
 
       - name: Verify API service
         run: |
@@ -219,23 +249,48 @@ jobs:
               fi
             fi
 
+            echo "Checking local health on port $HEALTH_PORT..."
+            LOCAL_OK=0
             for i in $(seq 1 30); do
               if curl --fail --silent --show-error "http://127.0.0.1:${HEALTH_PORT}/api/health" || \
                  curl --fail --silent --show-error "http://127.0.0.1:3001/api/health"; then
-
                 echo
-                echo "E-Learning API health check passed."
-                exit 0
+                echo "Local E-Learning API health check passed."
+                LOCAL_OK=1
+                break
               fi
 
               echo "Waiting for E-Learning API health... ($i/30)"
               sleep 1
             done
 
-            echo "=== systemctl status uay-elearning-api.service ==="
-            systemctl status uay-elearning-api.service --no-pager -l || true
-            echo "=== journalctl -u uay-elearning-api.service -n 60 ==="
-            journalctl -u uay-elearning-api.service -n 60 --no-pager || true
-            echo "E-Learning API health check failed."
-            exit 1
+            if [ "$LOCAL_OK" -ne 1 ]; then
+              echo "=== Local health check failed ==="
+              echo "=== systemctl status uay-elearning-api.service ==="
+              systemctl status uay-elearning-api.service --no-pager -l || true
+              echo "=== journalctl -u uay-elearning-api.service -n 60 ==="
+              journalctl -u uay-elearning-api.service -n 60 --no-pager || true
+              echo "E-Learning API health check failed."
+              exit 1
+            fi
             '
+
+      - name: Verify Public HTTPS Health
+        run: |
+          echo "Testing public HTTPS endpoint from GitHub Actions runner..."
+          PUBLIC_OK=0
+          for i in $(seq 1 20); do
+            HTTP_CODE=$(curl -k -s -o /dev/null -w "%{http_code}" https://e-learning.uay.ac.id/api/health || true)
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "Public HTTPS health check passed (HTTP 200)."
+              PUBLIC_OK=1
+              break
+            fi
+            echo "Public endpoint returned HTTP $HTTP_CODE, waiting... ($i/20)"
+            sleep 2
+          done
+
+          if [ "$PUBLIC_OK" -ne 1 ]; then
+            echo "=== PUBLIC HEALTH CHECK FAILED (returned HTTP $HTTP_CODE) ==="
+            exit 1
+          fi
