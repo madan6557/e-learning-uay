@@ -319,7 +319,10 @@ export function createApp() {
   if (webDist) {
     app.use(express.static(webDist, { index: false, maxAge: "1h" }));
     app.use((req, res, next) => {
-      if (req.method === "GET" && !req.path.startsWith("/api")) {
+      if (
+        (req.method === "GET" || req.method === "HEAD") &&
+        !req.path.startsWith("/api")
+      ) {
         res.sendFile(join(webDist, "index.html"));
       } else {
         next();

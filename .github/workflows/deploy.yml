@@ -203,6 +203,7 @@ jobs:
             -o StrictHostKeyChecking=yes \
             uay-deploy@${{ secrets.UAY_VPS_HOST }} \
             '
+            sudo /usr/bin/systemctl enable uay-elearning-api.service || true
             sudo /usr/bin/systemctl restart uay-elearning-api.service
             sudo -n /usr/bin/systemctl reload nginx || true
             '
