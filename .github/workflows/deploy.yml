@@ -11,8 +11,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  test-and-build:
-    name: Build & Test
+  deploy:
+    name: Build, Test & Deploy (Systemd VPS)
     runs-on: ubuntu-latest
 
     steps:
@@ -26,102 +26,93 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit --no-fund
 
       - name: Generate Prisma Client
         run: npm run db:generate
 
-      - name: Build Web
-        run: npm run build:web
+      - name: Build Web, Build API & Run Tests (Parallel)
+        run: |
+          set -e
+          echo "Starting parallel Web build, API build, and Test suite..."
 
-      - name: Build API
-        run: npm run build:api
+          npm run build:web > /tmp/build-web.log 2>&1 &
+          PID_WEB=$!
 
-      - name: Run tests
-        run: npm test
+          npx tsc -p apps/api/tsconfig.json > /tmp/build-api.log 2>&1 &
+          PID_API=$!
 
-  deploy:
-    name: Deploy to UAY VPS
-    needs: test-and-build
-    runs-on: ubuntu-latest
-    if: github.repository == 'UAY-System/e-learning'
+          npm test &
+          PID_TEST=$!
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+          if ! wait $PID_WEB; then
+            echo "=== Web Build Failed ==="
+            cat /tmp/build-web.log
+            exit 1
+          fi
+          echo "✓ Web build completed."
 
-      - name: Setup SSH
+          if ! wait $PID_API; then
+            echo "=== API Build Failed ==="
+            cat /tmp/build-api.log
+            exit 1
+          fi
+          echo "✓ API build completed."
+
+          wait $PID_TEST
+          echo "✓ All unit tests passed."
+
+          test -f apps/api/dist/apps/api/src/index.js
+          test -f apps/web/dist/index.html
+
+      - name: Setup SSH with Multiplexing
+        if: github.repository == 'UAY-System/e-learning'
         run: |
           mkdir -p ~/.ssh
 
-          printf '%s\n' "${{ secrets.UAY_DEPLOY_SSH_KEY }}" \
-            > ~/.ssh/id_ed25519
-
+          printf '%s\n' "${{ secrets.UAY_DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
-          printf '%s\n' "${{ secrets.UAY_VPS_KNOWN_HOSTS }}" \
-            > ~/.ssh/known_hosts
-
+          printf '%s\n' "${{ secrets.UAY_VPS_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
           cat << 'EOF' > ~/.ssh/config
           Host *
+            ControlMaster auto
+            ControlPath ~/.ssh/cm-%r@%h:%p
+            ControlPersist 120s
             ServerAliveInterval 15
             ServerAliveCountMax 60
             TCPKeepAlive yes
           EOF
           chmod 600 ~/.ssh/config
 
-      - name: Verify SSH host key
-        run: |
-          ssh-keygen -F "${{ secrets.UAY_VPS_HOST }}" \
-            -f ~/.ssh/known_hosts
+          ssh-keygen -F "${{ secrets.UAY_VPS_HOST }}" -f ~/.ssh/known_hosts > /dev/null
 
-      - name: Verify VPS SSH access
+      - name: Backup current dist & Sync application to VPS
+        if: github.repository == 'UAY-System/e-learning'
         run: |
-          ssh \
-            -o BatchMode=yes \
-            -o StrictHostKeyChecking=yes \
-            uay-deploy@${{ secrets.UAY_VPS_HOST }} \
-            'whoami && hostname'
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            uay-deploy@${{ secrets.UAY_VPS_HOST }} '
+            APP_DIR="/opt/uay/e-learning/application"
+            STATE_DIR="$APP_DIR/.deploy-state"
+            mkdir -p "$APP_DIR/uploads" "$STATE_DIR"
+            if [ ! -f "$STATE_DIR/package-lock.sha256" ] && [ -d "$APP_DIR/node_modules/@prisma/client" ] && [ -f "$APP_DIR/package-lock.json" ]; then
+              sha256sum "$APP_DIR/package-lock.json" | cut -d" " -f1 > "$STATE_DIR/package-lock.sha256"
+            fi
+            if [ ! -f "$STATE_DIR/schema.sha256" ] && [ -d "$APP_DIR/node_modules/.prisma/client" ] && [ -f "$APP_DIR/packages/db/prisma/schema.prisma" ]; then
+              sha256sum "$APP_DIR/packages/db/prisma/schema.prisma" | cut -d" " -f1 > "$STATE_DIR/schema.sha256"
+            fi
+            rm -rf "$STATE_DIR/rollback-dist"
+            mkdir -p "$STATE_DIR/rollback-dist"
+            if [ -d "$APP_DIR/apps/api/dist" ]; then
+              cp -a "$APP_DIR/apps/api/dist" "$STATE_DIR/rollback-dist/api-dist"
+            fi
+            if [ -d "$APP_DIR/apps/web/dist" ]; then
+              cp -a "$APP_DIR/apps/web/dist" "$STATE_DIR/rollback-dist/web-dist"
+            fi
+          '
 
-      - name: Pre-deploy VPS Diagnostics
-        run: |
-          ssh \
-            -o BatchMode=yes \
-            -o StrictHostKeyChecking=yes \
-            uay-deploy@${{ secrets.UAY_VPS_HOST }} \
-            '
-            echo "=== SYSTEM UPTIME & MEMORY ==="
-            uptime
-            free -m
-            echo "=== CURRENT LISTENING PORTS ==="
-            ss -tlnp || ss -tln || true
-            echo "=== SERVICE STATUS BEFORE DEPLOY ==="
-            systemctl status uay-elearning-api.service --no-pager -l || true
-            echo "=== RECENT SERVICE LOGS (LAST 80 LINES) ==="
-            journalctl -u uay-elearning-api.service -n 80 --no-pager || sudo -n journalctl -u uay-elearning-api.service -n 80 --no-pager || true
-            echo "=== SYSTEMD SERVICE UNIT CONFIG ==="
-            cat /etc/systemd/system/uay-elearning-api.service || true
-            echo "=== NGINX SITES CONFIG ==="
-            cat /etc/nginx/sites-enabled/* || true
-            echo "=== RECENT NGINX ERROR LOGS ==="
-            tail -n 60 /var/log/nginx/error.log || sudo -n tail -n 60 /var/log/nginx/error.log || true
-            echo "=== LOCAL PORTS PROBE ==="
-            curl -I http://127.0.0.1:3000/api/health || true
-            curl -I http://127.0.0.1:3001/api/health || true
-            '
-
-      - name: Prepare deployment directory
-        run: |
-          ssh \
-            -o BatchMode=yes \
-            -o StrictHostKeyChecking=yes \
-            uay-deploy@${{ secrets.UAY_VPS_HOST }} \
-            'mkdir -p /opt/uay/e-learning/application/uploads'
-
-      - name: Sync application
-        run: |
           rsync -az --delete \
             --exclude='.git/' \
             --exclude='.github/' \
@@ -135,148 +126,121 @@ jobs:
             --exclude='docs/' \
             --exclude='tmp/' \
             --exclude='scratch/' \
+            --exclude='tests/' \
+            --exclude='deployment/' \
+            --exclude='.deploy-state/' \
             -e "ssh -o BatchMode=yes -o StrictHostKeyChecking=yes" \
             ./ \
             uay-deploy@${{ secrets.UAY_VPS_HOST }}:/opt/uay/e-learning/application/
 
-      - name: Install dependencies on VPS
+      - name: Migrate, Pre-flight, Restart Systemd & Verify Health (with Auto-Rollback)
+        if: github.repository == 'UAY-System/e-learning'
         run: |
-          ssh \
-            -o BatchMode=yes \
-            -o StrictHostKeyChecking=yes \
-            uay-deploy@${{ secrets.UAY_VPS_HOST }} \
-            'cd /opt/uay/e-learning/application && npm ci --no-audit --no-fund'
-
-      - name: Generate Prisma Client and migrate database
-        run: |
-          ssh \
-            -o BatchMode=yes \
-            -o StrictHostKeyChecking=yes \
-            uay-deploy@${{ secrets.UAY_VPS_HOST }} \
-            '
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            uay-deploy@${{ secrets.UAY_VPS_HOST }} '
+            set -e
             cd /opt/uay/e-learning/application
+            STATE_DIR="/opt/uay/e-learning/application/.deploy-state"
+
+            rollback_dist() {
+              echo "=== [AUTO-ROLLBACK] Restoring previous working dist/ build ==="
+              if [ -d "$STATE_DIR/rollback-dist/api-dist" ]; then
+                rm -rf /opt/uay/e-learning/application/apps/api/dist
+                cp -a "$STATE_DIR/rollback-dist/api-dist" /opt/uay/e-learning/application/apps/api/dist
+              fi
+              if [ -d "$STATE_DIR/rollback-dist/web-dist" ]; then
+                rm -rf /opt/uay/e-learning/application/apps/web/dist
+                cp -a "$STATE_DIR/rollback-dist/web-dist" /opt/uay/e-learning/application/apps/web/dist
+              fi
+            }
+
+            LOCK_HASH=$(sha256sum package-lock.json | cut -d" " -f1)
+            SCHEMA_HASH=$(sha256sum packages/db/prisma/schema.prisma | cut -d" " -f1)
+            PREV_LOCK_HASH=$(cat "$STATE_DIR/package-lock.sha256" 2>/dev/null || true)
+            PREV_SCHEMA_HASH=$(cat "$STATE_DIR/schema.sha256" 2>/dev/null || true)
+
+            NEED_PRISMA_GEN=0
+            if [ ! -d node_modules/@prisma/client ] || [ "$LOCK_HASH" != "$PREV_LOCK_HASH" ]; then
+              echo "=== Installing dependencies on VPS (package-lock changed or initial run) ==="
+              npm ci --prefer-offline --no-audit --no-fund
+              echo "$LOCK_HASH" > "$STATE_DIR/package-lock.sha256"
+              NEED_PRISMA_GEN=1
+            else
+              echo "=== Skipping npm ci on VPS (package-lock.json unchanged) ==="
+            fi
 
             set -a
             source /etc/uay-elearning-api
             set +a
 
-            npx prisma generate \
-              --schema packages/db/prisma/schema.prisma
+            if [ "$NEED_PRISMA_GEN" -eq 1 ] || [ ! -d node_modules/.prisma/client ] || [ "$SCHEMA_HASH" != "$PREV_SCHEMA_HASH" ]; then
+              echo "=== Generating Prisma Client on VPS ==="
+              npx prisma generate --schema packages/db/prisma/schema.prisma
+              echo "$SCHEMA_HASH" > "$STATE_DIR/schema.sha256"
+            else
+              echo "=== Skipping Prisma generate on VPS (schema.prisma unchanged) ==="
+            fi
 
-            npx prisma migrate deploy \
-              --schema packages/db/prisma/schema.prisma
-            '
+            echo "=== Applying Prisma database migrations ==="
+            npx prisma migrate deploy --schema packages/db/prisma/schema.prisma
 
-      - name: Build application on VPS
-        run: |
-          ssh \
-            -o BatchMode=yes \
-            -o StrictHostKeyChecking=yes \
-            uay-deploy@${{ secrets.UAY_VPS_HOST }} \
-            '
-            set -e
-            cd /opt/uay/e-learning/application && npm run build
+            run_preflight() {
+              node --input-type=module -e '\''
+                let core;
+                try {
+                  core = await import("./apps/api/dist/apps/api/src/core.js");
+                  console.log("[PRE-FLIGHT] core.js loaded successfully. Config port:", core.config.port);
+                } catch (err) {
+                  console.error("[PRE-FLIGHT] FATAL CONFIG ERROR:", err.message);
+                  process.exitCode = 1;
+                } finally {
+                  core?.redis?.disconnect();
+                  await core?.db.$disconnect();
+                }
+              '\''
+            }
 
             echo "=== Pre-flight: checking core config on VPS ==="
-            set -a
-            source /etc/uay-elearning-api
-            set +a
-            node --input-type=module -e '\''
-              let core;
-              try {
-                core = await import("./apps/api/dist/apps/api/src/core.js");
-                console.log("[PRE-FLIGHT] core.js loaded successfully. Config port:", core.config.port);
-              } catch (err) {
-                console.error("[PRE-FLIGHT] FATAL CONFIG ERROR:", err.message);
-                process.exitCode = 1;
-              } finally {
-                core?.redis?.disconnect();
-                await core?.db.$disconnect();
-              }
-            '\''
-            '
-
-      - name: Restart API service
-        run: |
-          ssh \
-            -o BatchMode=yes \
-            -o StrictHostKeyChecking=yes \
-            uay-deploy@${{ secrets.UAY_VPS_HOST }} \
-            '
-            sudo /usr/bin/systemctl enable uay-elearning-api.service || true
-            sudo /usr/bin/systemctl restart uay-elearning-api.service
-            sudo -n /usr/bin/systemctl reload nginx || true
-            '
-
-      - name: Verify API service
-        run: |
-          ssh \
-            -o BatchMode=yes \
-            -o StrictHostKeyChecking=yes \
-            uay-deploy@${{ secrets.UAY_VPS_HOST }} \
-            '
-            for i in $(seq 1 30); do
-              if systemctl is-active --quiet uay-elearning-api.service; then
-                echo "E-Learning API is active."
-                exit 0
-              fi
-
-              echo "Waiting for E-Learning API... ($i/30)"
-              sleep 1
-            done
-
-            echo "=== systemctl status uay-elearning-api.service ==="
-            systemctl status uay-elearning-api.service --no-pager -l || true
-            echo "=== journalctl -u uay-elearning-api.service -n 50 ==="
-            journalctl -u uay-elearning-api.service -n 50 --no-pager || true
-            echo "E-Learning API failed to become active."
-            exit 1
-            '
-
-      - name: Verify API health
-        run: |
-          ssh \
-            -o BatchMode=yes \
-            -o StrictHostKeyChecking=yes \
-            uay-deploy@${{ secrets.UAY_VPS_HOST }} \
-            '
-            HEALTH_PORT="3001"
-            if [ -f /etc/uay-elearning-api ]; then
-              set -a
-              source /etc/uay-elearning-api
-              set +a
-              if [ -n "$PORT" ]; then
-                HEALTH_PORT="$PORT"
+            if ! run_preflight; then
+              echo "Pre-flight failed on first attempt; running fallback npm ci + prisma generate..."
+              npm ci --prefer-offline --no-audit --no-fund
+              npx prisma generate --schema packages/db/prisma/schema.prisma
+              if ! run_preflight; then
+                rollback_dist
+                exit 1
               fi
             fi
 
-            echo "Checking local health on port $HEALTH_PORT..."
+            echo "=== Restarting uay-elearning-api.service (systemd) ==="
+            sudo /usr/bin/systemctl restart uay-elearning-api.service
+            sudo -n /usr/bin/systemctl reload nginx || true
+
+            HEALTH_PORT="${PORT:-3001}"
+            echo "=== Verifying local systemd service & health on port $HEALTH_PORT ==="
             LOCAL_OK=0
-            for i in $(seq 1 30); do
+            for i in $(seq 1 40); do
               if curl --fail --silent --show-error "http://127.0.0.1:${HEALTH_PORT}/api/health" || \
                  curl --fail --silent --show-error "http://127.0.0.1:3001/api/health"; then
                 echo
-                echo "Local E-Learning API health check passed."
+                echo "Local E-Learning API health check passed (attempt $i)."
                 LOCAL_OK=1
                 break
               fi
-
-              echo "Waiting for E-Learning API health... ($i/30)"
-              sleep 1
+              sleep 0.5
             done
 
             if [ "$LOCAL_OK" -ne 1 ]; then
-              echo "=== Local health check failed ==="
-              echo "=== systemctl status uay-elearning-api.service ==="
+              echo "=== LOCAL HEALTH CHECK FAILED — DUMPING DIAGNOSTICS & ROLLING BACK ==="
               systemctl status uay-elearning-api.service --no-pager -l || true
-              echo "=== journalctl -u uay-elearning-api.service -n 60 ==="
               journalctl -u uay-elearning-api.service -n 60 --no-pager || true
-              echo "E-Learning API health check failed."
+              rollback_dist
+              sudo /usr/bin/systemctl restart uay-elearning-api.service || true
               exit 1
             fi
-            '
+          '
 
       - name: Verify Public HTTPS Health
+        if: github.repository == 'UAY-System/e-learning'
         run: |
           echo "Testing public HTTPS endpoint from GitHub Actions runner..."
           PUBLIC_OK=0
@@ -288,10 +252,11 @@ jobs:
               break
             fi
             echo "Public endpoint returned HTTP $HTTP_CODE, waiting... ($i/20)"
-            sleep 2
+            sleep 1
           done
 
           if [ "$PUBLIC_OK" -ne 1 ]; then
             echo "=== PUBLIC HEALTH CHECK FAILED (returned HTTP $HTTP_CODE) ==="
             exit 1
           fi
+
