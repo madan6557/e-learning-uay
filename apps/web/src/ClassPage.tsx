@@ -114,7 +114,8 @@ export function ClassPage({
   const info = useApi(`/course-classes/${id}`);
   const phone = usePhoneLayout();
   const [modal, setModal] = useState<any>(null),
-    [message, setMessage] = useState("");
+    [message, setMessage] = useState(""),
+    [keyCopied, setKeyCopied] = useState(false);
   const cls = info.data;
   const canViewAll = Boolean(cls?.canManage || cls?.canMonitor);
   const [sectionTypeFilter, setSectionTypeFilter] = useState<string>("ALL");
@@ -262,7 +263,6 @@ export function ClassPage({
     notifyAction(msg);
   };
   const isArchived = cls.status === "ARCHIVED";
-  const [keyCopied, setKeyCopied] = useState(false);
   const tabs = [
     ["content", t.content],
     ...(!isParentAssistant
