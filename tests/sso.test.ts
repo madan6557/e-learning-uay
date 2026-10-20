@@ -558,4 +558,127 @@ test("syncUser preserves existing active users without false rejection even if t
   }
 });
 
+test("syncUser updates role, email, and departmentScopes when changes occur in SSO for authoritySource=SSO", async () => {
+  const { syncUser } = await import("../apps/api/src/auth.js");
+  const { db } = await import("../apps/api/src/core.js");
+  const originalFindMany = db.user.findMany;
+  const originalTransaction = db.$transaction;
 
+  const existingSub = "sso-change-user-" + Date.now();
+  const mockExistingUser = {
+    id: "existing-user-uuid-2",
+    ssoUserId: existingSub,
+    name: "Dosen Awal",
+    username: "dosen_awal",
+    email: "dosen_lama@uay.ac.id",
+    identifierValue: "198001012005011001",
+    identifierType: "NIP",
+    userType: "LECTURER",
+    role: "INSTRUCTOR",
+    authoritySource: "SSO",
+    status: "ACTIVE",
+    departmentScopes: ["IF"],
+    lastLoginAt: new Date(),
+    lastActiveAt: new Date(),
+  };
+
+  let updatedData: any = null;
+  db.user.findMany = (async () => [mockExistingUser]) as any;
+  db.$transaction = (async (run: any) => {
+    const txMock: any = {
+      user: {
+        findUniqueOrThrow: async () => mockExistingUser,
+        update: async ({ data }: any) => {
+          updatedData = data;
+          return { ...mockExistingUser, ...data };
+        },
+      },
+      auditLog: {
+        create: async () => {},
+      },
+    };
+    return run(txMock);
+  }) as any;
+
+  try {
+    const updatedTokenClaims = {
+      sub: existingSub,
+      preferred_username: "dosen_awal",
+      name: "Dr. Dosen Baru",
+      email: "dosen_baru@uay.ac.id",
+      roles: ["DEPARTMENT_ADMIN"],
+      department_scopes: ["IF", "SI"],
+      user_type: "STAFF",
+    };
+
+    const user = await syncUser(updatedTokenClaims as any, true);
+    assert.ok(user);
+    assert.equal(updatedData.name, "Dr. Dosen Baru");
+    assert.equal(updatedData.email, "dosen_baru@uay.ac.id");
+    assert.equal(updatedData.role, "DEPARTMENT_ADMIN");
+    assert.deepEqual(updatedData.departmentScopes, ["IF", "SI"]);
+  } finally {
+    db.user.findMany = originalFindMany;
+    db.$transaction = originalTransaction;
+  }
+});
+
+test("syncUser preserves local role when authoritySource is LOCAL even if SSO role differs", async () => {
+  const { syncUser } = await import("../apps/api/src/auth.js");
+  const { db } = await import("../apps/api/src/core.js");
+  const originalFindMany = db.user.findMany;
+  const originalTransaction = db.$transaction;
+
+  const existingSub = "local-managed-user-" + Date.now();
+  const mockLocalUser = {
+    id: "local-user-uuid",
+    ssoUserId: existingSub,
+    name: "Admin Lokal",
+    username: "admin_lokal",
+    email: "admin_lokal@uay.ac.id",
+    identifierValue: "198501012010011002",
+    identifierType: "NIP",
+    userType: "STAFF",
+    role: "DEPARTMENT_ADMIN",
+    authoritySource: "LOCAL",
+    status: "ACTIVE",
+    departmentScopes: ["IF"],
+    lastLoginAt: new Date(),
+    lastActiveAt: new Date(),
+  };
+
+  let updatedData: any = null;
+  db.user.findMany = (async () => [mockLocalUser]) as any;
+  db.$transaction = (async (run: any) => {
+    const txMock: any = {
+      user: {
+        findUniqueOrThrow: async () => mockLocalUser,
+        update: async ({ data }: any) => {
+          updatedData = data;
+          return { ...mockLocalUser, ...data };
+        },
+      },
+      auditLog: {
+        create: async () => {},
+      },
+    };
+    return run(txMock);
+  }) as any;
+
+  try {
+    const ssoClaims = {
+      sub: existingSub,
+      preferred_username: "admin_lokal",
+      roles: ["INSTRUCTOR"],
+      department_scopes: ["SI"],
+    };
+
+    const user = await syncUser(ssoClaims as any, true);
+    assert.ok(user);
+    assert.equal(updatedData.role, "DEPARTMENT_ADMIN");
+    assert.deepEqual(updatedData.departmentScopes, ["IF"]);
+  } finally {
+    db.user.findMany = originalFindMany;
+    db.$transaction = originalTransaction;
+  }
+});

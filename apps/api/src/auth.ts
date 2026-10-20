@@ -432,6 +432,8 @@ export async function fetchSsoMeProfile(
 
         return {
           ...(combinedRoles.length > 0 ? { roles: combinedRoles } : {}),
+          ...(data.name ? { name: data.name } : {}),
+          ...(data.email ? { email: data.email } : {}),
           ...(data.user_type ? { user_type: data.user_type } : {}),
           ...(data.status ? { account_status: data.status } : {}),
           ...(data.username ? { preferred_username: data.username } : {}),
@@ -826,10 +828,13 @@ export async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
         | "ASSISTANT"
         | "STUDENT"
         | "RECTOR";
-      // Once the account exists, E-Learning's stored role is authoritative.
+      // Once the account exists, SSO is authoritative if authoritySource === "SSO".
+      // LOCAL or SIAKAD manual assignments preserve the local stored role.
       // Only an explicit local break-glass identifier may enforce SUPER_ADMIN.
       if (isAdminIdentifier) {
         finalRole = "SUPER_ADMIN";
+      } else if (currentUser.authoritySource === "SSO" && data.role) {
+        finalRole = data.role;
       } else {
         finalRole = currentUser.role;
       }
@@ -854,7 +859,7 @@ export async function syncUser(rawClaims: JWTPayload, successfulLogin = false) {
           ssoUserId,
           name: data.name || existingUser.name,
           username: data.username || existingUser.username,
-          email: existingUser.email || data.email,
+          email: data.email || existingUser.email,
           identifierType: data.identifierType || existingUser.identifierType,
           identifierValue: data.identifierValue || existingUser.identifierValue,
           role: finalRole,
@@ -1497,8 +1502,15 @@ export async function authenticate(
         });
         ensure(existing?.ssoUserId === claims.sub, 401, "INVALID_IDENTITY");
         const ssoMe = await fetchSsoMeProfile(tokens.access_token);
-        if (ssoMe?.account_status) {
-          ensure(ssoMe.account_status === "ACTIVE", 403, "ACCOUNT_DISABLED");
+        if (ssoMe?.account_status && ssoMe.account_status !== "ACTIVE") {
+          await db.user
+            .update({
+              where: { id: session.userId },
+              data: { status: "DISABLED" },
+            })
+            .catch(() => {});
+          await cache.del(key);
+          ensure(false, 403, "ACCOUNT_DISABLED");
         }
         await syncUser({
           ...(existing
