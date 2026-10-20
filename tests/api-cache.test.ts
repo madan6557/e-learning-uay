@@ -132,3 +132,48 @@ test("anonymous identity checks preserve pending OIDC state and the return path"
     Object.assign(globalThis, previous);
   }
 });
+
+test("auth token synchronizes across tabs via localStorage when sessionStorage is empty", () => {
+  const previous = {
+    sessionStorage: globalThis.sessionStorage,
+    localStorage: globalThis.localStorage,
+  };
+  const sessionMap = new Map<string, string>();
+  const localMap = new Map<string, string>();
+  globalThis.sessionStorage = {
+    getItem: (key: string) => sessionMap.get(key) ?? null,
+    setItem: (key: string, val: string) => sessionMap.set(key, val),
+    removeItem: (key: string) => sessionMap.delete(key),
+    clear: () => sessionMap.clear(),
+  } as any;
+  globalThis.localStorage = {
+    getItem: (key: string) => localMap.get(key) ?? null,
+    setItem: (key: string, val: string) => localMap.set(key, val),
+    removeItem: (key: string) => localMap.delete(key),
+    clear: () => localMap.clear(),
+  } as any;
+  try {
+    // 1. In Tab 1, login sets token
+    setAuthToken("cross-tab-token");
+    assert.equal(sessionMap.get("uay-access-token"), "cross-tab-token");
+    assert.equal(localMap.get("uay-access-token"), "cross-tab-token");
+    assert.equal(getAuthToken(), "cross-tab-token");
+
+    // 2. Tab 2 opens: its sessionStorage is empty, but localStorage persists
+    sessionMap.clear();
+    setAuthToken(null);
+    localMap.set("uay-access-token", "persisted-login-token");
+    assert.equal(globalThis.sessionStorage.getItem("uay-access-token"), null);
+    assert.equal(getAuthToken(), "persisted-login-token");
+    assert.equal(globalThis.sessionStorage.getItem("uay-access-token"), "persisted-login-token");
+
+    // 3. Logout clears both
+    setAuthToken(null);
+    assert.equal(globalThis.sessionStorage.getItem("uay-access-token"), null);
+    assert.equal(globalThis.localStorage.getItem("uay-access-token"), null);
+    assert.equal(getAuthToken(), null);
+  } finally {
+    setAuthToken(null);
+    Object.assign(globalThis, previous);
+  }
+});

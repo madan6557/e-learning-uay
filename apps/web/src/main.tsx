@@ -218,8 +218,13 @@ function App() {
   const user = identity.data;
   useNavigationGuard();
   useEffect(() => {
-    if (route.split("?")[0] !== "/Panduan/panduan.html") return;
-    // A new tab uses the shared campus cookie. Recheck the account when the
+    const rawPath = route.split("?")[0];
+    const isPanduan =
+      rawPath === "/Panduan/panduan.html" ||
+      rawPath.toLowerCase() === "/panduan/panduan.html" ||
+      rawPath.toLowerCase() === "/panduan.html";
+    if (!isPanduan) return;
+    // A new tab uses the shared campus cookie/token. Recheck the account when the
     // reader returns after logging out or switching accounts in another tab.
     const refreshIdentity = () => identity.reload();
     const onVisibility = () => {
@@ -388,7 +393,11 @@ function App() {
   const parsedRoute = new URL(route, location.origin);
   const pathname = parsedRoute.pathname;
   const params = parsedRoute.searchParams;
-  if (pathname === "/Panduan/panduan.html")
+  const isPanduan =
+    pathname === "/Panduan/panduan.html" ||
+    pathname.toLowerCase() === "/panduan/panduan.html" ||
+    pathname.toLowerCase() === "/panduan.html";
+  if (isPanduan)
     return (
       <Suspense fallback={<Loading />}>
         <GuidePage user={user} />

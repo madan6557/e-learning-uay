@@ -41,19 +41,61 @@ let currentAuthToken: string | null = null;
 export function setAuthToken(token: string | null) {
   currentAuthToken = token;
   if (typeof sessionStorage !== "undefined") {
-    if (token) {
-      sessionStorage.setItem("uay-access-token", token);
-    } else {
-      sessionStorage.removeItem("uay-access-token");
-    }
+    try {
+      if (token) {
+        sessionStorage.setItem("uay-access-token", token);
+      } else {
+        sessionStorage.removeItem("uay-access-token");
+      }
+    } catch {}
+  }
+  if (typeof localStorage !== "undefined") {
+    try {
+      if (token) {
+        localStorage.setItem("uay-access-token", token);
+      } else {
+        localStorage.removeItem("uay-access-token");
+      }
+    } catch {}
   }
 }
 
 export function getAuthToken(): string | null {
-  if (!currentAuthToken && typeof sessionStorage !== "undefined") {
-    currentAuthToken = sessionStorage.getItem("uay-access-token");
+  if (!currentAuthToken) {
+    if (typeof sessionStorage !== "undefined") {
+      try {
+        currentAuthToken = sessionStorage.getItem("uay-access-token");
+      } catch {}
+    }
+    if (!currentAuthToken && typeof localStorage !== "undefined") {
+      try {
+        currentAuthToken = localStorage.getItem("uay-access-token");
+        if (currentAuthToken && typeof sessionStorage !== "undefined") {
+          try {
+            sessionStorage.setItem("uay-access-token", currentAuthToken);
+          } catch {}
+        }
+      } catch {}
+    }
   }
   return currentAuthToken;
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (e) => {
+    if (e.key === "uay-access-token") {
+      currentAuthToken = e.newValue;
+      if (typeof sessionStorage !== "undefined") {
+        try {
+          if (e.newValue) {
+            sessionStorage.setItem("uay-access-token", e.newValue);
+          } else {
+            sessionStorage.removeItem("uay-access-token");
+          }
+        } catch {}
+      }
+    }
+  });
 }
 
 export function parseJwtPayload(
