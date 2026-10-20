@@ -3,6 +3,7 @@ import { Eye, EyeOff, RefreshCw, Copy, Check } from "lucide-react";
 import {
   t,
   api,
+  useApi,
   Field,
   Modal,
   Form,
@@ -173,18 +174,27 @@ export function AnnouncementModal({
 
 export interface ClassSettingsModalProps {
   cls: any;
+  config?: any;
   onClose: () => void;
   onSaved: () => void;
 }
 
 export function ClassSettingsModal({
   cls,
+  config,
   onClose,
   onSaved,
 }: ClassSettingsModalProps) {
   const [key, setKey] = useState<string>(cls.enrollmentKey ?? "");
   const [showKey, setShowKey] = useState(false);
   const [copied, setCopied] = useState(false);
+  const authConfig = useApi<any>("/auth/config");
+  const availableYears = [
+    ...new Set([
+      ...(config?.academicYears || authConfig.data?.academicYears || []),
+      cls.academicYear,
+    ].filter(Boolean)),
+  ];
 
   const handleCopy = () => {
     if (!key) return;
@@ -221,7 +231,13 @@ export function ClassSettingsModal({
           <input required name="name" defaultValue={cls.name} />
         </Field>
         <Field label={t.academicYear}>
-          <input required name="academicYear" defaultValue={cls.academicYear} />
+          <select required name="academicYear" defaultValue={cls.academicYear}>
+            {availableYears.map((year: string) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
         </Field>
         <Field label={t.status}>
           <select name="status" defaultValue={cls.status}>
@@ -321,6 +337,17 @@ export function ClassCloneModal({
   config,
   onClose,
 }: ClassCloneModalProps) {
+  const authConfig = useApi<any>("/auth/config");
+  const defaultNextYear = cls.academicYear?.includes("Ganjil")
+    ? cls.academicYear.replace("Ganjil", "Genap")
+    : config?.academicYear || authConfig.data?.academicYear || "2026/2027 Genap";
+  const availableCloneYears = [
+    ...new Set([
+      ...(config?.academicYears || authConfig.data?.academicYears || []),
+      defaultNextYear,
+    ].filter(Boolean)),
+  ];
+
   return (
     <Modal title={t.cloneClass} onClose={onClose}>
       <p>{t.cloneDescription}</p>
@@ -377,22 +404,9 @@ export function ClassCloneModal({
           <select
             name="academicYear"
             required
-            defaultValue={
-              cls.academicYear.includes("Ganjil")
-                ? cls.academicYear.replace("Ganjil", "Genap")
-                : config?.academicYear || "2026/2027 Genap"
-            }
+            defaultValue={defaultNextYear}
           >
-            {(
-              config?.academicYears || [
-                "2025/2026 Ganjil",
-                "2025/2026 Genap",
-                "2026/2027 Ganjil",
-                "2026/2027 Genap",
-                "2027/2028 Ganjil",
-                "2027/2028 Genap",
-              ]
-            ).map((year: string) => (
+            {availableCloneYears.map((year: string) => (
               <option key={year} value={year}>
                 {year}
               </option>

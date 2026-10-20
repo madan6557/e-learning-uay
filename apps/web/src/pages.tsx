@@ -1039,6 +1039,7 @@ export function Dashboard({
         (canCreateClass ? (
           <ClassForm
             user={user}
+            config={config}
             defaultAcademicYear={config?.academicYear}
             onClose={() => setModal(false)}
             onSaved={() => {
@@ -1215,7 +1216,7 @@ function AdminOverview({
       )}
       <section className="welcome-panel compact">
         <div>
-          <span className="pill">{t.semester}</span>
+          <span className="pill">{config?.academicYear || t.semester}</span>
           <h2>
             {departmentAdmin ? t.departmentManagement : t.academicManagement}
           </h2>
@@ -1487,18 +1488,38 @@ function JoinClassModal({
 
 export function ClassForm({
   user,
+  config,
   onClose,
   onSaved,
   defaultAcademicYear,
 }: {
   user?: any;
+  config?: any;
   onClose: () => void;
   onSaved: () => void;
   defaultAcademicYear?: string;
 }) {
   const courses = useApi<CourseOption[]>("/courses");
+  const authConfig = useApi<any>("/auth/config");
   const isInstructor = user?.role === "INSTRUCTOR";
   const isAssistant = user?.role === "ASSISTANT";
+  const activeYear =
+    defaultAcademicYear ||
+    config?.academicYear ||
+    authConfig.data?.academicYear ||
+    "2026/2027 Ganjil";
+  const availableYears = useMemo(() => {
+    const list =
+      config?.academicYears ||
+      authConfig.data?.academicYears ||
+      [];
+    return [
+      ...new Set([
+        ...list,
+        activeYear,
+      ].filter(Boolean)),
+    ];
+  }, [config?.academicYears, authConfig.data?.academicYears, activeYear]);
   const [search, setSearch] = useState(""),
     [users, setUsers] = useState<UserSearchResult[]>([]),
     [selected, setSelected] = useState<string[]>(
@@ -1591,11 +1612,17 @@ export function ClassForm({
             <input name="name" required maxLength={200} />
           </Field>
           <Field label={t.academicYear}>
-            <input
+            <select
               name="academicYear"
-              defaultValue={defaultAcademicYear || "2026/2027 Ganjil"}
               required
-            />
+              defaultValue={activeYear}
+            >
+              {availableYears.map((year: string) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
           </Field>
         </div>
         <Field label={t.status}>

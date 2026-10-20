@@ -1425,6 +1425,7 @@ export function ClassPage({
       {modal?.kind === "settings" && (
         <ClassSettingsModal
           cls={cls}
+          config={config}
           onClose={() => setModal(null)}
           onSaved={saved}
         />
