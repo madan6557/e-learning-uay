@@ -152,7 +152,13 @@ async function mutateScopes<T>(
 /**
  * Otomatis mengisi data awal program studi resmi jika tabel departments masih kosong.
  */
-export async function ensureDefaultDepartments(client: any = db) {
+export async function ensureDefaultDepartments(
+  client: any = db,
+  force = false,
+) {
+  if (!force && process.env.AUTO_SEED_DEPARTMENTS !== "true") {
+    return;
+  }
   const count = await client.department.count();
   if (count === 0) {
     for (const d of UAY_DEPARTMENTS) {

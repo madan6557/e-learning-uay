@@ -28,6 +28,7 @@ const env = {
   UAY_FILE_SERVICE_API_KEY: "",
   UAY_FILE_SERVICE_REPOSITORY_ID: "",
   APP_ORIGIN: "http://127.0.0.1:5173",
+  AUTO_SEED_DEPARTMENTS: "true",
   NODE_ENV: "test",
 };
 const migration = spawnSync(

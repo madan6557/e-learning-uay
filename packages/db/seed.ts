@@ -1,3 +1,4 @@
+import { UAY_DEPARTMENTS, normalizeDepartmentCode } from "../shared/src/departments.js";
 import { classPath } from "../shared/src/urls.js";
 import { PrismaClient } from "@prisma/client";
 import { loadEnvFile } from "node:process";
@@ -31,6 +32,19 @@ await db.systemAnnouncement.createMany({
   })),
   skipDuplicates: true,
 });
+
+for (const d of UAY_DEPARTMENTS) {
+  await db.department.upsert({
+    where: { code: normalizeDepartmentCode(d.code) },
+    create: {
+      code: normalizeDepartmentCode(d.code),
+      name: d.name,
+      faculty: d.faculty,
+      isActive: true,
+    },
+    update: {},
+  });
+}
 
 export const ids = {
   admin: "00000000-0000-4000-8000-000000000001",
