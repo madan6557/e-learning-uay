@@ -32,13 +32,22 @@ export function Modal({
   const close = async () => {
     if (busyRef.current) return;
     if (ref.current?.querySelector('[aria-busy="true"]')) return;
-    if (
-      ref.current?.querySelector('[data-dirty="true"]') &&
-      !(await confirmAction(
-        "Perubahan belum dikirim ke server. Tutup editor dan simpan draft di perangkat ini?",
-      ))
-    )
-      return;
+    const dirtyEl = ref.current?.querySelector('[data-dirty="true"]');
+    if (dirtyEl) {
+      const hasMeaningfulContent = Array.from(
+        dirtyEl.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(
+          'input[type="text"], input:not([type]), textarea',
+        ),
+      ).some((input) => input.value && input.value.trim().length > 0);
+
+      if (
+        hasMeaningfulContent &&
+        !(await confirmAction(
+          "Perubahan belum dikirim ke server. Tutup editor dan simpan draft di perangkat ini?",
+        ))
+      )
+        return;
+    }
     onClose();
   };
 

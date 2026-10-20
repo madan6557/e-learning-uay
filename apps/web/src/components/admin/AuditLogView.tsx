@@ -9,8 +9,6 @@ import {
   User,
   Shield,
   ArrowRight,
-  ChevronDown,
-  ChevronUp,
   FileText,
   CheckCircle2,
   AlertCircle,
@@ -217,7 +215,6 @@ export function AuditLogView({
   const [departmentFilter, setDepartmentFilter] = useState("ALL");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 350);
@@ -302,7 +299,6 @@ export function AuditLogView({
       "Entitas",
       "Target Objek",
       "Catatan Alasan",
-      "Alamat IP",
     ];
 
     const rows = logs.map((l) => [
@@ -315,7 +311,6 @@ export function AuditLogView({
       ENTITY_LABELS[l.entity] || l.entity,
       l.objectTitle || l.entityId,
       (l.reason || "").replace(/"/g, '""'),
-      l.ipAddress || "—",
     ]);
 
     const csvContent = [
@@ -503,7 +498,6 @@ export function AuditLogView({
             const actionInfo = getAuditAction(entry);
             const entityLabel = ENTITY_LABELS[entry.entity] || entry.entity;
             const actorRole = ROLE_LABELS[entry.actorRole] || entry.actorRole;
-            const isExpanded = expandedId === entry.id;
             const hasChanges = entry.changes && entry.changes.length > 0;
 
             return (
@@ -521,11 +515,37 @@ export function AuditLogView({
                 </div>
 
                 <div className="audit-card-body">
-                  <h3 className="audit-target-heading">
-                    {entry.objectTitle || entry.entityId || "Aktivitas Sistem"}
-                  </h3>
+                  <div className="audit-target-row">
+                    {entry.entity === "USER" && (
+                      <span
+                        className="audit-target-label"
+                        style={{
+                          fontSize: "0.78rem",
+                          fontWeight: 600,
+                          color: "var(--muted, #64748b)",
+                          display: "block",
+                          marginBottom: 2,
+                        }}
+                      >
+                        Target Akun:
+                      </span>
+                    )}
+                    <h3 className="audit-target-heading">
+                      {entry.objectTitle || entry.entityId || "Aktivitas Sistem"}
+                    </h3>
+                  </div>
 
                   <div className="audit-actor-meta">
+                    <span
+                      className="audit-actor-label"
+                      style={{
+                        fontSize: "0.8rem",
+                        color: "var(--muted, #64748b)",
+                        marginRight: 4,
+                      }}
+                    >
+                      Dilakukan oleh:
+                    </span>
                     <span className="audit-actor-name">
                       <User size={14} />
                       <strong>{entry.user?.name || "Pengguna Sistem"}</strong>
@@ -534,11 +554,6 @@ export function AuditLogView({
                     {entry.user?.identifierValue && (
                       <span className="audit-actor-identifier">
                         • ID: {entry.user.identifierValue}
-                      </span>
-                    )}
-                    {entry.ipAddress && (
-                      <span className="audit-ip-address">
-                        • IP: {entry.ipAddress}
                       </span>
                     )}
                   </div>
@@ -584,44 +599,6 @@ export function AuditLogView({
                           })}
                         </tbody>
                       </table>
-                    </div>
-                  )}
-
-                  {/* RAW DETAIL TOGGLE */}
-                  {(entry.beforeState || entry.afterState) && (
-                    <div className="audit-details-toggle">
-                      <button
-                        type="button"
-                        className="text-btn"
-                        onClick={() => setExpandedId(isExpanded ? null : entry.id)}
-                      >
-                        {isExpanded ? (
-                          <>
-                            <ChevronUp size={14} /> Tutup Rincian Data Teknis
-                          </>
-                        ) : (
-                          <>
-                            <ChevronDown size={14} /> Lihat Rincian Data Teknis
-                          </>
-                        )}
-                      </button>
-
-                      {isExpanded && (
-                        <div className="audit-raw-json-grid">
-                          {entry.beforeState && (
-                            <div>
-                              <h4>Data Awal (Sebelum)</h4>
-                              <pre>{JSON.stringify(entry.beforeState, null, 2)}</pre>
-                            </div>
-                          )}
-                          {entry.afterState && (
-                            <div>
-                              <h4>Data Akhir (Sesudah)</h4>
-                              <pre>{JSON.stringify(entry.afterState, null, 2)}</pre>
-                            </div>
-                          )}
-                        </div>
-                      )}
                     </div>
                   )}
                 </div>

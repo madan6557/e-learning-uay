@@ -116,6 +116,16 @@ export function Form({
   const [isPublished, setIsPublished] = useState(publication?.published ?? false);
   const [error, setError] = useState<Error | null>(null);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
+  const [hasUserEdited, setHasUserEdited] = useState(false);
+  const userInteractedRef = useRef(false);
+
+  const markUserEdited = () => {
+    if (!userInteractedRef.current) {
+      userInteractedRef.current = true;
+      setHasUserEdited(true);
+    }
+  };
+
   const ref = useRef<HTMLFormElement>(null);
   const inFlight = useRef(false);
   useEffect(() => {
@@ -127,6 +137,8 @@ export function Form({
     (draftRoute || "#" + location.pathname + location.search) + ":" + draftKey,
     { fields, extra: draftValue },
     (stored) => {
+      userInteractedRef.current = true;
+      setHasUserEdited(true);
       onRestoreDraft?.(stored.extra);
       setFields(stored.fields ?? {});
       // Restore named fields after React has rebuilt any dynamic sections.
@@ -142,19 +154,25 @@ export function Form({
     if (!captureFields || !ref.current) return;
     const initialFields = captureForm(ref.current);
     setFields(initialFields);
-    draft.initialize({ fields: initialFields, extra: draftValue });
-  }, []);
+    if (!userInteractedRef.current) {
+      draft.initialize({ fields: initialFields, extra: draftValue });
+    }
+  }, [captureFields, draftValue]);
+
+  const isFormDirty = hasUserEdited && draft.dirty;
 
   useEffect(() => {
-    onDirtyChange?.(draft.dirty);
-  }, [draft.dirty, draft.recovery, onDirtyChange]);
+    onDirtyChange?.(isFormDirty);
+  }, [isFormDirty, draft.recovery, onDirtyChange]);
 
   return (
     <form
       ref={ref}
-      data-dirty={draft.dirty ? "true" : undefined}
+      data-dirty={isFormDirty ? "true" : undefined}
       aria-busy={busy}
+      onInput={markUserEdited}
       onChange={() => {
+        markUserEdited();
         if (ref.current && captureFields) setFields(captureForm(ref.current));
       }}
       onSubmit={async (e) => {
@@ -185,6 +203,8 @@ export function Form({
               );
             await new Promise((resolve) => setTimeout(resolve, 0));
             await draft.saved();
+            userInteractedRef.current = false;
+            setHasUserEdited(false);
             if (publication)
               window.dispatchEvent(new Event("notifications-changed"));
           }
@@ -215,7 +235,7 @@ export function Form({
             disabled={busy}
             onClick={async () => {
               if (
-                !draft.dirty ||
+                !isFormDirty ||
                 (await confirmAction(
                   "Tutup editor? Draft perubahan tetap tersedia di perangkat ini.",
                 ))

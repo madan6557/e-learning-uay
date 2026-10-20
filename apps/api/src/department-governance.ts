@@ -663,9 +663,19 @@ export function registerDepartmentGovernance(app: Express) {
             "USER",
             target.id,
             null,
-            { departmentScopes: target.departmentScopes, role: target.role },
-            { departmentScopes: after.departmentScopes, role: after.role },
-            "Pembaruan cakupan prodi & hak akses oleh Super Admin",
+            {
+              name: target.name,
+              identifierValue: target.identifierValue,
+              departmentScopes: target.departmentScopes,
+              role: target.role,
+            },
+            {
+              name: after.name,
+              identifierValue: after.identifierValue,
+              departmentScopes: after.departmentScopes,
+              role: after.role,
+            },
+            `Pembaruan cakupan prodi & hak akses untuk ${target.name} (${target.identifierValue || target.email})`,
           );
 
           return after;
@@ -2053,6 +2063,35 @@ export function registerDepartmentGovernance(app: Express) {
       }),
     ]);
 
+    const userEntityIds = Array.from(
+      new Set(
+        entries
+          .filter(
+            (e) =>
+              (e.entity === "USER" || e.entity === "User") &&
+              typeof e.entityId === "string" &&
+              e.entityId.length > 0,
+          )
+          .map((e) => e.entityId as string),
+      ),
+    );
+
+    const targetUsers =
+      userEntityIds.length > 0
+        ? await db.user.findMany({
+            where: { id: { in: userEntityIds } },
+            select: {
+              id: true,
+              name: true,
+              identifierValue: true,
+              email: true,
+              role: true,
+            },
+          })
+        : [];
+
+    const targetUserMap = new Map(targetUsers.map((u) => [u.id, u]));
+
     const record = (value: unknown): Record<string, unknown> =>
       value && typeof value === "object" && !Array.isArray(value)
         ? (value as Record<string, unknown>)
@@ -2082,14 +2121,28 @@ export function registerDepartmentGovernance(app: Express) {
         return [{ field, before: oldValue, after: newValue }];
       });
 
-      const title =
+      let title: unknown =
         after.title ??
         after.name ??
         after.code ??
         before.title ??
         before.name ??
-        before.code ??
-        entry.entityId;
+        before.code;
+
+      if (entry.entity === "USER" || entry.entity === "User") {
+        const target = entry.entityId ? targetUserMap.get(entry.entityId) : null;
+        if (target) {
+          title = `${target.name}${target.identifierValue ? ` • ID: ${target.identifierValue}` : ""}`;
+        } else if (after.name || before.name) {
+          const name = after.name ?? before.name;
+          const idVal = after.identifierValue ?? before.identifierValue;
+          title = `${name}${idVal ? ` • ID: ${idVal}` : ""}`;
+        }
+      }
+
+      if (!title) {
+        title = entry.entityId;
+      }
 
       return {
         id: entry.id,
