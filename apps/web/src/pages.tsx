@@ -8,7 +8,12 @@ import {
 } from "../../../packages/shared/src/domain";
 import { confirmAction } from "./confirm";
 import { ThemePreferenceControl } from "./components/layout/ThemeToggle";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  UAY_DEPARTMENTS,
+  DEPARTMENT_NAME_MAP,
+  normalizeDepartmentCode,
+} from "../../../packages/shared/src/departments";
 import {
   ArrowUpRight,
   BookOpen,
@@ -196,6 +201,14 @@ export function Dashboard({
   const systemAnnouncements = useApi<any[]>(
     page === "dashboard" ? "/system-announcements" : null,
   );
+  const masterDepts = useApi<any[]>(
+    page === "dashboard" ? "/system/departments" : null,
+  );
+  useEffect(() => {
+    if (masterDepts.data && Array.isArray(masterDepts.data)) {
+      setLiveDepartmentsCache(masterDepts.data);
+    }
+  }, [masterDepts.data]);
   const [search, setSearch] = useState(""),
     [filter, setFilter] = useState("ALL"),
     [departmentFilter, setDepartmentFilter] = useState(""),
@@ -203,10 +216,15 @@ export function Dashboard({
   const teacher = user.role === "INSTRUCTOR" || user.role === "ASSISTANT";
   if (classes.loading && !classes.data) return <Loading />;
   const canCreateClass = ["DEPARTMENT_ADMIN", "INSTRUCTOR"].includes(user.role);
+  const masterDeptCodes = (masterDepts.data ?? [])
+    .filter((d: any) => d.isActive !== false)
+    .map((d: any) => d.code);
+  const fallbackDeptCodes = UAY_DEPARTMENTS.map((d) => d.code);
+  const activeMasterCodes = masterDeptCodes.length > 0 ? masterDeptCodes : fallbackDeptCodes;
   const departments = [
     ...new Set(
       [
-        ...Object.keys(DEPARTMENT_NAMES),
+        ...activeMasterCodes,
         ...(classes.data ?? []).map((c) => c.course.departmentCode as string),
       ].filter(Boolean),
     ),
@@ -1040,6 +1058,26 @@ export function Dashboard({
     </>
   );
 }
+export interface LiveDepartmentItem {
+  id?: string;
+  code: string;
+  name: string;
+  faculty?: string | null;
+  isActive?: boolean;
+}
+
+let liveDepartmentsCache: LiveDepartmentItem[] = [];
+
+export function setLiveDepartmentsCache(items: LiveDepartmentItem[]) {
+  if (Array.isArray(items) && items.length > 0) {
+    liveDepartmentsCache = items;
+  }
+}
+
+export function getLiveDepartmentsCache(): LiveDepartmentItem[] {
+  return liveDepartmentsCache;
+}
+
 const DEPARTMENT_NAMES: Record<string, string> = {
   IF: "Program Studi Informatika",
   TI: "Program Studi Teknik Industri",
@@ -1059,11 +1097,42 @@ const DEPARTMENT_NAMES: Record<string, string> = {
   FARM: "Program Studi Farmasi",
 };
 
-export function formatDepartmentScope(code: string): string {
+export function formatDepartmentScope(
+  code: string,
+  customDepts?: LiveDepartmentItem[],
+): string {
   if (!code) return "";
-  const upper = code.trim().toUpperCase();
-  const name = DEPARTMENT_NAMES[upper];
-  if (name) return `${upper} (${name})`;
+  const rawUpper = code.trim().toUpperCase();
+  const normalized = normalizeDepartmentCode(rawUpper);
+
+  const lookupList =
+    customDepts && customDepts.length > 0 ? customDepts : liveDepartmentsCache;
+  const matched = lookupList.find(
+    (d) =>
+      d &&
+      typeof d.code === "string" &&
+      (d.code.toUpperCase() === rawUpper || d.code.toUpperCase() === normalized),
+  );
+  const deptName = matched ? matched.name || (matched as any).title : undefined;
+  if (matched && typeof deptName === "string" && deptName.trim()) {
+    const fullName = deptName.startsWith("Program Studi")
+      ? deptName
+      : `Program Studi ${deptName}`;
+    return `${matched.code} (${fullName})`;
+  }
+
+  const name =
+    DEPARTMENT_NAMES[rawUpper] ??
+    DEPARTMENT_NAMES[normalized] ??
+    DEPARTMENT_NAME_MAP[rawUpper] ??
+    DEPARTMENT_NAME_MAP[normalized];
+  if (name && typeof name === "string") {
+    const fullName = name.startsWith("Program Studi")
+      ? name
+      : `Program Studi ${name}`;
+    return `${normalized} (${fullName})`;
+  }
+
   return code;
 }
 
@@ -2820,6 +2889,12 @@ export function Catalog({
   onConfigChange?: () => void;
 }) {
   const courses = useApi<any[]>("/courses");
+  const masterDepts = useApi<any[]>("/system/departments");
+  useEffect(() => {
+    if (masterDepts.data && Array.isArray(masterDepts.data)) {
+      setLiveDepartmentsCache(masterDepts.data);
+    }
+  }, [masterDepts.data]);
   const [editing, setEditing] = useState<any>(null),
     [governanceModal, setGovernanceModal] = useState(false),
     [importModal, setImportModal] = useState(false),
@@ -2828,9 +2903,20 @@ export function Catalog({
   const canCreateCatalog =
     superAdmin ||
     (user.role === "DEPARTMENT_ADMIN" && user.departmentScopes?.length > 0);
-  const departments = [
-    ...new Set((courses.data ?? []).map((c) => c.departmentCode)),
-  ].sort();
+  const activeMasterCodes = useMemo(() => {
+    const fromApi = (masterDepts.data ?? [])
+      .filter((d: any) => d.isActive !== false)
+      .map((d: any) => d.code);
+    return fromApi.length > 0 ? fromApi : UAY_DEPARTMENTS.map((d) => d.code);
+  }, [masterDepts.data]);
+  const departments = useMemo(() => {
+    return [
+      ...new Set([
+        ...activeMasterCodes,
+        ...(courses.data ?? []).map((c) => c.departmentCode),
+      ].filter(Boolean)),
+    ].sort();
+  }, [activeMasterCodes, courses.data]);
   const visibleCourses = (courses.data ?? []).filter(
     (c) =>
       !superAdmin || !departmentFilter || c.departmentCode === departmentFilter,
@@ -3029,19 +3115,24 @@ export function Catalog({
                   <select
                     name="departmentCode"
                     required
-                    defaultValue={editing.departmentCode ?? "IF"}
+                    defaultValue={
+                      editing.departmentCode
+                        ? normalizeDepartmentCode(editing.departmentCode)
+                        : (activeMasterCodes[0] || "IF")
+                    }
                   >
                     {[
                       ...new Set([
-                        ...departments,
-                        ...Object.keys(DEPARTMENT_NAMES),
+                        ...activeMasterCodes,
+                        ...(editing.departmentCode
+                          ? [normalizeDepartmentCode(editing.departmentCode)]
+                          : []),
                       ]),
                     ]
-                      .filter((c) => !["IH", "MH", "MN", "FARM"].includes(c))
                       .sort()
                       .map((dept) => (
                         <option key={dept} value={dept}>
-                          {formatDepartmentScope(dept)}
+                          {formatDepartmentScope(dept, masterDepts.data ?? undefined)}
                         </option>
                       ))}
                   </select>
@@ -3050,14 +3141,19 @@ export function Catalog({
                     name="departmentCode"
                     required
                     defaultValue={
-                      editing.departmentCode ?? user.departmentScopes?.[0] ?? ""
+                      editing.departmentCode
+                        ? normalizeDepartmentCode(editing.departmentCode)
+                        : (user.departmentScopes?.[0] ?? "")
                     }
                   >
-                    {(user.departmentScopes ?? []).map((department: string) => (
-                      <option key={department} value={department}>
-                        {formatDepartmentScope(department)}
-                      </option>
-                    ))}
+                    {(user.departmentScopes ?? []).map((department: string) => {
+                      const norm = normalizeDepartmentCode(department);
+                      return (
+                        <option key={department} value={norm}>
+                          {formatDepartmentScope(department, masterDepts.data ?? undefined)}
+                        </option>
+                      );
+                    })}
                   </select>
                 )}
               </Field>
@@ -3192,7 +3288,7 @@ export function CourseImportModal({
         const credits = creditsIdx !== -1 ? Number(r[creditsIdx] || 3) : 3;
         const departmentCode =
           deptIdx !== -1 && r[deptIdx]
-            ? String(r[deptIdx]).trim().toUpperCase()
+            ? normalizeDepartmentCode(String(r[deptIdx]).trim().toUpperCase())
             : defaultDept;
         const description =
           descIdx !== -1 ? String(r[descIdx] ?? "").trim() : "";

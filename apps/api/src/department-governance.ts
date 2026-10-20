@@ -253,7 +253,7 @@ export function registerDepartmentGovernance(app: Express) {
   /**
    * READ: Daftar seluruh program studi (dengan opsi filter & pencarian).
    */
-  app.get("/api/v1/system/departments", authenticate, async (req, res) => {
+  const getDepartmentsHandler = async (req: Request, res: Response) => {
     await ensureDefaultDepartments();
 
     const includeInactive = req.query.includeInactive === "true";
@@ -275,7 +275,10 @@ export function registerDepartmentGovernance(app: Express) {
       orderBy: [{ code: "asc" }],
     });
     res.json(list);
-  });
+  };
+
+  app.get("/api/v1/system/departments", authenticate, getDepartmentsHandler);
+  app.get("/api/v1/departments", authenticate, getDepartmentsHandler);
 
   /**
    * CREATE: Tambah program studi baru oleh Super Admin.

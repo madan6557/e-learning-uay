@@ -28,6 +28,11 @@ import { confirmAction } from "./confirm";
 import { Html } from "./Content";
 import { canManageAnnouncement } from "../../../packages/shared/src/announcements";
 import { hasPermission } from "../../../packages/shared/src/permissions";
+import {
+  UAY_DEPARTMENTS,
+  formatDepartmentDisplay,
+  normalizeDepartmentCode,
+} from "../../../packages/shared/src/departments";
 import { notifyAction } from "./feedback";
 import { useLocalDraft, SaveStatus } from "./useLocalDraft";
 import { useEditorViewMode } from "./useEditorViewMode";
@@ -237,7 +242,7 @@ export function AnnouncementCard({
           >
             <Users size={13} />
             {TARGET_ROLE_LABELS[item.targetRole] ?? item.targetRole}
-            {item.departmentCode ? ` · Prodi ${item.departmentCode}` : ""}
+            {item.departmentCode ? ` · Prodi ${formatDepartmentDisplay(item.departmentCode)}` : ""}
           </span>
         </div>
 
@@ -378,17 +383,37 @@ function AnnouncementEditorModal({
   const catalogue = useApi<any[]>(
     user.role === "SUPER_ADMIN" ? "/courses" : null,
   );
-  const targetDepartments =
-    user.role === "DEPARTMENT_ADMIN"
-      ? (user.departmentScopes ?? [])
-      : [
-          ...new Set(
-            [
-              ...(catalogue.data ?? []).map((course) => course.departmentCode),
-              editing.departmentCode,
-            ].filter(Boolean),
-          ),
-        ].sort();
+  const masterDepts = useApi<any[]>("/system/departments");
+  const activeMasterCodes = useMemo(() => {
+    const fromApi = (masterDepts.data ?? [])
+      .filter((d: any) => d.isActive !== false)
+      .map((d: any) => d.code);
+    return fromApi.length > 0 ? fromApi : UAY_DEPARTMENTS.map((d) => d.code);
+  }, [masterDepts.data]);
+  const targetDepartments = useMemo(() => {
+    if (user.role === "DEPARTMENT_ADMIN") {
+      return (user.departmentScopes ?? []).map((code: string) =>
+        normalizeDepartmentCode(code),
+      );
+    }
+    return [
+      ...new Set(
+        [
+          ...activeMasterCodes,
+          ...(catalogue.data ?? []).map((course) => course.departmentCode),
+          editing.departmentCode
+            ? normalizeDepartmentCode(editing.departmentCode)
+            : "",
+        ].filter(Boolean),
+      ),
+    ].sort();
+  }, [
+    user.role,
+    user.departmentScopes,
+    activeMasterCodes,
+    catalogue.data,
+    editing.departmentCode,
+  ]);
 
   const [title, setTitle] = useState(editing.title ?? "");
   const [category, setCategory] = useState<SystemAnnouncementItem["category"]>(
@@ -401,10 +426,13 @@ function AnnouncementEditorModal({
     SystemAnnouncementItem["targetRole"]
   >(editing.targetRole ?? "ALL");
   const [departmentCode, setDepartmentCode] = useState(
-    editing.departmentCode ??
-      (user.role === "DEPARTMENT_ADMIN"
-        ? (user.departmentScopes?.[0] ?? "")
-        : ""),
+    editing.departmentCode
+      ? normalizeDepartmentCode(editing.departmentCode)
+      : user.role === "DEPARTMENT_ADMIN"
+        ? (user.departmentScopes?.[0]
+            ? normalizeDepartmentCode(user.departmentScopes[0])
+            : "")
+        : "",
   );
   const [isImportant, setIsImportant] = useState(editing.isImportant ?? false);
   const [content, setContent] = useState(editing.content ?? "");
@@ -654,11 +682,21 @@ function AnnouncementEditorModal({
             {user.role === "SUPER_ADMIN" && (
               <option value="">Semua Program Studi (Universitas)</option>
             )}
-            {targetDepartments.map((code: string) => (
-              <option key={code} value={code}>
-                {code}
-              </option>
-            ))}
+            {targetDepartments.map((code: string) => {
+              const matched = (masterDepts.data ?? []).find(
+                (d: any) => d.code.toUpperCase() === code.toUpperCase(),
+              );
+              const deptName = matched ? matched.name || (matched as any).title : undefined;
+              const label =
+                matched && typeof deptName === "string" && deptName.trim()
+                  ? `${matched.code} (${deptName.startsWith("Program Studi") ? deptName : `Program Studi ${deptName}`})`
+                  : formatDepartmentDisplay(code);
+              return (
+                <option key={code} value={code}>
+                  {label}
+                </option>
+              );
+            })}
           </select>
           {user.role === "DEPARTMENT_ADMIN" && (
             <small>
