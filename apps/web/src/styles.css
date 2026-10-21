@@ -440,38 +440,6 @@ footer {
 .help-guide-table th, .help-guide-table td { white-space: normal; vertical-align: top; padding: 12px; }
 .help-guide-table tbody th { width: 26%; text-align: left; }
 @media (max-width: 720px) {
-  .sidebar {
-    position: static;
-    width: 100%;
-    padding: 18px;
-  }
-  .app-shell {
-    display: block;
-  }
-  .brand {
-    font-size: 1.3rem;
-  }
-  .brand-mark {
-    padding: 8px;
-  }
-  .nav-caption,
-  .sidebar-bottom {
-    display: none;
-  }
-  .sidebar nav {
-    display: flex;
-    overflow: auto;
-    gap: 4px;
-    margin-top: 18px;
-  }
-  .sidebar nav a {
-    white-space: nowrap;
-    font-size: 0.82rem;
-    padding: 10px;
-  }
-  .sidebar nav svg {
-    width: 16px;
-  }
   .workspace {
     margin: 0;
     width: 100%;

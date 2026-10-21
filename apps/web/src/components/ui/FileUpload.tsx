@@ -144,7 +144,10 @@ export function FileUpload({
     size?: number;
   } | null>(existingFile ?? null);
   useEffect(() => {
-    if (existingFile) setUploadedFile(existingFile);
+    setUploadedFile(existingFile ?? null);
+    if (!existingFile && inputRef.current) {
+      inputRef.current.value = "";
+    }
   }, [existingFile?.id, existingFile?.name]);
   const inputRef = useRef<HTMLInputElement>(null);
 

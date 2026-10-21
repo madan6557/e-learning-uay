@@ -54,6 +54,7 @@ export {
   Modal,
   Notice,
   Pagination,
+  SearchableSelect,
   Empty,
   EmptyState,
   Status,

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Key, RefreshCw, Copy, Check } from "lucide-react";
+import { Plus, Key, RefreshCw, Copy, Check, Trash2 } from "lucide-react";
 import {
   t,
   api,
@@ -126,6 +126,7 @@ export function Participants({
   const canManageInstructors = isOwner || isAdmin;
 
   const pagination = usePagination(members.data ?? [], 25);
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -567,9 +568,147 @@ export function Participants({
         <Loading />
       ) : (
         <div className="card table-wrap phone-record-table">
+          {writable && selectedMemberIds.length > 0 && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "8px 14px",
+                background: "var(--adaptive-primary-soft, #eff6ff)",
+                border: "1px solid var(--adaptive-primary-border, #bfdbfe)",
+                borderRadius: 8,
+                marginBottom: 12,
+                gap: 12,
+                flexWrap: "wrap",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span
+                  style={{
+                    fontWeight: 700,
+                    fontSize: "0.85rem",
+                    color: "var(--adaptive-primary-text, #1d4ed8)",
+                  }}
+                >
+                  {selectedMemberIds.length} mahasiswa dipilih
+                </span>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  flexWrap: "wrap",
+                }}
+              >
+                <button
+                  type="button"
+                  className="secondary sm"
+                  onClick={async () => {
+                    const confirmed = await confirmAction(
+                      `Nonaktifkan kepesertaan ${selectedMemberIds.length} mahasiswa terpilih? Mahasiswa tidak akan dapat mengakses kelas untuk sementara waktu.`
+                    );
+                    if (!confirmed) return;
+                    await api(
+                      `/course-classes/${classId}/participants/batch-status`,
+                      "POST",
+                      {
+                        userIds: selectedMemberIds,
+                        isActive: false,
+                      }
+                    );
+                    setSelectedMemberIds([]);
+                    members.reload();
+                  }}
+                >
+                  Nonaktifkan Terpilih
+                </button>
+                <button
+                  type="button"
+                  className="secondary sm"
+                  onClick={async () => {
+                    const confirmed = await confirmAction(
+                      `Aktifkan kembali kepesertaan ${selectedMemberIds.length} mahasiswa terpilih?`
+                    );
+                    if (!confirmed) return;
+                    await api(
+                      `/course-classes/${classId}/participants/batch-status`,
+                      "POST",
+                      {
+                        userIds: selectedMemberIds,
+                        isActive: true,
+                      }
+                    );
+                    setSelectedMemberIds([]);
+                    members.reload();
+                  }}
+                >
+                  Aktifkan Terpilih
+                </button>
+                <button
+                  type="button"
+                  className="danger sm"
+                  style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+                  onClick={async () => {
+                    const confirmed = await confirmAction(
+                      `Hapus ${selectedMemberIds.length} mahasiswa terpilih dari kelas ini secara permanen? Data pendaftaran seluruh mahasiswa terpilih akan dihapus.`
+                    );
+                    if (!confirmed) return;
+                    await api(
+                      `/course-classes/${classId}/participants/batch-delete`,
+                      "POST",
+                      {
+                        userIds: selectedMemberIds,
+                      }
+                    );
+                    setSelectedMemberIds([]);
+                    members.reload();
+                  }}
+                >
+                  <Trash2 size={14} />
+                  Hapus Mahasiswa Terpilih
+                </button>
+                <button
+                  type="button"
+                  className="text-button"
+                  style={{ fontSize: "0.82rem" }}
+                  onClick={() => setSelectedMemberIds([])}
+                >
+                  Batal
+                </button>
+              </div>
+            </div>
+          )}
           <table>
             <thead>
               <tr>
+                {writable && (
+                  <th style={{ width: 36, textAlign: "center" }}>
+                    <input
+                      type="checkbox"
+                      aria-label="Pilih semua mahasiswa di halaman ini"
+                      checked={
+                        pagination.paginatedItems.length > 0 &&
+                        pagination.paginatedItems.every((m) =>
+                          selectedMemberIds.includes(m.userId)
+                        )
+                      }
+                      onChange={(e) => {
+                        const pageIds = pagination.paginatedItems.map((m) => m.userId);
+                        if (e.target.checked) {
+                          setSelectedMemberIds((prev) => [
+                            ...new Set([...prev, ...pageIds]),
+                          ]);
+                        } else {
+                          setSelectedMemberIds((prev) =>
+                            prev.filter((id) => !pageIds.includes(id))
+                          );
+                        }
+                      }}
+                    />
+                  </th>
+                )}
                 <th>{t.name}</th>
                 <th>{t.studentNumber}</th>
                 <th>{t.email}</th>
@@ -581,6 +720,24 @@ export function Participants({
             <tbody>
               {pagination.paginatedItems.map((m) => (
                 <tr key={m.id}>
+                  {writable && (
+                    <td style={{ textAlign: "center", width: 36 }}>
+                      <input
+                        type="checkbox"
+                        aria-label={`Pilih ${m.user.name}`}
+                        checked={selectedMemberIds.includes(m.userId)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedMemberIds((prev) => [...prev, m.userId]);
+                          } else {
+                            setSelectedMemberIds((prev) =>
+                              prev.filter((id) => id !== m.userId)
+                            );
+                          }
+                        }}
+                      />
+                    </td>
+                  )}
                   <td className="record-title">{m.user.name}</td>
                   <td data-label={t.studentNumber}>{m.user.identifierValue}</td>
                   <td data-label={t.email}>{m.user.email}</td>
@@ -595,28 +752,55 @@ export function Participants({
                   </td>
                   <td className="record-actions">
                     {writable && (
-                      <Action
-                        className={m.isActive ? "danger" : "secondary"}
-                        busyLabel={m.isActive ? "Menonaktifkan…" : "Mengaktifkan…"}
-                        successMessage={m.isActive ? "Kepesertaan dinonaktifkan." : "Kepesertaan diaktifkan."}
-                        run={async () => {
-                          if (
-                            m.isActive &&
-                            !(await confirmAction(
-                              "Nonaktifkan kepesertaan " + m.user.name + "?",
-                            ))
-                          )
-                            return false;
-                          await api(
-                            `/course-classes/${classId}/participants`,
-                            "POST",
-                            { userId: m.userId, isActive: !m.isActive },
-                          );
-                          members.reload();
-                        }}
-                      >
-                        {m.isActive ? t.removeEnrollment : t.activateEnrollment}
-                      </Action>
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        <Action
+                          className="secondary sm"
+                          busyLabel={m.isActive ? "Menonaktifkan…" : "Mengaktifkan…"}
+                          successMessage={
+                            m.isActive
+                              ? `Kepesertaan ${m.user.name} dinonaktifkan.`
+                              : `Kepesertaan ${m.user.name} diaktifkan.`
+                          }
+                          run={async () => {
+                            if (
+                              m.isActive &&
+                              !(await confirmAction(
+                                `Nonaktifkan kepesertaan ${m.user.name}? Mahasiswa tidak dapat mengakses kelas untuk sementara waktu.`,
+                              ))
+                            )
+                              return false;
+                            await api(
+                              `/course-classes/${classId}/participants`,
+                              "POST",
+                              { userId: m.userId, isActive: !m.isActive },
+                            );
+                            members.reload();
+                          }}
+                          label={m.isActive ? `Nonaktifkan kepesertaan ${m.user.name}` : `Aktifkan kepesertaan ${m.user.name}`}
+                        >
+                          {m.isActive ? "Nonaktifkan" : "Aktifkan"}
+                        </Action>
+                        <Action
+                          className="danger sm"
+                          busyLabel="Menghapus…"
+                          successMessage={`Mahasiswa ${m.user.name} berhasil dihapus dari kelas.`}
+                          run={async () => {
+                            const confirmed = await confirmAction(
+                              `Hapus mahasiswa "${m.user.name}" (${m.user.identifierValue}) dari kelas ini? Seluruh data pendaftaran peserta ini di kelas akan dihapus permanen.`,
+                            );
+                            if (!confirmed) return false;
+                            await api(
+                              `/course-classes/${classId}/participants/${m.userId}`,
+                              "DELETE",
+                            );
+                            members.reload();
+                          }}
+                          label={`Hapus mahasiswa ${m.user.name} dari kelas`}
+                        >
+                          <Trash2 size={13} style={{ marginRight: 4 }} />
+                          Hapus
+                        </Action>
+                      </div>
                     )}
                   </td>
                 </tr>
@@ -677,6 +861,75 @@ export function Participants({
               setModal("");
             }}
           >
+            {selected.length > 0 && (
+              <div
+                style={{
+                  marginBottom: 16,
+                  padding: "10px 14px",
+                  background: "var(--adaptive-info-soft, #f0f9ff)",
+                  border: "1px solid var(--adaptive-info-border, #bae6fd)",
+                  borderRadius: 8,
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "0.85rem",
+                    fontWeight: 700,
+                    color: "var(--adaptive-info-text, #0369a1)",
+                    marginBottom: 8,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <span>Mahasiswa yang Dipilih ({selected.length}):</span>
+                  <button
+                    type="button"
+                    className="text-button"
+                    style={{ fontSize: "0.78rem", color: "var(--destructive, #ef4444)" }}
+                    onClick={() => setSelected([])}
+                  >
+                    Hapus Semua Pilihan
+                  </button>
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {selected.map((u) => (
+                    <span
+                      key={u.id}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "3px 10px",
+                        borderRadius: 14,
+                        fontSize: "0.8rem",
+                        background: "var(--surface)",
+                        border: "1px solid var(--border)",
+                        color: "var(--foreground)",
+                      }}
+                    >
+                      <strong>{u.name}</strong> ({u.identifierValue})
+                      <button
+                        type="button"
+                        style={{
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          padding: "0 2px",
+                          color: "var(--muted)",
+                          fontWeight: 700,
+                          fontSize: "0.9rem",
+                        }}
+                        onClick={() => setSelected((v) => v.filter((x) => x.id !== u.id))}
+                        title="Batal pilih mahasiswa ini"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
             {searching && <p role="status">Mencari mahasiswa…</p>}
             {searchError && <Notice error={searchError} />}
             <div className="inline-form">

@@ -1,7 +1,4 @@
 import {
-  BookOpen,
-  ClipboardCheck,
-  GraduationCap,
   ArrowRight,
   ShieldCheck,
 } from "lucide-react";
@@ -97,96 +94,68 @@ export function Landing({
         </div>
       )}
       {error && <Notice error={error} />}
-      <section className="landing-hero">
-        <div className="hero-content">
-          <div className="hero-pill">
+      <section
+        className="landing-hero"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          textAlign: "center",
+          minHeight: "60vh",
+          padding: "48px 16px 64px",
+        }}
+      >
+        <div
+          className="hero-content"
+          style={{
+            alignItems: "center",
+            maxWidth: 620,
+            width: "100%",
+            margin: "0 auto",
+          }}
+        >
+          <div style={{ marginBottom: 20 }}>
+            <picture>
+              <source srcSet="/uay-logo.webp" type="image/webp" />
+              <img
+                src="/uay-logo.png"
+                alt="Logo UAY"
+                width="84"
+                height="84"
+                style={{ objectFit: "contain" }}
+                loading="eager"
+                decoding="async"
+              />
+            </picture>
+          </div>
+          <div className="hero-pill" style={{ marginBottom: 16 }}>
             <span className="hero-pill-dot" />
             <span>UNIVERSITAS ACHMAD YANI BANJARMASIN</span>
           </div>
-          <h1>E-Learning UAY</h1>
-          <p>
+          <h1 style={{ margin: "0 0 16px 0" }}>E-Learning UAY</h1>
+          <p style={{ margin: "0 0 28px 0" }}>
             Materi kuliah, tugas, kuis, dan rekap nilai untuk mahasiswa dan
             dosen Universitas Achmad Yani.
           </p>
-          <div className="hero-actions">
+          <div className="hero-actions" style={{ justifyContent: "center" }}>
             <LoginButton
               className="button hero-cta"
               label="Masuk dengan SSO UAY"
               config={config}
             >
-              <span>Masuk dengan SSO UAY</span>
+              <span>Login / Masuk Aplikasi</span>
               <ArrowRight size={18} />
             </LoginButton>
           </div>
-          <div className="landing-caption">
+          <div
+            className="landing-caption"
+            style={{ justifyContent: "center", marginTop: 20 }}
+          >
             <ShieldCheck size={16} />
             <span>Gunakan akun akademik UAY Anda.</span>
           </div>
         </div>
-        {/* A visitor here has exactly one job: sign in. The panel answers the
-            three things that actually confuse people afterwards, instead of
-            repeating the feature cards below the hero. */}
-        <aside className="landing-preview" aria-label="Sebelum masuk">
-          <div className="preview-body">
-            <div className="preview-portal-card">
-              <div className="portal-badge-row">
-                <span className="portal-badge">
-                  {config?.semesterLabel ||
-                    config?.academicYear ||
-                    "SEMESTER GANJIL 2026/2027"}
-                </span>
-              </div>
-              <h4>Sebelum masuk</h4>
-              <p>
-                Akses diatur oleh program studi dan dosen pengampu, bukan oleh
-                aplikasi ini.
-              </p>
-            </div>
-            <dl className="portal-notes">
-              <div>
-                <dt>Daftar kelas kosong</dt>
-                <dd>
-                  Program studi belum mendaftarkan Anda pada kelas semester ini.
-                </dd>
-              </div>
-              <div>
-                <dt>Kelas terbuka tetapi belum ada isinya</dt>
-                <dd>Dosen belum menerbitkan materi atau aktivitas.</dd>
-              </div>
-              <div>
-                <dt>Tidak dapat masuk</dt>
-                <dd>Hubungi bagian akademik program studi Anda.</dd>
-              </div>
-            </dl>
-          </div>
-        </aside>
-      </section>
-      <section className="landing-features" aria-label="Fitur pembelajaran">
-        {[
-          [
-            BookOpen,
-            "Kelas",
-            "Section, materi, dan pengumuman dari dosen pengampu.",
-          ],
-          [
-            ClipboardCheck,
-            "Tugas dan kuis",
-            "Kerjakan sebelum tenggat. Setiap versi pengumpulan tersimpan.",
-          ],
-          [
-            GraduationCap,
-            "Nilai",
-            "Rekap per kategori beserta bobotnya, setelah dosen menerbitkan.",
-          ],
-        ].map(([Icon, title, text]: any) => (
-          <article className="feature-card" key={title}>
-            <div className="feature-icon-wrapper">
-              <Icon size={22} />
-            </div>
-            <h2>{title}</h2>
-            <p>{text}</p>
-          </article>
-        ))}
       </section>
     </PublicShell>
   );

@@ -1714,6 +1714,124 @@ function expandDepartmentScopes(scopes: string[]): string[] {
       }),
     ),
   );
+  app.delete("/api/v1/course-classes/:id/participants/:userId", async (req, res) =>
+    res.json(
+      await mutate(req, async (tx) => {
+        const cls = await classAccess(
+          tx,
+          req.context.user,
+          String(req.params.id),
+        );
+        ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
+        ensure(
+          cls.status !== "ARCHIVED" &&
+            cls.course.status !== "ARCHIVED" &&
+            cls.parentClass?.status !== "ARCHIVED",
+          423,
+          "CLASS_ARCHIVED",
+        );
+        const userId = String(req.params.userId);
+        const enrollment = await tx.enrollment.findUnique({
+          where: { classId_userId: { classId: cls.id, userId } },
+          include: { user: true },
+        });
+        ensure(enrollment, 404, "NOT_FOUND");
+        await tx.enrollment.delete({
+          where: { classId_userId: { classId: cls.id, userId } },
+        });
+        await audit(
+          tx,
+          req.context,
+          "DELETE_ENROLLMENT",
+          "ENROLLMENT",
+          enrollment.id,
+          cls.id,
+          enrollment,
+          null,
+        );
+        return { ok: true };
+      }),
+    ),
+  );
+    app.post(
+    "/api/v1/course-classes/:id/participants/batch-delete",
+    async (req, res) =>
+      res.json(
+        await mutate(req, async (tx) => {
+          const cls = await classAccess(
+            tx,
+            req.context.user,
+            String(req.params.id),
+          );
+          ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
+          ensure(
+            cls.status !== "ARCHIVED" &&
+              cls.course.status !== "ARCHIVED" &&
+              cls.parentClass?.status !== "ARCHIVED",
+            423,
+            "CLASS_ARCHIVED",
+          );
+          const { userIds } = z
+            .object({ userIds: z.array(z.string()).min(1) })
+            .parse(req.body);
+          const enrollments = await tx.enrollment.findMany({
+            where: { classId: cls.id, userId: { in: userIds } },
+            include: { user: true },
+          });
+          if (enrollments.length > 0) {
+            await tx.enrollment.deleteMany({
+              where: { classId: cls.id, userId: { in: userIds } },
+            });
+            for (const enrollment of enrollments) {
+              await audit(
+                tx,
+                req.context,
+                "DELETE_ENROLLMENT",
+                "ENROLLMENT",
+                enrollment.id,
+                cls.id,
+                enrollment,
+                null,
+              );
+            }
+          }
+          return { ok: true, deletedCount: enrollments.length };
+        }),
+      ),
+  );
+  app.post(
+    "/api/v1/course-classes/:id/participants/batch-status",
+    async (req, res) =>
+      res.json(
+        await mutate(req, async (tx) => {
+          const cls = await classAccess(
+            tx,
+            req.context.user,
+            String(req.params.id),
+          );
+          ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
+          ensure(
+            cls.status !== "ARCHIVED" &&
+              cls.course.status !== "ARCHIVED" &&
+              cls.parentClass?.status !== "ARCHIVED",
+            423,
+            "CLASS_ARCHIVED",
+          );
+          const { userIds, isActive } = z
+            .object({
+              userIds: z.array(z.string()).min(1),
+              isActive: z.boolean(),
+            })
+            .parse(req.body);
+          const result = await tx.enrollment.updateMany({
+            where: { classId: cls.id, userId: { in: userIds } },
+            data: { isActive },
+          });
+          await syncPracticumFromParent(tx, cls.id);
+          return { ok: true, count: result.count };
+        }),
+      ),
+  );
   app.post("/api/v1/course-classes/:id/instructors", async (req, res) =>
     res.json(
       await mutate(req, async (tx) => {

@@ -62,6 +62,7 @@ import {
   Empty,
   Badge,
   Field,
+  SearchableSelect,
   Modal,
   Form,
   Action,
@@ -1022,11 +1023,57 @@ export function Dashboard({
                       <CalendarDays size={15} />
                       {item.date ? date(item.date) : t.noDeadline}
                     </div>
-                    {!teacher &&
-                      item.userStatus &&
-                      item.userStatus !== "OPEN" && (
-                        <Badge value={item.userStatus} />
-                      )}
+                    {!teacher && (
+                      item.hasSubmitted ? (
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                            fontSize: "0.75rem",
+                            fontWeight: 700,
+                            padding: "3px 10px",
+                            borderRadius: 12,
+                            background: "var(--adaptive-success-soft, #ecfdf5)",
+                            color: "var(--adaptive-success-text, #15803d)",
+                            border: "1px solid var(--adaptive-success-border, #bbf7d0)",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          <CheckCircle size={12} />
+                          Sudah Mengumpulkan
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                            fontSize: "0.75rem",
+                            fontWeight: 600,
+                            padding: "3px 10px",
+                            borderRadius: 12,
+                            background: item.date && new Date(item.date) < new Date()
+                              ? "var(--adaptive-danger-soft, #fef2f2)"
+                              : "var(--adaptive-warning-soft, #fffbeb)",
+                            color: item.date && new Date(item.date) < new Date()
+                              ? "var(--adaptive-danger-text, #991b1b)"
+                              : "var(--adaptive-warning-text, #92400e)",
+                            border: `1px solid ${
+                              item.date && new Date(item.date) < new Date()
+                                ? "var(--adaptive-danger-border, #fecaca)"
+                                : "var(--adaptive-warning-border, #fde68a)"
+                            }`,
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          <Clock size={12} />
+                          {item.date && new Date(item.date) < new Date()
+                            ? "Terlewat"
+                            : "Belum Mengumpulkan"}
+                        </span>
+                      )
+                    )}
                     <ChevronRight size={18} />
                   </a>
                 ))
@@ -1596,17 +1643,19 @@ export function ClassForm({
       >
         {error && <Notice error={error} onClose={() => setError(null)} />}
         <Field label={t.course}>
-          <select required name="courseId">
-            <option value="">{t.choose}</option>
-            {courses.data
+          <SearchableSelect
+            required
+            name="courseId"
+            placeholder={t.choose}
+            searchPlaceholder="Cari kode atau nama mata kuliah..."
+            options={courses.data
               ?.filter((c) => c.status !== "ARCHIVED")
-              .map((c) => (
-                <option value={c.id} key={c.id}>
-                  {c.departmentCode ? `[${c.departmentCode}] ` : ""}
-                  {c.code} · {c.title}
-                </option>
-              ))}
-          </select>
+              .map((c) => ({
+                value: c.id,
+                label: `${c.departmentCode ? `[${c.departmentCode}] ` : ""}${c.code} · ${c.title}`,
+                sublabel: c.departmentCode ? `Program Studi ${c.departmentCode}` : undefined,
+              }))}
+          />
         </Field>
         <div className="form-grid">
           <Field label={t.className}>
@@ -2178,7 +2227,7 @@ export function AcademicGovernanceModal({
         >
           <button
             type="button"
-            className={tab === "YEAR" ? "button primary" : "button secondary"}
+            className="button primary"
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -2189,20 +2238,6 @@ export function AcademicGovernanceModal({
           >
             <CalendarDays size={16} />
             <span>Tahun Ajaran &amp; Semester</span>
-          </button>
-          <button
-            type="button"
-            className={tab === "POLICY" ? "button primary" : "button secondary"}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              fontSize: "0.88rem",
-            }}
-            onClick={() => setTab("POLICY")}
-          >
-            <GraduationCap size={16} />
-            <span>Kebijakan Bobot Huruf Mutu</span>
           </button>
         </div>
 
@@ -2232,8 +2267,7 @@ export function AcademicGovernanceModal({
           disabled={readOnly || saving}
           style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}
         >
-          {tab === "YEAR" ? (
-            <div>
+          <div>
               <div style={{ marginBottom: 18 }}>
                 <Field
                   label="Tahun Akademik Aktif Berjalan"
@@ -2395,489 +2429,7 @@ export function AcademicGovernanceModal({
                 )}
               </div>
             </div>
-          ) : (
-            <div>
-              {validationError && (
-                <div
-                  style={{
-                    background: "var(--adaptive-danger-soft, #fef2f2)",
-                    color: "var(--adaptive-danger-text, #b91c1c)",
-                    border: "1px solid var(--adaptive-danger-border, #fecaca)",
-                    padding: "10px 14px",
-                    borderRadius: 8,
-                    marginBottom: 16,
-                    fontSize: "0.85rem",
-                  }}
-                >
-                  {validationError}
-                </div>
-              )}
-
-              <div style={{ marginBottom: 18 }}>
-                <Field
-                  label="Kebijakan Konversi Huruf Mutu Aktif (Grade Scale Policy)"
-                  hint="Menentukan pemetaan skor nilai akhir (0-100) ke huruf mutu dan bobot huruf mutu."
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: 10,
-                      alignItems: "center",
-                    }}
-                  >
-                    <select
-                      value={scaleVersion}
-                      onChange={(e) => setScaleVersion(e.target.value)}
-                      style={{ flex: 1 }}
-                    >
-                      {Object.values(scales).map((policy) => (
-                        <option key={policy.version} value={policy.version}>
-                          {gradeScaleLabel(policy)}
-                        </option>
-                      ))}
-                    </select>
-                    {!readOnly && (
-                      <button
-                        type="button"
-                        className="button secondary"
-                        onClick={() => setIsAddingVersion(true)}
-                        style={{
-                          whiteSpace: "nowrap",
-                          fontSize: "0.85rem",
-                        }}
-                      >
-                        + Buat Versi Baru
-                      </button>
-                    )}
-                  </div>
-                </Field>
-              </div>
-
-              {!readOnly && isAddingVersion && (
-                <div
-                  style={{
-                    background: "var(--adaptive-surface, #f8fafc)",
-                    border: "1px solid var(--adaptive-border, #e2e8f0)",
-                    borderRadius: 8,
-                    padding: "14px 16px",
-                    marginBottom: 18,
-                  }}
-                >
-                  <strong
-                    style={{
-                      fontSize: "0.88rem",
-                      display: "block",
-                      marginBottom: 8,
-                    }}
-                  >
-                    Buat Versi Kebijakan Huruf Mutu Baru
-                  </strong>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 2fr",
-                      gap: 10,
-                      marginBottom: 12,
-                    }}
-                  >
-                    <div>
-                      <label
-                        style={{
-                          fontSize: "0.8rem",
-                          fontWeight: 600,
-                          display: "block",
-                          marginBottom: 4,
-                        }}
-                      >
-                        Kode Versi
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="cth: 2027.1"
-                        value={newVersionCode}
-                        onChange={(e) => setNewVersionCode(e.target.value)}
-                        style={{ fontSize: "0.85rem" }}
-                      />
-                    </div>
-                    <div>
-                      <label
-                        style={{
-                          fontSize: "0.8rem",
-                          fontWeight: 600,
-                          display: "block",
-                          marginBottom: 4,
-                        }}
-                      >
-                        Nama Standar Kebijakan
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="cth: Standar Akademik UAY 2027/2028"
-                        value={newVersionName}
-                        onChange={(e) => setNewVersionName(e.target.value)}
-                        style={{ fontSize: "0.85rem" }}
-                      />
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "flex-end",
-                      gap: 8,
-                    }}
-                  >
-                    <button
-                      type="button"
-                      className="button secondary"
-                      onClick={() => {
-                        setIsAddingVersion(false);
-                        setNewVersionCode("");
-                        setNewVersionName("");
-                      }}
-                      style={{ fontSize: "0.82rem" }}
-                    >
-                      Batal
-                    </button>
-                    <button
-                      type="button"
-                      className="button primary"
-                      onClick={handleCreateNewPolicy}
-                      style={{ fontSize: "0.82rem" }}
-                    >
-                      Simpan &amp; Pilih Versi
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {!readOnly && (
-                <div style={{ marginBottom: 18 }}>
-                  <Field
-                    label="Nama Standar Kebijakan"
-                    hint="Nama deskriptif untuk kebijakan huruf mutu yang sedang dipilih."
-                  >
-                    <input
-                      type="text"
-                      value={currentScale.name}
-                      onChange={(e) =>
-                        setScales({
-                          ...scales,
-                          [scaleVersion]: {
-                            ...currentScale,
-                            name: e.target.value,
-                          },
-                        })
-                      }
-                      required
-                    />
-                  </Field>
-                </div>
-              )}
-
-              <div style={{ marginBottom: 20 }}>
-                <Field
-                  label="Ambang Batas Kehadiran Mengikuti Ujian (%)"
-                  hint="Ambang penanda kelayakan pada rekap kehadiran. Akses kuis dan tugas tetap mengikuti jadwal aktivitas."
-                >
-                  <input
-                    type="number"
-                    min={0}
-                    max={100}
-                    step={1}
-                    required
-                    value={minAttendance}
-                    onChange={(e) => setMinAttendance(Number(e.target.value))}
-                    style={{ maxWidth: 160 }}
-                  />
-                </Field>
-              </div>
-
-              <div
-                style={{
-                  border: "1px solid var(--adaptive-border, #e2e8f0)",
-                  borderRadius: 10,
-                  overflow: "hidden",
-                  marginBottom: 20,
-                }}
-              >
-                <div
-                  style={{
-                    background: "var(--adaptive-surface, #f8fafc)",
-                    padding: "10px 16px",
-                    borderBottom: "1px solid var(--adaptive-border, #e2e8f0)",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <strong style={{ fontSize: "0.9rem" }}>
-                    Tabel Konversi Skala Nilai: {currentScale.name}
-                  </strong>
-                  <span
-                    style={{
-                      fontSize: "0.75rem",
-                      background: "var(--adaptive-info-soft, #e0f2fe)",
-                      color: "var(--adaptive-info-text, #0369a1)",
-                      padding: "2px 8px",
-                      borderRadius: 12,
-                      fontWeight: 600,
-                    }}
-                  >
-                    Versi {currentScale.version}
-                  </span>
-                </div>
-
-                <table
-                  style={{
-                    margin: 0,
-                    fontSize: "0.84rem",
-                    width: "100%",
-                  }}
-                >
-                  <thead>
-                    <tr
-                      style={{
-                        background: "var(--adaptive-surface, #f1f5f9)",
-                      }}
-                    >
-                      <th style={{ padding: "8px 12px" }}>Huruf Mutu</th>
-                      <th style={{ padding: "8px 12px" }}>
-                        Batas Nilai Riil (≥ Nilai Min)
-                      </th>
-                      <th style={{ padding: "8px 12px" }}>
-                        Bobot IP (0.00–4.00)
-                      </th>
-                      {!readOnly && (
-                        <th
-                          style={{
-                            padding: "8px 12px",
-                            width: 50,
-                            textAlign: "center",
-                          }}
-                        >
-                          Aksi
-                        </th>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {currentScale.bands.map((b: any, index: number) => (
-                      <tr key={index}>
-                        <td style={{ padding: "8px 12px" }}>
-                          {readOnly ? (
-                            <span className="letter-badge">{b.letter}</span>
-                          ) : (
-                            <input
-                              type="text"
-                              maxLength={6}
-                              value={b.letter}
-                              onChange={(e) =>
-                                handleUpdateBand(index, {
-                                  letter: e.target.value.toUpperCase(),
-                                })
-                              }
-                              style={{
-                                width: 68,
-                                fontWeight: 700,
-                                textAlign: "center",
-                                textTransform: "uppercase",
-                                padding: "4px 8px",
-                              }}
-                              required
-                            />
-                          )}
-                        </td>
-                        <td
-                          style={{
-                            padding: "8px 12px",
-                            fontWeight: 600,
-                          }}
-                        >
-                          {readOnly ? (
-                            <span>&ge; {b.minScore}.00</span>
-                          ) : (
-                            <div
-                              style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 6,
-                              }}
-                            >
-                              <span style={{ fontWeight: 700 }}>&ge;</span>
-                              <input
-                                type="number"
-                                min={0}
-                                max={100}
-                                step={0.5}
-                                value={b.minScore}
-                                onChange={(e) =>
-                                  handleUpdateBand(index, {
-                                    minScore: parseFloat(e.target.value) || 0,
-                                  })
-                                }
-                                style={{
-                                  width: 84,
-                                  padding: "4px 8px",
-                                }}
-                                required
-                              />
-                              <span
-                                style={{
-                                  fontSize: "0.78rem",
-                                  color: "var(--adaptive-text-muted, #64748b)",
-                                }}
-                              >
-                                (skor 0–100)
-                              </span>
-                            </div>
-                          )}
-                        </td>
-                        <td
-                          style={{
-                            padding: "8px 12px",
-                            fontWeight: 700,
-                            color: "var(--adaptive-info-text, #0284c7)",
-                          }}
-                        >
-                          {readOnly ? (
-                            <span>{Number(b.point).toFixed(2)}</span>
-                          ) : (
-                            <input
-                              type="number"
-                              min={0}
-                              max={10}
-                              step={0.01}
-                              value={b.point}
-                              onChange={(e) =>
-                                handleUpdateBand(index, {
-                                  point: parseFloat(e.target.value) || 0,
-                                })
-                              }
-                              style={{
-                                width: 76,
-                                fontWeight: 700,
-                                color: "var(--adaptive-info-text, #0284c7)",
-                                padding: "4px 8px",
-                              }}
-                              required
-                            />
-                          )}
-                        </td>
-                        {!readOnly && (
-                          <td
-                            style={{
-                              padding: "8px 12px",
-                              textAlign: "center",
-                            }}
-                          >
-                            <button
-                              type="button"
-                              className="button secondary"
-                              onClick={() => handleRemoveBand(index)}
-                              disabled={currentScale.bands.length <= 1}
-                              title="Hapus bobot huruf ini"
-                              style={{
-                                padding: "4px 8px",
-                                color: "var(--danger, #ef4444)",
-                                opacity:
-                                  currentScale.bands.length <= 1 ? 0.4 : 1,
-                              }}
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </td>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                {!readOnly && (
-                  <div
-                    style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: 10,
-                      alignItems: "center",
-                      padding: "10px 14px",
-                      background: "var(--adaptive-surface, #f8fafc)",
-                      borderTop: "1px solid var(--adaptive-border, #e2e8f0)",
-                    }}
-                  >
-                    <button
-                      type="button"
-                      className="button secondary"
-                      onClick={handleAddBand}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        fontSize: "0.82rem",
-                      }}
-                    >
-                      <Plus size={14} />
-                      <span>Tambah Bobot Huruf</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="button secondary"
-                      onClick={handleSortBands}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        fontSize: "0.82rem",
-                      }}
-                    >
-                      <ArrowUpDown size={14} />
-                      <span>Urutkan Nilai (Tinggi ke Rendah)</span>
-                    </button>
-                    {GRADE_SCALE_PRESETS[scaleVersion] && (
-                      <button
-                        type="button"
-                        className="button secondary"
-                        onClick={handleResetPreset}
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 6,
-                          fontSize: "0.82rem",
-                          marginLeft: "auto",
-                          color: "var(--adaptive-text-muted, #64748b)",
-                        }}
-                      >
-                        <RotateCcw size={14} />
-                        <span>Reset ke Standar Preset</span>
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div
-                style={{
-                  background:
-                    "var(--adaptive-info-soft, rgba(2, 132, 199, 0.05))",
-                  border:
-                    "1px solid var(--adaptive-info-border, rgba(2, 132, 199, 0.2))",
-                  borderRadius: 8,
-                  padding: "12px 16px",
-                  fontSize: "0.84rem",
-                  lineHeight: 1.5,
-                  color: "var(--foreground, #1e293b)",
-                  marginBottom: 20,
-                }}
-              >
-                <strong>Pengaruh perubahan skala:</strong>
-                <p style={{ margin: "4px 0 0 0" }}>
-                  Pengaturan skala ini menjadi default untuk kelas baru,
-                  termasuk hasil duplikasi. Skala kelas yang sudah ada dan nilai
-                  yang telah diterbitkan tidak dihitung ulang. Revisi nilai
-                  terbit mengikuti alur koreksi nilai pada kelas.
-                </p>
-              </div>
-            </div>
-          )}
+          
         </fieldset>
         <div
           style={{

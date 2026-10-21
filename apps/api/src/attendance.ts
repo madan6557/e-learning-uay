@@ -39,13 +39,13 @@ export function registerAttendanceRoutes(app: Express) {
     const now = new Date();
 
     // Sinkronisasi otomatis sesi terjadwal:
-    // 1. Buka otomatis sesi terjadwal yang waktu mulainya telah tiba (startTime <= now) dan belum lewat endTime
+    // 1. Buka otomatis sesi terjadwal yang waktu mulainya telah tiba (startTime <= now) dan masih dalam jendela jadwal (endTime >= now)
     await db.attendanceSession.updateMany({
       where: {
         classId: cls.id,
         isOpen: false,
         startTime: { lte: now },
-        OR: [{ endTime: null }, { endTime: { gte: now } }],
+        endTime: { gte: now },
       },
       data: { isOpen: true },
     });
@@ -338,6 +338,15 @@ export function registerAttendanceRoutes(app: Express) {
               : null;
         }
 
+        const nowTime = new Date();
+        let nextEndTime =
+          data.endTime !== undefined ? data.endTime : session.endTime;
+        if (data.isOpen === false && nextEndTime && nextEndTime > nowTime) {
+          nextEndTime = nowTime;
+        } else if (data.isOpen === true && nextEndTime && nextEndTime <= nowTime) {
+          nextEndTime = null;
+        }
+
         const updated = await tx.attendanceSession.update({
           where: { id: sessionId },
           data: {
@@ -349,7 +358,7 @@ export function registerAttendanceRoutes(app: Express) {
             sessionDate: data.sessionDate ?? undefined,
             startTime:
               data.startTime !== undefined ? data.startTime : undefined,
-            endTime: data.endTime !== undefined ? data.endTime : undefined,
+            endTime: nextEndTime !== undefined ? nextEndTime : undefined,
             isOpen: data.isOpen !== undefined ? data.isOpen : undefined,
             allowSelfCheckIn:
               data.allowSelfCheckIn !== undefined

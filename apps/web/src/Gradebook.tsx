@@ -271,18 +271,7 @@ function StudentGradeReviewModal({
                   {roundedSimulated.toFixed(2)}
                 </div>
               </div>
-              <div
-                style={{
-                  background: "var(--adaptive-info-fill, #0284c7)",
-                  color: "#ffffff",
-                  padding: "6px 14px",
-                  borderRadius: 8,
-                  fontSize: "0.85rem",
-                  fontWeight: 700,
-                }}
-              >
-                Skala {data.class.gradeScaleVersion}
-              </div>
+
             </div>
           </div>
         </div>
@@ -669,7 +658,7 @@ export function PhoneGradeRecord({
         </span>
         <span className="phone-grade-total">
           <strong>{row.finalScore.toFixed(2)}</strong>
-          <span>Nilai {row.gradeLetter}</span>
+          
         </span>
       </summary>
       <div className="phone-grade-body">
@@ -798,9 +787,7 @@ export function Gradebook({
           <GraduationCap size={32} />
           <p>{t.finalScore}</p>
           <strong>{record.finalScore.toFixed(2)}</strong>
-          <span>
-            {record.gradeLetter} · {t.gradePoint} {record.gradePoint.toFixed(2)}
-          </span>
+
           <small>
             {t.publishedAt} {date(record.publishedAt)}
           </small>
@@ -1135,7 +1122,6 @@ export function Gradebook({
                   ))}
                   <th>{t.progress}</th>
                   <th>{t.finalScore}</th>
-                  <th>{t.letter}</th>
                   <th>{t.status}</th>
                 </tr>
               </thead>
@@ -1249,9 +1235,6 @@ export function Gradebook({
                     </td>
                     <td>
                       <strong>{r.finalScore.toFixed(2)}</strong>
-                    </td>
-                    <td>
-                      <span className="letter-badge">{r.gradeLetter}</span>
                     </td>
                     <td>
                       <Badge
@@ -1520,8 +1503,8 @@ export function Gradebook({
                           ? "var(--adaptive-info-soft, rgba(2, 132, 199, 0.12))"
                           : "transparent",
                         color: active
-                          ? "var(--adaptive-info-text, #0369a1)"
-                          : "inherit",
+                          ? "var(--adaptive-info-text)"
+                          : "var(--foreground)",
                         cursor: "pointer",
                         fontWeight: active ? 600 : 500,
                         display: "inline-flex",
@@ -1562,23 +1545,7 @@ export function Gradebook({
               </p>
             </div>
 
-            <div style={{ marginBottom: 16 }}>
-              <Field
-                label="Kebijakan Konversi Huruf Mutu"
-                hint="Menentukan konversi skor angka ke huruf mutu. Nilai yang sudah diterbitkan tidak berubah."
-              >
-                <select
-                  value={gradeScaleVersion}
-                  onChange={(e) => setGradeScaleVersion(e.target.value)}
-                >
-                  {Object.values(availableScales).map((policy) => (
-                    <option key={policy.version} value={policy.version}>
-                      {gradeScaleLabel(policy)}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
+
 
             <div className="weight-editor">
               {weights.map((c, i) => {
@@ -1589,13 +1556,14 @@ export function Gradebook({
                   <div
                     key={c.id ?? i}
                     style={{
-                      border: "1px solid var(--border, #e2e8f0)",
+                      border: "1px solid var(--border)",
                       borderRadius: 8,
                       padding: 12,
                       marginBottom: 12,
                       background: isMandatory
-                        ? "var(--adaptive-info-soft, rgba(2, 132, 199, 0.03))"
-                        : "transparent",
+                        ? "var(--adaptive-info-soft)"
+                        : "var(--surface)",
+                      color: "var(--foreground)",
                     }}
                   >
                     <div

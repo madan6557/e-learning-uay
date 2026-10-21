@@ -23,6 +23,7 @@ import {
   Empty,
   Badge,
   Field,
+  SearchableSelect,
   Modal,
   Form,
   Action,
@@ -608,16 +609,18 @@ export function QuizEditor({
         </Field>
         <div className="form-grid">
           <Field label={t.category}>
-            <select name="category" defaultValue={quiz?.gradeCategoryId ?? ""}>
-              <option value="">{t.choose}</option>
-              {categories.data
+            <SearchableSelect
+              name="category"
+              defaultValue={quiz?.gradeCategoryId ?? ""}
+              placeholder={t.choose}
+              searchPlaceholder="Cari kategori nilai..."
+              options={categories.data
                 ?.filter((c) => c.kind !== "PROGRESS")
-                .map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-            </select>
+                .map((c) => ({
+                  value: c.id,
+                  label: c.name,
+                }))}
+            />
           </Field>
           <Field label={t.scoreMode}>
             <select
@@ -798,30 +801,30 @@ export function QuizEditor({
             <Plus size={15} />
             {t.newQuestion}
           </button>
-          <select
+          <SearchableSelect
             aria-label={t.selectBankQuestion}
+            placeholder={t.selectBankQuestion}
+            searchPlaceholder="Cari soal dari bank soal..."
             value=""
-            onChange={(e) => {
+            onChange={(val) => {
+              if (!val) return;
               const q = banks.data
                 ?.flatMap((b) => b.questions)
-                .find((q) => q.id === e.target.value);
+                .find((q) => q.id === val);
               if (q) {
                 setQuestions([...questions, structuredClone(q)]);
                 setQuestionErrors([]);
               }
             }}
-          >
-            <option value="">{t.selectBankQuestion}</option>
-            {banks.data?.map((b) => (
-              <optgroup label={b.title} key={b.id}>
-                {b.questions.map((q: any) => (
-                  <option value={q.id} key={q.id}>
-                    {stripHtmlTags(q.text) || `${t.questions} ${q.id}`}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
+            options={banks.data?.flatMap((b) =>
+              b.questions.map((q: any) => ({
+                value: q.id,
+                label: stripHtmlTags(q.text) || `${t.questions} ${q.id}`,
+                group: b.title,
+                sublabel: b.title,
+              }))
+            )}
+          />
         </div>
       </Form>
     </Modal>
@@ -2056,19 +2059,18 @@ export function AssignmentEditor({
         </Field>
         <div className="form-grid">
           <Field label={t.category}>
-            <select
+            <SearchableSelect
               name="category"
               defaultValue={assignment?.gradeCategoryId ?? ""}
-            >
-              <option value="">{t.choose}</option>
-              {categories.data
+              placeholder={t.choose}
+              searchPlaceholder="Cari kategori nilai..."
+              options={categories.data
                 ?.filter((c) => c.kind !== "PROGRESS")
-                .map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-            </select>
+                .map((c) => ({
+                  value: c.id,
+                  label: c.name,
+                }))}
+            />
           </Field>
           <Field label={t.maxScore}>
             <input
@@ -2791,7 +2793,7 @@ export function AssignmentPage({
         />
       )}
       {grading && (
-        <Modal title={t.gradeSubmission} onClose={() => setGrading(null)}>
+        <Modal title={t.gradeSubmission} onClose={() => { setGrading(null); setGradingFeedback(""); }}>
           <h3>{grading.user.name}</h3>
           <Form
             draftKey={`submission-grading:${grading.id}`}
@@ -2809,6 +2811,7 @@ export function AssignmentPage({
                 ...(autoReason ? { reason: autoReason } : {}),
               });
               setGrading(null);
+              setGradingFeedback("");
               info.reload();
             }}
           >

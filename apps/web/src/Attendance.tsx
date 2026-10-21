@@ -247,7 +247,7 @@ export function Attendance({
             <p>
               {activeOpenSession.requiresCode
                 ? "Sesi presensi telah dibuka. Masukkan kode kehadiran dari dosen."
-                : "Sesi presensi telah dibuka. Silakan konfirmasi kehadiran Anda."}
+                : "Sesi presensi telah dibuka. Silakan lakukan Konfirmasi Kehadiran Mandiri."}
             </p>
           </div>
           <button
@@ -264,8 +264,7 @@ export function Attendance({
             )}
             <span>
               {activeOpenSession.requiresCode
-                ? "Masukkan Kode"
-                : "Konfirmasi Hadir"}
+                ? "Masukkan Kode" : "Konfirmasi Kehadiran Mandiri"}
             </span>
           </button>
         </div>
@@ -497,12 +496,12 @@ export function Attendance({
                             gap: 4,
                           }}
                         >
-                          <CheckCircle2 size={11} /> Presensi Terbuka
+                          <CheckCircle2 size={11} /> Presensi Mandiri
                         </span>
                       )}
 
                       {/* Jam Jadwal / Status Pembukaan */}
-                      {s.startTime || s.endTime ? (
+                      {s.startTime && s.endTime ? (
                         <span
                           style={{
                             display: "inline-flex",
@@ -534,7 +533,7 @@ export function Attendance({
                             fontWeight: 500,
                           }}
                         >
-                          <Clock size={11} /> Tanpa batas waktu · sampai ditutup dosen
+                          <Clock size={11} /> Tanpa batas waktu (sampai ditutup manual)
                         </span>
                       ) : (
                         <span
@@ -854,8 +853,7 @@ export function Attendance({
                           )}
                           <span>
                             {s.requiresCode
-                              ? "Masukkan Kode"
-                              : "Konfirmasi Hadir"}
+                              ? "Masukkan Kode" : "Konfirmasi Kehadiran Mandiri"}
                           </span>
                         </button>
                       )
@@ -1157,15 +1155,7 @@ export function Attendance({
               >
                 <CheckCircle2 size={32} />
               </div>
-              <h3
-                style={{
-                  margin: "0 0 8px 0",
-                  fontSize: "1.15rem",
-                  fontWeight: 700,
-                }}
-              >
-                Konfirmasi Kehadiran
-              </h3>
+              <h3 style={{ margin: "0 0 8px 0", fontSize: "1.15rem", fontWeight: 700 }}>Konfirmasi Kehadiran Mandiri</h3>
               <p
                 style={{
                   margin: "0 0 20px 0",
@@ -1702,6 +1692,12 @@ export function ScheduleSessionModal({
               >
                 {isOpen ? "Tutup Sesi" : "Buka Sesi Sekarang"}
               </button>
+            </div>
+            {(!hasSchedule || !endTime) && (
+              <div style={{ marginTop: 6, fontSize: "0.82rem", color: "var(--muted, #64748b)" }}>
+                ℹ️ <strong>Tanpa batas waktu:</strong> Sesi presensi ini akan tetap terbuka sampai Anda menutupnya secara manual.
+              </div>
+            )}<div>
             </div>
 
             <div

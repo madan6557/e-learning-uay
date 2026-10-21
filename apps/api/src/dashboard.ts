@@ -74,7 +74,7 @@ export async function dashboardClasses<T extends DashboardClass>(
       },
     },
   });
-  const [sections, video, slides, downloads, text, assignments, quizzes] =
+  const [sections, video, slides, downloads, text, assignments, quizzes, studentSubmissionsRaw, studentAttemptsRaw] =
     await Promise.all([
       sectionsPromise,
       db.videoProgress.findMany({
@@ -121,6 +121,26 @@ export async function dashboardClasses<T extends DashboardClass>(
             _count: true,
           })
         : [],
+      !managed.size
+        ? db.assignmentSubmission.findMany({
+            where: {
+              userId: user.id,
+              assignment: { section: { classId: { in: classIds } } },
+              status: { in: ["SUBMITTED", "LATE", "GRADED"] },
+            },
+            select: { assignmentId: true, status: true },
+          })
+        : [],
+      !managed.size
+        ? db.quizAttempt.findMany({
+            where: {
+              userId: user.id,
+              quiz: { section: { classId: { in: classIds } } },
+              status: { not: "IN_PROGRESS" },
+            },
+            select: { quizId: true, status: true },
+          })
+        : [],
     ]);
   const now = new Date();
   const visible = (item: Parameters<typeof available>[0]) => {
@@ -145,6 +165,12 @@ export async function dashboardClasses<T extends DashboardClass>(
     assignments.map((a) => [a.assignmentId, a._count]),
   );
   const quizCounts = new Map(quizzes.map((q) => [q.quizId, q._count]));
+  const studentSubmissions = new Map(
+    ((studentSubmissionsRaw as any[]) || []).map((s) => [s.assignmentId, s]),
+  );
+  const studentAttempts = new Map(
+    ((studentAttemptsRaw as any[]) || []).map((q) => [q.quizId, q]),
+  );
   return classes.map((cls) => {
     const canManage =
       Boolean(cls.canManage) ||
@@ -164,10 +190,28 @@ export async function dashboardClasses<T extends DashboardClass>(
             resources: s.resources
               .filter((r) => canViewAll || visible(r))
               .map(({ id, resourceType }) => ({ id, resourceType })),
-            assignments: s.assignments.filter((a) => canViewAll || a.isVisible),
-            quizzes: s.quizzes.filter(
-              (q) => canViewAll || (q.isVisible && q.status === "PUBLISHED"),
-            ),
+            assignments: s.assignments
+              .filter((a) => canViewAll || a.isVisible)
+              .map((a) => {
+                const sub = studentSubmissions.get(a.id);
+                return {
+                  ...a,
+                  hasSubmitted: Boolean(sub),
+                  userStatus: sub ? sub.status : undefined,
+                };
+              }),
+            quizzes: s.quizzes
+              .filter(
+                (q) => canViewAll || (q.isVisible && q.status === "PUBLISHED"),
+              )
+              .map((q) => {
+                const att = studentAttempts.get(q.id);
+                return {
+                  ...q,
+                  hasSubmitted: Boolean(att),
+                  userStatus: att ? att.status : undefined,
+                };
+              }),
           }));
     const ids = sections.flatMap((s) => s.resources.map((r) => r.id));
     const collect = <P>(map: Map<string, P>) =>
