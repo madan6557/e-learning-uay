@@ -121,7 +121,7 @@ async function review(
       issues.push("CORRECTION_REASON_REQUIRED");
     output.push({
       ...row,
-      rowNumber: index + 2,
+      rowNumber: index + 1,
       key,
       issues: row.exclude ? [] : [...new Set(issues)],
       status: row.exclude ? "EXCLUDED" : issues.length ? "ISSUE" : "READY",

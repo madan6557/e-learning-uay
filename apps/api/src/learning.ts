@@ -308,7 +308,7 @@ async function reviewCourseBatch(
 
     output.push({
       ...row,
-      rowNumber: index + 2,
+      rowNumber: index + 1,
       key: code,
       values: {
         ...row.values,

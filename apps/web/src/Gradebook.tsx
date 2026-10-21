@@ -2134,11 +2134,11 @@ export function ImportPanel({
                       key={index}
                       className={row.exclude ? "excluded-row" : ""}
                     >
-                      <td>{index + 2}</td>
+                      <td>{index + 1}</td>
                       {headers.map((header) => (
                         <td key={header}>
                           <input
-                            aria-label={`${header} ${index + 2}`}
+                            aria-label={`${header} ${index + 1}`}
                             disabled={row.exclude}
                             value={
                               typeof row.values[header] === "object"
@@ -2200,7 +2200,7 @@ export function ImportPanel({
                       </td>
                       <td>
                         <input
-                          aria-label={`${t.exclude} ${index + 2}`}
+                          aria-label={`${t.exclude} ${index + 1}`}
                           type="checkbox"
                           checked={row.exclude}
                           onChange={(e) => {
@@ -2217,7 +2217,7 @@ export function ImportPanel({
                       </td>
                       <td>
                         <input
-                          aria-label={`${t.override} ${index + 2}`}
+                          aria-label={`${t.override} ${index + 1}`}
                           type="checkbox"
                           checked={row.override}
                           onChange={(e) => {

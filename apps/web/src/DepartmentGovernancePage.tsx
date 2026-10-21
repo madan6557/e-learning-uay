@@ -397,7 +397,7 @@ function parseUserImportCsv(text: string) {
       }
 
       return {
-        rowNumber: i + 2,
+        rowNumber: i + 1,
         name,
         email,
         user_type: rawUserType,

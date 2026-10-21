@@ -73,6 +73,7 @@ import { countDrafts, removeDraft } from "./drafts";
 import { Avatar, Tabs } from "./ui";
 import { classPath, contentPath } from "./router";
 import { parseCsv } from "./csv";
+import { exportSheet, readImportFile } from "./services/excel";
 export interface ClassCardData {
   id: string;
   slug?: string;
@@ -3248,6 +3249,8 @@ export function CourseImportModal({
   onSuccess: () => void;
 }) {
   const [csvText, setCsvText] = useState("");
+  const [fileName, setFileName] = useState("");
+  const [reading, setReading] = useState(false);
   const [overrideAll, setOverrideAll] = useState(false);
   const [rows, setRows] = useState<any[]>([]);
   const [review, setReview] = useState<any>(null);
@@ -3258,20 +3261,25 @@ export function CourseImportModal({
 
   const defaultDept = user.departmentScopes?.[0] || "IF";
 
-  const handleParse = (text: string, forceOverride = overrideAll) => {
+  const handleParse = (
+    input: string | string[][],
+    forceOverride = overrideAll,
+  ) => {
+    setRows([]);
+    setReview(null);
     try {
-      if (!text.trim()) {
+      if (typeof input === "string" && !input.trim()) {
         setRows([]);
         setReview(null);
         setError(null);
         return;
       }
-      const parsed = parseCsv(text.trim());
+      const parsed = typeof input === "string" ? parseCsv(input.trim()) : input;
       if (parsed.length < 2) {
         setRows([]);
         setReview(null);
         setError(
-          "Format CSV minimal harus memiliki 1 baris judul kolom (header) dan 1 baris data.",
+          "Berkas minimal harus memiliki 1 baris judul kolom (header) dan 1 baris data.",
         );
         return;
       }
@@ -3304,7 +3312,7 @@ export function CourseImportModal({
 
       if (codeIdx === -1 || titleIdx === -1) {
         setError(
-          "Kolom header 'kode' (atau 'code') dan 'nama' (atau 'title') wajib ada pada baris pertama CSV.",
+          "Kolom header 'kode' (atau 'code') dan 'nama' (atau 'title') wajib ada pada baris pertama berkas.",
         );
         return;
       }
@@ -3343,13 +3351,14 @@ export function CourseImportModal({
       setRows(parsedRows);
       setError(null);
     } catch (e: any) {
-      setError(e.message || "Gagal memproses berkas/format CSV.");
+      setError(e.message || "Gagal memproses berkas Excel/CSV.");
     }
   };
 
   useEffect(() => {
     if (!rows.length) {
       setReview(null);
+      setLoading(false);
       return;
     }
     let active = true;
@@ -3387,33 +3396,48 @@ export function CourseImportModal({
     setRows((prev) => prev.map((r) => ({ ...r, override: checked })));
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const content = String(event.target?.result ?? "");
-      setCsvText(content);
-      handleParse(content, overrideAll);
-    };
-    reader.readAsText(file);
+    e.target.value = "";
+    setRows([]);
+    setReview(null);
+    setError(null);
+    setCsvText("");
+    setFileName(file.name);
+    setReading(true);
+    try {
+      handleParse(await readImportFile(file), overrideAll);
+    } catch (e: any) {
+      setError(e.message || "Gagal membaca berkas Excel/CSV.");
+    } finally {
+      setReading(false);
+    }
   };
 
   const handleLoadSample = () => {
+    setFileName("");
     const sample = `kode,nama,sks,prodi,deskripsi,status\nIF101,Algoritma dan Pemrograman I,3,${defaultDept},Konsep dasar pemrograman dan algoritma komputasi,PUBLISHED\nIF102,Struktur Data,3,${defaultDept},Array linked-list stack queue tree dan graf,PUBLISHED\nIF201,Basis Data,3,${defaultDept},Perancangan sistem basis data relasional dan SQL,PUBLISHED\nIF202,Pemrograman Berorientasi Objek,3,${defaultDept},Konsep OOP pewarisan polimorfisme dan enkapsulasi,PUBLISHED\nIF301,Jaringan Komputer,3,${defaultDept},Arsitektur protokol jaringan TCP/IP dan keamanan,PUBLISHED`;
     setCsvText(sample);
     handleParse(sample, overrideAll);
   };
 
-  const handleDownloadTemplate = () => {
-    const template = `kode,nama,sks,prodi,deskripsi,status\nIF101,Nama Mata Kuliah Contoh,3,${defaultDept},Deskripsi ringkas mata kuliah,PUBLISHED`;
-    const blob = new Blob([template], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "template-katalog-matakuliah.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleDownloadTemplate = async () => {
+    await exportSheet(
+      "template-katalog-matakuliah.xlsx",
+      ["kode", "nama", "sks", "prodi", "deskripsi", "status"],
+      [
+        [
+          "IF101",
+          "Nama Mata Kuliah Contoh",
+          3,
+          defaultDept,
+          "Deskripsi ringkas mata kuliah",
+          "PUBLISHED",
+        ],
+      ],
+      ["kode", "prodi"],
+    );
   };
 
   const handleCommit = async () => {
@@ -3432,11 +3456,18 @@ export function CourseImportModal({
   };
 
   return (
-    <Modal title="Impor Massal Katalog Mata Kuliah" wide onClose={onClose}>
+    <Modal
+      title="Impor Massal Katalog Mata Kuliah"
+      wide
+      onClose={onClose}
+      busy={reading || submitting}
+    >
       <p style={{ marginTop: 0, color: "var(--muted-foreground)" }}>
         Tambahkan banyak mata kuliah sekaligus ke kurikulum program studi
-        menggunakan format CSV. Sistem memverifikasi kode mata kuliah unik,
-        kewenangan prodi, dan bobot SKS.
+        menggunakan template Excel berkolom. Isi satu mata kuliah per baris pada
+        lembar pertama, lalu unggah kembali untuk diperiksa. Sistem
+        memverifikasi kode mata kuliah unik, kewenangan prodi, dan bobot SKS.
+        CSV lama juga dapat digunakan.
       </p>
 
       {successInfo ? (
@@ -3485,45 +3516,57 @@ export function CourseImportModal({
               }}
             >
               <UploadCloud size={15} />
-              Pilih Berkas CSV
+              {reading ? "Membaca berkas…" : "Pilih Berkas Excel / CSV"}
               <input
                 type="file"
-                accept=".csv,text/csv,text/plain"
+                accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
+                disabled={reading || submitting}
                 onChange={handleFileUpload}
                 style={{ display: "none" }}
               />
             </label>
-            <button
-              type="button"
-              className="secondary"
-              onClick={handleDownloadTemplate}
-            >
+            <Action className="secondary" run={handleDownloadTemplate}>
               <Download size={15} />
-              Unduh Template CSV
-            </button>
+              Unduh Template Excel
+            </Action>
             <button
               type="button"
               className="secondary"
               onClick={handleLoadSample}
+              disabled={reading || submitting}
             >
               Isi Contoh Data
             </button>
           </div>
 
-          <Field label="Data CSV (atau tempel teks di sini)">
-            <textarea
-              rows={4}
-              value={csvText}
-              onChange={(e) => {
-                setCsvText(e.target.value);
-                handleParse(e.target.value);
-              }}
-              placeholder={
-                "kode,nama,sks,prodi,deskripsi,status\nIF101,Algoritma dan Pemrograman I,3,IF,Dasar pemrograman,PUBLISHED\n..."
-              }
-              style={{ fontFamily: "monospace", fontSize: "0.82rem" }}
-            />
-          </Field>
+          <p className="muted">
+            {fileName && (
+              <>
+                Berkas: <strong>{fileName}</strong>.{" "}
+              </>
+            )}
+            Maksimal 10 MB. Kolom wajib: kode dan nama. Kolom lainnya: sks,
+            prodi, deskripsi, status.
+          </p>
+          <details>
+            <summary>Opsi lanjutan: tempel data CSV</summary>
+            <Field label="Data CSV">
+              <textarea
+                rows={4}
+                value={csvText}
+                disabled={reading || submitting}
+                onChange={(e) => {
+                  setFileName("");
+                  setCsvText(e.target.value);
+                  handleParse(e.target.value);
+                }}
+                placeholder={
+                  "kode,nama,sks,prodi,deskripsi,status\nIF101,Algoritma dan Pemrograman I,3,IF,Dasar pemrograman,PUBLISHED\n..."
+                }
+                style={{ fontFamily: "monospace", fontSize: "0.82rem" }}
+              />
+            </Field>
+          </details>
 
           {rows.length > 0 && (
             <div
@@ -3714,7 +3757,7 @@ export function CourseImportModal({
               type="button"
               className="secondary"
               onClick={onClose}
-              disabled={submitting}
+              disabled={reading || submitting}
             >
               Batal
             </button>
