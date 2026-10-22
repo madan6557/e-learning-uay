@@ -417,6 +417,129 @@ export function registerAssessment(app: Express) {
         }),
       ),
   );
+  // PUT question in bank
+  app.put(
+    "/api/v1/course-classes/:id/question-banks/:bankId/questions/:questionId",
+    async (req, res) =>
+      res.json(
+        await mutate(req, async (tx) => {
+          const cls = await classAccess(
+            tx,
+            req.context.user,
+            String(req.params.id),
+            true,
+          );
+          ensure(!cls.parentClassId, 409, "COURSE_QUESTION_BANK_SHARED");
+          const bank = await tx.questionBank.findUnique({
+            where: { id: String(req.params.bankId) },
+          });
+          ensure(bank?.courseId === cls.courseId, 403, "WRITE_ACCESS_DENIED");
+          const existing = await tx.question.findFirst({
+            where: {
+              id: String(req.params.questionId),
+              questionBankId: bank.id,
+            },
+          });
+          ensure(existing, 404, "NOT_FOUND");
+          const q = questionSchema.parse(req.body);
+          const after = await tx.question.update({
+            where: { id: existing.id },
+            data: mapQuestionToDb(q),
+          });
+          await audit(
+            tx,
+            req.context,
+            "UPDATE",
+            "QUESTION",
+            after.id,
+            cls.id,
+            existing,
+            after,
+          );
+          return after;
+        }),
+      ),
+  );
+
+  // DELETE question in bank
+  app.delete(
+    "/api/v1/course-classes/:id/question-banks/:bankId/questions/:questionId",
+    async (req, res) =>
+      res.json(
+        await mutate(req, async (tx) => {
+          const cls = await classAccess(
+            tx,
+            req.context.user,
+            String(req.params.id),
+            true,
+          );
+          ensure(!cls.parentClassId, 409, "COURSE_QUESTION_BANK_SHARED");
+          const bank = await tx.questionBank.findUnique({
+            where: { id: String(req.params.bankId) },
+          });
+          ensure(bank?.courseId === cls.courseId, 403, "WRITE_ACCESS_DENIED");
+          const existing = await tx.question.findFirst({
+            where: {
+              id: String(req.params.questionId),
+              questionBankId: bank.id,
+            },
+          });
+          ensure(existing, 404, "NOT_FOUND");
+          await tx.question.delete({
+            where: { id: existing.id },
+          });
+          await audit(
+            tx,
+            req.context,
+            "DELETE",
+            "QUESTION",
+            existing.id,
+            cls.id,
+            existing,
+            null,
+          );
+          return { ok: true };
+        }),
+      ),
+  );
+
+  // DELETE question bank
+  app.delete(
+    "/api/v1/course-classes/:id/question-banks/:bankId",
+    async (req, res) =>
+      res.json(
+        await mutate(req, async (tx) => {
+          const cls = await classAccess(
+            tx,
+            req.context.user,
+            String(req.params.id),
+            true,
+          );
+          ensure(!cls.parentClassId, 409, "COURSE_QUESTION_BANK_SHARED");
+          const bank = await tx.questionBank.findUnique({
+            where: { id: String(req.params.bankId) },
+          });
+          ensure(bank?.courseId === cls.courseId, 403, "WRITE_ACCESS_DENIED");
+          await tx.question.deleteMany({
+            where: { questionBankId: bank.id },
+          });
+          await tx.questionBank.delete({
+            where: { id: bank.id },
+          });
+          await audit(
+            tx,
+            req.context,
+            "DELETE",
+            "QUESTION_BANK",
+            bank.id,
+            cls.id,
+            bank,
+            null,
+          );
+          return { ok: true };
+        }),
+      ),
+  );
   app.post("/api/v1/sections/:id/quizzes", async (req, res) =>
     res.status(201).json(
       await mutate(req, async (tx) => {
@@ -530,6 +653,45 @@ export function registerAssessment(app: Express) {
           after,
         );
         return after;
+      }),
+    ),
+  );
+  app.delete("/api/v1/quizzes/:id", async (req, res) =>
+    res.json(
+      await mutate(req, async (tx) => {
+        const quiz = await tx.quiz.findUnique({
+          where: { id: String(req.params.id) },
+          include: { section: { include: { class: true } } },
+        });
+        ensure(quiz, 404, "NOT_FOUND");
+        const cls = await classAccess(
+          tx,
+          req.context.user,
+          quiz.section.classId,
+          true,
+        );
+        ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
+        ensure(
+          cls.status !== "ARCHIVED" &&
+            cls.course.status !== "ARCHIVED" &&
+            cls.parentClass?.status !== "ARCHIVED",
+          423,
+          "CLASS_ARCHIVED",
+        );
+        await tx.quiz.delete({
+          where: { id: quiz.id },
+        });
+        await audit(
+          tx,
+          req.context,
+          "DELETE",
+          "QUIZ",
+          quiz.id,
+          cls.id,
+          quiz,
+          null,
+        );
+        return { ok: true };
       }),
     ),
   );
@@ -1128,6 +1290,45 @@ export function registerAssessment(app: Express) {
           after,
         );
         return after;
+      }),
+    ),
+  );
+  app.delete("/api/v1/assignments/:id", async (req, res) =>
+    res.json(
+      await mutate(req, async (tx) => {
+        const assignment = await tx.assignment.findUnique({
+          where: { id: String(req.params.id) },
+          include: { section: { include: { class: true } } },
+        });
+        ensure(assignment, 404, "NOT_FOUND");
+        const cls = await classAccess(
+          tx,
+          req.context.user,
+          assignment.section.classId,
+          true,
+        );
+        ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
+        ensure(
+          cls.status !== "ARCHIVED" &&
+            cls.course.status !== "ARCHIVED" &&
+            cls.parentClass?.status !== "ARCHIVED",
+          423,
+          "CLASS_ARCHIVED",
+        );
+        await tx.assignment.delete({
+          where: { id: assignment.id },
+        });
+        await audit(
+          tx,
+          req.context,
+          "DELETE",
+          "ASSIGNMENT",
+          assignment.id,
+          cls.id,
+          assignment,
+          null,
+        );
+        return { ok: true };
       }),
     ),
   );

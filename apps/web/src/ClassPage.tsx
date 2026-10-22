@@ -867,6 +867,19 @@ export function ClassPage({
                               >
                                 {t.edit}
                               </button>
+                              <button
+                                className="text-button danger-text"
+                                onClick={async () => {
+                                  const confirmed = await confirmAction(
+                                    `Hapus "${section.title}"? Seluruh materi, kuis, dan tugas di dalam pertemuan ini akan ikut terhapus.`,
+                                  );
+                                  if (!confirmed) return;
+                                  await api(`/sections/${section.id}`, "DELETE");
+                                  info.reload();
+                                }}
+                              >
+                                {t.delete}
+                              </button>
                             </div>
                           )}
                         </div>
@@ -1031,18 +1044,33 @@ export function ClassPage({
                                         </>
                                       )}
                                       {writable && (
-                                        <button
-                                          className="text-button"
-                                          onClick={() =>
-                                            setModal({
-                                              kind: "resource",
-                                              sectionId: section.id,
-                                              resource: r,
-                                            })
-                                          }
-                                        >
-                                          {t.edit}
-                                        </button>
+                                        <>
+                                          <button
+                                            className="text-button"
+                                            onClick={() =>
+                                              setModal({
+                                                kind: "resource",
+                                                sectionId: section.id,
+                                                resource: r,
+                                              })
+                                            }
+                                          >
+                                            {t.edit}
+                                          </button>
+                                          <button
+                                            className="text-button danger-text"
+                                            onClick={async () => {
+                                              const confirmed = await confirmAction(
+                                                `Hapus materi "${r.title}"?`,
+                                              );
+                                              if (!confirmed) return;
+                                              await api(`/resources/${r.id}`, "DELETE");
+                                              info.reload();
+                                            }}
+                                          >
+                                            {t.delete}
+                                          </button>
+                                        </>
                                       )}
                                     </div>
                                   );
@@ -1130,7 +1158,32 @@ export function ClassPage({
                                               {t.moveDown}
                                             </span>
                                           </Action>
-                                        </>
+                                                                                   <button
+                                             className="text-button"
+                                             onClick={() =>
+                                               setModal({
+                                                 kind: "quiz",
+                                                 sectionId: section.id,
+                                                 quiz: q,
+                                               })
+                                             }
+                                           >
+                                             {t.edit}
+                                           </button>
+                                           <button
+                                             className="text-button danger-text"
+                                             onClick={async () => {
+                                               const confirmed = await confirmAction(
+                                                 `Hapus kuis "${q.title}"? Seluruh riwayat pengerjaan kuis ini akan ikut terhapus.`,
+                                               );
+                                               if (!confirmed) return;
+                                               await api(`/quizzes/${q.id}`, "DELETE");
+                                               info.reload();
+                                             }}
+                                           >
+                                             {t.delete}
+                                           </button>
+</>
                                       )}
                                     </div>
                                   );
@@ -1206,7 +1259,32 @@ export function ClassPage({
                                               {t.moveDown}
                                             </span>
                                           </Action>
-                                        </>
+                                                                                   <button
+                                             className="text-button"
+                                             onClick={() =>
+                                               setModal({
+                                                 kind: "assignment",
+                                                 sectionId: section.id,
+                                                 assignment: a,
+                                               })
+                                             }
+                                           >
+                                             {t.edit}
+                                           </button>
+                                           <button
+                                             className="text-button danger-text"
+                                             onClick={async () => {
+                                               const confirmed = await confirmAction(
+                                                 `Hapus tugas "${a.title}"? Seluruh pengumpulan tugas mahasiswa akan ikut terhapus.`,
+                                               );
+                                               if (!confirmed) return;
+                                               await api(`/assignments/${a.id}`, "DELETE");
+                                               info.reload();
+                                             }}
+                                           >
+                                             {t.delete}
+                                           </button>
+</>
                                       )}
                                     </div>
                                   );
@@ -1395,6 +1473,7 @@ export function ClassPage({
         <QuizEditor
           classId={cls.id}
           sectionId={modal.sectionId}
+          quiz={modal.quiz}
           onClose={() => setModal(null)}
           onSaved={saved}
         />
@@ -1403,6 +1482,7 @@ export function ClassPage({
         <AssignmentEditor
           classId={cls.id}
           sectionId={modal.sectionId}
+          assignment={modal.assignment}
           onClose={() => setModal(null)}
           onSaved={saved}
         />

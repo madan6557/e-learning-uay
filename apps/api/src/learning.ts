@@ -2003,6 +2003,44 @@ function expandDepartmentScopes(scopes: string[]): string[] {
       }),
     ),
   );
+  app.delete("/api/v1/sections/:id", async (req, res) =>
+    res.json(
+      await mutate(req, async (tx) => {
+        const before = await tx.section.findUnique({
+          where: { id: String(req.params.id) },
+        });
+        ensure(before, 404, "NOT_FOUND");
+        const cls = await classAccess(
+          tx,
+          req.context.user,
+          before.classId,
+          true,
+        );
+        ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
+        ensure(
+          cls.status !== "ARCHIVED" &&
+            cls.course.status !== "ARCHIVED" &&
+            cls.parentClass?.status !== "ARCHIVED",
+          423,
+          "CLASS_ARCHIVED",
+        );
+        await tx.section.delete({
+          where: { id: before.id },
+        });
+        await audit(
+          tx,
+          req.context,
+          "DELETE",
+          "SECTION",
+          before.id,
+          cls.id,
+          before,
+          null,
+        );
+        return { ok: true };
+      }),
+    ),
+  );
   app.put("/api/v1/course-classes/:id/section-order", async (req, res) =>
     res.json(
       await mutate(req, async (tx) => {

@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { Action } from "./components/ui/Action";
 import { notifyAction } from "./feedback";
+import { confirmAction } from "./confirm";
 import {
   CalendarCheck,
   CalendarClock,
@@ -17,6 +18,7 @@ import {
   UserCheck,
   Sliders,
   Calendar,
+  Trash2,
 } from "lucide-react";
 import {
   clock,
@@ -757,25 +759,55 @@ export function Attendance({
                         )}
 
                         {writable && (
-                          <button
-                            type="button"
-                            className="button secondary"
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: 6,
-                              fontSize: "0.84rem",
-                              cursor: "pointer",
-                              padding: "7px 12px",
-                              borderRadius: 8,
-                            }}
-                            onClick={() =>
-                              setModal({ kind: "schedule", session: s })
-                            }
-                          >
-                            <Sliders size={14} />
-                            <span>Atur Jadwal</span>
-                          </button>
+                          <>
+                            <button
+                              type="button"
+                              className="button secondary"
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                                fontSize: "0.84rem",
+                                cursor: "pointer",
+                                padding: "7px 12px",
+                                borderRadius: 8,
+                              }}
+                              onClick={() =>
+                                setModal({ kind: "schedule", session: s })
+                              }
+                            >
+                              <Sliders size={14} />
+                              <span>Atur Jadwal</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="button secondary danger"
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                                fontSize: "0.84rem",
+                                cursor: "pointer",
+                                padding: "7px 12px",
+                                borderRadius: 8,
+                                color: "var(--danger, #dc2626)",
+                              }}
+                              onClick={async () => {
+                                const confirmed = await confirmAction(
+                                  `Hapus sesi presensi "${s.title}"? Seluruh data kehadiran pada sesi ini akan dihapus permanen.`,
+                                );
+                                if (!confirmed) return;
+                                await api(`/attendance/${s.id}`, "DELETE");
+                                sessionsApi.reload();
+                                const msg = `Sesi "${s.title}" berhasil dihapus.`;
+                                setMessage(msg);
+                                notifyAction(msg);
+                              }}
+                            >
+                              <Trash2 size={14} />
+                              <span>Hapus Sesi</span>
+                            </button>
+                          </>
                         )}
 
                         {writable && s.checkInCode && (
@@ -1925,7 +1957,8 @@ export function ScheduleSessionModal({
           <div
             style={{
               display: "flex",
-              justifyContent: "flex-end",
+              justifyContent: "space-between",
+              alignItems: "center",
               gap: 10,
               marginTop: 12,
               borderTop: "1px solid var(--border, #f1f5f9)",
@@ -1934,15 +1967,49 @@ export function ScheduleSessionModal({
           >
             <button
               type="button"
-              className="button secondary"
-              onClick={onClose}
+              className="button secondary danger"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                color: "var(--danger, #dc2626)",
+              }}
               disabled={saving}
+              onClick={async () => {
+                const confirmed = await confirmAction(
+                  `Hapus sesi presensi "${session.title}"? Seluruh data kehadiran pada sesi ini akan dihapus permanen.`,
+                );
+                if (!confirmed) return;
+                setSaving(true);
+                try {
+                  await api(`/attendance/${session.id}`, "DELETE");
+                  onSaved();
+                  onClose();
+                  notifyAction(`Sesi "${session.title}" berhasil dihapus.`);
+                } catch (err) {
+                  const e = err as Error;
+                  setError(e);
+                  notifyAction(e.message, true);
+                  setSaving(false);
+                }
+              }}
             >
-              Batal
+              <Trash2 size={14} />
+              <span>Hapus Sesi</span>
             </button>
-            <button type="submit" className="button primary" disabled={saving}>
-              {saving ? "Menyimpan..." : "Simpan Pengaturan"}
-            </button>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                type="button"
+                className="button secondary"
+                onClick={onClose}
+                disabled={saving}
+              >
+                Batal
+              </button>
+              <button type="submit" className="button primary" disabled={saving}>
+                {saving ? "Menyimpan..." : "Simpan Pengaturan"}
+              </button>
+            </div>
           </div>
         </fieldset>
       </form>

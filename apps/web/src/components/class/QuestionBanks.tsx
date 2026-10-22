@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Edit3, Trash2 } from "lucide-react";
+import { confirmAction } from "../../confirm";
 import {
   t,
   api,
@@ -67,27 +69,53 @@ export function QuestionBanks({
                 <span className="count">{bank.questions.length}</span>
               </h2>
               {writable && (
-                <button
-                  className="secondary"
-                  onClick={() => {
-                    setQuestion({
-                      text: "",
-                      type: "SINGLE_CHOICE",
-                      points: 10,
-                      options: [
-                        { id: "a", text: "" },
-                        { id: "b", text: "" },
-                      ],
-                      answerKey: { correct: ["a"] },
-                      rubric: [],
-                      maxWords: 1000,
-                    });
-                    setQuestionErrors([]);
-                    setModal({ kind: "question", bankId: bank.id });
-                  }}
-                >
-                  {t.newQuestion}
-                </button>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    className="secondary"
+                    onClick={() => {
+                      setQuestion({
+                        text: "",
+                        type: "SINGLE_CHOICE",
+                        points: 10,
+                        options: [
+                          { id: "a", text: "" },
+                          { id: "b", text: "" },
+                        ],
+                        answerKey: { correct: ["a"] },
+                        rubric: [],
+                        maxWords: 1000,
+                      });
+                      setQuestionErrors([]);
+                      setModal({ kind: "question", bankId: bank.id });
+                    }}
+                  >
+                    {t.newQuestion}
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary danger"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      color: "var(--danger, #dc2626)",
+                    }}
+                    onClick={async () => {
+                      const confirmed = await confirmAction(
+                        `Hapus bank soal "${bank.title}"? Seluruh soal di dalamnya akan dihapus permanen.`,
+                      );
+                      if (!confirmed) return;
+                      await api(
+                        `/course-classes/${classId}/question-banks/${bank.id}`,
+                        "DELETE",
+                      );
+                      banks.reload();
+                    }}
+                  >
+                    <Trash2 size={13} />
+                    <span>Hapus Bank</span>
+                  </button>
+                </div>
               )}
             </div>
             {bank.questions.map((q: any, i: number) => (
@@ -104,6 +132,81 @@ export function QuestionBanks({
                     <Html text={formatContentHtml(q.text)} />
                   </div>
                   <AnswerKeyDisplay question={q} />
+                  {writable && (
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: 8,
+                        marginTop: 14,
+                        justifyContent: "flex-end",
+                        borderTop: "1px solid var(--border, #f1f5f9)",
+                        paddingTop: 10,
+                      }}
+                    >
+                      <button
+                        type="button"
+                        className="secondary sm"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          fontSize: "0.82rem",
+                        }}
+                        onClick={() => {
+                          setQuestion({
+                            id: q.id,
+                            text: q.text,
+                            type: q.type,
+                            points: q.points,
+                            options: q.options || [],
+                            allowedFileTypes: q.allowedFileTypes || [
+                              "PDF",
+                              "DOCX",
+                              "PNG",
+                              "JPG",
+                            ],
+                            answerKey: q.answerKey || { correct: [] },
+                            rubric: q.rubric || [],
+                            maxWords: q.maxWords || 1000,
+                          });
+                          setQuestionErrors([]);
+                          setModal({
+                            kind: "question",
+                            bankId: bank.id,
+                            questionId: q.id,
+                          });
+                        }}
+                      >
+                        <Edit3 size={13} />
+                        <span>Edit Soal</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="secondary danger sm"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          fontSize: "0.82rem",
+                          color: "var(--danger, #dc2626)",
+                        }}
+                        onClick={async () => {
+                          const confirmed = await confirmAction(
+                            "Hapus soal ini dari bank soal?",
+                          );
+                          if (!confirmed) return;
+                          await api(
+                            `/course-classes/${classId}/question-banks/${bank.id}/questions/${q.id}`,
+                            "DELETE",
+                          );
+                          banks.reload();
+                        }}
+                      >
+                        <Trash2 size={13} />
+                        <span>Hapus Soal</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </details>
             ))}
@@ -131,9 +234,13 @@ export function QuestionBanks({
         </Modal>
       )}
       {modal?.kind === "question" && (
-        <Modal title={t.newQuestion} wide onClose={() => setModal(null)}>
+        <Modal
+          title={modal.questionId ? "Edit Soal" : t.newQuestion}
+          wide
+          onClose={() => setModal(null)}
+        >
           <Form
-            draftKey={`bank-question:${modal.bankId}`}
+            draftKey={modal.questionId ? undefined : `bank-question:${modal.bankId}`}
             draftValue={question}
             onRestoreDraft={setQuestion}
             onSubmit={async () => {
@@ -155,11 +262,19 @@ export function QuestionBanks({
                 );
               }
               setQuestionErrors([]);
-              await api(
-                `/course-classes/${classId}/question-banks/${modal.bankId}/questions`,
-                "POST",
-                parsed.data,
-              );
+              if (modal.questionId) {
+                await api(
+                  `/course-classes/${classId}/question-banks/${modal.bankId}/questions/${modal.questionId}`,
+                  "PUT",
+                  parsed.data,
+                );
+              } else {
+                await api(
+                  `/course-classes/${classId}/question-banks/${modal.bankId}/questions`,
+                  "POST",
+                  parsed.data,
+                );
+              }
               setModal(null);
               banks.reload();
             }}

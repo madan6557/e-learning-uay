@@ -385,6 +385,49 @@ export function registerAttendanceRoutes(app: Express) {
     ),
   );
 
+  // 3b. DELETE /api/v1/attendance/:sessionId
+  // Menghapus sesi presensi beserta seluruh catatan kehadiran di dalamnya
+  app.delete("/api/v1/attendance/:sessionId", async (req, res) =>
+    res.json(
+      await mutate(req, async (tx) => {
+        const sessionId = String(req.params.sessionId);
+        const session = await tx.attendanceSession.findUnique({
+          where: { id: sessionId },
+          include: { class: { include: { course: true, parentClass: true } } },
+        });
+        ensure(session, 404, "NOT_FOUND");
+
+        const cls = await classAccess(tx, req.context.user, session.classId, true);
+        ensure(cls.canManage, 403, "WRITE_ACCESS_DENIED");
+        ensure(
+          cls.status !== "ARCHIVED" &&
+            cls.course.status !== "ARCHIVED" &&
+            cls.parentClass?.status !== "ARCHIVED",
+          423,
+          "CLASS_ARCHIVED",
+        );
+
+        await tx.attendanceSession.delete({
+          where: { id: sessionId },
+        });
+
+        await audit(
+          tx,
+          req.context,
+          "DELETE",
+          "ATTENDANCE_SESSION",
+          session.id,
+          session.classId,
+          session,
+          null,
+          `Penghapusan sesi presensi: ${session.title}`,
+        );
+
+        return { ok: true };
+      }),
+    ),
+  );
+
   // 4. GET /api/v1/attendance/:sessionId/records
   // Mengambil daftar seluruh mahasiswa kelas beserta status kehadiran saat ini
   app.get("/api/v1/attendance/:sessionId/records", async (req, res) => {
