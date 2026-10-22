@@ -44,12 +44,14 @@ export function QuestionBanks({
             <button
               className="secondary"
               onClick={() => setModal({ kind: "import" })}
+              title="Impor butir soal dari file spreadsheet atau teks"
             >
               {t.import}
             </button>
             <button
               className="primary"
               onClick={() => setModal({ kind: "bank" })}
+              title="Buat kelompok bank soal baru untuk kelas ini"
             >
               {t.newBank}
             </button>
@@ -72,6 +74,7 @@ export function QuestionBanks({
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
                     className="secondary"
+                    title="Tambah butir soal baru ke dalam bank soal ini"
                     onClick={() => {
                       setQuestion({
                         text: "",
@@ -152,6 +155,7 @@ export function QuestionBanks({
                           gap: 6,
                           fontSize: "0.82rem",
                         }}
+                        title="Edit pertanyaan, opsi pilihan, kunci jawaban, atau poin soal ini"
                         onClick={() => {
                           setQuestion({
                             id: q.id,

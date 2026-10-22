@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import {
   t,
   api,
@@ -238,56 +239,69 @@ export function Audit({ classId }: { classId: string }) {
               typeof entry.reason === "string" ? entry.reason.trim() : "";
 
             return (
-              <article key={entry.id} className="card audit-entry">
-                <div className="audit-header">
-                  <div className="audit-header-main">
-                    <span className={`badge ${actionInfo.tone}`}>
-                      {actionInfo.label}
-                    </span>
-                    <h3 className="audit-target-title">{targetTitle}</h3>
-                    <div className="audit-meta">
+              <details key={entry.id} className="card audit-entry audit-collapsible">
+                <summary className="audit-header" style={{ cursor: "pointer", listStyle: "none" }} title="Klik untuk membuka atau menyembunyikan rincian data aktivitas ini">
+                  <div className="audit-header-main" style={{ width: "100%" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                        <span className={`badge ${actionInfo.tone}`}>
+                          {actionInfo.label}
+                        </span>
+                        <h3 className="audit-target-title" style={{ margin: 0 }}>{targetTitle}</h3>
+                      </div>
+                      <span className="audit-toggle-hint" style={{ fontSize: "0.8rem", color: "var(--primary, #0284c7)", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                        <ChevronDown size={14} className="audit-chevron" />
+                        <span>{diffs.length > 0 ? `${diffs.length} rincian` : reason ? "Catatan" : "Rincian"}</span>
+                      </span>
+                    </div>
+                    <div className="audit-meta" style={{ marginTop: 4 }}>
                       <span className="audit-actor">{actor}</span>
                       <span className="audit-dot">·</span>
                       <time className="audit-time">{date(entry.createdAt)}</time>
                     </div>
                   </div>
+                </summary>
+
+                <div className="audit-collapsible-body" style={{ marginTop: 12, paddingTop: 12, borderTop: "1px dashed var(--border, #e2e8f0)" }}>
+                  {reason && (
+                    <div className="audit-reason-box">
+                      <strong>Catatan / Alasan:</strong> {reason}
+                    </div>
+                  )}
+
+                  {diffs.length > 0 ? (
+                    <div className="audit-changes-box">
+                      <div className="audit-changes-heading">
+                        {t.auditChangedFields || "Rincian perubahan data:"}
+                      </div>
+                      <div className="audit-changes-list">
+                        {diffs.map((diff: { field: string; before?: string; after: string }, i: number) => (
+                          <div key={i} className="audit-change-row">
+                            <span className="audit-field-name">
+                              {diff.field}:
+                            </span>
+                            {diff.before !== undefined && (
+                              <>
+                                <span className="audit-value-before">
+                                  {diff.before}
+                                </span>
+                                <span className="audit-arrow">➔</span>
+                              </>
+                            )}
+                            <span className="audit-value-after">
+                              {diff.after}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : !reason ? (
+                    <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--muted, #64748b)" }}>
+                      Aktivitas tercatat berhasil. Tidak ada parameter nilai tambahan yang diubah.
+                    </p>
+                  ) : null}
                 </div>
-
-                {reason && (
-                  <div className="audit-reason-box">
-                    <strong>Catatan:</strong> {reason}
-                  </div>
-                )}
-
-                {diffs.length > 0 && (
-                  <div className="audit-changes-box">
-                    <div className="audit-changes-heading">
-                      {t.auditChangedFields || "Rincian perubahan data:"}
-                    </div>
-                    <div className="audit-changes-list">
-                      {diffs.map((diff: { field: string; before?: string; after: string }, i: number) => (
-                        <div key={i} className="audit-change-row">
-                          <span className="audit-field-name">
-                            {diff.field}:
-                          </span>
-                          {diff.before !== undefined && (
-                            <>
-                              <span className="audit-value-before">
-                                {diff.before}
-                              </span>
-                              <span className="audit-arrow">➔</span>
-                            </>
-                          )}
-                          <span className="audit-value-after">
-                            {diff.after}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-              </article>
+              </details>
             );
           })}
           {hasMore && (entries.data?.length ?? 0) >= 50 && (

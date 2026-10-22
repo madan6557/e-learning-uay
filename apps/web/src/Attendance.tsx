@@ -775,6 +775,7 @@ export function Attendance({
                               onClick={() =>
                                 setModal({ kind: "schedule", session: s })
                               }
+                              title="Atur jadwal buka/tutup otomatis, tanggal perkuliahan, dan kode presensi"
                             >
                               <Sliders size={14} />
                               <span>Atur Jadwal</span>
@@ -826,6 +827,7 @@ export function Attendance({
                             onClick={() =>
                               setModal({ kind: "code", session: s })
                             }
+                            title="Tampilkan kode angka dan QR code di layar proyektor ruang kuliah"
                           >
                             <QrCode size={14} />
                             <span>Kode Proyektor</span>
@@ -850,6 +852,7 @@ export function Attendance({
                           onClick={() =>
                             setModal({ kind: "manual", session: s })
                           }
+                          title="Buka daftar nama mahasiswa dan status kehadiran sesi ini"
                         >
                           <UserCheck size={14} />
                           <span>

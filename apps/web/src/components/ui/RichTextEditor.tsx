@@ -1,4 +1,4 @@
-import { useState, useRef, useContext, useId } from "react";
+import { useState, useRef, useContext, useId, useEffect } from "react";
 import {
   Bold,
   Italic,
@@ -9,11 +9,10 @@ import {
   Quote,
   Link as LinkIcon,
   Code,
-  Eye,
-  Edit3,
   Sparkles,
+  FileCode,
+  Type,
 } from "lucide-react";
-import { Html } from "../../Content";
 import { FieldContext } from "./Field";
 import { AiPromptModal, type AiPromptTemplate } from "./AiPromptModal";
 export type { AiPromptTemplate } from "./AiPromptModal";
@@ -191,38 +190,85 @@ export function RichTextEditor({
   defaultAiTemplate,
   showAiPrompt = true,
 }: RichTextEditorProps) {
-  const [mode, setMode] = useState<"edit" | "preview">("edit");
+  const [mode, setMode] = useState<"visual" | "source">("visual");
   const [showAiModal, setShowAiModal] = useState(false);
+  const editorRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const field = useContext(FieldContext);
   const generatedId = useId();
   const controlId = id ?? field?.controlId ?? generatedId;
+  const computedMinHeight = minHeight ?? (rows ? rows * 28 : 140);
 
-  const insertTag = (before: string, after: string, placeholderText = "") => {
-    if (disabled) return;
-    const el = textareaRef.current;
-    if (!el) {
-      onChange(value + before + placeholderText + after);
-      return;
+  // Sync value from props into contentEditable innerHTML when changed externally
+  useEffect(() => {
+    if (editorRef.current && mode === "visual") {
+      if (editorRef.current.innerHTML !== (value || "")) {
+        editorRef.current.innerHTML = value || "";
+      }
     }
-    const start = el.selectionStart;
-    const end = el.selectionEnd;
-    const selected = value.slice(start, end) || placeholderText;
-    const newValue =
-      value.slice(0, start) + before + selected + after + value.slice(end);
-    onChange(newValue);
-    setTimeout(() => {
-      el.focus();
-      el.setSelectionRange(
-        start + before.length,
-        start + before.length + selected.length,
-      );
-    }, 0);
+  }, [value, mode]);
+
+  const handleInput = () => {
+    if (!editorRef.current) return;
+    let html = editorRef.current.innerHTML;
+    // Normalize empty content
+    if (html === "<p><br></p>" || html === "<br>" || html.trim() === "") {
+      html = "";
+    }
+    onChange(html);
+  };
+
+  const exec = (command: string, val: string | undefined = undefined) => {
+    if (disabled) return;
+    if (mode === "source") return;
+    editorRef.current?.focus();
+    document.execCommand(command, false, val);
+    handleInput();
+  };
+
+  const formatHeading = () => {
+    if (disabled || mode === "source") return;
+    editorRef.current?.focus();
+    document.execCommand("formatBlock", false, "<h3>");
+    handleInput();
+  };
+
+  const insertCallout = () => {
+    if (disabled || mode === "source") return;
+    editorRef.current?.focus();
+    const sel = window.getSelection();
+    const selectedText =
+      sel?.toString() || "Tuliskan instruksi atau catatan penting di sini...";
+    const calloutHtml = `<blockquote class="callout-box"><strong>Catatan:</strong> ${selectedText}</blockquote><p><br></p>`;
+    document.execCommand("insertHTML", false, calloutHtml);
+    handleInput();
+  };
+
+  const insertLink = () => {
+    if (disabled || mode === "source") return;
+    editorRef.current?.focus();
+    const url = prompt(
+      "Masukkan URL tautan web (contoh: https://uay.ac.id):",
+      "https://",
+    );
+    if (url) {
+      document.execCommand("createLink", false, url);
+      handleInput();
+    }
+  };
+
+  const insertCode = () => {
+    if (disabled || mode === "source") return;
+    editorRef.current?.focus();
+    const sel = window.getSelection();
+    const selectedText = sel?.toString() || "kode";
+    document.execCommand("insertHTML", false, `<code>${selectedText}</code>`);
+    handleInput();
   };
 
   return (
     <div className={`rich-editor-container ${className}`}>
-      {/* Hidden textarea to guarantee FormData captures value even if in preview mode */}
+      {/* Hidden textarea to guarantee FormData captures value in standard form submit */}
       {name && (
         <textarea
           name={name}
@@ -235,7 +281,7 @@ export function RichTextEditor({
         />
       )}
 
-      {/* Formatting Toolbar */}
+      {/* Formatting Toolbar with rich hover tooltips */}
       <div
         className="rich-editor-toolbar"
         style={{ justifyContent: "space-between" }}
@@ -250,25 +296,25 @@ export function RichTextEditor({
         >
           <button
             type="button"
-            title="Teks Tebal"
-            disabled={disabled || mode === "preview"}
-            onClick={() => insertTag("<strong>", "</strong>", "Teks Tebal")}
+            title="Tebalkan teks (Ctrl+B) — teks langsung tebal tanpa tag"
+            disabled={disabled || mode === "source"}
+            onClick={() => exec("bold")}
           >
             <Bold size={13} /> {!compact && "Tebal"}
           </button>
           <button
             type="button"
-            title="Teks Miring"
-            disabled={disabled || mode === "preview"}
-            onClick={() => insertTag("<em>", "</em>", "Teks Miring")}
+            title="Miringkan teks (Ctrl+I) — teks langsung miring tanpa tag"
+            disabled={disabled || mode === "source"}
+            onClick={() => exec("italic")}
           >
             <Italic size={13} /> {!compact && "Miring"}
           </button>
           <button
             type="button"
-            title="Garis Bawah"
-            disabled={disabled || mode === "preview"}
-            onClick={() => insertTag("<u>", "</u>", "Garis Bawah")}
+            title="Garis bawahi teks (Ctrl+U) — teks langsung bergaris bawah"
+            disabled={disabled || mode === "source"}
+            onClick={() => exec("underline")}
           >
             <Underline size={13} /> {!compact && "Garis Bawah"}
           </button>
@@ -276,9 +322,9 @@ export function RichTextEditor({
           {!compact && (
             <button
               type="button"
-              title="Subjudul"
-              disabled={disabled || mode === "preview"}
-              onClick={() => insertTag("<h3>", "</h3>", "Subjudul Poin")}
+              title="Ubah teks terpilih menjadi Subjudul (Heading) langsung"
+              disabled={disabled || mode === "source"}
+              onClick={formatHeading}
             >
               <Heading size={13} /> Subjudul
             </button>
@@ -288,135 +334,129 @@ export function RichTextEditor({
 
           <button
             type="button"
-            title="Daftar Poin (Bullet)"
-            disabled={disabled || mode === "preview"}
-            onClick={() =>
-              insertTag(
-                "<ul>\n  <li>",
-                "</li>\n  <li>Poin berikutnya</li>\n</ul>",
-                "Poin pertama",
-              )
-            }
+            title="Buat daftar butir (Bullet List) — format langsung terlihat seperti Word"
+            disabled={disabled || mode === "source"}
+            onClick={() => exec("insertUnorderedList")}
           >
             <List size={13} /> {!compact && "Poin"}
           </button>
           <button
             type="button"
-            title="Daftar Nomor"
-            disabled={disabled || mode === "preview"}
-            onClick={() =>
-              insertTag(
-                "<ol>\n  <li>",
-                "</li>\n  <li>Langkah berikutnya</li>\n</ol>",
-                "Langkah pertama",
-              )
-            }
+            title="Buat daftar bernomor urut (1, 2, 3) — format langsung terlihat seperti Word"
+            disabled={disabled || mode === "source"}
+            onClick={() => exec("insertOrderedList")}
           >
             <ListOrdered size={13} /> {!compact && "Nomor"}
           </button>
           <button
             type="button"
-            title="Kotak Catatan / Sorotan"
-            disabled={disabled || mode === "preview"}
-            onClick={() =>
-              insertTag(
-                '<blockquote class="callout-box">\n  <strong>Catatan:</strong> ',
-                "\n</blockquote>",
-                "Tuliskan instruksi atau catatan penting di sini...",
-              )
-            }
+            title="Sisipkan kotak sorotan berwarna untuk instruksi atau catatan penting"
+            disabled={disabled || mode === "source"}
+            onClick={insertCallout}
           >
             <Quote size={13} /> {!compact && "Catatan"}
           </button>
 
           <button
             type="button"
-            title="Sisipkan Tautan Web"
-            disabled={disabled || mode === "preview"}
-            onClick={() => {
-              const url = prompt(
-                "Masukkan URL tautan (contoh: https://uay.ac.id):",
-                "https://",
-              );
-              if (url) {
-                insertTag(
-                  `<a href="${url}" target="_blank" rel="noopener noreferrer">`,
-                  "</a>",
-                  "Teks Tautan",
-                );
-              }
-            }}
+            title="Sisipkan tautan URL web aktif pada teks terpilih"
+            disabled={disabled || mode === "source"}
+            onClick={insertLink}
           >
             <LinkIcon size={13} /> {!compact && "Tautan"}
           </button>
 
           <button
             type="button"
-            title="Kode / Monospace"
-            disabled={disabled || mode === "preview"}
-            onClick={() => insertTag("<code>", "</code>", "kode")}
+            title="Format teks monospace / potongan kode"
+            disabled={disabled || mode === "source"}
+            onClick={insertCode}
           >
             <Code size={13} /> {!compact && "Kode"}
           </button>
         </div>
 
-        {/* Mode Toggle & AI Prompt */}
+        {/* AI Prompt & Mode Toggle */}
         <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-          {showAiPrompt && <button
-            type="button"
-            style={{
-              background:
-                "linear-gradient(135deg, var(--adaptive-info-soft, rgba(124, 58, 237, 0.09)), var(--adaptive-info-soft, rgba(2, 132, 199, 0.09)))",
-              color: "var(--adaptive-violet-text, #7c3aed)",
-              borderColor: "var(--adaptive-info-border, rgba(124, 58, 237, 0.35))",
-              fontWeight: 600,
-            }}
-            onClick={() => {
-              setShowAiModal(true);
-            }}
-            title="Buka Template Prompt AI"
-          >
-            <Sparkles size={13} /> {!compact && "Prompt AI"}
-          </button>}
+          {showAiPrompt && (
+            <button
+              type="button"
+              style={{
+                background:
+                  "linear-gradient(135deg, var(--adaptive-info-soft, rgba(124, 58, 237, 0.09)), var(--adaptive-info-soft, rgba(2, 132, 199, 0.09)))",
+                color: "var(--adaptive-violet-text, #7c3aed)",
+                borderColor:
+                  "var(--adaptive-info-border, rgba(124, 58, 237, 0.35))",
+                fontWeight: 600,
+              }}
+              onClick={() => setShowAiModal(true)}
+              title="Gunakan bantuan AI untuk menyusun kerangka teks pembelajaran otomatis"
+            >
+              <Sparkles size={13} /> {!compact && "Prompt AI"}
+            </button>
+          )}
 
           <button
             type="button"
             style={{
               background:
-                mode === "edit" ? "var(--action-background, var(--primary, #0284c7))" : "var(--adaptive-surface, #ffffff)",
-              color: mode === "edit" ? "#ffffff" : "var(--foreground, #334155)",
+                mode === "visual"
+                  ? "var(--action-background, var(--primary, #0284c7))"
+                  : "var(--adaptive-surface, #ffffff)",
+              color:
+                mode === "visual" ? "#ffffff" : "var(--foreground, #334155)",
               borderColor:
-                mode === "edit" ? "var(--primary, #0284c7)" : undefined,
+                mode === "visual" ? "var(--primary, #0284c7)" : undefined,
             }}
-            onClick={() => setMode("edit")}
-            aria-pressed={mode === "edit"}
-            aria-controls={controlId}
-            title="Mode Editor Teks"
+            onClick={() => setMode("visual")}
+            aria-pressed={mode === "visual"}
+            title="Mode visual seperti Microsoft Word (efek tebal/miring/poin langsung terlihat tanpa tag)"
           >
-            <Edit3 size={13} /> Tulis
+            <Type size={13} /> {!compact && "Visual (Word)"}
           </button>
           <button
             type="button"
             style={{
               background:
-                mode === "preview" ? "var(--action-background, var(--primary, #0284c7))" : "var(--adaptive-surface, #ffffff)",
+                mode === "source"
+                  ? "var(--action-background, var(--primary, #0284c7))"
+                  : "var(--adaptive-surface, #ffffff)",
               color:
-                mode === "preview" ? "#ffffff" : "var(--foreground, #334155)",
+                mode === "source" ? "#ffffff" : "var(--foreground, #334155)",
               borderColor:
-                mode === "preview" ? "var(--primary, #0284c7)" : undefined,
+                mode === "source" ? "var(--primary, #0284c7)" : undefined,
             }}
-            onClick={() => setMode("preview")}
-            aria-pressed={mode === "preview"}
-            aria-controls={controlId}
-            title="Pratinjau Hasil Format"
+            onClick={() => setMode("source")}
+            aria-pressed={mode === "source"}
+            title="Mode kode HTML mentah (khusus teknis bila ingin melihat tag HTML)"
           >
-            <Eye size={13} /> Pratinjau
+            <FileCode size={13} /> {!compact && "HTML"}
           </button>
         </div>
       </div>
 
-      {/* Editor Body or Preview Body */}
-      {mode === "edit" ? (
+      {/* WYSIWYG ContentEditable Body */}
+      {mode === "visual" ? (
+        <div
+          ref={editorRef}
+          id={controlId}
+          role="textbox"
+          contentEditable={!disabled}
+          suppressContentEditableWarning
+          aria-multiline="true"
+          aria-labelledby={field?.labelId}
+          aria-describedby={field?.describedBy}
+          aria-label={field ? undefined : placeholder || "Konten teks"}
+          className="rich-editor-content formatted-content announcement-content-body"
+          style={{ minHeight: computedMinHeight }}
+          data-placeholder={
+            placeholder ||
+            "Tuliskan konten di sini (seperti Microsoft Word: format langsung terlihat)..."
+          }
+          onInput={handleInput}
+          onBlur={handleInput}
+        />
+      ) : (
         <textarea
           ref={textareaRef}
           id={controlId}
@@ -425,42 +465,13 @@ export function RichTextEditor({
           aria-label={field ? undefined : placeholder || "Konten teks"}
           className="rich-editor-textarea"
           rows={rows}
-          style={{ minHeight }}
-          placeholder={
-            placeholder || "Tuliskan konten dengan format teks rapi di sini..."
-          }
+          style={{ minHeight: computedMinHeight }}
+          placeholder={placeholder || "Tuliskan kode HTML di sini..."}
           value={value}
           required={required}
           disabled={disabled}
           onChange={(e) => onChange(e.target.value)}
         />
-      ) : (
-        <div
-          id={controlId}
-          role="region"
-          tabIndex={0}
-          aria-labelledby={field?.labelId}
-          aria-label={field ? undefined : "Pratinjau konten teks"}
-          className="rich-editor-textarea formatted-content announcement-content-body"
-          style={{
-            minHeight: minHeight ?? (rows ? rows * 28 : 120),
-            maxHeight: 480,
-            overflowY: "auto",
-            background: "var(--surface-subtle, #fafafa)",
-            padding: "14px 16px",
-          }}
-        >
-          {value.trim() ? (
-            <Html text={formatContentHtml(value)} inline={false} />
-          ) : (
-            <span
-              style={{ color: "var(--muted, #94a3b8)", fontStyle: "italic" }}
-            >
-              (Belum ada teks untuk dipratinjau. Ketik pada mode Tulis terlebih
-              dahulu.)
-            </span>
-          )}
-        </div>
       )}
 
       {showAiPrompt && showAiModal && (

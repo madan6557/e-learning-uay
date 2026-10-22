@@ -38,7 +38,6 @@ import {
   categoryLabel,
 } from "./ActivityWaterfall";
 import {
-  INDICATOR_DEFINITIONS,
   type Activity,
   type ActivityMetrics,
   type ClassDetail,
@@ -68,12 +67,11 @@ const shortDay = (v: string) =>
         month: "short",
       }).format(new Date(v + "T00:00:00"));
 type View =
-  | "overview"
   | "lecturers"
+  | "overview"
   | "lecturer"
   | "class"
-  | "activities"
-  | "definitions";
+  | "activities";
 function useReport<T>(path: string | null, onUnauthorized: () => void) {
   const cacheKey = path ? `/rector${path}` : null;
   const initialData = cacheKey
@@ -588,7 +586,7 @@ export function RectorDashboard({ demo }: { demo: boolean }) {
     setExportError("");
     try {
       const q = new URLSearchParams(query);
-      q.set("view", view === "definitions" ? "overview" : view);
+      q.set("view", view);
       if (id) q.set("id", id);
       const r = await fetch(API + "/exports/" + format + "?" + q);
       if (r.status === 401) {
@@ -624,8 +622,7 @@ export function RectorDashboard({ demo }: { demo: boolean }) {
         ? "Aktivitas dosen"
         : view === "activities"
           ? "Riwayat kegiatan"
-          : view === "definitions"
-            ? "Panduan membaca"
+          
             : view === "lecturer"
               ? "Profil aktivitas dosen"
               : "Pemantauan kelas";
@@ -645,10 +642,9 @@ export function RectorDashboard({ demo }: { demo: boolean }) {
       <nav className="rector-tabs" aria-label="Laporan akademik">
         {(
           [
-            { v: "overview", text: "Ringkasan" },
-            { v: "lecturers", text: "Dosen & kelas" },
+            { v: "lecturers", text: "Aktivitas dosen" },
+            { v: "overview", text: "Ringkasan universitas" },
             { v: "activities", text: "Riwayat kegiatan" },
-            { v: "definitions", text: "Panduan membaca" },
           ] as { v: View; text: string }[]
         ).map((link) => (
           <button
@@ -674,33 +670,29 @@ export function RectorDashboard({ demo }: { demo: boolean }) {
                 ? "Pantau aktivitas dosen dan penyelesaian penilaian."
                 : view === "lecturer"
                   ? "Lihat kelas dan urutan aktivitas dosen selama sesi login."
-                  : view === "definitions"
-                    ? "Penjelasan singkat untuk memahami laporan akademik."
-                    : "Pilih dosen atau kelas untuk melihat rinciannya."}
+                  : "Pilih dosen atau kelas untuk melihat rinciannya."}
             </p>
           </div>
-          {view !== "definitions" && (
-            <div className="export-actions">
-              <button
-                disabled={!stats || exporting}
-                onClick={() => exportReport("csv")}
-              >
-                <ArrowDownToLine size={15} /> Unduh tabel
-              </button>
-              <button
-                className="primary"
-                disabled={!stats || exporting}
-                onClick={() => exportReport("pdf")}
-              >
-                <ArrowDownToLine size={15} />
-                {exporting ? "Menyiapkan…" : "Unduh laporan"}
-              </button>
-            </div>
-          )}
+          <div className="export-actions">
+            <button
+              disabled={!stats || exporting}
+              onClick={() => exportReport("csv")}
+              title="Unduh data tabel aktivitas dosen dalam format spreadsheet CSV (Excel)"
+            >
+              <ArrowDownToLine size={15} /> Unduh tabel
+            </button>
+            <button
+              className="primary"
+              disabled={!stats || exporting}
+              onClick={() => exportReport("pdf")}
+              title="Cetak atau unduh dokumen laporan resmi dalam format PDF"
+            >
+              <ArrowDownToLine size={15} />
+              {exporting ? "Menyiapkan…" : "Unduh laporan"}
+            </button>
+          </div>
         </div>
-        {view !== "definitions" && (
-          <>
-            <div className="data-status">
+        <div className="data-status">
               <span>
                 <Clock3 size={14} /> Data terakhir:{" "}
                 <strong>
@@ -741,67 +733,66 @@ export function RectorDashboard({ demo }: { demo: boolean }) {
             />
             {opts && (
               <section className="filter-panel" aria-label="Filter laporan">
-                <div className="filter-top">
-                  <span>
-                    <CalendarDays size={15} /> Filter laporan
+                <div className="filter-top" style={{ flexWrap: "wrap", gap: 12 }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontWeight: 700 }}>
+                    <CalendarDays size={16} /> Pemantauan Periode:
                   </span>
-                  <button
-                    aria-expanded={moreFilters}
-                    onClick={() => setMoreFilters(!moreFilters)}
-                  >
-                    {moreFilters ? "Tutup filter" : "Ubah filter"}{" "}
-                    <ChevronDown size={13} />
-                  </button>
-                  <button
-                    onClick={() => {
-                      const next = new URLSearchParams({
-                        view: "overview",
-                        timeZone,
-                      });
-                      history.pushState(history.state, "", "/rector?" + next);
-                      setParams(next);
-                    }}
-                  >
-                    Reset filter
-                  </button>
-                  {params.has("to") && (
-                    <button onClick={() => editFilter("to", "")}>
-                      Ikuti tanggal terbaru
-                    </button>
-                  )}
-                </div>
-                {moreFilters && (
-                  <div className="filter-fields">
-                    <label>
-                      Semester
-                      <select
-                        value={get("semester")}
-                        onChange={(e) => editFilter("semester", e.target.value)}
-                      >
-                        <option value="all">Semua semester</option>
-                        {opts.semesters.map((s) => (
-                          <option key={s}>{s}</option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className={!moreFilters ? "extra-filter" : ""}>
-                      Dari tanggal
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.86rem", fontWeight: 600 }}>
+                      Dari:
                       <input
                         type="date"
                         aria-label="Dari tanggal"
                         value={get("from")}
                         onChange={(e) => editFilter("from", e.target.value)}
+                        title="Pilih tanggal awal periode pemantauan aktivitas dosen"
+                        style={{ padding: "5px 8px", borderRadius: 6, border: "1px solid var(--line, #cbd5e1)" }}
                       />
                     </label>
-                    <label className={!moreFilters ? "extra-filter" : ""}>
-                      Sampai tanggal
+                    <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.86rem", fontWeight: 600 }}>
+                      Sampai:
                       <input
                         type="date"
                         aria-label="Sampai tanggal"
                         value={get("to")}
                         onChange={(e) => editFilter("to", e.target.value)}
+                        title="Pilih tanggal akhir periode pemantauan aktivitas dosen"
+                        style={{ padding: "5px 8px", borderRadius: 6, border: "1px solid var(--line, #cbd5e1)" }}
                       />
                     </label>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const next = new URLSearchParams({
+                        view: view,
+                        timeZone,
+                      });
+                      history.pushState(history.state, "", "/rector?" + next);
+                      setParams(next);
+                    }}
+                    title="Kembalikan tanggal dan filter ke pengaturan default"
+                  >
+                    Reset filter
+                  </button>
+                  {params.has("to") && (
+                    <button
+                      onClick={() => editFilter("to", "")}
+                      title="Otomatis mengikuti tanggal hari ini"
+                    >
+                      Ikuti tanggal terbaru
+                    </button>
+                  )}
+                  <button
+                    aria-expanded={moreFilters}
+                    onClick={() => setMoreFilters(!moreFilters)}
+                    title="Buka / tutup pilihan filter program studi dan kelas"
+                  >
+                    {moreFilters ? "Tutup filter prodi" : "Filter prodi & kelas"}{" "}
+                    <ChevronDown size={13} />
+                  </button>
+                </div>
+                {moreFilters && (
+                  <div className="filter-fields">
                     <label>
                       Program studi
                       <select
@@ -809,6 +800,7 @@ export function RectorDashboard({ demo }: { demo: boolean }) {
                         onChange={(e) =>
                           editFilter("department", e.target.value)
                         }
+                        title="Saring aktivitas berdasarkan program studi"
                       >
                         <option value="">Semua prodi</option>
                         {opts.departments.map((d) => (
@@ -816,11 +808,25 @@ export function RectorDashboard({ demo }: { demo: boolean }) {
                         ))}
                       </select>
                     </label>
-                    <label className={!moreFilters ? "extra-filter" : ""}>
+                    <label>
+                      Semester
+                      <select
+                        value={get("semester")}
+                        onChange={(e) => editFilter("semester", e.target.value)}
+                        title="Saring berdasarkan semester akademik"
+                      >
+                        <option value="all">Semua semester</option>
+                        {opts.semesters.map((s) => (
+                          <option key={s}>{s}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
                       Dosen
                       <select
                         value={get("lecturer")}
                         onChange={(e) => editFilter("lecturer", e.target.value)}
+                        title="Pilih dosen tertentu"
                       >
                         <option value="">Semua dosen</option>
                         {visibleLecturers.map((l) => (
@@ -830,11 +836,12 @@ export function RectorDashboard({ demo }: { demo: boolean }) {
                         ))}
                       </select>
                     </label>
-                    <label className={!moreFilters ? "extra-filter" : ""}>
+                    <label>
                       Kelas
                       <select
                         value={get("classId")}
                         onChange={(e) => editFilter("classId", e.target.value)}
+                        title="Pilih kelas perkuliahan tertentu"
                       >
                         <option value="">Semua kelas</option>
                         {visibleClasses.map((c) => (
@@ -866,8 +873,6 @@ export function RectorDashboard({ demo }: { demo: boolean }) {
               error={report.error}
               retry={report.reload}
             />
-          </>
-        )}
         {stats && view === "overview" && (
           <Overview stats={stats} nav={nav} from={get("from")} to={get("to")} />
         )}
@@ -906,7 +911,7 @@ export function RectorDashboard({ demo }: { demo: boolean }) {
             unauthorized={unauthorized}
           />
         )}{" "}
-        {view === "definitions" && <Definitions demo={demo} />}
+        
         <footer>
           Universitas Achmad Yani · Dashboard Rektor{" "}
           <span>{demo ? "Data contoh · " : ""}Akses hanya baca</span>
@@ -1073,29 +1078,7 @@ function Overview({
         to={to}
         onLecturer={(id, sessionId) => nav("lecturer", id, sessionId)}
       />
-      <details className="secondary-detail panel">
-        <summary>Informasi pembelajaran lainnya</summary>
-        <div className="supporting-stats">
-          <span>
-            <strong>{s.loggedInLecturers}</strong> dosen login
-          </span>
-          <span>
-            <strong>{s.materialCount}</strong> materi tersedia
-          </span>
-          <span>
-            <strong>{s.assignmentCount}</strong> tugas
-          </span>
-          <span>
-            <strong>{s.quizCount}</strong> kuis
-          </span>
-        </div>
-        <p>
-          Presensi, forum diskusi, dan kehadiran telekonferensi: belum tersedia.
-        </p>
-        <button className="text-link" onClick={() => nav("definitions")}>
-          Panduan membaca indikator <ArrowRight size={15} />
-        </button>
-      </details>
+
     </>
   );
 }
@@ -1870,44 +1853,6 @@ function ActivityPage({
           setPage={(p) => update({ page: String(p) })}
         />
       )}
-    </section>
-  );
-}
-function Definitions({ demo }: { demo: boolean }) {
-  return (
-    <section className="panel definitions">
-      <span className="eyebrow">MEMAHAMI LAPORAN</span>
-      <h2>Cara membaca dashboard</h2>
-      <p>
-        Dashboard menyajikan bukti aktivitas untuk mendukung pertimbangan
-        rektor. Tidak ada skor, peringkat, atau penilaian otomatis atas kualitas
-        kerja dosen.
-      </p>
-      {INDICATOR_DEFINITIONS.slice(0, 4).map((text, i) => (
-        <div className="definition" key={text}>
-          <span>{String(i + 1).padStart(2, "0")}</span>
-          <p>{text}</p>
-        </div>
-      ))}
-      <details className="secondary-detail">
-        <summary>Penjelasan perhitungan lebih lengkap</summary>
-        {INDICATOR_DEFINITIONS.slice(4).map((text) => (
-          <p key={text}>{text}</p>
-        ))}
-      </details>
-      <div className="unavailable">
-        <strong>Sumber yang belum tersedia</strong>
-        <p>
-          Presensi, forum diskusi, dan kehadiran telekonferensi belum diukur.
-          Identitas mahasiswa, nilai individual, jawaban, dan isi umpan balik
-          mahasiswa tidak ditampilkan.
-        </p>
-      </div>
-      <p className="footnote">
-        {demo ? "Laporan ini memakai data contoh untuk presentasi. " : ""}
-        Tanggal data terakhir menunjukkan kapan informasi laporan dicatat.
-        Menekan muat ulang tidak menambah kegiatan dosen.
-      </p>
     </section>
   );
 }

@@ -2867,6 +2867,37 @@ hr {
   background: var(--input-bg, #ffffff);
   color: var(--foreground, #0f172a);
 }
+.rich-editor-content {
+  width: 100%;
+  border-radius: 0 0 8px 8px !important;
+  border: 1px solid var(--line, #cbd5e1) !important;
+  font-family: var(--font-sans, inherit);
+  font-size: 0.95rem;
+  line-height: 1.74;
+  padding: 14px 16px;
+  background: var(--input-bg, #ffffff);
+  color: var(--foreground, #0f172a);
+  outline: none;
+  min-height: 140px;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+.rich-editor-content:focus {
+  border-color: var(--primary, #0284c7) !important;
+  box-shadow: 0 0 0 2px var(--focus-ring, rgba(2, 132, 199, 0.2));
+}
+.rich-editor-content:empty:before {
+  content: attr(data-placeholder);
+  color: var(--muted, #94a3b8);
+  pointer-events: none;
+}
+/* Tooltip hover cursor hint */
+[title] {
+  cursor: pointer;
+}
+input[title], textarea[title], [contenteditable][title] {
+  cursor: text;
+}
 .announcement-content-body,
 .formatted-content {
   font-size: 0.95rem;
@@ -3081,3 +3112,23 @@ td .notice {
   .weight-category-grid > :nth-child(3) { grid-column: auto; }
 }
 
+
+/* Collapsible Audit Logs */
+.audit-collapsible summary::-webkit-details-marker {
+  display: none;
+}
+.audit-collapsible summary {
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+.audit-collapsible summary:hover .audit-target-title,
+.audit-collapsible summary:hover .audit-target-heading {
+  color: var(--primary, #0284c7);
+}
+.audit-collapsible .audit-chevron {
+  transition: transform 0.15s ease;
+}
+.audit-collapsible[open] .audit-chevron {
+  transform: rotate(180deg);
+}

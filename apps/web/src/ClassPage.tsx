@@ -864,11 +864,13 @@ export function ClassPage({
                                 onClick={() =>
                                   setModal({ kind: "section", section })
                                 }
+                                title="Edit judul, tipe, tanggal, dan deskripsi pertemuan ini"
                               >
                                 {t.edit}
                               </button>
                               <button
                                 className="text-button danger-text"
+                                title="Hapus pertemuan ini beserta seluruh materi, kuis, dan tugas di dalamnya"
                                 onClick={async () => {
                                   const confirmed = await confirmAction(
                                     `Hapus "${section.title}"? Seluruh materi, kuis, dan tugas di dalam pertemuan ini akan ikut terhapus.`,

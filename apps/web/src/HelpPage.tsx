@@ -166,7 +166,7 @@ export function HelpPage({ user }: { user: { role?: unknown } | null }) {
         <p style={{ color: "var(--muted, #64748b)", marginTop: 6, fontSize: "0.95rem" }}>
           Panduan penggunaan dan solusi pertanyaan umum seputar E-Learning UAY.
         </p>
-        {userRole && <a className="button secondary" href="/Panduan/panduan.html" target="_blank" rel="noopener noreferrer"><ExternalLink size={18} /> Buka buku panduan</a>}
+        {userRole && <a className="button secondary" href="/Panduan/panduan.html" target="_blank" rel="noopener noreferrer" title="Buka buku panduan penggunaan aplikasi"><ExternalLink size={18} /> Buka buku panduan</a>}
       </div>
 
       {selectedArticle ? (

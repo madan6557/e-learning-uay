@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   History,
+  ChevronDown,
   Search,
   RefreshCw,
   Download,
@@ -382,6 +383,7 @@ export function AuditLogView({
                 id="audit-search"
                 type="text"
                 placeholder="Cari aktor, NIM/NIDN, aksi, entitas..."
+                title="Cari jejak aktivitas berdasarkan aktor, NIM/NIDN, aksi, atau entitas"
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
@@ -396,6 +398,7 @@ export function AuditLogView({
             <select
               id="audit-role"
               value={roleFilter}
+              title="Saring log berdasarkan peran pengguna"
               onChange={(e) => {
                 setRoleFilter(e.target.value);
                 setPage(1);
@@ -437,6 +440,7 @@ export function AuditLogView({
               id="audit-date-from"
               type="date"
               value={dateFrom}
+              title="Pilih tanggal awal filter log"
               onChange={(e) => {
                 setDateFrom(e.target.value);
                 setPage(1);
@@ -450,6 +454,7 @@ export function AuditLogView({
               id="audit-date-to"
               type="date"
               value={dateTo}
+              title="Pilih tanggal akhir filter log"
               onChange={(e) => {
                 setDateTo(e.target.value);
                 setPage(1);
@@ -501,21 +506,27 @@ export function AuditLogView({
             const hasChanges = entry.changes && entry.changes.length > 0;
 
             return (
-              <article key={entry.id} className="card audit-log-card">
-                <div className="audit-card-top">
-                  <div className="audit-badge-group">
-                    <span className={`badge ${actionInfo.tone}`}>
-                      {actionInfo.label}
-                    </span>
-                    <span className="badge neutral">{entityLabel}</span>
+              <details key={entry.id} className="card audit-log-card audit-collapsible">
+                <summary className="audit-card-summary" style={{ cursor: "pointer", listStyle: "none" }} title="Klik untuk membuka atau menyembunyikan rincian log aktivitas ini">
+                  <div className="audit-card-top">
+                    <div className="audit-badge-group">
+                      <span className={`badge ${actionInfo.tone}`}>
+                        {actionInfo.label}
+                      </span>
+                      <span className="badge neutral">{entityLabel}</span>
+                    </div>
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+                      <span className="audit-toggle-hint" style={{ fontSize: "0.8rem", color: "var(--primary, #0284c7)", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                        <ChevronDown size={14} className="audit-chevron" />
+                        <span>{hasChanges ? `${entry.changes.length} perubahan` : "Rincian"}</span>
+                      </span>
+                      <time className="audit-timestamp" dateTime={entry.createdAt}>
+                        {date(entry.createdAt)}
+                      </time>
+                    </div>
                   </div>
-                  <time className="audit-timestamp" dateTime={entry.createdAt}>
-                    {date(entry.createdAt)}
-                  </time>
-                </div>
 
-                <div className="audit-card-body">
-                  <div className="audit-target-row">
+                  <div className="audit-target-row" style={{ marginTop: 6 }}>
                     {entry.entity === "USER" && (
                       <span
                         className="audit-target-label"
@@ -530,7 +541,7 @@ export function AuditLogView({
                         Target Akun:
                       </span>
                     )}
-                    <h3 className="audit-target-heading">
+                    <h3 className="audit-target-heading" style={{ margin: "2px 0 6px" }}>
                       {entry.objectTitle || entry.entityId || "Aktivitas Sistem"}
                     </h3>
                   </div>
@@ -557,6 +568,9 @@ export function AuditLogView({
                       </span>
                     )}
                   </div>
+                </summary>
+
+                <div className="audit-card-body" style={{ marginTop: 12, paddingTop: 12, borderTop: "1px dashed var(--border, #e2e8f0)" }}>
 
                   {entry.reason && (
                     <div className="audit-reason-alert">
@@ -602,7 +616,7 @@ export function AuditLogView({
                     </div>
                   )}
                 </div>
-              </article>
+              </details>
             );
           })}
 
