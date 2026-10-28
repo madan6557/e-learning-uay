@@ -294,9 +294,19 @@ export async function uploadFile(
   await new Promise<void>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", ticket.uploadUrl);
-    xhr.withCredentials = true;
+    // Only the application's upload endpoints use our session. A signed
+    // third-party storage URL must never receive the application's bearer token.
+    const apiUrl = new URL(`${apiBase}/api/v1/`, window.location.href);
+    const uploadUrl = new URL(ticket.uploadUrl, window.location.href);
+    const isAppUpload = uploadUrl.origin === apiUrl.origin &&
+      /^\/api\/v1\/files\/(upload|local-storage)\/[^/]+$/.test(uploadUrl.pathname);
+    xhr.withCredentials = isAppUpload;
     for (const [key, value] of Object.entries(ticket.headers ?? {}))
       xhr.setRequestHeader(key, String(value));
+    const token = getAuthToken();
+    if (isAppUpload && token) {
+      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+    }
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable)
         onProgress(Math.round((e.loaded / e.total) * 100));
@@ -305,18 +315,20 @@ export async function uploadFile(
       if (xhr.status >= 200 && xhr.status < 300) {
         resolve();
       } else {
-        let msg = t.connectionError;
+        let msg = xhr.status === 413
+          ? "Ukuran berkas terlalu besar untuk diunggah (melebihi batas server)."
+          : xhr.status === 403 || xhr.status === 401
+            ? "Sesi atau izin akses tidak valid untuk mengunggah berkas ini."
+            : `Unggahan berkas gagal (HTTP ${xhr.status}). Silakan coba lagi.`;
         try {
           const parsed = JSON.parse(xhr.responseText);
+          if (parsed.error?.code) {
+            reject(new ApiError(parsed.error.code, parsed.error.details, parsed.error.requestId));
+            return;
+          }
           if (parsed.message) msg = parsed.message;
           else if (parsed.error?.message) msg = parsed.error.message;
-        } catch {
-          if (xhr.status === 413) {
-            msg = "Ukuran berkas terlalu besar untuk diunggah (melebihi batas server).";
-          } else if (xhr.status === 403 || xhr.status === 401) {
-            msg = "Sesi atau izin akses tidak valid untuk mengunggah berkas ini.";
-          }
-        }
+        } catch { /* Keep the HTTP-specific message for non-JSON responses. */ }
         reject(new Error(msg));
       }
     };
