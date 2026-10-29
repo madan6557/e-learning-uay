@@ -1,0 +1,50 @@
+name: Deploy to Kubernetes Dev Environment - E-Learning
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  build-and-deploy:
+    name: Build Docker & Deploy to k3d
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Build Docker Image
+        run: |
+          docker build \
+            -t uay-elearning-api:dev \
+            -f Dockerfile .
+
+      - name: Compress Docker Image
+        run: |
+          docker save uay-elearning-api:dev | gzip > uay-elearning-api-dev.tar.gz
+          
+      - name: Transfer Image to Dev Server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEV_SSH_HOST }}
+          username: ${{ secrets.DEV_SSH_USER }}
+          key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          source: "uay-elearning-api-dev.tar.gz"
+          target: "/tmp/"
+          
+      - name: Deploy & Rolling Update on Kubernetes
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEV_SSH_HOST }}
+          username: ${{ secrets.DEV_SSH_USER }}
+          key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          script: |
+            gunzip -c /tmp/uay-elearning-api-dev.tar.gz | docker load
+            rm -f /tmp/uay-elearning-api-dev.tar.gz
+            k3d image import uay-elearning-api:dev -c uay-dev-cluster
+            kubectl rollout restart deployment/uay-elearning-api -n uay-dev
+            kubectl rollout status deployment/uay-elearning-api -n uay-dev --timeout=120s
