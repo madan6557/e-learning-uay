@@ -118,6 +118,8 @@ const chart = renderToStaticMarkup(
 );
 assert.ok(chart.includes("00.00–24.00"));
 assert.ok(chart.includes("waktu lokal perangkat"));
+assert.ok(chart.includes('type="date"'));
+assert.ok(!chart.includes("<select"));
 assert.ok(!chart.includes("WIB"));
 assert.deepEqual(sessionChartCalendar([], "2026-11-01", "2026-11-03").days, [
   "2026-11-03",

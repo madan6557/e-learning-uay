@@ -9,7 +9,10 @@ import type {
   Activity,
   LoginSession,
 } from "../../../../packages/shared/src/rector";
-import { formatClock as clock, localDateInput } from "../../../../packages/shared/src/time";
+import {
+  formatClock as clock,
+  localDateInput,
+} from "../../../../packages/shared/src/time";
 
 const axisClock = (at: string | number) =>
   new Intl.DateTimeFormat("id-ID", {
@@ -56,14 +59,21 @@ function Ruler({
   const labels = ["00.00", "06.00", "12.00", "18.00", "24.00"];
   const ticks = labels.map((label, i) => {
     const at = fullDay
-      ? i === 4 ? end : Date.parse(`${localDateInput(start)}T${String(i * 6).padStart(2, "0")}:00:00`)
+      ? i === 4
+        ? end
+        : Date.parse(
+            `${localDateInput(start)}T${String(i * 6).padStart(2, "0")}:00:00`,
+          )
       : start + ((end - start) * i) / 4;
     return { at, label: fullDay ? label : axisClock(at) };
   });
   return (
     <div className="time-ruler" aria-hidden="true">
       {ticks.map((tick, i) => (
-        <span key={i} style={{ left: `${(tick.at - start) / (end - start) * 100}%` }}>
+        <span
+          key={i}
+          style={{ left: `${((tick.at - start) / (end - start)) * 100}%` }}
+        >
           {tick.label}
         </span>
       ))}
@@ -134,19 +144,22 @@ export function SessionChart({
         <div>
           <h3>Rentang login sampai logout</h3>
           <p>
-            00.00–24.00 · waktu lokal perangkat. Klik sesi untuk melihat aktivitas dosen.
+            00.00–24.00 · waktu lokal perangkat. Klik sesi untuk melihat
+            aktivitas dosen.
           </p>
         </div>
         {days.length > 0 && (
           <label>
             Tanggal sesi
-            <select value={day} onChange={(e) => setDay(e.target.value)}>
-              {days.map((d) => (
-                <option key={d} value={d}>
-                  {date(d + "T00:00:00")}
-                </option>
-              ))}
-            </select>
+            <input
+              type="date"
+              aria-label="Tanggal sesi"
+              value={day}
+              min={days[days.length - 1]}
+              max={days[0]}
+              onChange={(e) => setDay(e.target.value)}
+              title="Pilih tanggal sesi untuk melihat rentang login sampai logout dosen"
+            />
           </label>
         )}
       </div>
@@ -207,7 +220,10 @@ export function SessionChart({
               <p className="empty-line session-empty">
                 Tidak ada sesi login tercatat pada {date(day + "T00:00:00")}.
                 {latestSessionDay && latestSessionDay !== day && (
-                  <button type="button" onClick={() => setDay(latestSessionDay)}>
+                  <button
+                    type="button"
+                    onClick={() => setDay(latestSessionDay)}
+                  >
                     Lihat sesi terakhir: {date(latestSessionDay + "T00:00:00")}
                   </button>
                 )}
@@ -290,10 +306,7 @@ export function ActivityWaterfall({
               {sessions.map((s) => (
                 <option key={s.id} value={s.id}>
                   {date(s.loginAt)} · {clock(s.loginAt)} –{" "}
-                  {s.logoutAt
-                    ? clock(s.logoutAt)
-                    : "logout belum tercatat"}{" "}
-                  ·{" "}
+                  {s.logoutAt ? clock(s.logoutAt) : "logout belum tercatat"} ·{" "}
                   {
                     events.filter(
                       (a) =>
