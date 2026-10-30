@@ -26,18 +26,6 @@ jobs:
       - name: Compress Docker Image
         run: |
           docker save uay-elearning-api:dev | gzip > uay-elearning-api-dev.tar.gz
-
-      - name: Connect to Tailscale Network
-        uses: tailscale/github-action@v2
-        with:
-          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-          
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.DEV_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          echo -e "Host *\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null" >> ~/.ssh/config
           
       - name: Transfer Image to Dev Server
         uses: appleboy/scp-action@v0.1.7
