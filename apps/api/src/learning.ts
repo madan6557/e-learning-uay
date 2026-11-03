@@ -245,12 +245,23 @@ const courseBatchSchema = z.object({
     .max(500),
   reason: z.string().trim().min(5).optional(),
 });
-async function reviewCourseBatch(
+export async function reviewCourseBatch(
   tx: any,
   user: any,
   batch: z.infer<typeof courseBatchSchema>,
 ) {
   const codes = batch.rows.map((r) => String(r.values.code ?? "").trim());
+  const deptCodes = batch.rows.map((r) =>
+    normalizeDepartmentCode(
+      String(
+        r.values.departmentCode ??
+          r.values.prodi ??
+          r.values.department ??
+          user.departmentScopes?.[0] ??
+          "",
+      ),
+    ),
+  );
   const output = [];
   for (let index = 0; index < batch.rows.length; index++) {
     const row = batch.rows[index];
@@ -283,14 +294,28 @@ async function reviewCourseBatch(
 
     if (
       code &&
-      batch.rows.some((r, i) => i !== index && !r.exclude && codes[i] === code)
+      deptCode &&
+      batch.rows.some(
+        (r, i) =>
+          i !== index &&
+          !r.exclude &&
+          codes[i] === code &&
+          deptCodes[i] === deptCode,
+      )
     ) {
       issues.push("DUPLICATE_FILE");
     }
 
     let existing: any = null;
-    if (code) {
-      existing = await tx.course.findUnique({ where: { code } });
+    if (code && deptCode) {
+      existing = await tx.course.findUnique({
+        where: {
+          code_departmentCode: {
+            code,
+            departmentCode: deptCode,
+          },
+        },
+      });
     }
 
     if (existing && !row.override) {
@@ -518,7 +543,12 @@ export function registerLearning(app: Express) {
           "WRITE_ACCESS_DENIED",
         );
         const existing = await tx.course.findUnique({
-          where: { code: data.code },
+          where: {
+            code_departmentCode: {
+              code: data.code,
+              departmentCode: data.departmentCode,
+            },
+          },
         });
         ensure(!existing, 409, "COURSE_CODE_EXISTS");
         const after = await tx.course.create({ data });
@@ -550,11 +580,19 @@ export function registerLearning(app: Express) {
           403,
           "WRITE_ACCESS_DENIED",
         );
-        if (data.code !== before.code) {
+        if (
+          data.code !== before.code ||
+          data.departmentCode !== before.departmentCode
+        ) {
           const existing = await tx.course.findUnique({
-            where: { code: data.code },
+            where: {
+              code_departmentCode: {
+                code: data.code,
+                departmentCode: data.departmentCode,
+              },
+            },
           });
-          ensure(!existing, 409, "COURSE_CODE_EXISTS");
+          ensure(!existing || existing.id === before.id, 409, "COURSE_CODE_EXISTS");
         }
         const after = await tx.course.update({
           where: { id: before.id },
@@ -659,7 +697,12 @@ export function registerLearning(app: Express) {
             status: row.values.status as "DRAFT" | "PUBLISHED" | "ARCHIVED",
           };
           const course = await tx.course.upsert({
-            where: { code: row.values.code },
+            where: {
+              code_departmentCode: {
+                code: data.code,
+                departmentCode: data.departmentCode,
+              },
+            },
             create: data,
             update: data,
           });

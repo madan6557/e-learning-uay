@@ -173,7 +173,7 @@ enum CourseStatus {
 
 model Course {
   id             String       @id @default(uuid()) @map("course_id")
-  code           String       @unique @map("code")
+  code           String       @map("code")
   title          String       @map("title")
   description    String?      @map("description")
   credits        Int          @default(3) @map("credits")
@@ -185,6 +185,7 @@ model Course {
   classes       CourseClass[]
   questionBanks QuestionBank[]
 
+  @@unique([code, departmentCode])
   @@map("courses")
 }
 
