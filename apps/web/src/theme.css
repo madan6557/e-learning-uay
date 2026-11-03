@@ -60,11 +60,15 @@
     --card-bg: var(--card);
     --card-muted: var(--surface-muted);
     --input-bg: var(--surface-muted);
+    --surface-card: var(--surface);
+    --surface-table-head: var(--surface-muted);
     --surface-subtle: var(--surface-muted);
     --chip-bg: var(--secondary);
     --muted-soft: var(--muted-surface);
     --border-subtle: var(--border);
     --text: var(--foreground);
+    --text-primary: var(--foreground);
+    --text-secondary: var(--muted-foreground);
     --heading: var(--foreground);
     --fg: var(--foreground);
     --brand: var(--primary);
